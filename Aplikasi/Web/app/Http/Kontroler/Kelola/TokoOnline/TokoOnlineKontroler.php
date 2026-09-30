@@ -63,7 +63,7 @@ final class TokoOnlineKontroler extends DasarKelolaKontroler
                 $kirim = $pengiriman->get($p->Id);
 
                 return [
-                    ...$p->only(['Uuid', 'Nomor', 'NamaPelanggan', 'JenisPemenuhan', 'MetodePembayaran', 'Subtotal', 'Ongkir', 'Total', 'Status', 'Catatan', 'IdPenjualan']),
+                    ...$p->only(['Uuid', 'Nomor', 'NamaPelanggan', 'JenisPemenuhan', 'MetodePembayaran', 'Subtotal', 'Ongkir', 'DiskonOngkir', 'Total', 'Status', 'Catatan', 'IdPenjualan']),
                     'NoHp' => $p->NoHp, 'Alamat' => $p->Alamat, 'Kelurahan' => $p->Kelurahan,
                     'Kecamatan' => $p->Kecamatan, 'Kota' => $p->Kota, 'Provinsi' => $p->Provinsi,
                     'KodePos' => $p->KodePos, 'UuidOutlet' => $uuidOutlet[$p->IdOutlet] ?? null,

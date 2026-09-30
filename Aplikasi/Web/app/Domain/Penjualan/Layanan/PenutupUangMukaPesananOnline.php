@@ -31,9 +31,10 @@ use Illuminate\Support\Carbon;
  * `Selesai` hanya dipasang untuk pesanan **ambil sendiri**: pesanan kirim baru selesai setelah kurirnya menyerahkan
  * barang (dijaga `UbahStatusPesananOnline`), jadi menagihnya di kasir tidak boleh mendahului itu.
  *
- * Ongkir pesanan (F-17 bagian 3) dibandingkan dengan `Penjualan.BiayaKirim` lewat `PeriksaOngkir()`. Servernya
- * **tidak** mengisi sendiri dari `PesananOnline.Ongkir`: yang menentukan uang di laci adalah yang benar-benar ditagih
- * perangkat, dan mengarang ongkir di server akan membuat `TotalAkhir` tidak lagi sama dengan yang dibayar pelanggan.
+ * Ongkir pesanan (F-17 bagian 3) dibandingkan dengan `Penjualan.BiayaKirim` **dan** `DiskonKirim` lewat `PeriksaOngkir()`
+ * — keduanya pasangan `PesananOnline.Ongkir` (kotor) dan `DiskonOngkir` (promo gratis ongkir). Servernya **tidak**
+ * mengisi sendiri dari pesanan: yang menentukan uang di laci adalah yang benar-benar ditagih perangkat, dan mengarang
+ * ongkir di server akan membuat `TotalAkhir` tidak lagi sama dengan yang dibayar pelanggan.
  */
 final class PenutupUangMukaPesananOnline
 {
@@ -106,19 +107,23 @@ final class PenutupUangMukaPesananOnline
     }
 
     /**
-     * Ongkir yang ditagih penjualan vs ongkir pesanannya (F-17 bagian 3); null bila sama. Ikut memeriksa pesanan
-     * **ambil sendiri** yang justru tidak boleh berongkir. Perangkat versi lama belum mengirim `BiayaKirim`, jadi
-     * pesanan kirim berongkir akan tertangkap di sini sebagai selisih, bukan lewat begitu saja.
+     * Ongkir yang ditagih penjualan vs ongkir pesanannya (F-17 bagian 3); null bila sama. Yang dibandingkan **dua pasang**:
+     * ongkir kotor (`BiayaKirim` ↔ `Ongkir`) dan potongannya (`DiskonKirim` ↔ `DiskonOngkir`). Membandingkan hanya
+     * netto akan meloloskan salah pasang yang kebetulan berselisih sama (ongkir Rp 15.000 gratis vs ongkir Rp 0) —
+     * padahal yang pertama membawa biaya promo yang harus terbaca di laporan. Ikut memeriksa pesanan **ambil sendiri**
+     * yang justru tidak boleh berongkir. Perangkat versi lama belum mengirim keduanya, jadi pesanan kirim berongkir akan
+     * tertangkap di sini sebagai selisih, bukan lewat begitu saja.
      */
-    public function PeriksaOngkir(PesananOnline $pesanan, Uang $biayaKirim): ?string
+    public function PeriksaOngkir(PesananOnline $pesanan, Uang $biayaKirim, Uang $diskonKirim): ?string
     {
         $ongkir = Uang::Dari($pesanan->Ongkir);
+        $diskonOngkir = Uang::Dari($pesanan->DiskonOngkir);
 
-        if ($biayaKirim->SamaDengan($ongkir)) {
+        if ($biayaKirim->SamaDengan($ongkir) && $diskonKirim->SamaDengan($diskonOngkir)) {
             return null;
         }
 
-        return "ongkir ditagih {$biayaKirim->FormatRupiah()}, pesanan {$pesanan->Nomor} berongkir {$ongkir->FormatRupiah()}";
+        return "ongkir ditagih {$biayaKirim->FormatRupiah()} (diskon {$diskonKirim->FormatRupiah()}), pesanan {$pesanan->Nomor} berongkir {$ongkir->FormatRupiah()} (diskon {$diskonOngkir->FormatRupiah()})";
     }
 
     /** Void penjualan penagihan: uang muka kembali menjadi sisa pesanan, pesanan bisa ditagihkan ulang. */

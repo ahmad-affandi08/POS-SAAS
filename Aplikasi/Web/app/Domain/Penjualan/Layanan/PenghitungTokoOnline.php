@@ -13,7 +13,18 @@ use App\Domain\Penjualan\Enum\KanalPenjualan;
 use App\Domain\Penjualan\Model\PengaturanTokoOnline;
 use App\Domain\Penjualan\Model\ZonaPengiriman;
 
-/** Hitung checkout sepenuhnya di server: harga kanal Online, promo/pajak, lalu ongkir zona kode pos. */
+/**
+ * Hitung checkout sepenuhnya di server: harga kanal Online, promo/pajak, lalu ongkir zona kode pos.
+ *
+ * **Dua tahap** (F-17 bagian 3): tahap 1 menghitung barang tanpa ongkir, karena zona & ambang `GratisMulai` ditentukan
+ * dari subtotal barang; tahap 2 menghitung ulang **dengan** ongkir kotor di dalam mesin kalkulasi. Hanya dengan begitu
+ * promo gratis ongkir (F-16c) dan pajak atas ongkir (`KenaBiayaKirim`) dihitung dengan aturan yang sama dengan kasir —
+ * bila ongkir ditambahkan di luar mesin seperti sebelumnya, total yang dibayar pembeli di muka tidak akan sama dengan
+ * penjualan yang kasir hitung, dan selisihnya muncul sebagai kewajiban manual.
+ *
+ * `Ongkir` yang dikembalikan **kotor** (tarif zona, atau Rp 0 bila `GratisMulai` terpenuhi), `DiskonOngkir` potongan
+ * promonya; yang dibayar pembeli = `Ongkir − DiskonOngkir` dan sudah termasuk di `Total`.
+ */
 final class PenghitungTokoOnline
 {
     public function __construct(private readonly PenghitungPesanSendiri $dasar) {}
@@ -27,7 +38,7 @@ final class PenghitungTokoOnline
         $hasil = $this->dasar->Hitung($konteks, $baris, KanalPenjualan::Online, true);
         $pengaturan = PengaturanTokoOnline::query()->firstOrFail();
         $outlet = Outlet::query()->findOrFail($konteks->idOutlet);
-        $totalBarang = $hasil['Perkiraan']['Total'];
+        $total = $hasil['Perkiraan']['Total'];
 
         if (($pemenuhan === JenisPemenuhanOnline::AmbilSendiri && ! $outlet->AmbilSendiriAktif)
             || ($pemenuhan === JenisPemenuhanOnline::Kirim && ! $outlet->KirimAktif)) {
@@ -40,6 +51,7 @@ final class PenghitungTokoOnline
 
         $zona = null;
         $ongkir = Uang::Nol();
+        $diskonOngkir = Uang::Nol();
 
         if ($pemenuhan === JenisPemenuhanOnline::Kirim) {
             if ($kodePos === null || preg_match('/^\d{5}$/', $kodePos) !== 1) {
@@ -59,13 +71,20 @@ final class PenghitungTokoOnline
 
             $gratis = $zona->GratisMulai !== null && $hasil['Subtotal']->Bandingkan(Uang::Dari($zona->GratisMulai)) >= 0;
             $ongkir = $gratis ? Uang::Nol() : Uang::Dari($zona->Ongkir);
+
+            if (! $ongkir->BernilaiNol()) {
+                $hasil = $this->dasar->Hitung($konteks, $baris, KanalPenjualan::Online, true, $ongkir);
+                $diskonOngkir = $hasil['Perkiraan']['DiskonKirim'] ?? Uang::Nol();
+                $total = $hasil['Perkiraan']['Total'];
+            }
         }
 
         return [
             ...$hasil,
             'Zona' => $zona,
             'Ongkir' => $ongkir,
-            'Total' => $totalBarang->Tambah($ongkir),
+            'DiskonOngkir' => $diskonOngkir,
+            'Total' => $total,
         ];
     }
 }

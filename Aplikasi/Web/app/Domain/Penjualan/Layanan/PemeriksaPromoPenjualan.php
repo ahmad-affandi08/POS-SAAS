@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Penjualan\Layanan;
 
+use App\Domain\Bersama\Nilai\Uang;
 use App\Domain\Katalog\Data\DataProdukPenjualan;
 use App\Domain\Organisasi\Data\DataOutletPenjualan;
 use App\Domain\Pelanggan\Kueri\IdentitasPelanggan;
@@ -27,7 +28,10 @@ use App\Domain\Promo\Kueri\PromoBerlaku;
  * tetap memakai hitungan perangkat. F-16c bagian 3: konteks server juga memuat metode semua pembayaran, tanggal lahir
  * pelanggan, jumlah transaksinya sebelum penjualan ini, dan pemakaian promonya (hari ini & selama promo) sehingga promo
  * yang diterapkan perangkat dari data lokal yang tertinggal (offline) terdeteksi sebagai `PromoBerbeda`. Bagian 4: promo
- * poin berlipat ditentukan server (poin dihitung server), jadi tidak dibandingkan dengan perangkat.
+ * poin berlipat ditentukan server (poin dihitung server), jadi tidak dibandingkan dengan perangkat. F-17 bagian 3: potongan
+ * ongkir (`DiskonKirim`) perangkat dibandingkan dengan potongan promo gratis ongkir server yang dihitung dari masukan
+ * **tanpa** `DiskonKirim` — dengan `DiskonKirim` perangkat ikut masuk, `max(perangkat, promo)` tidak akan pernah lebih
+ * kecil dari angka perangkat dan selisih tidak terlihat.
  */
 final class PemeriksaPromoPenjualan
 {
@@ -48,12 +52,12 @@ final class PemeriksaPromoPenjualan
     {
         $definisi = $this->promo->AmbilDefinisi();
 
-        if ($definisi === [] && $perangkat === []) {
+        if ($definisi === [] && $perangkat === [] && $dasar->diskonKirim->BernilaiNol()) {
             return new DataPemeriksaanPromo([]);
         }
 
         $hasilServer = $this->mesin->Terapkan(
-            $dasar,
+            $dasar->GantiDiskonKirim(Uang::Nol()),
             array_values(array_map(fn (DataBarisPenjualanPos $b): BarisPromo => new BarisPromo($b->uuidProduk, $produk[$b->uuidProduk]->uuidKategori ?? null), $data->baris)),
             $definisi,
             new KonteksPromo(
@@ -75,14 +79,21 @@ final class PemeriksaPromoPenjualan
 
         $petaServer = self::Petakan($server);
         $petaPerangkat = self::Petakan($perangkat);
+        $masalah = [];
 
-        if ($petaServer === $petaPerangkat) {
-            return new DataPemeriksaanPromo([], $hasilServer->poinBerlipat);
+        if ($petaServer !== $petaPerangkat) {
+            $kode = fn (array $daftar): string => $daftar === [] ? 'tanpa promo' : implode(', ', array_map(fn (PromoTerpakai $p): string => "{$p->kode} {$p->HitungTotal()->FormatRupiah()}", $daftar));
+            $masalah[] = "perangkat: {$kode($perangkat)}; server: {$kode($server)}";
         }
 
-        $kode = fn (array $daftar): string => $daftar === [] ? 'tanpa promo' : implode(', ', array_map(fn (PromoTerpakai $p): string => "{$p->kode} {$p->HitungTotal()->FormatRupiah()}", $daftar));
+        // Potongan ongkir: masukan server tanpa `DiskonKirim`, jadi `hasil->diskonKirim` murni potongan promo server.
+        $diskonKirimServer = $hasilServer->hasil->diskonKirim;
 
-        return new DataPemeriksaanPromo(["perangkat: {$kode($perangkat)}; server: {$kode($server)}"], $hasilServer->poinBerlipat);
+        if (! $diskonKirimServer->SamaDengan($dasar->diskonKirim)) {
+            $masalah[] = "diskon ongkir perangkat {$dasar->diskonKirim->FormatRupiah()}; server {$diskonKirimServer->FormatRupiah()}";
+        }
+
+        return new DataPemeriksaanPromo($masalah, $hasilServer->poinBerlipat, $hasilServer->gratisOngkir);
     }
 
     /**

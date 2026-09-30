@@ -148,7 +148,7 @@ final class DataKalkulasi {
   final Uang diskonKirim;
 
   /// Salinan dengan [diskonKirim] diganti (promo gratis ongkir, F-17 bagian 3); seluruh bidang lain sama.
-  DataKalkulasi DenganDiskonKirim(Uang diskonKirim) => DataKalkulasi(
+  DataKalkulasi GantiDiskonKirim(Uang diskonKirim) => DataKalkulasi(
     hargaTermasukPajak: hargaTermasukPajak,
     baris: baris,
     persenBiayaLayanan: persenBiayaLayanan,

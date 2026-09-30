@@ -15,9 +15,10 @@ import 'LayananPenjualan.dart';
 /// `UuidPesananOnline`. Server memakai uang mukanya, menautkan penjualannya, dan menyelesaikan pesanan ambil sendiri
 /// dalam transaksi yang sama.
 ///
-/// Ongkir pesanan (F-17 bagian 3) masuk keranjang sebagai `Keranjang.biayaKirim`, sehingga `TotalAkhir` penjualan sama
-/// dengan total pesanan yang dilihat pembeli dan pendapatan pengirimannya masuk buku (J-07.1). Mengosongkannya bukan
-/// pilihan yang aman: server membandingkannya dengan `PesananOnline.Ongkir` dan menandai selisihnya `OngkirBerbeda`.
+/// Ongkir pesanan (F-17 bagian 3) masuk keranjang sebagai `Keranjang.biayaKirim` (kotor) dan `diskonKirim` (promo gratis
+/// ongkir yang sudah dipotong saat checkout), sehingga `TotalAkhir` penjualan sama dengan total pesanan yang dilihat
+/// pembeli dan pendapatan pengirimannya masuk buku (J-07.1). Keduanya dibawa apa adanya: server membandingkan kedua
+/// pasangan dengan `PesananOnline.Ongkir`/`DiskonOngkir` dan menandai selisihnya `OngkirBerbeda`.
 class LayananPesananOnline {
   LayananPesananOnline({required this.klien, required this.penjualan});
 
@@ -97,6 +98,7 @@ class LayananPesananOnline {
       catatan: pesanan.catatan,
       kanal: KanalPenjualan.Online,
       biayaKirim: Uang.Dari(pesanan.ongkir),
+      diskonKirim: Uang.Dari(pesanan.diskonOngkir),
       praPesan: PraPesananKeranjang(
         uuid: pesanan.uuid,
         nomor: pesanan.nomor,

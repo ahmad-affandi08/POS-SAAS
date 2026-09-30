@@ -19,6 +19,7 @@ use App\Domain\Penjualan\Model\PengaturanTokoOnline;
 use App\Domain\Penjualan\Model\Penjualan;
 use App\Domain\Penjualan\Model\PesananOnline;
 use App\Domain\Penjualan\Model\TagihanQris;
+use App\Domain\Promo\Model\PromoPemakaian;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Client\Request as PermintaanHttp;
 use Illuminate\Support\Facades\Http;
@@ -261,6 +262,93 @@ it('F-17 bagian 3: perangkat versi lama menagih pesanan kirim tanpa ongkir = dit
         ->and($penjualan->PerluTinjauan)->toBeTrue()
         ->and($penjualan->AlasanTinjauan)->toContain('OngkirBerbeda')
         ->and($penjualan->AlasanTinjauan)->toContain('12.000');
+});
+
+/**
+ * Pesanan kirim berbayar QRIS dengan promo gratis ongkir aktif, sudah dibayar dan siap ditagih kasir.
+ *
+ * @param  array<string, mixed>  $k
+ * @return array{0: PesananOnline, 1: mixed, 2: mixed}
+ */
+function SiapkanPesananGratisOngkir(TestCase $tes, array $k): array
+{
+    $promo = BantuanTokoOnline::BuatPromoGratisOngkir($k);
+    [$pesanan] = PesanBayarQris($tes, $k, 'Kirim');
+    $tes->postJson("/{$k['Slug']}/pesanan/{$pesanan->KodeAkses}/bayar")->assertCreated();
+    BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+    WebhookBayarOnline($tes, $k, TagihanQris::query()->sole()->NomorPesanan, $pesanan->Total)->assertOk();
+
+    BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+    $uangMuka = BantuanPenjualan::BuatMetode(JenisMetodePembayaran::UangMuka, 'Uang muka (DP)');
+    $pesanan->refresh()->forceFill(['Status' => StatusPesananOnline::Siap])->save();
+
+    return [$pesanan, $uangMuka, $promo];
+}
+
+it('F-16c gratis ongkir: pesanan bergratis ongkir ditagih dengan BiayaKirim + DiskonKirim; ongkir kotor ke Pendapatan Pengiriman, potongan ke Diskon Penjualan, pemakaian promo tercatat', function (): void {
+    $status = 'pending';
+    PalsukanGerbangOnline($status);
+    $k = SiapkanBayarOnline($this);
+    [$pesanan, $uangMuka, $promo] = SiapkanPesananGratisOngkir($this, $k);
+    // Pembeli membayar di muka Rp 60.000 saja: ongkir Rp 12.000 sudah digratiskan di checkout.
+    expect($pesanan->Ongkir)->toBe('12000.00')->and($pesanan->DiskonOngkir)->toBe('12000.00')->and($pesanan->Total)->toBe('60000.00');
+    $produk = BantuanPenjualan::BuatProdukBerstok($k['Gudang'], $k['Pemilik']->Id);
+
+    $item = BantuanPenjualan::Item($k, [
+        'BiayaKirim' => '12000.00',
+        'DiskonKirim' => '12000.00',
+        'Baris' => [['Produk' => $produk, 'Jumlah' => '1', 'Harga' => '60000.00']],
+        'Pembayaran' => [['Metode' => $uangMuka, 'Jumlah' => '60000.00']],
+    ], ['UuidPesananOnline' => $pesanan->Uuid]);
+    expect($item['Data']['Ringkasan']['TotalAkhir'])->toBe('60000.00');
+    expect(BantuanKasir::KirimRingkas($this, $k['Token'], [$item]))->toBe([['Diterima', null]]);
+
+    BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+    $penjualan = Penjualan::query()->where('Uuid', $item['Uuid'])->sole();
+    $o = $k['Outlet']->Id;
+    $pakai = PromoPemakaian::query()->where('IdPenjualan', $penjualan->Id)->get();
+
+    expect($penjualan->BiayaKirim)->toBe('12000.00')
+        ->and($penjualan->DiskonKirim)->toBe('12000.00')
+        ->and($penjualan->TotalAkhir)->toBe('60000.00')
+        ->and($penjualan->AlasanTinjauan ?? '')->not->toContain('OngkirBerbeda')
+        ->and($penjualan->AlasanTinjauan ?? '')->not->toContain('PromoBerbeda')
+        // Ongkir kotor Rp 12.000 sebagai pendapatan, potongannya sebagai Diskon Penjualan: biaya promo terbaca di laporan.
+        ->and(SaldoPeranOnline((int) $penjualan->IdJurnal, PeranAkun::PendapatanPengiriman, $o))->toBe('-12000.00')
+        ->and(SaldoPeranOnline((int) $penjualan->IdJurnal, PeranAkun::DiskonPenjualan, $o))->toBe('12000.00')
+        ->and($pakai)->toHaveCount(1)
+        ->and($pakai->first()->IdPromo)->toBe($promo->Id)
+        ->and($pakai->first()->JumlahDiskon)->toBe('12000.00')
+        ->and($promo->refresh()->KuotaTerpakai)->toBe(1);
+});
+
+it('F-16c gratis ongkir: kasir yang menagih ongkir penuh padahal pesanan bergratis ongkir = diterima + tinjauan OngkirBerbeda dan PromoBerbeda', function (): void {
+    $status = 'pending';
+    PalsukanGerbangOnline($status);
+    $k = SiapkanBayarOnline($this);
+    [$pesanan, $uangMuka] = SiapkanPesananGratisOngkir($this, $k);
+    $produk = BantuanPenjualan::BuatProdukBerstok($k['Gudang'], $k['Pemilik']->Id);
+
+    // Aplikasi yang tidak mengenal promo gratis ongkir: ongkir kotor ikut, potongannya tidak.
+    $item = BantuanPenjualan::Item($k, [
+        'BiayaKirim' => '12000.00',
+        'Baris' => [['Produk' => $produk, 'Jumlah' => '1', 'Harga' => '60000.00']],
+        'Pembayaran' => [
+            ['Metode' => $uangMuka, 'Jumlah' => '60000.00'],
+            ['Metode' => $k['Tunai'], 'Jumlah' => '12000.00'],
+        ],
+    ], ['UuidPesananOnline' => $pesanan->Uuid]);
+    expect(BantuanKasir::KirimRingkas($this, $k['Token'], [$item]))->toBe([['Diterima', null]]);
+
+    BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+    $penjualan = Penjualan::query()->where('Uuid', $item['Uuid'])->sole();
+
+    expect($penjualan->PerluTinjauan)->toBeTrue()
+        ->and($penjualan->AlasanTinjauan)->toContain('OngkirBerbeda')
+        ->and($penjualan->AlasanTinjauan)->toContain('PromoBerbeda')
+        ->and($penjualan->AlasanTinjauan)->toContain('diskon ongkir perangkat Rp 0; server Rp 12.000')
+        // Tanpa potongan, tidak ada yang dicatat sebagai pemakaian promo.
+        ->and(PromoPemakaian::query()->where('IdPenjualan', $penjualan->Id)->count())->toBe(0);
 });
 
 it('pesanan berbayar yang ditolak muncul di Kotak Tindakan dan pengembaliannya dibukukan sekali (J-17.2)', function (): void {

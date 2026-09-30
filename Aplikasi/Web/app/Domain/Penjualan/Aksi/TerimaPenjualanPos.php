@@ -362,7 +362,7 @@ final class TerimaPenjualanPos
             $masalahUangMuka = [...$masalahUangMuka, ...$this->penutupUangMukaOnline->Tandai($pesananOnline, $penjualan->Id, $uangMukaDipakai, $data->dibuatPada, $kasir->id)];
             // F-17 bagian 3: ongkir pesanan yang tidak ditagih kasir berarti uang yang tidak pernah masuk. Ditandai,
             // tidak ditolak (§18.3): uangnya sudah diterima, dan yang salah harus diperiksa orang.
-            $bedaOngkir = $this->penutupUangMukaOnline->PeriksaOngkir($pesananOnline, $hasil->biayaKirim);
+            $bedaOngkir = $this->penutupUangMukaOnline->PeriksaOngkir($pesananOnline, $hasil->biayaKirim, $hasil->diskonKirim);
 
             if ($bedaOngkir !== null) {
                 $tinjauan['OngkirBerbeda'] = "OngkirBerbeda: {$bedaOngkir}";
@@ -467,6 +467,15 @@ final class TerimaPenjualanPos
             array_map(fn (PromoTerpakai $p): Uang => $p->HitungTotal(), $promoPerangkat),
         );
         $masalahPromo = [...$masalahPromo, ...$this->pemakaianPromo->Catat($penjualan->Id, $idPelanggan, $tanggalBisnis, $diskonPerPromo)];
+
+        // F-17 bagian 3: pemakaian promo gratis ongkir (kuota, batas per pelanggan, laporan efektivitas) dicatat hanya bila
+        // ongkirnya benar-benar dipotong. Sengaja lewat panggilan terpisah dari `$diskonPerPromo`: klaim ke pemasok di bawah
+        // dihitung dari potongan harga, dan ongkir tidak ditanggung pemasok.
+        $gratisOngkir = $pemeriksaanPromo->gratisOngkir;
+
+        if ($gratisOngkir !== null && ! $hasil->diskonKirim->BernilaiNol()) {
+            $masalahPromo = [...$masalahPromo, ...$this->pemakaianPromo->Catat($penjualan->Id, $idPelanggan, $tanggalBisnis, [$gratisOngkir->uuid => $hasil->diskonKirim])];
+        }
         // F-16c bagian 4b/4d: bagian potongan yang ditanggung pemasok menjadi klaim ke pemasok, diakui akrual
         // (Dr Piutang Klaim Promosi Pemasok, Cr HPP) di transaksi yang sama.
         $this->klaimPemasok->Catat($penjualan->Id, $penjualan->Uuid, $penjualan->Nomor, $penjualan->IdOutlet, $tanggalBisnis, $diskonPerPromo, $kasir->id);

@@ -92,7 +92,7 @@ final class MesinPromo {
 
     var data = SusunData(dasar, terpilih);
     if (potonganOngkir.Bandingkan(data.diskonKirim) > 0) {
-      data = data.DenganDiskonKirim(potonganOngkir);
+      data = data.GantiDiskonKirim(potonganOngkir);
     }
     return HasilPromo(
       terpakai: terpilih,

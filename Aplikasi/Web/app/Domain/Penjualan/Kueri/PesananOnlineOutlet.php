@@ -33,7 +33,7 @@ final class PesananOnlineOutlet
             $hasil[] = [
                 'Uuid' => $p->Uuid, 'Nomor' => $p->Nomor, 'NamaPelanggan' => $p->NamaPelanggan,
                 'JenisPemenuhan' => $p->JenisPemenuhan->value, 'MetodePembayaran' => $p->MetodePembayaran->value,
-                'Status' => $p->Status->value, 'Subtotal' => $p->Subtotal, 'Ongkir' => $p->Ongkir, 'Total' => $p->Total,
+                'Status' => $p->Status->value, 'Subtotal' => $p->Subtotal, 'Ongkir' => $p->Ongkir, 'DiskonOngkir' => $p->DiskonOngkir, 'Total' => $p->Total,
                 'Catatan' => $p->Catatan, 'DibuatPada' => $p->DibuatPada?->toIso8601ZuluString(),
                 'SudahDibayar' => $p->DibayarPada !== null, 'SisaUangMuka' => $p->AmbilSisaUangMuka()->KeString(),
                 'Baris' => $p->Detail->map(fn (PesananOnlineDetail $d): array => [

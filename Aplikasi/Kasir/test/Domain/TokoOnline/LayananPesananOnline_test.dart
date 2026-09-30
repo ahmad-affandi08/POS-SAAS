@@ -27,6 +27,7 @@ void main() {
     String status = 'Siap',
     String jenisPemenuhan = 'AmbilSendiri',
     String ongkir = '0.00',
+    String diskonOngkir = '0.00',
     String sisaUangMuka = '28000.00',
     String total = '28000.00',
     bool sudahDibayar = true,
@@ -39,6 +40,7 @@ void main() {
     'Status': status,
     'Subtotal': '28000.00',
     'Ongkir': ongkir,
+    'DiskonOngkir': diskonOngkir,
     'Total': total,
     'SudahDibayar': sudahDibayar,
     'SisaUangMuka': sisaUangMuka,
@@ -210,6 +212,58 @@ void main() {
     expect((data['Ringkasan']! as Map<String, Object?>)['TotalAkhir'], '42800.00');
     expect(data['UuidPesananOnline'], '01K5PESANANONLINE000000001');
   });
+
+  test(
+    'F-16c gratis ongkir: pesanan membawa DiskonOngkir ke keranjang; outbox memuat ongkir kotor + diskonnya',
+    () async {
+      final katalog = await u.MuatKatalog();
+      final k = await u.MuatKonteks();
+
+      // Ongkir zona Rp 12.000 digratiskan promo di checkout: pembeli membayar di muka Rp 30.800 (barang + pajak).
+      u.server.penangan = (_) async => JsonUji(
+        Balasan(
+          Pesanan(
+            jenisPemenuhan: 'Kirim',
+            ongkir: '12000.00',
+            diskonOngkir: '12000.00',
+            sisaUangMuka: '30800.00',
+            total: '30800.00',
+          ),
+        ),
+      );
+      final hasil = await u.pesananOnline.AmbilAktif();
+      expect(hasil.pesanan.single.diskonOngkir, '12000.00');
+
+      final keranjang = u.pesananOnline.MuatKeKeranjang(hasil.pesanan.single, hasil, katalog, k);
+      expect(keranjang.biayaKirim, Uang.DariBulat(12000));
+      expect(keranjang.diskonKirim, Uang.DariBulat(12000));
+      expect(keranjang.HitungBiayaKirimNetto(), Uang.Nol());
+      // Draf keranjang yang disimpan & dibaca ulang tidak boleh kehilangan diskon ongkirnya.
+      expect(Keranjang.DariJson(keranjang.KeJson()).diskonKirim, Uang.DariBulat(12000));
+
+      final hitungan = u.penjualan.Hitung(keranjang, k);
+      expect(hitungan.hasil.biayaKirim, Uang.DariBulat(12000));
+      expect(hitungan.hasil.diskonKirim, Uang.DariBulat(12000));
+      // Sama dengan yang dibayar pembeli di muka: ongkir netto nol tidak menambah total.
+      expect(hitungan.hasil.totalAkhir, Uang.DariBulat(30800));
+
+      await u.penjualan.Bayar(
+        keranjang: keranjang,
+        pembayaran: [
+          PembayaranMasukan(
+            metode: LayananPreOrder.MetodeUangMuka(keranjang.praPesan!),
+            jumlah: hitungan.hasil.totalAkhir,
+          ),
+        ],
+        kasir: rina,
+        k: k,
+      );
+      final data = await BacaOutboxTerakhir();
+      expect(data['BiayaKirim'], '12000.00');
+      expect(data['DiskonKirim'], '12000.00');
+      expect((data['Ringkasan']! as Map<String, Object?>)['TotalAkhir'], '30800.00');
+    },
+  );
 
   test('pesanan tanpa ongkir tidak mengirim kunci ongkir sama sekali; pesanan yang belum Siap ditolak', () async {
     final katalog = await u.MuatKatalog();

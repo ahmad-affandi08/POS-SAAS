@@ -113,7 +113,8 @@ final class BuatPesananOnline
                     'KodePos' => self::Teks($data['KodePos'] ?? null), 'IdZonaPengiriman' => $hitung['Zona']?->Id,
                     'Catatan' => self::Teks($data['Catatan'] ?? null), 'Subtotal' => $hitung['Subtotal']->KeString(),
                     'Diskon' => $perkiraan['Diskon'], 'BiayaLayanan' => $perkiraan['BiayaLayanan'], 'Pajak' => $pajak->KeString(),
-                    'Ongkir' => $hitung['Ongkir']->KeString(), 'Total' => $hitung['Total']->KeString(), 'Perkiraan' => $perkiraan,
+                    'Ongkir' => $hitung['Ongkir']->KeString(), 'DiskonOngkir' => $hitung['DiskonOngkir']->KeString(),
+                    'Total' => $hitung['Total']->KeString(), 'Perkiraan' => $perkiraan,
                     'Status' => $pembayaran->CekBayarDiMuka() ? StatusPesananOnline::MenungguPembayaran : StatusPesananOnline::MenungguKonfirmasi,
                     'HashNoHp' => $hashNoHp, 'HashIp' => $hashIp,
                 ]);

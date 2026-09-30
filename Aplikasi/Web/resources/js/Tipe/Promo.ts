@@ -11,7 +11,9 @@ export type JenisAksiPromo =
     | 'BeliXGratisY'
     | 'BundelHargaTetap'
     /** F-16c bagian 4: tidak memotong harga; poin loyalti dikalikan `Pengali`. */
-    | 'PoinBerlipat';
+    | 'PoinBerlipat'
+    /** F-17 bagian 3: tidak memotong harga barang; memotong ongkir (`Jumlah` opsional = batas potongan). */
+    | 'GratisOngkir';
 
 export type JenisKondisiPromo = 'Semua' | 'Produk' | 'Kategori';
 

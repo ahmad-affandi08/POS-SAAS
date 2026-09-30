@@ -109,6 +109,50 @@ describe('Halaman promo (F-16c)', () => {
         );
     });
 
+    it('formulir (F-17 bagian 3): gratis ongkir menampilkan batas opsional, menyembunyikan pendanaan pemasok, dan mengirim Jumlah tanpa Persen/Harga', () => {
+        const ongkir = {
+            ...HappyHour,
+            Kode: 'ONGKIR0',
+            Nama: 'Gratis ongkir belanja 100 ribu',
+            JenisAksi: 'GratisOngkir' as const,
+            LabelAksi: 'Gratis ongkir',
+            Definisi: {
+                Hari: [],
+                JamMulai: null,
+                JamSelesai: null,
+                Outlet: [],
+                Kanal: [],
+                Tier: [],
+                MinimalSubtotal: '100000.00',
+                Kondisi: { Jenis: 'Semua' as const, Uuid: [], JumlahMinimal: '0.0000' },
+                Aksi: { Jenis: 'GratisOngkir' as const },
+                BatasPerTransaksi: null,
+            },
+            TanggalMulai: null,
+            TanggalSelesai: null,
+            NamaProduk: {},
+            UuidPemasok: null,
+            PersenDanaPemasok: '0.00',
+        };
+        RenderUji(<HalamanFormulirPromo Promo={ongkir} FiturAktif {...opsi} />);
+        // Potongan ongkir dibatasi opsional; pendanaan pemasok tidak relevan karena ongkir bukan potongan harga.
+        expect(screen.getByLabelText('Batas potongan ongkir')).not.toBeNull();
+        expect(screen.queryByText('Pendanaan promo')).toBeNull();
+        fireEvent.change(screen.getByLabelText('Batas potongan ongkir'), { target: { value: '10000' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Simpan promo' }));
+        expect(tiruanRouter.put).toHaveBeenCalledWith(
+            `/kelola/promo/${HappyHour.Uuid}`,
+            expect.objectContaining({
+                JenisAksi: 'GratisOngkir',
+                Jumlah: '10000',
+                Persen: null,
+                Harga: null,
+                UuidPemasok: null,
+            }),
+            expect.anything(),
+        );
+    });
+
     it('formulir (F-16c bagian 4): promo poin berlipat menampilkan pengali dan mengirimnya tanpa nilai potongan', () => {
         const poin = {
             ...HappyHour,

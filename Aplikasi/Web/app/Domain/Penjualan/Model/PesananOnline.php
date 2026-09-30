@@ -36,7 +36,8 @@ use LogicException;
  * @property string $Diskon
  * @property string $BiayaLayanan
  * @property string $Pajak
- * @property string $Ongkir
+ * @property string $Ongkir ongkir kotor (tarif zona); yang dibayar pembeli = Ongkir − DiskonOngkir
+ * @property string $DiskonOngkir potongan promo gratis ongkir (F-16c); pasangan `Penjualan.DiskonKirim`
  * @property string $Total
  * @property array<string, mixed> $Perkiraan
  * @property StatusPesananOnline $Status
@@ -70,7 +71,7 @@ final class PesananOnline extends ModelDasar
     protected $attributes = [
         'IdPelanggan' => null, 'Email' => null, 'Alamat' => null, 'Kelurahan' => null, 'Kecamatan' => null,
         'Kota' => null, 'Provinsi' => null, 'KodePos' => null, 'IdZonaPengiriman' => null, 'Catatan' => null,
-        'Diskon' => '0.00', 'BiayaLayanan' => '0.00', 'Pajak' => '0.00', 'Ongkir' => '0.00',
+        'Diskon' => '0.00', 'BiayaLayanan' => '0.00', 'Pajak' => '0.00', 'Ongkir' => '0.00', 'DiskonOngkir' => '0.00',
         'IdPenjualan' => null, 'DibayarPada' => null, 'JumlahDibayar' => null, 'UangMukaTerpakai' => '0.00',
         'IdJurnal' => null, 'DikembalikanPada' => null, 'IdJurnalRefund' => null, 'HashNoHp' => null, 'HashIp' => null, 'DikonfirmasiOleh' => null, 'DikonfirmasiPada' => null,
         'SelesaiPada' => null, 'DiubahOleh' => null, 'Alasan' => null,
@@ -119,7 +120,7 @@ final class PesananOnline extends ModelDasar
             'MetodePembayaran' => MetodePembayaranOnline::class,
             'NoHp' => 'encrypted', 'Email' => 'encrypted', 'Alamat' => 'encrypted',
             'Subtotal' => 'decimal:2', 'Diskon' => 'decimal:2', 'BiayaLayanan' => 'decimal:2', 'Pajak' => 'decimal:2',
-            'Ongkir' => 'decimal:2', 'Total' => 'decimal:2', 'Perkiraan' => 'array',
+            'Ongkir' => 'decimal:2', 'DiskonOngkir' => 'decimal:2', 'Total' => 'decimal:2', 'Perkiraan' => 'array',
             'JumlahDibayar' => 'decimal:2', 'UangMukaTerpakai' => 'decimal:2',
             'DibayarPada' => 'datetime', 'DikembalikanPada' => 'datetime',
             'Status' => StatusPesananOnline::class,

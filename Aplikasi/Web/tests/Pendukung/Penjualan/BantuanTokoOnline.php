@@ -8,6 +8,8 @@ use App\Domain\Organisasi\Model\Outlet;
 use App\Domain\Pengelola\TimInternal\Enum\PeranPengelolaBawaan;
 use App\Domain\Penjualan\Model\PengaturanTokoOnline;
 use App\Domain\Penjualan\Model\ZonaPengiriman;
+use App\Domain\Promo\Kueri\PromoBerlaku;
+use App\Domain\Promo\Model\Promo;
 use App\Domain\Tenant\Enum\JenisOverride;
 use App\Domain\Tenant\Layanan\PemeriksaFiturTenant;
 use App\Domain\Tenant\Model\OverrideTenant;
@@ -51,6 +53,42 @@ final class BantuanTokoOnline
         ]);
 
         return $k + ['AlamatToko' => '/'.$k['Slug']];
+    }
+
+    /**
+     * Promo **gratis ongkir** aktif (F-16c + F-17 bagian 3). `batas` = `Jumlah` aksi (potongan ongkir maksimal; null =
+     * seluruh ongkir), `minimal` = minimal subtotal barang. Fitur `promo.mesin` dinyalakan lewat override bila paket
+     * uji belum memuatnya, supaya test ini tidak bergantung pada isi paket bawaan.
+     *
+     * @param  array<string, mixed>  $k  hasil `Siapkan()`
+     */
+    public static function BuatPromoGratisOngkir(array $k, ?string $batas = null, string $minimal = '0.00', string $kode = 'ONGKIR-GRATIS'): Promo
+    {
+        BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+
+        if (! app(PromoBerlaku::class)->CekFiturAktif()) {
+            OverrideTenant::query()->create([
+                'IdTenant' => $k['Tenant']->Id,
+                'Jenis' => JenisOverride::Fitur,
+                'Kunci' => PromoBerlaku::KUNCI_FITUR,
+                'BerakhirPada' => now()->addDays(30),
+                'Alasan' => 'Uji gratis ongkir',
+                'DibuatOleh' => BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::SuperAdmin)->Id,
+            ]);
+        }
+
+        return Promo::query()->create([
+            'Kode' => $kode,
+            'Nama' => "Promo {$kode}",
+            'Prioritas' => 1,
+            'Definisi' => [
+                'Hari' => [], 'JamMulai' => null, 'JamSelesai' => null, 'Outlet' => [], 'Kanal' => [], 'Tier' => [],
+                'MinimalSubtotal' => $minimal,
+                'Kondisi' => ['Jenis' => 'Semua', 'Uuid' => [], 'JumlahMinimal' => '0.0000'],
+                'Aksi' => ['Jenis' => 'GratisOngkir', ...($batas === null ? [] : ['Jumlah' => $batas])],
+                'BatasPerTransaksi' => null,
+            ],
+        ]);
     }
 
     /**

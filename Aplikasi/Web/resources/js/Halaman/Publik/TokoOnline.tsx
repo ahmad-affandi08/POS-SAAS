@@ -37,6 +37,8 @@ type Hasil = {
     BiayaLayanan: string;
     Pajak: { Nama: string; Tarif: string; Jumlah: string }[];
     Ongkir: string;
+    /** Potongan promo gratis ongkir (F-16c); yang dibayar = Ongkir − DiskonOngkir, sudah termasuk di Total. */
+    DiskonOngkir: string;
     Total: string;
     Zona: { Nama: string; EstimasiHariMin: number; EstimasiHariMaks: number } | null;
 };
@@ -479,6 +481,16 @@ export default function TokoOnline({
                                         <div className="flex justify-between">
                                             <dt>Ongkir</dt>
                                             <dd>{FormatRupiah(hasilBerlaku.Ongkir)}</dd>
+                                        </div>
+                                    ) : null}
+                                    {Number(hasilBerlaku.DiskonOngkir) > 0 ? (
+                                        <div className="flex justify-between text-sukses">
+                                            <dt>
+                                                {Number(hasilBerlaku.DiskonOngkir) === Number(hasilBerlaku.Ongkir)
+                                                    ? 'Gratis ongkir'
+                                                    : 'Diskon ongkir'}
+                                            </dt>
+                                            <dd>−{FormatRupiah(hasilBerlaku.DiskonOngkir)}</dd>
                                         </div>
                                     ) : null}
                                     <div className="flex justify-between text-subjudul font-semibold">

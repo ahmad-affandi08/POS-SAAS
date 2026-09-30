@@ -89,7 +89,7 @@ final class TokoOnlineKontroler extends Kontroler
             return response()->json([
                 'Baris' => array_map(fn (array $b): array => ['UuidProduk' => $b['UuidProduk'], 'NamaProduk' => $b['NamaProduk'], 'Jumlah' => $b['Jumlah']->KeString(), 'Total' => $b['Total']->KeString()], $hasil['Baris']),
                 'Subtotal' => $hasil['Subtotal']->KeString(), ...PenghitungPesanSendiri::KeLarik($hasil['Perkiraan']),
-                'Ongkir' => $hasil['Ongkir']->KeString(), 'Total' => $hasil['Total']->KeString(),
+                'Ongkir' => $hasil['Ongkir']->KeString(), 'DiskonOngkir' => $hasil['DiskonOngkir']->KeString(), 'Total' => $hasil['Total']->KeString(),
                 'Zona' => $hasil['Zona'] === null ? null : ['Nama' => $hasil['Zona']->Nama, 'EstimasiHariMin' => $hasil['Zona']->EstimasiHariMin, 'EstimasiHariMaks' => $hasil['Zona']->EstimasiHariMaks],
             ]);
         });
@@ -125,7 +125,7 @@ final class TokoOnlineKontroler extends Kontroler
                     'Nomor' => $pesanan->Nomor, 'NamaPelanggan' => $pesanan->NamaPelanggan,
                     'JenisPemenuhan' => $pesanan->JenisPemenuhan->AmbilLabel(), 'Status' => $pesanan->Status->value,
                     'LabelStatus' => $pesanan->Status->AmbilLabel(), 'Total' => $pesanan->Total,
-                    'Ongkir' => $pesanan->Ongkir, 'DibuatPada' => $pesanan->DibuatPada?->toIso8601String(),
+                    'Ongkir' => $pesanan->Ongkir, 'DiskonOngkir' => $pesanan->DiskonOngkir, 'DibuatPada' => $pesanan->DibuatPada?->toIso8601String(),
                     'MetodePembayaran' => $pesanan->MetodePembayaran->AmbilLabel(),
                     'PerluBayar' => $pesanan->Status === StatusPesananOnline::MenungguPembayaran,
                     'SudahDibayar' => $pesanan->DibayarPada !== null,

@@ -51,6 +51,7 @@ class PesananOnlinePos {
     required this.status,
     required this.subtotal,
     required this.ongkir,
+    this.diskonOngkir = '0',
     required this.total,
     required this.sudahDibayar,
     required this.sisaUangMuka,
@@ -72,7 +73,12 @@ class PesananOnlinePos {
   /// `Dikonfirmasi` / `Diproses` / `Siap`.
   final String status;
   final String subtotal;
+
+  /// Ongkir kotor (tarif zona). Yang dibayar pembeli = [ongkir] − [diskonOngkir] (F-17 bagian 3).
   final String ongkir;
+
+  /// Potongan promo gratis ongkir (F-16c); '0' dari server lama yang belum mengirimnya.
+  final String diskonOngkir;
   final String total;
   final bool sudahDibayar;
   final String sisaUangMuka;
@@ -91,6 +97,7 @@ class PesananOnlinePos {
     status: UraiJson.AmbilTeks(json['Status']),
     subtotal: UraiJson.AmbilDesimal(json['Subtotal']),
     ongkir: UraiJson.AmbilDesimal(json['Ongkir']),
+    diskonOngkir: UraiJson.AmbilDesimal(json['DiskonOngkir']),
     total: UraiJson.AmbilDesimal(json['Total']),
     sudahDibayar: UraiJson.AmbilBenar(json['SudahDibayar']),
     sisaUangMuka: UraiJson.AmbilDesimal(json['SisaUangMuka']),

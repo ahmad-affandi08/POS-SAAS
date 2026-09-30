@@ -1027,9 +1027,10 @@ class LayananPenjualan {
       'HargaTermasukPajak': k.profilPajak.hargaTermasukPajak,
       'PersenBiayaLayanan': k.AmbilPersenBiayaLayanan().toString(),
       'PembulatanTunai': pembulatan == null ? null : {'Kelipatan': pembulatan.kelipatan, 'Arah': pembulatan.arah.name},
-      // F-17 bagian 3: dikirim hanya bila ada ongkirnya, supaya muatan penjualan biasa tidak berubah sama sekali.
-      if (!keranjang.biayaKirim.BernilaiNol()) 'BiayaKirim': keranjang.biayaKirim.KeString(),
-      if (!keranjang.diskonKirim.BernilaiNol()) 'DiskonKirim': keranjang.diskonKirim.KeString(),
+      // F-17 bagian 3: dikirim hanya bila ada ongkirnya, supaya muatan penjualan biasa tidak berubah sama sekali. Yang
+      // dikirim hasil hitungan (bukan isi keranjang): `DiskonKirim` sudah memuat potongan promo gratis ongkir.
+      if (!hasil.biayaKirim.BernilaiNol()) 'BiayaKirim': hasil.biayaKirim.KeString(),
+      if (!hasil.diskonKirim.BernilaiNol()) 'DiskonKirim': hasil.diskonKirim.KeString(),
       'Pajak': [
         for (final p in hitungan.pajakDokumen)
           {

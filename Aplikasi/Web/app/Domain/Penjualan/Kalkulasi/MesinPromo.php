@@ -129,7 +129,7 @@ final class MesinPromo
         $data = self::SusunData($dasar, $terpilih);
 
         if ($potonganOngkir->Bandingkan($data->diskonKirim) > 0) {
-            $data = $data->DenganDiskonKirim($potonganOngkir);
+            $data = $data->GantiDiskonKirim($potonganOngkir);
         }
 
         return new HasilPromo($terpilih, $data, $this->mesin->Hitung($data), $poinBerlipat, $gratisOngkir);

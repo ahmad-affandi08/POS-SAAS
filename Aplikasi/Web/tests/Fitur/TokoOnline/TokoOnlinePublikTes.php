@@ -56,6 +56,43 @@ it('menerapkan zona ongkir dan gratis ongkir menurut subtotal server', function 
     $this->postJson($k['AlamatToko'].'/keranjang/hitung', $kirim)->assertUnprocessable()->assertJsonPath('Galat.Kode', 'DiLuarZona');
 });
 
+it('F-16c gratis ongkir: promo memotong ongkir zona di checkout; total dihitung server dan pesanan menyimpan pasangan Ongkir/DiskonOngkir', function (): void {
+    $k = SiapkanTokoOnline();
+    BantuanTokoOnline::BuatPromoGratisOngkir($k);
+    $kirim = KirimanOnline($k, 'Kirim');
+
+    // 2 kopi Rp 30.000 + ongkir zona Rp 12.000 − gratis ongkir Rp 12.000.
+    $this->postJson($k['AlamatToko'].'/keranjang/hitung', $kirim)->assertOk()
+        ->assertJsonPath('Ongkir', '12000.00')->assertJsonPath('DiskonOngkir', '12000.00')->assertJsonPath('Total', '60000.00');
+
+    $this->postJson($k['AlamatToko'].'/pesan', $kirim)->assertCreated();
+    BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+    $pesanan = PesananOnline::query()->where('Uuid', $kirim['Uuid'])->sole();
+    expect($pesanan->Ongkir)->toBe('12000.00')
+        ->and($pesanan->DiskonOngkir)->toBe('12000.00')
+        ->and($pesanan->Total)->toBe('60000.00');
+
+    // Pesanan ambil sendiri tidak berongkir, jadi promo gratis ongkir tidak berlaku sama sekali.
+    $ambil = KirimanOnline($k, 'AmbilSendiri');
+    $this->postJson($k['AlamatToko'].'/keranjang/hitung', $ambil)->assertOk()
+        ->assertJsonPath('Ongkir', '0.00')->assertJsonPath('DiskonOngkir', '0.00')->assertJsonPath('Total', '60000.00');
+});
+
+it('F-16c gratis ongkir: subsidi sebagian dan syarat minimal belanja dihormati', function (): void {
+    $k = SiapkanTokoOnline();
+    BantuanTokoOnline::BuatPromoGratisOngkir($k, batas: '5000');
+    $kirim = KirimanOnline($k, 'Kirim');
+
+    // Ongkir Rp 12.000, potongan maksimal Rp 5.000: pembeli membayar Rp 7.000 ongkir.
+    $this->postJson($k['AlamatToko'].'/keranjang/hitung', $kirim)->assertOk()
+        ->assertJsonPath('Ongkir', '12000.00')->assertJsonPath('DiskonOngkir', '5000.00')->assertJsonPath('Total', '67000.00');
+
+    // Promo kedua berbatas lebih besar tetapi butuh belanja Rp 100.000: belum terpenuhi (Rp 60.000), jadi tidak dipakai.
+    BantuanTokoOnline::BuatPromoGratisOngkir($k, batas: '12000', minimal: '100000.00', kode: 'ONGKIR-100K');
+    $this->postJson($k['AlamatToko'].'/keranjang/hitung', $kirim)->assertOk()
+        ->assertJsonPath('DiskonOngkir', '5000.00')->assertJsonPath('Total', '67000.00');
+});
+
 it('checkout mengabaikan harga browser, idempoten, dan mewajibkan persetujuan data', function (): void {
     $k = SiapkanTokoOnline();
     $uuid = (string) Str::ulid();

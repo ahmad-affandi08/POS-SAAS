@@ -38,7 +38,10 @@ use Carbon\CarbonImmutable;
  * - harga termasuk pajak: `Produk.HargaTermasukPajak` ?? profil pajak outlet; biaya layanan outlet (0 bila tidak aktif);
  * - promo otomatis tanpa pelanggan (kanal `MakanDiTempat`, outlet, jam lokal outlet): promo wajib voucher, tier,
  *   metode bayar, ulang tahun, dan transaksi pertama tidak berlaku karena tamu belum dikenal & belum memilih bayar;
- * - tanpa pembulatan tunai (metode bayar belum diketahui) sehingga `Pembulatan` selalu 0.
+ * - tanpa pembulatan tunai (metode bayar belum diketahui) sehingga `Pembulatan` selalu 0;
+ * - ongkir (F-17 bagian 3, hanya checkout toko online): `$biayaKirim` ikut masuk mesin sehingga promo gratis ongkir
+ *   dan pajak atas ongkir (`KenaBiayaKirim`) dihitung dengan aturan yang sama dengan kasir. Kunci `BiayaKirim` &
+ *   `DiskonKirim` di `Perkiraan` hanya ada bila ongkir dikirim, jadi keluaran self-order meja tidak berubah.
  * Hasilnya perkiraan; tagihan akhir tetap dihitung kasir.
  */
 final class PenghitungPesanSendiri
@@ -58,9 +61,9 @@ final class PenghitungPesanSendiri
 
     /**
      * @param  list<array{UuidProduk: string, Jumlah: int, Pilihan: list<string>, UuidVarian?: string|null}>  $baris
-     * @return array{Baris: list<array{UuidProduk: string, UuidProdukSatuan: string, NamaProduk: string, UuidProdukInduk: string|null, NamaVarian: string|null, Jumlah: Kuantitas, HargaSatuan: Uang, HargaPilihan: Uang, Total: Uang, Pilihan: list<array{UuidPilihan: string, Nama: string, Harga: string}>, IdKelompokPajak: int|null, HargaTermasukPajak: bool|null, UuidKategori: string|null}>, Subtotal: Uang, Perkiraan: array{Diskon: Uang, BiayaLayanan: Uang, Pajak: list<array{Kode: string, Nama: string, Tarif: string, Jumlah: Uang}>, PajakTermasukHarga: Uang, Pembulatan: Uang, Total: Uang}}
+     * @return array{Baris: list<array{UuidProduk: string, UuidProdukSatuan: string, NamaProduk: string, UuidProdukInduk: string|null, NamaVarian: string|null, Jumlah: Kuantitas, HargaSatuan: Uang, HargaPilihan: Uang, Total: Uang, Pilihan: list<array{UuidPilihan: string, Nama: string, Harga: string}>, IdKelompokPajak: int|null, HargaTermasukPajak: bool|null, UuidKategori: string|null}>, Subtotal: Uang, Perkiraan: array{BiayaKirim?: Uang, DiskonKirim?: Uang, Diskon: Uang, BiayaLayanan: Uang, Pajak: list<array{Kode: string, Nama: string, Tarif: string, Jumlah: Uang}>, PajakTermasukHarga: Uang, Pembulatan: Uang, Total: Uang}}
      */
-    public function Hitung(DataKonteksPesanSendiri $konteks, array $baris, KanalPenjualan $kanal = KanalPenjualan::MakanDiTempat, bool $tampilOnline = false): array
+    public function Hitung(DataKonteksPesanSendiri $konteks, array $baris, KanalPenjualan $kanal = KanalPenjualan::MakanDiTempat, bool $tampilOnline = false, ?Uang $biayaKirim = null): array
     {
         $berharga = $this->menu->HitungBaris($konteks->idOutlet, $baris, $kanal, $tampilOnline);
         $hasil = [];
@@ -73,18 +76,19 @@ final class PenghitungPesanSendiri
             $hasil[] = [...$b, 'Jumlah' => $jumlah, 'Total' => $total];
         }
 
-        return ['Baris' => $hasil, 'Subtotal' => $subtotal, 'Perkiraan' => $this->HitungPerkiraan($konteks, $hasil, $subtotal, $kanal)];
+        return ['Baris' => $hasil, 'Subtotal' => $subtotal, 'Perkiraan' => $this->HitungPerkiraan($konteks, $hasil, $subtotal, $kanal, $biayaKirim)];
     }
 
     /**
      * Bentuk string (JSON/penyimpanan) dari `Perkiraan`.
      *
-     * @param  array{Diskon: Uang, BiayaLayanan: Uang, Pajak: list<array{Kode: string, Nama: string, Tarif: string, Jumlah: Uang}>, PajakTermasukHarga: Uang, Pembulatan: Uang, Total: Uang}  $perkiraan
-     * @return array{Diskon: string, BiayaLayanan: string, Pajak: list<array{Kode: string, Nama: string, Tarif: string, Jumlah: string}>, PajakTermasukHarga: string, Pembulatan: string, Total: string}
+     * @param  array{BiayaKirim?: Uang, DiskonKirim?: Uang, Diskon: Uang, BiayaLayanan: Uang, Pajak: list<array{Kode: string, Nama: string, Tarif: string, Jumlah: Uang}>, PajakTermasukHarga: Uang, Pembulatan: Uang, Total: Uang}  $perkiraan
+     * @return array{BiayaKirim?: string, DiskonKirim?: string, Diskon: string, BiayaLayanan: string, Pajak: list<array{Kode: string, Nama: string, Tarif: string, Jumlah: string}>, PajakTermasukHarga: string, Pembulatan: string, Total: string}
      */
     public static function KeLarik(array $perkiraan): array
     {
         return [
+            ...(isset($perkiraan['BiayaKirim'], $perkiraan['DiskonKirim']) ? ['BiayaKirim' => $perkiraan['BiayaKirim']->KeString(), 'DiskonKirim' => $perkiraan['DiskonKirim']->KeString()] : []),
             'Diskon' => $perkiraan['Diskon']->KeString(),
             'BiayaLayanan' => $perkiraan['BiayaLayanan']->KeString(),
             'Pajak' => array_map(fn (array $p): array => [...$p, 'Jumlah' => $p['Jumlah']->KeString()], $perkiraan['Pajak']),
@@ -96,9 +100,9 @@ final class PenghitungPesanSendiri
 
     /**
      * @param  list<array{UuidProduk: string, Jumlah: Kuantitas, HargaSatuan: Uang, HargaPilihan: Uang, IdKelompokPajak: int|null, HargaTermasukPajak: bool|null, UuidKategori: string|null}>  $baris
-     * @return array{Diskon: Uang, BiayaLayanan: Uang, Pajak: list<array{Kode: string, Nama: string, Tarif: string, Jumlah: Uang}>, PajakTermasukHarga: Uang, Pembulatan: Uang, Total: Uang}
+     * @return array{BiayaKirim?: Uang, DiskonKirim?: Uang, Diskon: Uang, BiayaLayanan: Uang, Pajak: list<array{Kode: string, Nama: string, Tarif: string, Jumlah: Uang}>, PajakTermasukHarga: Uang, Pembulatan: Uang, Total: Uang}
      */
-    private function HitungPerkiraan(DataKonteksPesanSendiri $konteks, array $baris, Uang $subtotal, KanalPenjualan $kanal): array
+    private function HitungPerkiraan(DataKonteksPesanSendiri $konteks, array $baris, Uang $subtotal, KanalPenjualan $kanal, ?Uang $biayaKirim = null): array
     {
         if ($baris === []) {
             return ['Diskon' => Uang::Nol(), 'BiayaLayanan' => Uang::Nol(), 'Pajak' => [], 'PajakTermasukHarga' => Uang::Nol(), 'Pembulatan' => Uang::Nol(), 'Total' => $subtotal];
@@ -148,10 +152,12 @@ final class PenghitungPesanSendiri
             ), $baris, $kodeBaris)),
             pajak: array_values($pajakDokumen),
             persenBiayaLayanan: $profil->biayaLayananAktif ? $profil->persenBiayaLayanan : '0',
+            biayaKirim: $biayaKirim,
         );
         $hasil = $this->TerapkanPromo($konteks, $dasar, $baris, $kanal);
 
         return [
+            ...($biayaKirim === null ? [] : ['BiayaKirim' => $hasil->biayaKirim, 'DiskonKirim' => $hasil->diskonKirim]),
             'Diskon' => $hasil->totalDiskon,
             'BiayaLayanan' => $hasil->biayaLayanan,
             'Pajak' => array_values(array_map(fn (string $kode): array => [

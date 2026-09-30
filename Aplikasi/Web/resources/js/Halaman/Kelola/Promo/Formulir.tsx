@@ -35,6 +35,7 @@ export const opsiAksi: { Nilai: JenisAksiPromo; Label: string }[] = [
     { Nilai: 'DiskonPersenPesanan', Label: 'Diskon persen pesanan' },
     { Nilai: 'DiskonTetapPesanan', Label: 'Potongan rupiah pesanan' },
     { Nilai: 'PoinBerlipat', Label: 'Poin berlipat (tanpa potongan harga)' },
+    { Nilai: 'GratisOngkir', Label: 'Gratis ongkir (toko online, tanpa potongan harga barang)' },
 ];
 
 const opsiKondisi: { Nilai: JenisKondisiPromo; Label: string }[] = [
@@ -152,6 +153,7 @@ export default function HalamanFormulirPromo({
     const aksi = isian.JenisAksi;
     const pakaiPersen = aksi === 'DiskonPersenItem' || aksi === 'DiskonPersenPesanan';
     const pakaiJumlah = aksi === 'DiskonTetapItem' || aksi === 'DiskonTetapPesanan';
+    const gratisOngkir = aksi === 'GratisOngkir';
     const pakaiHarga = aksi === 'HargaSpesial' || aksi === 'BundelHargaTetap';
     const bertingkat = aksi === 'BeliXGratisY' || aksi === 'BundelHargaTetap';
 
@@ -179,14 +181,15 @@ export default function HalamanFormulirPromo({
             JumlahMinimal: aksi === 'BundelHargaTetap' || isian.JumlahMinimal !== '' ? isian.JumlahMinimal || '0' : '0',
             JenisAksi: aksi,
             Persen: pakaiPersen ? KosongJadiNull(isian.Persen) : null,
-            Jumlah: pakaiJumlah ? KosongJadiNull(isian.Jumlah) : null,
+            Jumlah: pakaiJumlah || gratisOngkir ? KosongJadiNull(isian.Jumlah) : null,
             Harga: pakaiHarga ? KosongJadiNull(isian.Harga) : null,
             Beli: aksi === 'BeliXGratisY' ? Number(isian.Beli || '0') : null,
             Gratis: aksi === 'BeliXGratisY' ? Number(isian.Gratis || '0') : null,
             PersenGratis: aksi === 'BeliXGratisY' ? KosongJadiNull(isian.PersenGratis) : null,
             Pengali: aksi === 'PoinBerlipat' ? KosongJadiNull(isian.Pengali) : null,
-            UuidPemasok: KosongJadiNull(isian.UuidPemasok),
-            PersenDanaPemasok: isian.UuidPemasok === '' ? '0' : isian.PersenDanaPemasok || '0',
+            // Ongkir tidak ditanggung pemasok (klaim dihitung dari potongan harga), jadi gratis ongkir tanpa pemasok.
+            UuidPemasok: gratisOngkir ? null : KosongJadiNull(isian.UuidPemasok),
+            PersenDanaPemasok: gratisOngkir || isian.UuidPemasok === '' ? '0' : isian.PersenDanaPemasok || '0',
             BatasPerTransaksi: bertingkat && isian.BatasPerTransaksi !== '' ? Number(isian.BatasPerTransaksi) : null,
             MetodeBayar: isian.MetodeBayar,
             UlangTahun: KosongJadiNull(isian.UlangTahun),
@@ -297,6 +300,15 @@ export default function HalamanFormulirPromo({
                                 saatBerubah={(nilai) => Ubah({ Harga: nilai })}
                                 galat={galat.Harga}
                                 required
+                            />
+                        ) : null}
+                        {gratisOngkir ? (
+                            <BidangUang
+                                label="Batas potongan ongkir"
+                                nilai={isian.Jumlah}
+                                saatBerubah={(nilai) => Ubah({ Jumlah: nilai })}
+                                keterangan="Kosongkan untuk menggratiskan seluruh ongkir. Isi untuk subsidi sebagian, misal Rp 10.000: ongkir Rp 15.000 menjadi Rp 5.000. Berlaku di checkout toko online saat ada ongkir; syarat minimal belanja, kanal, dan jam ikut aturan promo di atas."
+                                galat={galat.Jumlah}
                             />
                         ) : null}
                         {aksi === 'PoinBerlipat' ? (
@@ -512,7 +524,7 @@ export default function HalamanFormulirPromo({
                     ) : null}
                 </Card>
 
-                {aksi !== 'PoinBerlipat' ? (
+                {aksi !== 'PoinBerlipat' && !gratisOngkir ? (
                     <Card className="gap-4 rounded-panel p-4 shadow-none">
                         <h2 className="text-subjudul font-semibold text-teks-utama">Pendanaan promo</h2>
                         <p className="text-isi text-teks-sekunder">
