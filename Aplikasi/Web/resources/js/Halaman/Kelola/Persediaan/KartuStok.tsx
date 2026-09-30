@@ -224,6 +224,12 @@ export default function HalamanKartuStok({
     return (
         <TataLetakAplikasi judul="Kartu stok">
             <DaftarGalatServer galat={props.errors} />
+            <p className="text-label text-teks-sekunder">
+                Mencari satu unit bernomor seri atau IMEI?{' '}
+                <Link href="/kelola/persediaan/nomor-seri" className="font-semibold underline">
+                    Cari riwayat nomor seri
+                </Link>
+            </p>
 
             <Card className="gap-0 rounded-panel p-4 shadow-none">
                 <form

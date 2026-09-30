@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Domain\Organisasi\Enum\IzinTenant;
 use App\Http\Kontroler\Kelola\Persediaan\KartuStokKontroler;
+use App\Http\Kontroler\Kelola\Persediaan\NomorSeriKontroler;
 use App\Http\Kontroler\Kelola\Persediaan\PengaturanPersediaanKontroler;
 use App\Http\Kontroler\Kelola\Persediaan\ProdukStokKontroler;
 use App\Http\Kontroler\Kelola\Persediaan\SaldoStokKontroler;
@@ -44,6 +45,8 @@ Route::middleware(SiapkanAuditTenant::class)->group(function () use ($izin, $uli
     // Saldo, kartu stok, pengaturan persediaan (Tim F).
     Route::get('/persediaan/saldo', [SaldoStokKontroler::class, 'Daftar'])->middleware($lihat)->name('kelola.persediaan.saldo');
     Route::get('/persediaan/kartu-stok', [KartuStokKontroler::class, 'Tampilkan'])->middleware($lihat)->name('kelola.persediaan.kartu-stok');
+    // F-05h: cari nomor seri/IMEI dan riwayatnya.
+    Route::get('/persediaan/nomor-seri', [NomorSeriKontroler::class, 'Tampilkan'])->middleware($lihat)->name('kelola.persediaan.nomor-seri');
     Route::get('/persediaan/pengaturan', [PengaturanPersediaanKontroler::class, 'Tampilkan'])->middleware($izin(IzinTenant::AkuntansiKelola))->name('kelola.persediaan.pengaturan');
     Route::put('/persediaan/pengaturan', [PengaturanPersediaanKontroler::class, 'Simpan'])->middleware($izin(IzinTenant::AkuntansiKelola))->name('kelola.persediaan.pengaturan.simpan');
 });

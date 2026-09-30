@@ -1756,7 +1756,7 @@
     "src": "node_modules/@fontsource-variable/atkinson-hyperlegible-next/files/atkinson-hyperlegible-next-latin-wght-normal.woff2"
   },
   "resources/js/Aplikasi.tsx": {
-    "file": "assets/Aplikasi-D6jR1orR.js",
+    "file": "assets/Aplikasi-Orx9kUT9.js",
     "name": "Aplikasi",
     "src": "resources/js/Aplikasi.tsx",
     "isEntry": true,
@@ -1901,6 +1901,7 @@
       "resources/js/Halaman/Kelola/Perangkat/Daftar.tsx",
       "resources/js/Halaman/Kelola/Persediaan/BahanTerbuang/Daftar.tsx",
       "resources/js/Halaman/Kelola/Persediaan/KartuStok.tsx",
+      "resources/js/Halaman/Kelola/Persediaan/NomorSeri.tsx",
       "resources/js/Halaman/Kelola/Persediaan/Opname/Daftar.tsx",
       "resources/js/Halaman/Kelola/Persediaan/Opname/Detail.tsx",
       "resources/js/Halaman/Kelola/Persediaan/Pengaturan.tsx",
@@ -4501,7 +4502,7 @@
     ]
   },
   "resources/js/Halaman/Kelola/Persediaan/KartuStok.tsx": {
-    "file": "assets/KartuStok-B9gyl5aa.js",
+    "file": "assets/KartuStok-CMoyF0VT.js",
     "name": "KartuStok",
     "src": "resources/js/Halaman/Kelola/Persediaan/KartuStok.tsx",
     "isDynamicEntry": true,
@@ -4521,6 +4522,22 @@
       "_Panel-D-QRkpi6.js",
       "_FormatPersediaan-D_llveu_.js",
       "_PemilihProdukStok-BdlzU_x2.js"
+    ]
+  },
+  "resources/js/Halaman/Kelola/Persediaan/NomorSeri.tsx": {
+    "file": "assets/NomorSeri-Cbfm9DE9.js",
+    "name": "NomorSeri",
+    "src": "resources/js/Halaman/Kelola/Persediaan/NomorSeri.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_jsx-runtime-3r379PkU.js",
+      "_TataLetakAplikasi-DEggh-tF.js",
+      "_TabelData-DqlCROe5.js",
+      "_input-BF6bxnvw.js",
+      "_label-DNU8cAIl.js",
+      "_Tombol-xNOjlsFt.js",
+      "_FormatWaktu-bKvj24HB.js",
+      "_Panel-D-QRkpi6.js"
     ]
   },
   "resources/js/Halaman/Kelola/Persediaan/Opname/Daftar.tsx": {

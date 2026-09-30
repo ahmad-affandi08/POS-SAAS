@@ -301,3 +301,32 @@ export type PropsDetailImporStokAwal = {
     Dokumen: { Uuid: string; NamaGudang: string; JumlahBaris: number; Status: StatusStokAwal }[];
     OpsiGudang: OpsiGudang[];
 };
+
+/** F-05h: riwayat nomor seri/IMEI (`/kelola/persediaan/nomor-seri`). */
+export type UnitNomorSeri = {
+    Uuid: string;
+    Nomor: string;
+    UuidProduk: string;
+    NamaProduk: string;
+    Sku: string | null;
+    Status: 'Tersedia' | 'DalamPerjalanan' | 'Terjual' | 'Keluar';
+    LabelStatus: string;
+    NamaGudang: string | null;
+    NomorPenjualan: string | null;
+    TanggalJual: string | null;
+};
+
+export type BarisRiwayatNomorSeri = {
+    Tanggal: string;
+    Jenis: string;
+    Arah: 'Masuk' | 'Keluar';
+    NomorDokumen: string | null;
+    NamaGudang: string | null;
+};
+
+export type PropsNomorSeri = {
+    Saring: { Cari: string; Unit: string };
+    Hasil: UnitNomorSeri[];
+    Detail: { Unit: UnitNomorSeri; Riwayat: BarisRiwayatNomorSeri[] } | null;
+    BatasHasil: number;
+};

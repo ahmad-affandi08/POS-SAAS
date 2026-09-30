@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Domain\Katalog\Enum\PelacakanProduk;
 use App\Domain\Katalog\Model\Produk;
+use App\Domain\Organisasi\Enum\PeranTenantBawaan;
 use App\Domain\Penjualan\Model\Penjualan;
 use App\Domain\Penjualan\Model\PenjualanDetail;
 use App\Domain\Persediaan\Enum\JenisReferensiMutasi;
@@ -11,10 +12,12 @@ use App\Domain\Persediaan\Enum\StatusNomorSeri;
 use App\Domain\Persediaan\Model\MutasiStok;
 use App\Domain\Persediaan\Model\NomorSeri;
 use App\Domain\Persediaan\Model\SaldoStok;
+use Inertia\Testing\AssertableInertia;
 use Tests\Pendukung\Kasir\BantuanKasir;
 use Tests\Pendukung\Katalog\BantuanKatalog;
 use Tests\Pendukung\Organisasi\BantuanOrganisasi;
 use Tests\Pendukung\Penjualan\BantuanPenjualan;
+use Tests\Pendukung\Persediaan\BantuanPersediaan;
 use Tests\Pendukung\Persediaan\BantuanStokAwal;
 use Tests\Pendukung\Persediaan\PemeriksaInvarian;
 use Tests\Pendukung\Tenant\BantuanPendaftaran;
@@ -149,5 +152,49 @@ describe('F-05h void & retur mengembalikan nomor seri', function (): void {
         expect(StatusSerialJual($hp))->toBe(['IMEI-0001' => 'Tersedia', 'IMEI-0002' => 'Tersedia', 'IMEI-0003' => 'Tersedia'])
             ->and(SaldoStok::query()->where('IdProduk', $hp->Id)->value('JumlahTersedia'))->toBe('3.0000')
             ->and(PemeriksaInvarian::PeriksaSemua($k['Tenant']->Id))->toBe([]);
+    });
+});
+
+describe('F-05h riwayat nomor seri /kelola/persediaan/nomor-seri', function (): void {
+    it('cari potongan nomor (status, lokasi, penjualan) dan riwayat satu unit dari masuk sampai terjual; tenant lain tidak terlihat; izin persediaan.lihat', function (): void {
+        $k = BantuanPenjualan::Siapkan($this);
+        BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+        $hp = BuatProdukSerialJual($k, ['IMEI-0001', 'IMEI-0002']);
+        $p = BantuanPenjualan::Jual($this, $k, ['Baris' => [['Produk' => $hp, 'Jumlah' => '1', 'Harga' => '6500000.00', 'NomorSeri' => ['IMEI-0001']]]]);
+        $terjual = NomorSeri::query()->where('Nomor', 'IMEI-0001')->sole();
+
+        BantuanPersediaan::MasukSebagai($this, $k['Tenant']->Id, PeranTenantBawaan::StafGudang);
+        $this->get('/kelola/persediaan/nomor-seri?cari=IMEI')->assertOk()->assertInertia(fn (AssertableInertia $h) => $h
+            ->component('Kelola/Persediaan/NomorSeri')
+            ->where('Saring', ['Cari' => 'IMEI', 'Unit' => ''])
+            ->has('Hasil', 2)
+            ->where('Hasil.0.Nomor', 'IMEI-0001')
+            ->where('Hasil.0.Status', 'Terjual')
+            ->where('Hasil.0.NomorPenjualan', $p->Nomor)
+            ->where('Hasil.0.NamaProduk', $hp->Nama)
+            ->where('Hasil.1.Nomor', 'IMEI-0002')
+            ->where('Hasil.1.Status', 'Tersedia')
+            ->where('Hasil.1.NamaGudang', $k['Gudang']->Nama)
+            ->where('Detail', null));
+
+        $this->get("/kelola/persediaan/nomor-seri?cari=IMEI&unit={$terjual->Uuid}")->assertOk()->assertInertia(fn (AssertableInertia $h) => $h
+            ->where('Detail.Unit.Nomor', 'IMEI-0001')
+            ->has('Detail.Riwayat', 2)
+            ->where('Detail.Riwayat.0.Jenis', 'Stok awal')
+            ->where('Detail.Riwayat.0.Arah', 'Masuk')
+            ->where('Detail.Riwayat.1.Jenis', 'Penjualan')
+            ->where('Detail.Riwayat.1.Arah', 'Keluar')
+            ->where('Detail.Riwayat.1.NomorDokumen', $p->Nomor));
+
+        $this->get('/kelola/persediaan/nomor-seri?cari=%25')->assertOk()->assertInertia(fn (AssertableInertia $h) => $h->has('Hasil', 0));
+        $this->get('/kelola/persediaan/nomor-seri')->assertOk()->assertInertia(fn (AssertableInertia $h) => $h->has('Hasil', 0)->where('Detail', null));
+
+        // Tenant lain tidak melihat nomor seri ini, dan Kasir tanpa izin persediaan.lihat ditolak.
+        $lain = BantuanPenjualan::Siapkan($this, 'Warung Bakso Pak Kumis');
+        BantuanPersediaan::MasukSebagai($this, $lain['Tenant']->Id);
+        $this->get("/kelola/persediaan/nomor-seri?cari=IMEI&unit={$terjual->Uuid}")->assertOk()->assertInertia(fn (AssertableInertia $h) => $h->has('Hasil', 0)->where('Detail', null));
+
+        BantuanPersediaan::MasukSebagai($this, $k['Tenant']->Id, PeranTenantBawaan::Kasir);
+        $this->get('/kelola/persediaan/nomor-seri?cari=IMEI')->assertForbidden();
     });
 });
