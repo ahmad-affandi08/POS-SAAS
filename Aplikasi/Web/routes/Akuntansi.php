@@ -48,6 +48,7 @@ Route::middleware([SiapkanAuditTenant::class, $izin(IzinTenant::LaporanKeuanganL
     // F-13a: laporan keuangan dari jurnal + ekspor CSV.
     // F-08 BR-08.4: pencairan dana non-tunai (daftar & detail).
     Route::get('/akuntansi/pencairan', [PencairanKontroler::class, 'Daftar'])->name('kelola.akuntansi.pencairan.daftar');
+    Route::get('/akuntansi/pencairan/rekap-potongan/ekspor', [PencairanKontroler::class, 'EksporRekapPotongan'])->name('kelola.akuntansi.pencairan.rekap-potongan.ekspor');
     Route::get('/akuntansi/pencairan/{pencairan}', [PencairanKontroler::class, 'Detail'])->where('pencairan', $ulid)->name('kelola.akuntansi.pencairan.detail');
 
     Route::get('/akuntansi/laporan/buku-besar', [LaporanKeuanganKontroler::class, 'BukuBesar'])->name('kelola.akuntansi.laporan.buku-besar');

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Kontroler\Kelola\Akuntansi;
 
 use App\Domain\Akuntansi\Kueri\DaftarAkunPilihan;
+use App\Domain\Akuntansi\Layanan\PenulisCsvLaporan;
 use App\Domain\Bersama\Dokumen\Enum\StatusDokumenTerposting;
 use App\Domain\Bersama\Tabel\Data\DataPermintaanTabel;
 use App\Domain\Penjualan\Aksi\BatalkanPencairan;
@@ -22,6 +23,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * Pencairan dana non-tunai (F-08, BR-08.4, J-08.1, `/kelola/akuntansi/pencairan`): lihat `laporan.keuangan.lihat`,
@@ -46,6 +48,22 @@ final class PencairanKontroler extends DasarAkuntansiKontroler
             ),
             'Izin' => ['Kelola' => $this->CekIzinKelola()],
         ]);
+    }
+
+    /**
+     * Ekspor CSV rekap potongan platform untuk **saringan yang sama** dengan daftar (tanggal, metode, status dibaca dari
+     * query yang sama), supaya angka yang dibawa ke platform persis angka di layar. Uang sebagai angka desimal titik.
+     */
+    public function EksporRekapPotongan(Request $permintaan, DaftarPencairan $daftar): StreamedResponse
+    {
+        $tabel = DataPermintaanTabel::Dari($permintaan->query(), DaftarPencairan::KOLOM_URUT, DaftarPencairan::URUT_BAWAAN, DaftarPencairan::KOLOM_SARING);
+        $rekap = $daftar->RekapPotongan($tabel, $this->IdOutletBoleh());
+
+        return PenulisCsvLaporan::Alirkan(
+            'rekap-potongan-pencairan',
+            ['Metode', 'Jumlah pencairan', 'Diserahkan', 'Dipotong', 'Perkiraan potongan', 'Selisih', 'Persen efektif'],
+            array_map(fn (array $r): array => [$r['Nama'], (string) $r['Jumlah'], $r['JumlahKotor'], $r['Biaya'], $r['BiayaDiharapkan'], $r['Selisih'], $r['PersenEfektif']], $rekap),
+        );
     }
 
     /**

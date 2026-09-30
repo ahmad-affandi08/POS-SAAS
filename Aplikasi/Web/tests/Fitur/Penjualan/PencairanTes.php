@@ -377,6 +377,13 @@ describe('BR-08.4 pengingat & rekap potongan', function (): void {
             ->assertJsonPath('Ringkasan.0.Biaya', '2000.00')
             ->assertJsonPath('Ringkasan.0.PersenEfektif', '2.0000');
 
+        // Ekspor CSV memakai saringan yang sama dengan tabel: September saja.
+        $ekspor = $pemilik()->get('/kelola/akuntansi/pencairan/rekap-potongan/ekspor?'.http_build_query(['saring' => ['Tanggal' => '2026-09-01..2026-09-30']]))->assertOk();
+        expect($ekspor->headers->get('Content-Type'))->toContain('text/csv')
+            ->and($ekspor->streamedContent())->toContain('Dipotong')
+            ->toContain('QRIS Statis,1,100000.00,2000.00,700.00,1300.00,2.0000')
+            ->not->toContain('150000.00');
+
         // Yang dibatalkan tidak ikut: jurnalnya sudah dibalik, jadi potongannya tidak pernah terjadi.
         BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
         $pertama = Pencairan::query()->orderBy('Id')->firstOrFail();

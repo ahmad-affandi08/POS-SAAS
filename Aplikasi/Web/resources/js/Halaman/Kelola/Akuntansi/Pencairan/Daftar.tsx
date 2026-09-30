@@ -2,6 +2,7 @@ import { Link } from '@inertiajs/react';
 
 import PesanHanyaLihat from '@/Komponen/Katalog/PesanHanyaLihat';
 import Panel from '@/Komponen/Kelola/Panel';
+import { TautanEkspor } from '@/Komponen/Laporan/NavigasiTab';
 import TabelData from '@/Komponen/TabelData/TabelData';
 import type { KolomTabel } from '@/Komponen/TabelData/Tipe';
 import { Button } from '@/Komponen/Ui/button';
@@ -110,7 +111,15 @@ function RekapPotongan({ rekap }: { rekap: RekapPotonganPencairan[] }) {
 
     return (
         <div className="flex flex-col gap-2 rounded-panel border border-garis p-3">
-            <h3 className="text-label font-semibold text-teks-sekunder">Potongan platform pada saringan ini</h3>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+                <h3 className="text-label font-semibold text-teks-sekunder">Potongan platform pada saringan ini</h3>
+                <TautanEkspor
+                    alamat={`${alamat}/rekap-potongan/ekspor`}
+                    query={Object.fromEntries(
+                        new URLSearchParams(typeof window === 'undefined' ? '' : window.location.search),
+                    )}
+                />
+            </div>
             <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                 {rekap.map((r) => {
                     const menyimpang = BandingkanDesimal(r.Selisih, '0') !== 0;
