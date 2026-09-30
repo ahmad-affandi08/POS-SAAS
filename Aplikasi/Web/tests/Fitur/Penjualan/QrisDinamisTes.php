@@ -306,6 +306,27 @@ describe('audit P0 F-02 QRIS dinamis: hasil gerbang tidak pasti', function (): v
             ->and($ambil($dua)->PerluTinjauan)->toBeFalse();
     });
 
+    it('kedaluwarsa terjadwal: tagihan Menunggu yang tidak pernah dibaca lagi menjadi Kedaluwarsa setelah batas + tenggang, tidak sebelumnya', function (): void {
+        $charge = 'ok';
+        $status = 'pending';
+        PalsukanMidtransTidakPasti($charge, $status);
+        $k = SiapkanQrisDinamis($this);
+        $uuid = BantuanKasir::Uuid();
+        BuatQrisPos($this, $k, $k['QrisDinamis'], '38500', $uuid)->assertCreated();
+        $ambil = function () use ($k): TagihanQris {
+            BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+
+            return TagihanQris::query()->sole();
+        };
+
+        $this->artisan('penjualan:rekonsiliasi-qris')->assertSuccessful();
+        expect($ambil()->Status)->toBe(StatusTagihanQris::Menunggu);
+
+        $this->travel(18)->minutes();
+        $this->artisan('penjualan:rekonsiliasi-qris')->assertSuccessful();
+        expect($ambil()->Status)->toBe(StatusTagihanQris::Kedaluwarsa);
+    });
+
     it('proses terhenti setelah memanggil gerbang (cadangan basi tanpa QR) tidak dihapus lagi: menjadi TidakPasti', function (): void {
         $charge = 'ok';
         $status = 'pending';

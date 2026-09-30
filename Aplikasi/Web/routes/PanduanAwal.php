@@ -41,6 +41,7 @@ Route::middleware([SiapkanAuditTenant::class, $izin(IzinTenant::PanduanAwalKelol
     Route::get('/metode-pembayaran', [PanduanAwalMetodePembayaranKontroler::class, 'Tampilkan'])->name('kelola.panduan-awal.metode-pembayaran');
     Route::post('/metode-pembayaran', [PanduanAwalMetodePembayaranKontroler::class, 'Simpan'])->name('kelola.panduan-awal.metode-pembayaran.simpan');
     Route::post('/metode-pembayaran/{metodePembayaran}/nonaktifkan', [PanduanAwalMetodePembayaranKontroler::class, 'Nonaktifkan'])->name('kelola.panduan-awal.metode-pembayaran.nonaktifkan');
+    Route::post('/metode-pembayaran/{metodePembayaran}/batas-hari-menunggu', [PanduanAwalMetodePembayaranKontroler::class, 'UbahBatasHariMenunggu'])->name('kelola.panduan-awal.metode-pembayaran.batas-hari-menunggu');
     Route::post('/metode-pembayaran/{metodePembayaran}/aktifkan', [PanduanAwalMetodePembayaranKontroler::class, 'Aktifkan'])->name('kelola.panduan-awal.metode-pembayaran.aktifkan');
     Route::get('/metode-pembayaran/{metodePembayaran}/gambar-qris', [PanduanAwalMetodePembayaranKontroler::class, 'UnduhGambarQris'])->name('kelola.panduan-awal.metode-pembayaran.gambar-qris');
 

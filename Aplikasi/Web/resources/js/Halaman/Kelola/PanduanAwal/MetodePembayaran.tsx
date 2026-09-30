@@ -22,6 +22,15 @@ import {
 } from '@/Komponen/Ui/alert-dialog';
 import { Button } from '@/Komponen/Ui/button';
 import { Card, CardContent, CardHeader } from '@/Komponen/Ui/card';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from '@/Komponen/Ui/dialog';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import { FormatPersen } from '@/Pustaka/Format';
@@ -98,6 +107,65 @@ export default function HalamanMetodePembayaran({
     );
 }
 
+/**
+ * F-08: berapa hari uang metode ini wajar menunggu sebelum masuk rekening. Lewat batas itu, Kotak Tindakan mengingatkan
+ * bahwa platform belum menyetor. Kosong = bawaan jenis metode; tidak memengaruhi pembukuan.
+ */
+function AturBatasHariMenunggu({ metode }: { metode: MetodePembayaranRingkas }) {
+    const [terbuka, AturTerbuka] = useState(false);
+    const formulir = useForm({ BatasHariMenunggu: metode.BatasHariKustom ? String(metode.BatasHariKustom) : '' });
+
+    const Kirim = (peristiwa: FormEvent) => {
+        peristiwa.preventDefault();
+        formulir.transform((data) => ({
+            BatasHariMenunggu: data.BatasHariMenunggu === '' ? null : data.BatasHariMenunggu,
+        }));
+        formulir.post(`${AlamatPanduan.MetodePembayaran}/${metode.Uuid}/batas-hari-menunggu`, {
+            preserveScroll: true,
+            onSuccess: () => AturTerbuka(false),
+        });
+    };
+
+    return (
+        <Dialog open={terbuka} onOpenChange={AturTerbuka}>
+            <span className="block text-keterangan">
+                Wajar menunggu pencairan {metode.BatasHariMenunggu} hari
+                {metode.BatasHariKustom ? '' : ' (bawaan)'} ·{' '}
+                <DialogTrigger asChild>
+                    <button type="button" className="font-semibold text-brand underline">
+                        Atur
+                    </button>
+                </DialogTrigger>
+            </span>
+            <DialogContent>
+                <form onSubmit={Kirim} noValidate className="flex flex-col gap-4">
+                    <DialogHeader>
+                        <DialogTitle>Batas menunggu pencairan {metode.Nama}</DialogTitle>
+                        <DialogDescription>
+                            Setelah lewat batas ini, Kotak Tindakan mengingatkan bahwa uang belum masuk rekening.
+                            Kosongkan untuk memakai bawaan.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <BidangTeks
+                        label="Batas menunggu (hari)"
+                        nilai={formulir.data.BatasHariMenunggu}
+                        saatBerubah={(nilai) => formulir.setData('BatasHariMenunggu', nilai.replace(/\D/g, ''))}
+                        galat={formulir.errors.BatasHariMenunggu}
+                        keterangan="1 sampai 60 hari kalender sejak tanggal transaksi."
+                        inputMode="numeric"
+                        maxLength={2}
+                    />
+                    <DialogFooter>
+                        <Tombol type="submit" memproses={formulir.processing}>
+                            Simpan batas
+                        </Tombol>
+                    </DialogFooter>
+                </form>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
 function TabelMetodePembayaran({ metodePembayaran }: { metodePembayaran: MetodePembayaranRingkas[] }) {
     const [memproses, AturMemproses] = useState<string | null>(null);
 
@@ -152,6 +220,7 @@ function TabelMetodePembayaran({ metodePembayaran }: { metodePembayaran: MetodeP
                     {!metode.TautanGambarQris && !metode.NamaBank && !metode.NomorRekening && !metode.LabelKanal
                         ? '—'
                         : null}
+                    {metode.BatasHariMenunggu ? <AturBatasHariMenunggu metode={metode} /> : null}
                 </>
             ),
         },

@@ -6,15 +6,18 @@ namespace App\Http\Kontroler\Kelola;
 
 use App\Domain\Integrasi\Layanan\InfoGerbangPembayaran;
 use App\Domain\Penjualan\Aksi\SimpanMetodePembayaran;
+use App\Domain\Penjualan\Aksi\UbahBatasHariMenungguMetode;
 use App\Domain\Penjualan\Aksi\UbahStatusMetodePembayaran;
 use App\Domain\Penjualan\Enum\JenisMetodePembayaran;
 use App\Domain\Penjualan\Enum\KanalPenjualan;
 use App\Domain\Penjualan\Kueri\DaftarMetodePembayaran;
+use App\Domain\Penjualan\Kueri\PembayaranBelumDicairkan;
 use App\Domain\Penjualan\Layanan\PenyimpanGambarQris;
 use App\Domain\Penjualan\Model\MetodePembayaran;
 use App\Domain\Referensi\Kueri\ReferensiBankAktif;
 use App\Http\Permintaan\Kelola\PanduanAwal\SimpanMetodePembayaranPermintaan;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -77,6 +80,18 @@ final class PanduanAwalMetodePembayaranKontroler extends DasarPanduanAwalKontrol
         $metode = $ubah->Jalankan($this->CariMetode($daftar, $metodePembayaran), true);
 
         return back()->with('Kilat', "{$metode->Nama} aktif kembali.");
+    }
+
+    /** F-08: batas hari wajar menunggu pencairan per metode; kosong = bawaan jenis. */
+    public function UbahBatasHariMenunggu(Request $permintaan, string $metodePembayaran, DaftarMetodePembayaran $daftar, UbahBatasHariMenungguMetode $ubah): RedirectResponse
+    {
+        $valid = $permintaan->validate(
+            ['BatasHariMenunggu' => ['nullable', 'integer', 'min:1', 'max:'.PembayaranBelumDicairkan::BATAS_HARI_MAKSIMAL]],
+            ['BatasHariMenunggu.*' => 'Batas hari menunggu berupa bilangan bulat 1 sampai '.PembayaranBelumDicairkan::BATAS_HARI_MAKSIMAL.', atau kosongkan untuk memakai bawaan.'],
+        );
+        $metode = $ubah->Jalankan($this->CariMetode($daftar, $metodePembayaran), isset($valid['BatasHariMenunggu']) ? (int) $valid['BatasHariMenunggu'] : null);
+
+        return back()->with('Kilat', "Batas hari menunggu pencairan {$metode->Nama} disimpan.");
     }
 
     public function UnduhGambarQris(string $metodePembayaran, DaftarMetodePembayaran $daftar, PenyimpanGambarQris $penyimpan): StreamedResponse

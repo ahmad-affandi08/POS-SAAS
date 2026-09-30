@@ -35,8 +35,8 @@ final class PembayaranBelumDicairkan
      *
      * Satu angka untuk semua jenis akan salah dua kali: QRIS biasanya cair H+1 sehingga tiga hari sudah pantas
      * ditanyakan, sedangkan platform ojol menyetor mingguan sehingga tiga hari cuma menghasilkan peringatan palsu
-     * setiap hari. Angka per jenis ini bawaan yang masuk akal, bukan kesepakatan dengan platform; kalau tenant perlu
-     * mengaturnya sendiri per metode, itu kolom baru di `MetodePembayaran` dan pekerjaan tersendiri.
+     * setiap hari. Angka per jenis ini bawaan yang masuk akal, bukan kesepakatan dengan platform; tenant bisa menimpanya
+     * per metode lewat `MetodePembayaran.BatasHariMenunggu` (lihat `AmbilBatasHari`).
      *
      * @return array<string, int>
      */
@@ -51,6 +51,23 @@ final class PembayaranBelumDicairkan
             // Ojol & marketplace umumnya menyetor mingguan.
             JenisMetodePembayaran::Marketplace->value => 10,
         ];
+    }
+
+    /** Batas terlama yang boleh diatur tenant (hari kalender). */
+    public const BATAS_HARI_MAKSIMAL = 60;
+
+    /**
+     * Batas hari menunggu **berlaku** untuk satu metode: buatan tenant bila ada, selain itu bawaan jenisnya (3 hari untuk
+     * jenis yang tidak dikenal). Null bila metodenya tidak lewat akun kliring (tunai, tempo, deposit) sehingga tidak ada
+     * yang perlu ditunggu.
+     */
+    public static function AmbilBatasHari(MetodePembayaran $metode): ?int
+    {
+        if (! in_array($metode->Jenis, self::JENIS_KLIRING, true)) {
+            return null;
+        }
+
+        return $metode->BatasHariMenunggu ?? self::BatasHariMenunggu()[$metode->Jenis->value] ?? 3;
     }
 
     /** Metode yang uangnya lewat akun kliring dan karena itu perlu dicairkan (BR-08.3). */
@@ -187,11 +204,10 @@ final class PembayaranBelumDicairkan
      */
     public function MenungguTerlaluLama(?array $idOutletBoleh, CarbonImmutable $hariIni): array
     {
-        $batas = self::BatasHariMenunggu();
         $hasil = [];
 
         foreach ($this->MetodeModel() as $metode) {
-            $batasHari = $batas[$metode->Jenis->value] ?? 3;
+            $batasHari = self::AmbilBatasHari($metode) ?? 3;
             $sampai = $hariIni->subDays($batasHari);
             $idPenjualan = Penjualan::query()
                 ->where('Status', '!=', StatusPenjualan::Void->value)

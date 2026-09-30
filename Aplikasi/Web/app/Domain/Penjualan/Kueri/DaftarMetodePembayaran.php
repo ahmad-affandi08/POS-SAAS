@@ -17,7 +17,7 @@ final class DaftarMetodePembayaran
     public function __construct(private readonly ReferensiBankAktif $referensiBank) {}
 
     /**
-     * @return list<array{Uuid: string, Jenis: string, LabelJenis: string, Nama: string, NamaBank: string|null, NomorRekening: string|null, NamaPemilikRekening: string|null, Kanal: string|null, LabelKanal: string|null, PersenBiaya: string, AdaGambarQris: bool, Aktif: bool, Wajib: bool}>
+     * @return list<array{Uuid: string, Jenis: string, LabelJenis: string, Nama: string, NamaBank: string|null, NomorRekening: string|null, NamaPemilikRekening: string|null, Kanal: string|null, LabelKanal: string|null, PersenBiaya: string, BatasHariMenunggu: int|null, BatasHariKustom: int|null, AdaGambarQris: bool, Aktif: bool, Wajib: bool}>
      */
     public function Ambil(): array
     {
@@ -35,6 +35,9 @@ final class DaftarMetodePembayaran
             'Kanal' => $metode->Kanal?->value,
             'LabelKanal' => $metode->Kanal?->AmbilLabel(),
             'PersenBiaya' => $metode->PersenBiaya,
+            // F-08: batas hari menunggu pencairan (null = metode tanpa pencairan); `Kustom` null = memakai bawaan jenis.
+            'BatasHariMenunggu' => PembayaranBelumDicairkan::AmbilBatasHari($metode),
+            'BatasHariKustom' => $metode->BatasHariMenunggu,
             'AdaGambarQris' => $metode->PathGambarQris !== null,
             'Aktif' => $metode->Aktif,
             'Wajib' => $metode->Jenis === JenisMetodePembayaran::Tunai,

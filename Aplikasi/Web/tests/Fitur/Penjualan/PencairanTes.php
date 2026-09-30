@@ -8,11 +8,13 @@ use App\Domain\Akuntansi\Model\Akun;
 use App\Domain\Akuntansi\Model\Jurnal;
 use App\Domain\Akuntansi\Model\JurnalDetail;
 use App\Domain\Bersama\Dokumen\Enum\StatusDokumenTerposting;
+use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Bersama\Nilai\Uang;
 use App\Domain\Katalog\Enum\JenisProduk;
 use App\Domain\Organisasi\Enum\PeranTenantBawaan;
 use App\Domain\Penjualan\Aksi\BatalkanPencairan;
 use App\Domain\Penjualan\Aksi\BuatPencairan;
+use App\Domain\Penjualan\Aksi\UbahBatasHariMenungguMetode;
 use App\Domain\Penjualan\Data\DataPencairan;
 use App\Domain\Penjualan\Enum\JenisMetodePembayaran;
 use App\Domain\Penjualan\Model\MetodePembayaran;
@@ -347,6 +349,80 @@ describe('BR-08.4 pengingat & rekap potongan', function (): void {
         );
 
         expect($tindakan())->toBeNull();
+    });
+
+    it('batas hari menunggu bisa diatur tenant per metode: lebih pendek memunculkan butir lebih cepat, kosong = bawaan jenis; tunai dan angka tidak sah ditolak', function (): void {
+        ['K' => $k, 'Metode' => $qris] = SiapkanPencairanUji($this);
+        $tindakan = function () use ($k): ?array {
+            $butir = null;
+            $this->actingAs($k['Pemilik'])->withSession(['IdTenantAktif' => $k['Tenant']->Id])
+                ->get('/kelola/tindakan')->assertOk()->assertInertia(function (AssertableInertia $h) use (&$butir) {
+                    foreach ($h->toArray()['props']['Butir'] as $b) {
+                        if ($b['Kunci'] === 'pencairan.belum-cair') {
+                            $butir = $b;
+                        }
+                    }
+
+                    return $h;
+                });
+
+            return $butir;
+        };
+
+        // Transaksi 28 Sep; dua hari kemudian bawaan QRIS (3 hari) belum memperingatkan.
+        Carbon::setTestNow('2026-09-30 04:00:00');
+        expect($tindakan())->toBeNull();
+
+        BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+        app(UbahBatasHariMenungguMetode::class)->Jalankan($qris, 1);
+        expect($qris->fresh()->BatasHariMenunggu)->toBe(1);
+        $butir = $tindakan();
+        expect($butir)->not->toBeNull()
+            ->and($butir['Rincian'][0]['Keterangan'])->toContain('wajar sampai 1 hari');
+
+        // Dikosongkan: kembali ke bawaan jenis (3 hari).
+        BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+        app(UbahBatasHariMenungguMetode::class)->Jalankan($qris, null);
+        expect($qris->fresh()->BatasHariMenunggu)->toBeNull()
+            ->and($tindakan())->toBeNull();
+
+        // Tunai tidak lewat pencairan; 0 dan 61 di luar 1–60.
+        $tunai = MetodePembayaran::query()->where('Jenis', JenisMetodePembayaran::Tunai->value)->firstOrFail();
+        $kode = fn (callable $aksi): string => (function () use ($aksi): string {
+            try {
+                $aksi();
+            } catch (PelanggaranAturanBisnis $e) {
+                return $e->kode;
+            }
+
+            return 'tidak-ditolak';
+        })();
+        expect($kode(fn () => app(UbahBatasHariMenungguMetode::class)->Jalankan($tunai, 5)))->toBe('MetodeTanpaPencairan')
+            ->and($kode(fn () => app(UbahBatasHariMenungguMetode::class)->Jalankan($qris, 0)))->toBe('BatasHariTidakSah')
+            ->and($kode(fn () => app(UbahBatasHariMenungguMetode::class)->Jalankan($qris, 61)))->toBe('BatasHariTidakSah');
+    });
+
+    it('HTTP: atur batas hari menunggu lewat halaman metode pembayaran; daftar metode membawa batas berlaku & kustom', function (): void {
+        ['K' => $k, 'Metode' => $qris] = SiapkanPencairanUji($this);
+        $pemilik = fn () => $this->actingAs($k['Pemilik'])->withSession(['IdTenantAktif' => $k['Tenant']->Id]);
+
+        $pemilik()->post("/kelola/panduan-awal/metode-pembayaran/{$qris->Uuid}/batas-hari-menunggu", ['BatasHariMenunggu' => 7])->assertSessionHasNoErrors();
+        BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+        expect($qris->fresh()->BatasHariMenunggu)->toBe(7);
+
+        $pemilik()->get('/kelola/panduan-awal/metode-pembayaran')->assertOk()->assertInertia(function (AssertableInertia $h) use ($qris) {
+            $metode = collect($h->toArray()['props']['MetodePembayaran'])->keyBy('Uuid');
+            expect($metode[$qris->Uuid]['BatasHariMenunggu'])->toBe(7)
+                ->and($metode[$qris->Uuid]['BatasHariKustom'])->toBe(7)
+                ->and(collect($metode)->firstWhere('Jenis', 'Tunai')['BatasHariMenunggu'])->toBeNull();
+
+            return $h;
+        });
+
+        $pemilik()->post("/kelola/panduan-awal/metode-pembayaran/{$qris->Uuid}/batas-hari-menunggu", ['BatasHariMenunggu' => 99])->assertSessionHasErrors('BatasHariMenunggu');
+        $pemilik()->post("/kelola/panduan-awal/metode-pembayaran/{$qris->Uuid}/batas-hari-menunggu", ['BatasHariMenunggu' => null])->assertSessionHasNoErrors();
+        BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+        expect($qris->fresh()->BatasHariMenunggu)->toBeNull();
     });
 
     it('rekap potongan per metode ikut saringan tabel dan hanya menghitung yang diposting', function (): void {

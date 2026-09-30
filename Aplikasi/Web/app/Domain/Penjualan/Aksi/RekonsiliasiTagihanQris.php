@@ -16,7 +16,8 @@ use Carbon\CarbonImmutable;
  * Audit P0 F-02: menyelesaikan tagihan QRIS `TidakPasti` tenant aktif (dijalankan terjadwal per tenant).
  * - Gerbang yang bisa ditanya dengan `NomorPesanan` (atau tagihan sudah punya `IdReferensi`) ditanya statusnya:
  *   `Lunas`/`Kedaluwarsa`/`Gagal` diterapkan lewat `PenerapStatusTagihanQris` (lunas = uang nyata, ditandai tinjauan).
- * - Lewat `KedaluwarsaPada` + tenggang tanpa kabar lunas = `Kedaluwarsa` (bukan final: webhook lunas tetap diterima).
+ * - Lewat `KedaluwarsaPada` + tenggang tanpa kabar lunas = `Kedaluwarsa` (bukan final: webhook lunas tetap diterima);
+ *   berlaku juga untuk tagihan `Menunggu` yang tidak pernah dibaca lagi (kedaluwarsa terjadwal, F-08).
  * Galat gerbang tidak menghentikan tagihan lain. Mengembalikan jumlah tagihan yang statusnya berubah.
  */
 final class RekonsiliasiTagihanQris
@@ -44,6 +45,13 @@ final class RekonsiliasiTagihanQris
             if ($tagihan->KedaluwarsaPada->lessThan($batas)) {
                 $berubah += $this->penerap->TandaiKedaluwarsa($tagihan->Id)->Status === StatusTagihanQris::Kedaluwarsa ? 1 : 0;
             }
+        }
+
+        // F-08: tagihan `Menunggu` yang tidak pernah dibaca lagi (kasir pindah metode, aplikasi ditutup) tetap `Menunggu`
+        // selamanya bila kedaluwarsanya hanya diterapkan saat dibaca. Jadwal ini menutupnya; uang yang masuk sesudahnya tetap
+        // `Lunas` lewat webhook (bukan status final).
+        foreach (TagihanQris::query()->where('Status', StatusTagihanQris::Menunggu->value)->where('KedaluwarsaPada', '<', $batas)->orderBy('Id')->limit(500)->get() as $tagihan) {
+            $berubah += $this->penerap->TandaiKedaluwarsa($tagihan->Id)->Status === StatusTagihanQris::Kedaluwarsa ? 1 : 0;
         }
 
         return $berubah;

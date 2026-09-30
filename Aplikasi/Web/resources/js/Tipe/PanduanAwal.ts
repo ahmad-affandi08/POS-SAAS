@@ -127,6 +127,10 @@ export type MetodePembayaranRingkas = {
     Kanal?: string | null;
     LabelKanal?: string | null;
     PersenBiaya: string;
+    /** F-08: hari wajar menunggu pencairan yang berlaku; null = metode tanpa pencairan (tunai, tempo, deposit). */
+    BatasHariMenunggu?: number | null;
+    /** F-08: batas buatan tenant; null = memakai bawaan jenis metode. */
+    BatasHariKustom?: number | null;
     TautanGambarQris: string | null;
     Aktif: boolean;
     /** True untuk Tunai: selalu tersedia, tidak bisa dinonaktifkan. */

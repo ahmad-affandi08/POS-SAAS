@@ -196,6 +196,50 @@ describe('Langkah 5 Metode pembayaran (F-01): daftar TabelData & nonaktifkan lew
         );
         expect(screen.getByText('Gerbang pembayaran aktif: Midtrans')).toBeTruthy();
     });
+    it('F-08: batas hari menunggu pencairan tampil hanya untuk metode berpencairan; Atur mengirim angka (kosong = bawaan)', () => {
+        const dasar = {
+            NamaBank: null,
+            NomorRekening: null,
+            NamaPemilikRekening: null,
+            PersenBiaya: '0',
+            TautanGambarQris: null,
+            Aktif: true,
+        };
+        RenderUji(
+            <HalamanMetodePembayaranPanduan
+                Progres={BuatProgresContoh({ ProfilUsaha: 'Selesai', Sektor: 'Selesai', Pajak: 'Selesai' })}
+                MetodePembayaran={[
+                    { ...dasar, Uuid: 'M1', Jenis: 'Tunai', LabelJenis: 'Tunai', Nama: 'Tunai', Wajib: true },
+                    {
+                        ...dasar,
+                        Uuid: 'M2',
+                        Jenis: 'Marketplace',
+                        LabelJenis: 'Platform ojol / marketplace',
+                        Nama: 'GoFood',
+                        Wajib: false,
+                        BatasHariMenunggu: 10,
+                        BatasHariKustom: null,
+                    },
+                ]}
+                JenisTersedia={[]}
+                Bank={[]}
+                BatasGambarQris={{ UkuranMaksimalKb: 2048, Ekstensi: ['png'] }}
+                GerbangPembayaran={{ Aktif: false, Penyedia: null }}
+            />,
+        );
+
+        expect(screen.getAllByText(/Wajar menunggu pencairan/)).toHaveLength(1);
+        expect(screen.getByText(/Wajar menunggu pencairan 10 hari \(bawaan\)/)).toBeTruthy();
+        fireEvent.click(screen.getByRole('button', { name: 'Atur' }));
+        fireEvent.change(screen.getByLabelText('Batas menunggu (hari)'), { target: { value: '14' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Simpan batas' }));
+        expect(kirimanForm.at(-1)).toMatchObject({
+            metode: 'post',
+            url: '/kelola/panduan-awal/metode-pembayaran/M2/batas-hari-menunggu',
+            data: { BatasHariMenunggu: '14' },
+        });
+    });
+
     it('X8 platform ojol: isian Platform, petunjuk pencatatan manual, komisi sampai 40 persen, kanal tampil di tabel', () => {
         RenderUji(
             <HalamanMetodePembayaranPanduan

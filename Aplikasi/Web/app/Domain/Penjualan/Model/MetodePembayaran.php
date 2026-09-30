@@ -28,6 +28,7 @@ use App\Domain\Penjualan\Enum\KanalPenjualan;
  * @property int|null $IdAkunKliring
  * @property string $PersenBiaya
  * @property string $BiayaTetap
+ * @property int|null $BatasHariMenunggu F-08: batas hari menunggu pencairan buatan tenant; null = bawaan jenis
  * @property bool $Aktif
  * @property int $Urutan
  */
@@ -48,6 +49,7 @@ final class MetodePembayaran extends ModelDasar
         'IdAkunKliring' => null,
         'PersenBiaya' => '0',
         'BiayaTetap' => '0',
+        'BatasHariMenunggu' => null,
         'Aktif' => true,
         'Urutan' => 0,
     ];
@@ -62,6 +64,7 @@ final class MetodePembayaran extends ModelDasar
             'Kanal' => KanalPenjualan::class,
             'PersenBiaya' => 'decimal:6',
             'BiayaTetap' => 'decimal:2',
+            'BatasHariMenunggu' => 'integer',
             'Aktif' => 'boolean',
             'Urutan' => 'integer',
         ];
