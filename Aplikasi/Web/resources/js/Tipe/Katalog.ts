@@ -116,6 +116,8 @@ export type FormProduk = {
     AtributVarian: { Nama: string; Nilai: string[] }[];
     /** F-07 mode service: lama layanan jasa (menit) untuk reservasi; null = tidak bisa direservasi. */
     DurasiMenit?: number | null;
+    /** F-05h: masa garansi standar (bulan) produk bernomor seri; null = tanpa garansi. */
+    MasaGaransiBulan?: number | null;
     /** D-23 B: "Jual sebagai paket sesi" saat membuat produk Jasa; tidak ada/null = bukan paket. */
     PaketSesi?: { JumlahSesi: string; MasaBerlakuHari: string } | null;
 };

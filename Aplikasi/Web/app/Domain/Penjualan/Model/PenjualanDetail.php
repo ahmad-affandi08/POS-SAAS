@@ -45,6 +45,8 @@ use LogicException;
  * @property string $HppSatuan
  * @property string $TotalHpp
  * @property string|null $Catatan
+ * @property list<string>|null $NomorSeri F-05h snapshot nomor seri/IMEI yang dijual
+ * @property int|null $MasaGaransiBulan F-05h snapshot masa garansi produk (bulan)
  * @property Carbon|null $DibuatPada
  */
 final class PenjualanDetail extends ModelDasar
@@ -68,6 +70,8 @@ final class PenjualanDetail extends ModelDasar
             'HargaTermasukPajak' => 'boolean',
             'SnapshotPajak' => 'array',
             'DiskonManual' => 'array',
+            'NomorSeri' => 'array',
+            'MasaGaransiBulan' => 'integer',
             'Bruto' => 'decimal:2',
             'JumlahDiskon' => 'decimal:2',
             'JumlahDiskonPesanan' => 'decimal:2',

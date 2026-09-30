@@ -80,6 +80,11 @@ final class StrukDigitalPenjualan
                 'HargaSatuan' => $d->HargaSatuan,
                 'Diskon' => $d->JumlahDiskon,
                 'Total' => $d->Bruto,
+                // F-05h: nomor seri/IMEI yang dijual & garansi sampai (tanggal bisnis + masa garansi), hanya produk bernomor seri.
+                'NomorSeri' => $d->NomorSeri ?? [],
+                'GaransiSampai' => $d->NomorSeri !== null && $d->MasaGaransiBulan !== null
+                    ? $p->TanggalBisnis->copy()->addMonthsNoOverflow($d->MasaGaransiBulan)->toDateString()
+                    : null,
             ])->all()),
             'Subtotal' => $p->Subtotal,
             'TotalDiskon' => $p->TotalDiskon,

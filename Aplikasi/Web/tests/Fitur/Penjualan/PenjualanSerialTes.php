@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Domain\Katalog\Enum\PelacakanProduk;
 use App\Domain\Katalog\Model\Produk;
 use App\Domain\Organisasi\Enum\PeranTenantBawaan;
+use App\Domain\Penjualan\Layanan\KodeStrukDigital;
 use App\Domain\Penjualan\Model\Penjualan;
 use App\Domain\Penjualan\Model\PenjualanDetail;
 use App\Domain\Persediaan\Enum\JenisReferensiMutasi;
@@ -196,5 +197,44 @@ describe('F-05h riwayat nomor seri /kelola/persediaan/nomor-seri', function (): 
 
         BantuanPersediaan::MasukSebagai($this, $k['Tenant']->Id, PeranTenantBawaan::Kasir);
         $this->get('/kelola/persediaan/nomor-seri?cari=IMEI')->assertForbidden();
+    });
+});
+
+describe('F-05h garansi: snapshot penjualan & struk digital', function (): void {
+    it('nomor seri dan masa garansi produk di-snapshot ke baris penjualan (tidak ikut berubah bila produk diubah) dan tampil di struk digital sebagai garansi sampai', function (): void {
+        $k = BantuanPenjualan::Siapkan($this);
+        BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+        $hp = BuatProdukSerialJual($k, ['IMEI-0001', 'IMEI-0002']);
+        $hp->forceFill(['MasaGaransiBulan' => 12])->save();
+        $tanpaGaransi = BuatProdukSerialJual($k, ['SN-A1'], 'Charger Cepat 65 W');
+
+        $p = BantuanPenjualan::Jual($this, $k, ['Baris' => [
+            ['Produk' => $hp, 'Jumlah' => '2', 'Harga' => '6500000.00', 'NomorSeri' => ['IMEI-0001', 'IMEI-0002']],
+            ['Produk' => $tanpaGaransi, 'Jumlah' => '1', 'Harga' => '250000.00', 'NomorSeri' => ['SN-A1']],
+        ]]);
+        $hp->forceFill(['MasaGaransiBulan' => 24])->save();
+        $detail = PenjualanDetail::query()->where('IdPenjualan', $p->Id)->orderBy('Urutan')->get();
+
+        expect($detail[0]->NomorSeri)->toBe(['IMEI-0001', 'IMEI-0002'])
+            ->and($detail[0]->MasaGaransiBulan)->toBe(12)
+            ->and($detail[1]->NomorSeri)->toBe(['SN-A1'])
+            ->and($detail[1]->MasaGaransiBulan)->toBeNull();
+
+        $garansi = $p->TanggalBisnis->copy()->addMonthsNoOverflow(12)->toDateString();
+        $this->get('/s/'.KodeStrukDigital::Buat($k['Tenant']->Id, $p->Uuid))->assertOk()->assertInertia(fn (AssertableInertia $h) => $h
+            ->where('Struk.Baris.0.NomorSeri', ['IMEI-0001', 'IMEI-0002'])
+            ->where('Struk.Baris.0.GaransiSampai', $garansi)
+            ->where('Struk.Baris.1.NomorSeri', ['SN-A1'])
+            ->where('Struk.Baris.1.GaransiSampai', null));
+    });
+
+    it('produk biasa tidak menyimpan nomor seri atau garansi di baris penjualan', function (): void {
+        $k = BantuanPenjualan::Siapkan($this);
+        BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+        $minyak = BantuanPenjualan::BuatProdukBerstok($k['Gudang'], $k['Pemilik']->Id);
+        $p = BantuanPenjualan::Jual($this, $k, ['Baris' => [['Produk' => $minyak, 'Jumlah' => '1', 'Harga' => '38500.00']]]);
+        $d = PenjualanDetail::query()->where('IdPenjualan', $p->Id)->sole();
+
+        expect($d->NomorSeri)->toBeNull()->and($d->MasaGaransiBulan)->toBeNull();
     });
 });

@@ -40,7 +40,18 @@ type KunciTab = 'Umum' | 'Satuan' | 'Harga' | 'Varian' | 'Pajak';
 
 /** Kunci galat server per tab (untuk penanda "perlu diperbaiki" dan pindah tab otomatis). */
 const galatPerTab: Record<KunciTab, string[]> = {
-    Umum: ['Nama', 'NamaStruk', 'Sku', 'Jenis', 'UuidKategori', 'Merek', 'UuidSatuanDasar', 'Pelacakan', 'DurasiMenit'],
+    Umum: [
+        'Nama',
+        'NamaStruk',
+        'Sku',
+        'Jenis',
+        'UuidKategori',
+        'Merek',
+        'UuidSatuanDasar',
+        'Pelacakan',
+        'DurasiMenit',
+        'MasaGaransiBulan',
+    ],
     Satuan: ['Satuan'],
     Harga: [],
     Varian: ['AtributVarian'],
@@ -353,6 +364,22 @@ export default function HalamanFormProduk({
                 maxLength={3}
             />
         ) : null;
+    // F-05h: masa garansi standar produk bernomor seri (tercetak di kartu garansi bersama nomor seri yang dijual).
+    const bagianGaransi =
+        data.Pelacakan === 'Seri' ? (
+            <BidangTeks
+                label="Masa garansi (bulan, opsional)"
+                nilai={data.MasaGaransiBulan ? String(data.MasaGaransiBulan) : ''}
+                saatBerubah={(nilai) => {
+                    const angka = nilai.replace(/\D/g, '');
+                    Atur('MasaGaransiBulan', angka === '' ? null : Number(angka));
+                }}
+                galat={galat.MasaGaransiBulan}
+                keterangan="Isi agar struk memuat garansi sampai tanggal berapa (misal 12 untuk garansi setahun)."
+                inputMode="numeric"
+                maxLength={3}
+            />
+        ) : null;
     const bagianPaketSesi = bolehPaketSesi ? (
         <div className="flex flex-col gap-2 rounded-kontrol border border-garis p-3 sm:col-span-2">
             <KotakCentang
@@ -425,6 +452,7 @@ export default function HalamanFormProduk({
                 />
             </div>
             {bagianDurasi}
+            {bagianGaransi}
             {bagianPaketSesi}
             {bisaDijual && !induk ? (
                 <div className="flex flex-col gap-1">
@@ -556,6 +584,7 @@ export default function HalamanFormProduk({
                 </p>
             </div>
             {bagianDurasi}
+            {bagianGaransi}
             {bagianPaketSesi}
             {aturan?.BolehPelacakan ? (
                 <div className="sm:col-span-2">

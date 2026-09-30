@@ -40,5 +40,7 @@ final readonly class DataProduk
         public SumberPerubahanKatalog $sumber = SumberPerubahanKatalog::Manual,
         // F-07 mode service: lama layanan jasa (menit) untuk slot reservasi; hanya untuk jenis Jasa.
         public ?int $durasiMenit = null,
+        // F-05h: masa garansi standar (bulan) produk bernomor seri; null = tanpa garansi.
+        public ?int $masaGaransiBulan = null,
     ) {}
 }

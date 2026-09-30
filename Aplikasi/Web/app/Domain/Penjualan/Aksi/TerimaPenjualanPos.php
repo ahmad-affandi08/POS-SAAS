@@ -1120,6 +1120,9 @@ final class TerimaPenjualanPos
                 'HppSatuan' => '0',
                 'TotalHpp' => '0.00',
                 'Catatan' => $baris->catatan === null ? null : mb_substr($baris->catatan, 0, 255),
+                // F-05h: snapshot nomor seri yang dicatat kasir & masa garansi produk (struk, kartu garansi).
+                'NomorSeri' => $p->pelacakan === PelacakanProduk::Seri && $baris->nomorSeri !== [] ? $baris->nomorSeri : null,
+                'MasaGaransiBulan' => $p->pelacakan === PelacakanProduk::Seri ? $p->masaGaransiBulan : null,
             ]);
         }
 

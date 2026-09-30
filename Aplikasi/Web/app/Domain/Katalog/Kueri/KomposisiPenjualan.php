@@ -64,6 +64,7 @@ final class KomposisiPenjualan
                 $p->IdKelompokPajak,
                 $p->HargaTermasukPajak,
                 $p->IdKategori === null ? null : ($kategori[$p->IdKategori] ?? null),
+                $p->MasaGaransiBulan,
             );
         }
 

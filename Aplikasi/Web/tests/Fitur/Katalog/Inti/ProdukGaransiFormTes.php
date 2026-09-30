@@ -1,0 +1,64 @@
+<?php
+
+declare(strict_types=1);
+
+use App\Domain\Katalog\Enum\PelacakanProduk;
+use App\Domain\Katalog\Model\Produk;
+use Tests\Pendukung\Katalog\BantuanKatalog;
+use Tests\Pendukung\Organisasi\BantuanOrganisasi;
+use Tests\Pendukung\Tenant\BantuanPendaftaran;
+
+/*
+ * F-05h garansi: form produk menyimpan `MasaGaransiBulan` (1–240) hanya untuk produk bernomor seri; produk lain
+ * mengabaikannya (disimpan null).
+ */
+
+beforeEach(function (): void {
+    BantuanPendaftaran::SiapkanPrasyarat();
+});
+
+/**
+ * @param  array<string, mixed>  $t
+ * @param  array<string, mixed>  $timpa
+ * @return array<string, mixed>
+ */
+function IsiFormGaransi(array $t, array $timpa = []): array
+{
+    return BantuanKatalog::IsiFormProduk($t['Pcs'], $t['KelompokPajak'], array_replace([
+        'Nama' => 'Ponsel Android 8/256 GB Hitam',
+        'Pelacakan' => PelacakanProduk::Seri->value,
+        'MasaGaransiBulan' => 12,
+        'Satuan' => [BantuanKatalog::IsiSatuanForm($t['Pcs'], '1', [], [['JumlahMinimum' => '1', 'Harga' => '6500000']], defaultJual: true)],
+    ], $timpa));
+}
+
+it('produk bernomor seri menyimpan masa garansi; diubah lewat form ubah; dikosongkan = tanpa garansi', function (): void {
+    $t = BantuanKatalog::SiapkanTenantProduk('Toko Ponsel Nusantara Solo');
+    $masuk = fn () => BantuanKatalog::MasukSebagai($this, $t['Tenant']->Id);
+
+    $form = IsiFormGaransi($t);
+    $masuk()->post('/kelola/produk', $form)->assertSessionHasNoErrors();
+    BantuanOrganisasi::AturKonteks($t['Tenant']->Id);
+    expect(Produk::query()->where('Uuid', $form['Uuid'])->sole()->MasaGaransiBulan)->toBe(12);
+
+    $masuk()->put("/kelola/produk/{$form['Uuid']}", [...$form, 'MasaGaransiBulan' => 24])->assertSessionHasNoErrors();
+    BantuanOrganisasi::AturKonteks($t['Tenant']->Id);
+    expect(Produk::query()->where('Uuid', $form['Uuid'])->sole()->MasaGaransiBulan)->toBe(24);
+
+    $masuk()->put("/kelola/produk/{$form['Uuid']}", [...$form, 'MasaGaransiBulan' => null])->assertSessionHasNoErrors();
+    BantuanOrganisasi::AturKonteks($t['Tenant']->Id);
+    expect(Produk::query()->where('Uuid', $form['Uuid'])->sole()->MasaGaransiBulan)->toBeNull();
+});
+
+it('produk tanpa pelacakan seri mengabaikan masa garansi; nilai di luar 1–240 ditolak', function (): void {
+    $t = BantuanKatalog::SiapkanTenantProduk('Toko Ponsel Nusantara Solo');
+    $masuk = fn () => BantuanKatalog::MasukSebagai($this, $t['Tenant']->Id);
+
+    $biasa = IsiFormGaransi($t, ['Nama' => 'Casing Silikon Bening', 'Pelacakan' => PelacakanProduk::Tidak->value]);
+    $masuk()->post('/kelola/produk', $biasa)->assertSessionHasNoErrors();
+    BantuanOrganisasi::AturKonteks($t['Tenant']->Id);
+    expect(Produk::query()->where('Uuid', $biasa['Uuid'])->sole()->MasaGaransiBulan)->toBeNull();
+
+    $masuk()->post('/kelola/produk', IsiFormGaransi($t, ['Nama' => 'Ponsel Uji Nol', 'MasaGaransiBulan' => 0]))->assertSessionHasErrors('MasaGaransiBulan');
+    $masuk()->post('/kelola/produk', IsiFormGaransi($t, ['Nama' => 'Ponsel Uji Besar', 'MasaGaransiBulan' => 241]))->assertSessionHasErrors('MasaGaransiBulan');
+});

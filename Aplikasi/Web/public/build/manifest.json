@@ -1756,7 +1756,7 @@
     "src": "node_modules/@fontsource-variable/atkinson-hyperlegible-next/files/atkinson-hyperlegible-next-latin-wght-normal.woff2"
   },
   "resources/js/Aplikasi.tsx": {
-    "file": "assets/Aplikasi-Orx9kUT9.js",
+    "file": "assets/Aplikasi-BL4kK_3P.js",
     "name": "Aplikasi",
     "src": "resources/js/Aplikasi.tsx",
     "isEntry": true,
@@ -5146,7 +5146,7 @@
     ]
   },
   "resources/js/Halaman/Kelola/Produk/Form.tsx": {
-    "file": "assets/Form-B6u3xmsZ.js",
+    "file": "assets/Form-DAAWWqDj.js",
     "name": "Form",
     "src": "resources/js/Halaman/Kelola/Produk/Form.tsx",
     "isDynamicEntry": true,
@@ -6466,7 +6466,7 @@
     ]
   },
   "resources/js/Halaman/Publik/StrukDigital.tsx": {
-    "file": "assets/StrukDigital-Boagy-Vd.js",
+    "file": "assets/StrukDigital-lMFR96MQ.js",
     "name": "StrukDigital",
     "src": "resources/js/Halaman/Publik/StrukDigital.tsx",
     "isDynamicEntry": true,

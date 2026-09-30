@@ -29,5 +29,7 @@ final readonly class DataProdukPenjualan
         public ?int $idKelompokPajak = null,
         public ?bool $hargaTermasukPajak = null,
         public ?string $uuidKategori = null,
+        // F-05h: masa garansi standar (bulan), di-snapshot ke baris penjualan bernomor seri.
+        public ?int $masaGaransiBulan = null,
     ) {}
 }

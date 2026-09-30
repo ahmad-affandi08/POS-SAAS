@@ -4,7 +4,7 @@ import JudulHalaman from '@/Komponen/Umpan/JudulHalaman';
 import StatusLacakLaundry from '@/Komponen/Laundry/StatusLacakLaundry';
 import { PENUTUP_BAWAAN } from '@/Komponen/Struk/PratinjauStruk';
 import { FormatRupiah } from '@/Pustaka/Format';
-import { FormatTanggalWaktu } from '@/Pustaka/FormatWaktu';
+import { FormatTanggal, FormatTanggalWaktu } from '@/Pustaka/FormatWaktu';
 import type { StatusLaundryPublik } from '@/Tipe/Laundry';
 
 export type StrukDigital = {
@@ -25,6 +25,9 @@ export type StrukDigital = {
         HargaSatuan: string;
         Diskon: string;
         Total: string;
+        /** F-05h: nomor seri/IMEI yang dijual dan tanggal garansi berakhir (null = tanpa garansi). */
+        NomorSeri: string[];
+        GaransiSampai: string | null;
     }[];
     Subtotal: string;
     TotalDiskon: string;
@@ -120,6 +123,10 @@ export default function HalamanStrukDigital({ Struk }: { Struk: StrukDigital | n
                             <div key={i}>
                                 <p className="text-teks-utama">{b.NamaProduk}</p>
                                 {b.Pilihan.length > 0 ? <p>+ {b.Pilihan.join(', ')}</p> : null}
+                                {b.NomorSeri.length > 0 ? (
+                                    <p className="font-mono">No. seri: {b.NomorSeri.join(', ')}</p>
+                                ) : null}
+                                {b.GaransiSampai ? <p>Garansi sampai {FormatTanggal(b.GaransiSampai)}</p> : null}
                                 <Baris
                                     kiri={`  ${FormatJumlah(b.Jumlah)} x ${FormatRupiah(b.HargaSatuan)}`}
                                     kanan={FormatRupiah(b.Total)}

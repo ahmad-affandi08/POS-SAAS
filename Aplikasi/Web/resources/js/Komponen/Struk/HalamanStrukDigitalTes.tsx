@@ -25,6 +25,8 @@ const struk: StrukDigital = {
             HargaSatuan: '18000.00',
             Diskon: '2000.00',
             Total: '36000.00',
+            NomorSeri: [],
+            GaransiSampai: null,
         },
     ],
     Subtotal: '36000.00',
@@ -53,6 +55,28 @@ describe('Struk digital publik (POS-11)', () => {
         expect(screen.getByText('Rp 12.600')).toBeTruthy();
         expect(screen.getByText('Terima kasih atas kunjungan Anda')).toBeTruthy();
         expect(screen.queryByText('TRANSAKSI DIBATALKAN')).toBeNull();
+    });
+
+    it('F-05h: nomor seri dan garansi sampai tampil di baris produk bernomor seri', () => {
+        RenderUji(
+            <HalamanStrukDigital
+                Struk={{
+                    ...struk,
+                    Baris: struk.Baris.map((b) => ({
+                        ...b,
+                        NomorSeri: ['IMEI-0001', 'IMEI-0002'],
+                        GaransiSampai: '2027-09-20',
+                    })),
+                }}
+            />,
+        );
+        expect(screen.getByText('No. seri: IMEI-0001, IMEI-0002')).toBeTruthy();
+        expect(screen.getByText(/^Garansi sampai 20 \w+ 2027$/)).toBeTruthy();
+        cleanup();
+
+        RenderUji(<HalamanStrukDigital Struk={struk} />);
+        expect(screen.queryByText(/No\. seri/)).toBeNull();
+        expect(screen.queryByText(/Garansi sampai/)).toBeNull();
     });
 
     it('F-16c bagian 4a: poin diperoleh tampil bila ada', () => {

@@ -83,6 +83,7 @@ final class Produk extends ModelDasar
         'TampilDiPos' => true,
         'TampilOnline' => false,
         'DurasiMenit' => null,
+        'MasaGaransiBulan' => null,
         'PathGambar' => null,
         'DiarsipkanPada' => null,
     ];
@@ -163,6 +164,7 @@ final class Produk extends ModelDasar
             'TampilDiPos' => 'boolean',
             'TampilOnline' => 'boolean',
             'DurasiMenit' => 'integer',
+            'MasaGaransiBulan' => 'integer',
             'DiarsipkanPada' => 'datetime',
         ];
     }

@@ -9,6 +9,7 @@ use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Bersama\Tenant\KonteksTenant;
 use App\Domain\Katalog\Data\DataProduk;
 use App\Domain\Katalog\Enum\JenisProduk;
+use App\Domain\Katalog\Enum\PelacakanProduk;
 use App\Domain\Katalog\Enum\SumberPerubahanKatalog;
 use App\Domain\Katalog\Kueri\PemakaianSku;
 use App\Domain\Katalog\Layanan\AturanProduk;
@@ -122,6 +123,10 @@ final class SimpanProduk
             'TampilDiPos' => AturanProduk::TentukanTampilDiPos($data->jenis, $data->tampilDiPos),
             'TampilOnline' => $data->tampilOnline,
             'DurasiMenit' => $data->jenis === JenisProduk::Jasa ? $data->durasiMenit : null,
+            // F-05h: hanya produk bernomor seri; impor & panduan awal tidak mengubah garansi yang sudah diatur.
+            'MasaGaransiBulan' => $pelacakan === PelacakanProduk::Seri
+                ? ($data->sumber === SumberPerubahanKatalog::Manual ? $data->masaGaransiBulan : $produk->MasaGaransiBulan)
+                : null,
         ])->save();
 
         $this->penyelaras->Terapkan($produk, $rencanaSatuan, $data->sumber->value);
