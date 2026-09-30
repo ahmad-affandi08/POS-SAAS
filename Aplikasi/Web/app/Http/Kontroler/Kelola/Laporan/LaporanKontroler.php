@@ -27,7 +27,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  * - penjualan (`laporan.penjualan.lihat`): tab ringkasan harian, per produk (TabelData mode server lewat URL yang sama
  *   dengan `Accept: application/json`), kategori, jam, kasir, kanal, metode bayar, diskon; ekspor CSV sesuai saring;
  * - pajak (`laporan.keuangan.lihat`): PB1/PBJT per outlet per bulan & PPN keluaran per bulan; ekspor CSV;
- * - stok (`persediaan.lihat`): nilai persediaan pada tanggal & stok kritis; ekspor CSV.
+ * - stok (`persediaan.lihat`): nilai persediaan pada tanggal, stok kritis & batch kedaluwarsa (F-05g); ekspor CSV.
  */
 final class LaporanKontroler extends DasarKelolaKontroler
 {
@@ -94,6 +94,7 @@ final class LaporanKontroler extends DasarKelolaKontroler
             'OpsiGudang' => array_values(array_map(fn ($g): array => ['Nilai' => $g->uuid, 'Label' => $g->namaOutlet === null ? $g->nama : "{$g->nama} ({$g->namaOutlet})"], $gudang)),
             'Nilai' => $tab === 'nilai' ? $laporan->NilaiPersediaan($pada, $this->IdOutletBoleh(), $uuidGudang) : null,
             'Kritis' => $tab === 'kritis' ? $laporan->StokKritis($this->IdOutletBoleh(), $uuidGudang) : null,
+            'Kedaluwarsa' => $tab === 'kedaluwarsa' ? $laporan->BatchKedaluwarsa($this->IdOutletBoleh(), $tanggal->Hitung(null), $uuidGudang) : null,
         ]);
     }
 
@@ -106,6 +107,15 @@ final class LaporanKontroler extends DasarKelolaKontroler
 
             return PenulisCsvLaporan::Alirkan('laporan-stok-kritis', ['Produk', 'SKU', 'Satuan', 'Lokasi stok', 'Outlet', 'Saldo', 'Stok minimum', 'Kekurangan'], array_map(
                 fn (array $b): array => [$b['NamaProduk'], $b['Sku'], $b['SimbolSatuan'], $b['NamaGudang'], $b['NamaOutlet'], $b['Saldo'], $b['StokMinimum'], $b['Kekurangan']],
+                $isi,
+            ));
+        }
+
+        if ($tab === 'kedaluwarsa') {
+            $isi = $laporan->BatchKedaluwarsa($this->IdOutletBoleh(), $tanggal->Hitung(null), $uuidGudang)['Baris'];
+
+            return PenulisCsvLaporan::Alirkan('laporan-batch-kedaluwarsa', ['Produk', 'SKU', 'Satuan', 'Nomor batch', 'Lokasi stok', 'Outlet', 'Kedaluwarsa', 'Sisa hari', 'Status', 'Sisa'], array_map(
+                fn (array $b): array => [$b['NamaProduk'], $b['Sku'], $b['SimbolSatuan'], $b['NomorBatch'], $b['NamaGudang'], $b['NamaOutlet'], $b['TanggalKedaluwarsa'], $b['SisaHari'], $b['Status'], $b['Sisa']],
                 $isi,
             ));
         }
@@ -140,11 +150,11 @@ final class LaporanKontroler extends DasarKelolaKontroler
     }
 
     /**
-     * @return array{0: string, 1: CarbonImmutable, 2: string}
+     * @return array{0: 'nilai'|'kritis'|'kedaluwarsa', 1: CarbonImmutable, 2: string}
      */
     private function BacaSaringStok(Request $permintaan, CarbonImmutable $hariIni): array
     {
-        $tab = $permintaan->query('tab') === 'kritis' ? 'kritis' : 'nilai';
+        $tab = in_array($permintaan->query('tab'), ['kritis', 'kedaluwarsa'], true) ? $permintaan->query('tab') : 'nilai';
         $pada = DataPeriodeLaporan::Urai($permintaan->query('tanggal')) ?? $hariIni;
         $uuidGudang = is_string($permintaan->query('gudang')) ? $permintaan->query('gudang') : '';
 

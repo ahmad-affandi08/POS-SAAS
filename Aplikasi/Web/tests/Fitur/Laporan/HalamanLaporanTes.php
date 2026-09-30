@@ -3,12 +3,14 @@
 declare(strict_types=1);
 
 use App\Domain\Katalog\Enum\JenisProduk;
+use App\Domain\Katalog\Enum\PelacakanProduk;
 use App\Domain\Katalog\Model\Kategori;
 use App\Domain\Katalog\Model\ProdukGudang;
 use App\Domain\Organisasi\Enum\PeranTenantBawaan;
 use App\Domain\Organisasi\Model\OutletPengguna;
 use App\Domain\Penjualan\Model\Penjualan;
 use App\Domain\Penjualan\Model\PenjualanDetail;
+use App\Domain\Persediaan\Model\BatchStok;
 use Carbon\CarbonImmutable;
 use Inertia\Testing\AssertableInertia;
 use Tests\Pendukung\Akuntansi\BantuanJurnal;
@@ -19,6 +21,7 @@ use Tests\Pendukung\Organisasi\BantuanOrganisasi;
 use Tests\Pendukung\PanduanAwal\BantuanPanduanAwal;
 use Tests\Pendukung\Penjualan\BantuanPenjualan;
 use Tests\Pendukung\Persediaan\BantuanPersediaan;
+use Tests\Pendukung\Persediaan\BantuanStokAwal;
 use Tests\Pendukung\Tenant\BantuanPendaftaran;
 
 beforeEach(function (): void {
@@ -353,5 +356,59 @@ describe('F-14a laporan stok /kelola/laporan/stok', function (): void {
         BantuanPersediaan::MasukSebagai($this, $b['Tenant']->Id);
         $this->get("/kelola/laporan/stok?gudang={$d['Gudang']->Uuid}")->assertOk()->assertInertia(fn (AssertableInertia $h) => $h->where('Nilai.Total.Nilai', '0.00'));
         $this->get('/kelola/laporan/stok?tab=kritis')->assertOk()->assertInertia(fn (AssertableInertia $h) => $h->where('Kritis.Jumlah', 0));
+    });
+});
+
+describe('F-05g batch kedaluwarsa: laporan stok & Kotak Tindakan', function (): void {
+    it('tab kedaluwarsa memuat batch bersisa yang lewat atau jatuh dalam 30 hari (urut terdekat; batch habis & yang masih jauh tidak ikut); ekspor CSV; butir stok.kedaluwarsa Penting bila ada yang lewat', function (): void {
+        $k = BantuanPenjualan::Siapkan($this);
+        BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+        $susu = BantuanKatalog::BuatProduk(['Nama' => 'Susu UHT Full Cream 1 Liter', 'Pelacakan' => PelacakanProduk::Batch], '19500.00');
+        BantuanStokAwal::BuatDanPosting($k['Gudang'], [
+            BantuanStokAwal::Baris($susu, '4', '10000', 'UHT-LEWAT', '2026-10-04'),
+            BantuanStokAwal::Baris($susu, '10', '10000', 'UHT-SEGERA', '2026-10-12'),
+            BantuanStokAwal::Baris($susu, '6', '10000', 'UHT-JAUH', '2026-12-31'),
+            BantuanStokAwal::Baris($susu, '3', '10000', 'UHT-HABIS', '2026-10-05'),
+            BantuanStokAwal::Baris($susu, '2', '10000', 'UHT-TANPA'),
+        ], $k['Pemilik']->Id);
+        BantuanStokAwal::Jual($susu, $k['Gudang'], '3', idBatchStok: BatchStok::query()->where('NomorBatch', 'UHT-HABIS')->value('Id'));
+
+        BantuanPersediaan::MasukSebagai($this, $k['Tenant']->Id);
+        $this->get('/kelola/laporan/stok?tab=kedaluwarsa')->assertOk()->assertInertia(fn (AssertableInertia $h) => $h
+            ->where('Nilai', null)
+            ->where('Kritis', null)
+            ->where('Kedaluwarsa.Jumlah', 2)
+            ->where('Kedaluwarsa.JumlahLewat', 1)
+            ->where('Kedaluwarsa.Baris.0.NomorBatch', 'UHT-LEWAT')
+            ->where('Kedaluwarsa.Baris.0.Status', 'Lewat')
+            ->where('Kedaluwarsa.Baris.0.SisaHari', -3)
+            ->where('Kedaluwarsa.Baris.0.Sisa', '4.0000')
+            ->where('Kedaluwarsa.Baris.1.NomorBatch', 'UHT-SEGERA')
+            ->where('Kedaluwarsa.Baris.1.Status', 'Segera')
+            ->where('Kedaluwarsa.Baris.1.SisaHari', 5));
+
+        $csv = $this->get('/kelola/laporan/stok/ekspor?tab=kedaluwarsa')->assertOk()->streamedContent();
+        expect($csv)->toContain('UHT-LEWAT')->toContain('UHT-SEGERA')->not->toContain('UHT-JAUH')->not->toContain('UHT-HABIS')->not->toContain('UHT-TANPA');
+
+        $this->get('/kelola/tindakan')->assertOk()->assertInertia(function (AssertableInertia $h): void {
+            $butir = collect($h->toArray()['props']['Butir'])->firstWhere('Kunci', 'stok.kedaluwarsa');
+            expect($butir['Jumlah'])->toBe(2)
+                ->and($butir['Tingkat'])->toBe('Penting')
+                ->and($butir['Tautan'])->toBe('/kelola/laporan/stok?tab=kedaluwarsa')
+                ->and($butir['Rincian'][0]['Judul'])->toContain('UHT-LEWAT')
+                ->and($butir['Rincian'][0]['Keterangan'])->toContain('lewat 3 hari');
+        });
+
+        // Tanpa batch yang lewat, butir turun ke Perhatian; tanpa batch mendekat, butir hilang.
+        $this->travelTo(CarbonImmutable::parse('2026-10-03 05:00:00', 'UTC'));
+        $this->get('/kelola/tindakan')->assertOk()->assertInertia(function (AssertableInertia $h): void {
+            $butir = collect($h->toArray()['props']['Butir'])->firstWhere('Kunci', 'stok.kedaluwarsa');
+            expect($butir['Tingkat'])->toBe('Perhatian');
+        });
+
+        // Isolasi tenant.
+        $b = BantuanPenjualan::Siapkan($this, 'Warung Bakso Pak Kumis');
+        BantuanPersediaan::MasukSebagai($this, $b['Tenant']->Id);
+        $this->get('/kelola/laporan/stok?tab=kedaluwarsa')->assertOk()->assertInertia(fn (AssertableInertia $h) => $h->where('Kedaluwarsa.Jumlah', 0));
     });
 });

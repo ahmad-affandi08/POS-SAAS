@@ -38,6 +38,24 @@ export type BarisStokKritis = {
 
 export type StokKritis = { Jumlah: number; Baris: BarisStokKritis[] };
 
+export type BarisBatchKedaluwarsa = {
+    Kunci: string;
+    UuidProduk: string;
+    NamaProduk: string;
+    Sku: string | null;
+    SimbolSatuan: string;
+    UuidGudang: string;
+    NamaGudang: string;
+    NamaOutlet: string;
+    NomorBatch: string;
+    TanggalKedaluwarsa: string;
+    SisaHari: number;
+    Status: 'Lewat' | 'Segera' | 'Mendekati';
+    Sisa: string;
+};
+
+export type BatchKedaluwarsa = { Jumlah: number; JumlahLewat: number; Baris: BarisBatchKedaluwarsa[] };
+
 export type DasborPemilik = {
     Tanggal: string;
     HariIni: AngkaPenjualan;
@@ -199,8 +217,9 @@ export type NilaiPersediaan = {
 };
 
 export type PropsLaporanStok = {
-    Saring: { Tab: 'nilai' | 'kritis'; Tanggal: string; Gudang: string };
+    Saring: { Tab: 'nilai' | 'kritis' | 'kedaluwarsa'; Tanggal: string; Gudang: string };
     OpsiGudang: OpsiLaporan[];
     Nilai: NilaiPersediaan | null;
     Kritis: StokKritis | null;
+    Kedaluwarsa: BatchKedaluwarsa | null;
 };

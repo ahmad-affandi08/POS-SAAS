@@ -38,6 +38,7 @@ use App\Domain\Persediaan\Data\DataDokumenMutasi;
 use App\Domain\Persediaan\Enum\JenisMutasi;
 use App\Domain\Persediaan\Enum\JenisReferensiMutasi;
 use App\Domain\Persediaan\Enum\ModeNilaiMutasi;
+use App\Domain\Persediaan\Kueri\InfoBatchStok;
 use App\Domain\Persediaan\Kueri\MutasiDokumen;
 use App\Domain\Promo\Layanan\PemakaiVoucher;
 use App\Domain\Promo\Layanan\PencatatKlaimPromoPemasok;
@@ -91,6 +92,7 @@ final class TerimaVoidPenjualanPos
         private readonly PencatatDepositPenjualan $deposit,
         private readonly PencatatSesiPenjualan $sesi,
         private readonly PencatatLaundryPenjualan $laundry,
+        private readonly InfoBatchStok $infoBatch,
     ) {}
 
     public function Jalankan(DataVoidPenjualanPos $data): StatusItemSinkron
@@ -315,6 +317,9 @@ final class TerimaVoidPenjualanPos
             return;
         }
 
+        // F-05g: stok produk ber-batch kembali ke batch asalnya (nomor & kedaluwarsa yang sama), bukan ke batch lain.
+        $batch = $this->infoBatch->AmbilBanyak(array_values(array_filter(array_map(fn (array $m): ?int => $m['IdBatchStok'], $asal))));
+
         $this->catatMutasi->Jalankan(new DataDokumenMutasi(
             jenisReferensi: JenisReferensiMutasi::VoidPenjualan,
             idReferensi: $penjualan->Id,
@@ -333,6 +338,7 @@ final class TerimaVoidPenjualanPos
                 nilai: Uang::Dari(BigDecimal::of($m['TotalHpp'])->abs()),
                 hppSatuan: BigDecimal::of($m['HppSatuan'])->abs(),
                 idReferensiDetail: $m['IdReferensiDetail'],
+                batchMasuk: $m['IdBatchStok'] === null ? null : $batch[$m['IdBatchStok']],
                 idMutasiAsal: $m['Id'],
             ), $asal),
         ));

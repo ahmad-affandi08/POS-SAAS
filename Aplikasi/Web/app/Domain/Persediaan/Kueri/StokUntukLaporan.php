@@ -6,6 +6,7 @@ namespace App\Domain\Persediaan\Kueri;
 
 use App\Domain\Bersama\Nilai\Kuantitas;
 use App\Domain\Bersama\Nilai\Uang;
+use App\Domain\Persediaan\Model\BatchStok;
 use App\Domain\Persediaan\Model\MutasiStok;
 use App\Domain\Persediaan\Model\SaldoStok;
 use Carbon\CarbonImmutable;
@@ -69,5 +70,38 @@ final class StokUntukLaporan
         }
 
         return $hasil;
+    }
+
+    /**
+     * F-05g: batch yang masih bersisa dan kedaluwarsanya jatuh paling lambat `$sampai` (termasuk yang sudah lewat), urut
+     * kedaluwarsa terdekat. `Jumlah` = seluruh batch yang cocok, `Baris` dibatasi `$batas` bila diisi.
+     *
+     * @param  list<int>  $idGudang
+     * @return array{Jumlah: int, Baris: list<array{IdProduk: int, IdGudang: int, NomorBatch: string, TanggalKedaluwarsa: string, JumlahSisa: string}>}
+     */
+    public function AmbilBatchMendekatiKedaluwarsa(array $idGudang, CarbonImmutable $sampai, ?int $batas = null): array
+    {
+        if ($idGudang === []) {
+            return ['Jumlah' => 0, 'Baris' => []];
+        }
+
+        $kueri = BatchStok::query()
+            ->whereIn('IdGudang', $idGudang)
+            ->where('JumlahSisa', '>', 0)
+            ->whereNotNull('TanggalKedaluwarsa')
+            ->where('TanggalKedaluwarsa', '<=', $sampai->toDateString());
+        $jumlah = (clone $kueri)->count();
+
+        $baris = $kueri->orderBy('TanggalKedaluwarsa')->orderBy('NomorBatch')->orderBy('Id')
+            ->when($batas !== null, fn ($k) => $k->limit((int) $batas))
+            ->get(['IdProduk', 'IdGudang', 'NomorBatch', 'TanggalKedaluwarsa', 'JumlahSisa']);
+
+        return ['Jumlah' => $jumlah, 'Baris' => array_values($baris->map(fn (BatchStok $b): array => [
+            'IdProduk' => $b->IdProduk,
+            'IdGudang' => $b->IdGudang,
+            'NomorBatch' => $b->NomorBatch,
+            'TanggalKedaluwarsa' => $b->TanggalKedaluwarsa->toDateString(),
+            'JumlahSisa' => Kuantitas::Dari($b->JumlahSisa)->KeString(),
+        ])->all())];
     }
 }

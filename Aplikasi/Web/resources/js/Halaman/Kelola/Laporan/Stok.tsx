@@ -11,7 +11,7 @@ import { FormatRupiah } from '@/Pustaka/Format';
 import { BuatUrlKartuStok, FormatJumlahStok } from '@/Pustaka/FormatPersediaan';
 import { FormatTanggal } from '@/Pustaka/FormatWaktu';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
-import type { BarisStokKritis, NilaiPersediaan, PropsLaporanStok } from '@/Tipe/Laporan';
+import type { BarisBatchKedaluwarsa, BarisStokKritis, NilaiPersediaan, PropsLaporanStok } from '@/Tipe/Laporan';
 
 const alamat = '/kelola/laporan/stok';
 
@@ -91,12 +91,64 @@ const kolomKritis: KolomTabel<BarisStokKritis>[] = [
     },
 ];
 
+const labelStatusKedaluwarsa: Record<BarisBatchKedaluwarsa['Status'], string> = {
+    Lewat: 'Sudah lewat',
+    Segera: 'Segera',
+    Mendekati: 'Mendekati',
+};
+
+const kolomKedaluwarsa: KolomTabel<BarisBatchKedaluwarsa>[] = [
+    {
+        id: 'NamaProduk',
+        accessorKey: 'NamaProduk',
+        header: 'Produk',
+        meta: { label: 'Produk', prioritas: 'utama', wajib: true },
+        cell: ({ row: { original: b } }) => (
+            <>
+                <span className="block text-teks-utama">{b.NamaProduk}</span>
+                <span className="block font-mono text-label text-teks-sekunder">Batch {b.NomorBatch}</span>
+            </>
+        ),
+    },
+    {
+        id: 'TanggalKedaluwarsa',
+        accessorKey: 'TanggalKedaluwarsa',
+        header: 'Kedaluwarsa',
+        meta: { label: 'Kedaluwarsa', prioritas: 'utama' },
+        cell: ({ row: { original: b } }) => (
+            <>
+                <span className="block text-teks-utama">{FormatTanggal(b.TanggalKedaluwarsa)}</span>
+                <span className="block text-label text-teks-sekunder">
+                    {labelStatusKedaluwarsa[b.Status]}
+                    {b.SisaHari < 0 ? ` (${String(Math.abs(b.SisaHari))} hari lalu)` : ` (${String(b.SisaHari)} hari lagi)`}
+                </span>
+            </>
+        ),
+    },
+    {
+        id: 'Sisa',
+        accessorKey: 'Sisa',
+        header: 'Sisa',
+        meta: { label: 'Sisa', angka: true, prioritas: 'penting' },
+        cell: ({ row }) => FormatJumlahStok(row.original.Sisa, row.original.SimbolSatuan),
+    },
+    {
+        id: 'NamaGudang',
+        accessorKey: 'NamaGudang',
+        header: 'Lokasi stok',
+        meta: { label: 'Lokasi stok', prioritas: 'rendah' },
+        cell: ({ row }) =>
+            `${row.original.NamaGudang}${row.original.NamaOutlet ? ` · ${row.original.NamaOutlet}` : ''}`,
+    },
+];
+
 /**
  * F-14a laporan stok (izin lihat persediaan): nilai persediaan per lokasi stok & kategori pada akhir tanggal
- * tertentu (dari buku stok) dan stok kritis (saldo ≤ batas minimum per lokasi). Posisi & kartu stok per produk ada di
+ * tertentu (dari buku stok), stok kritis (saldo ≤ batas minimum per lokasi), dan F-05g batch yang sudah lewat atau akan
+ * kedaluwarsa dalam 30 hari. Posisi & kartu stok per produk ada di
  * menu Persediaan.
  */
-export default function HalamanLaporanStok({ Saring, OpsiGudang, Nilai, Kritis }: PropsLaporanStok) {
+export default function HalamanLaporanStok({ Saring, OpsiGudang, Nilai, Kritis, Kedaluwarsa }: PropsLaporanStok) {
     const query = { tanggal: Saring.Tanggal, gudang: Saring.Gudang };
     const Terapkan = (ubah: Record<string, string>) => {
         const baru = Object.fromEntries(
@@ -142,6 +194,7 @@ export default function HalamanLaporanStok({ Saring, OpsiGudang, Nilai, Kritis }
                     tab={[
                         { nilai: 'nilai', label: 'Nilai persediaan' },
                         { nilai: 'kritis', label: 'Stok kritis' },
+                        { nilai: 'kedaluwarsa', label: 'Kedaluwarsa' },
                     ]}
                 />
                 <TautanEkspor alamat={`${alamat}/ekspor`} query={{ ...query, tab: Saring.Tab }} />
@@ -218,6 +271,33 @@ export default function HalamanLaporanStok({ Saring, OpsiGudang, Nilai, Kritis }
                         kosong={{
                             ilustrasi: true,
                             judul: 'Tidak ada stok kritis. Semua produk berbatas minimum masih di atas batasnya.',
+                        }}
+                    />
+                </section>
+            ) : null}
+
+            {Kedaluwarsa ? (
+                <section aria-labelledby="judul-kedaluwarsa" className="flex flex-col gap-2">
+                    <h2 id="judul-kedaluwarsa" className="text-subjudul font-semibold text-teks-utama">
+                        Batch kedaluwarsa ({String(Kedaluwarsa.Jumlah)})
+                    </h2>
+                    <p className="text-label text-teks-sekunder">
+                        Batch yang masih bersisa dan sudah lewat atau kedaluwarsa dalam 30 hari. Penjualan mengambil
+                        batch berkedaluwarsa terdekat lebih dulu (FEFO); barang yang sudah lewat dicatat sebagai bahan
+                        terbuang atau penyesuaian stok.
+                    </p>
+                    <TabelData
+                        id="laporan-stok-kedaluwarsa"
+                        label="Batch kedaluwarsa"
+                        kolom={kolomKedaluwarsa}
+                        sumber={{ mode: 'lokal', data: Kedaluwarsa.Baris }}
+                        ambilIdBaris={(b) => b.Kunci}
+                        urutBawaan="TanggalKedaluwarsa"
+                        cari="Cari produk atau batch"
+                        alamatDetail={(b) => BuatUrlKartuStok(b.UuidProduk, b.UuidGudang)}
+                        kosong={{
+                            ilustrasi: true,
+                            judul: 'Tidak ada batch yang lewat atau mendekati kedaluwarsa dalam 30 hari.',
                         }}
                     />
                 </section>

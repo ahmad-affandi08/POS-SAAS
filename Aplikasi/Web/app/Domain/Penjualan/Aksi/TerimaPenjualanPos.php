@@ -73,10 +73,11 @@ use App\Domain\Penjualan\Peristiwa\PenjualanDiterima;
 use App\Domain\Persediaan\Aksi\CatatMutasiStok;
 use App\Domain\Persediaan\Data\DataBarisMutasi;
 use App\Domain\Persediaan\Data\DataDokumenMutasi;
-use App\Domain\Persediaan\Data\HasilCatatMutasi;
+use App\Domain\Persediaan\Data\HasilBarisMutasi;
 use App\Domain\Persediaan\Enum\JenisMutasi;
 use App\Domain\Persediaan\Enum\JenisReferensiMutasi;
 use App\Domain\Persediaan\Enum\ModeNilaiMutasi;
+use App\Domain\Persediaan\Layanan\AlokatorBatchFefo;
 use App\Domain\Persediaan\Layanan\PemeriksaStokMinus;
 use App\Domain\Persediaan\Layanan\PetaAkunPersediaan;
 use App\Domain\Promo\Layanan\PemakaiVoucher;
@@ -104,7 +105,8 @@ use InvalidArgumentException;
  * `PembayaranKurang`).
  *
  * Keadaan yang bisa berubah setelah transaksi offline tidak menolak (§18.3, PRD v1.46 "Tindak lanjut tinjauan"):
- * penjualan diterima dan ditandai `PerluTinjauan` dengan alasan `StokTidakCukup` (mutasi tetap dicatat),
+ * penjualan diterima dan ditandai `PerluTinjauan` dengan alasan `StokTidakCukup` (mutasi tetap dicatat), F-05g
+ * `BatchTidakCukup` (bagian yang tidak tertutup batch tidak mengurangi stok) dan `BatchKedaluwarsa` (batch FEFO sudah lewat tanggalnya),
  * `PilihanTidakDikenal` (bahan pilihan yang dihapus tidak dikurangi), `ProdukDihapus` (produk dihapus, hanya mungkin
  * bila belum pernah dipakai, BR-03.2), `IzinBerubah` (kasir/penyetuju masih anggota tenant tetapi tidak lagi di outlet
  * atau tanpa izin berjualan), `DiskonMelebihiBatas` (BR-07.3 dilanggar menurut batas yang berlaku saat diterima),
@@ -119,6 +121,9 @@ final class TerimaPenjualanPos
 
     /** Panjang kolom `Penjualan.AlasanTinjauan`. */
     private const PANJANG_ALASAN_TINJAUAN = 1000;
+
+    /** F-05g: percobaan membuat ulang rencana FEFO bila batch keburu diambil penjualan lain. */
+    private const PERCOBAAN_BATCH = 3;
 
     private const JENIS_TIDAK_BISA_DIJUAL = [JenisProduk::IndukVarian, JenisProduk::BahanBaku, JenisProduk::Konsinyasi];
 
@@ -160,6 +165,7 @@ final class TerimaPenjualanPos
         private readonly PencatatDepositPenjualan $deposit,
         private readonly PencatatSesiPenjualan $sesi,
         private readonly PenyediaAkunPeran $penyediaAkun,
+        private readonly AlokatorBatchFefo $alokatorBatch,
     ) {}
 
     public function Jalankan(DataPenjualanPos $data): StatusItemSinkron
@@ -1181,6 +1187,7 @@ final class TerimaPenjualanPos
         $barisMutasi = [];
         $infoPerKunci = [];
         $indeksPerKunci = [];
+        $permintaanBatch = [];
 
         foreach ($data->baris as $indeks => $baris) {
             $jumlahDasar = Kuantitas::Dari($detail[$indeks]->JumlahDasar);
@@ -1225,6 +1232,16 @@ final class TerimaPenjualanPos
 
                 $urutan++;
                 $kunci = $baris->uuid.'/'.$urutan;
+                $infoPerKunci[$kunci] = $k;
+                $indeksPerKunci[$kunci] = $indeks;
+
+                if ($k->pelacakan === PelacakanProduk::Batch) {
+                    // F-05g: batch dipilih FEFO di server (dirinci di CatatStokBatch), bukan oleh kasir.
+                    $permintaanBatch[$kunci] = [Kuantitas::Dari($jumlah), $detail[$indeks]->Id];
+
+                    continue;
+                }
+
                 $barisMutasi[] = new DataBarisMutasi(
                     kunciBaris: $kunci,
                     idProduk: $k->idProduk,
@@ -1234,12 +1251,10 @@ final class TerimaPenjualanPos
                     modeNilai: ModeNilaiMutasi::Berjalan,
                     idReferensiDetail: $detail[$indeks]->Id,
                 );
-                $infoPerKunci[$kunci] = $k;
-                $indeksPerKunci[$kunci] = $indeks;
             }
         }
 
-        if ($barisMutasi === []) {
+        if ($barisMutasi === [] && $permintaanBatch === []) {
             return [$tinjauan, []];
         }
 
@@ -1247,33 +1262,41 @@ final class TerimaPenjualanPos
             throw new PelanggaranAturanBisnis('LokasiStokTidakAda', "Outlet {$outlet->namaOutlet} belum punya lokasi stok Toko untuk mengurangi stok penjualan.", 'Baris');
         }
 
-        $hasil = $this->catatMutasi->Jalankan(new DataDokumenMutasi(
-            jenisReferensi: JenisReferensiMutasi::Penjualan,
-            idReferensi: $penjualan->Id,
-            uuidReferensi: $penjualan->Uuid,
-            nomorReferensi: $penjualan->Nomor,
-            tanggalBisnis: CarbonImmutable::parse($penjualan->TanggalBisnis->toDateString()),
-            idPengguna: $idKasir,
-            idPerangkat: $data->idPerangkat,
-            baris: array_map(fn (DataBarisMutasi $b): DataBarisMutasi => new DataBarisMutasi(
+        $idGudang = (int) $outlet->idGudangToko;
+        /** @var array<string, HasilBarisMutasi> $hasilBaris */
+        $hasilBaris = [];
+        $kurang = [];
+
+        if ($barisMutasi !== []) {
+            $hasil = $this->catatMutasi->Jalankan($this->BuatDokumenMutasi($data, $penjualan, $idKasir, array_map(fn (DataBarisMutasi $b): DataBarisMutasi => new DataBarisMutasi(
                 kunciBaris: $b->kunciBaris,
                 idProduk: $b->idProduk,
-                idGudang: (int) $outlet->idGudangToko,
+                idGudang: $idGudang,
                 jenisMutasi: $b->jenisMutasi,
                 jumlah: $b->jumlah,
                 modeNilai: $b->modeNilai,
                 idReferensiDetail: $b->idReferensiDetail,
-            ), $barisMutasi),
-            abaikanBatasMinus: true,
-        ));
+            ), $barisMutasi), abaikanBatasMinus: true));
+            $hasilBaris = $hasil->baris;
 
-        $this->IsiHppBaris($hasil, $detail, $indeksPerKunci);
-
-        $kurang = [];
-
-        foreach ($hasil->AmbilBarisStokTidakCukup() as $b) {
-            $kurang[$b->idProduk] = $infoPerKunci[$b->kunciBaris]->nama.' (sisa '.PemeriksaStokMinus::FormatJumlah($b->saldoSetelah).')';
+            foreach ($hasil->AmbilBarisStokTidakCukup() as $b) {
+                $kurang[$b->idProduk] = $infoPerKunci[$b->kunciBaris]->nama.' (sisa '.PemeriksaStokMinus::FormatJumlah($b->saldoSetelah).')';
+            }
         }
+
+        if ($permintaanBatch !== []) {
+            [$hasilBatch, $asalKunci, $tinjauanBatch] = $this->CatatStokBatch($data, $penjualan, $idKasir, $idGudang, $permintaanBatch, $infoPerKunci);
+
+            foreach ($hasilBatch as $kunciBaru => $b) {
+                $hasilBaris[$kunciBaru] = $b;
+                $infoPerKunci[$kunciBaru] = $infoPerKunci[$asalKunci[$kunciBaru]];
+                $indeksPerKunci[$kunciBaru] = $indeksPerKunci[$asalKunci[$kunciBaru]];
+            }
+
+            $tinjauan = [...$tinjauan, ...$tinjauanBatch];
+        }
+
+        $this->IsiHppBaris($hasilBaris, $detail, $indeksPerKunci);
 
         if ($kurang !== []) {
             $tinjauan['StokTidakCukup'] = 'StokTidakCukup: '.implode(', ', $kurang);
@@ -1281,12 +1304,119 @@ final class TerimaPenjualanPos
 
         $perubahan = [];
 
-        foreach ($hasil->baris as $kunci => $b) {
+        foreach ($hasilBaris as $kunci => $b) {
             $peran = $this->petaAkunPersediaan->UntukJenis($infoPerKunci[$kunci]->jenis)->value;
             $perubahan[$peran] = ($perubahan[$peran] ?? Uang::Nol())->Tambah($b->totalHpp);
         }
 
         return [$tinjauan, $perubahan];
+    }
+
+    /**
+     * @param  list<DataBarisMutasi>  $baris
+     */
+    private function BuatDokumenMutasi(DataPenjualanPos $data, Penjualan $penjualan, int $idKasir, array $baris, bool $abaikanBatasMinus): DataDokumenMutasi
+    {
+        return new DataDokumenMutasi(
+            jenisReferensi: JenisReferensiMutasi::Penjualan,
+            idReferensi: $penjualan->Id,
+            uuidReferensi: $penjualan->Uuid,
+            nomorReferensi: $penjualan->Nomor,
+            tanggalBisnis: CarbonImmutable::parse($penjualan->TanggalBisnis->toDateString()),
+            idPengguna: $idKasir,
+            idPerangkat: $data->idPerangkat,
+            baris: $baris,
+            abaikanBatasMinus: $abaikanBatasMinus,
+        );
+    }
+
+    /**
+     * F-05g: penjualan produk ber-batch. Server memilih batch secara FEFO (kedaluwarsa terdekat lebih dulu, `AlokatorBatchFefo`)
+     * dan satu baris penjualan bisa dipecah ke beberapa batch (kunci `{kunci}#{n}`). Batch tidak pernah minus, sehingga
+     * bagian yang tidak tertutup batch mana pun **tidak dikurangi** dan penjualan ditandai `BatchTidakCukup` untuk
+     * dikoreksi pemilik lewat penyesuaian/opname (penjualan sudah terjadi di kasir, BR-07.x: tidak ditolak). Batch yang
+     * sudah lewat kedaluwarsa pada tanggal bisnis tetap tercatat tetapi ditandai `BatchKedaluwarsa`.
+     *
+     * Rencana dibuat dari bacaan tanpa kunci; bila penjualan lain mengambil batch yang sama lebih dulu, mesin buku stok menolak
+     * dengan `StokBatchTidakCukup` dan rencana dibuat ulang dari data terkini (savepoint, paling banyak 3 percobaan).
+     *
+     * @param  array<string, array{0: Kuantitas, 1: int}>  $permintaan  kunci → [jumlah dasar positif, Id baris penjualan]
+     * @param  array<string, DataKebutuhanStok>  $infoPerKunci
+     * @return array{0: array<string, HasilBarisMutasi>, 1: array<string, string>, 2: array<string, string>} [hasil per kunci pecahan, kunci pecahan → kunci asal, tinjauan]
+     */
+    private function CatatStokBatch(DataPenjualanPos $data, Penjualan $penjualan, int $idKasir, int $idGudang, array $permintaan, array $infoPerKunci): array
+    {
+        $tanggalBisnis = CarbonImmutable::parse($penjualan->TanggalBisnis->toDateString());
+        $daftarPermintaan = [];
+
+        foreach ($permintaan as $kunci => [$jumlah]) {
+            $daftarPermintaan[] = ['Kunci' => $kunci, 'IdProduk' => $infoPerKunci[$kunci]->idProduk, 'IdGudang' => $idGudang, 'Jumlah' => $jumlah];
+        }
+
+        for ($percobaan = 1; ; $percobaan++) {
+            $rencana = $this->alokatorBatch->Susun($daftarPermintaan, $percobaan > 1);
+            $barisMutasi = [];
+            $asalKunci = [];
+
+            foreach ($rencana['Alokasi'] as $kunci => $daftarAlokasi) {
+                foreach (array_values($daftarAlokasi) as $n => $a) {
+                    $kunciBaru = $kunci.'#'.($n + 1);
+                    $asalKunci[$kunciBaru] = $kunci;
+                    $barisMutasi[] = new DataBarisMutasi(
+                        kunciBaris: $kunciBaru,
+                        idProduk: $infoPerKunci[$kunci]->idProduk,
+                        idGudang: $idGudang,
+                        jenisMutasi: JenisMutasi::Penjualan,
+                        jumlah: $a['Jumlah']->Negasi(),
+                        modeNilai: ModeNilaiMutasi::Berjalan,
+                        idReferensiDetail: $permintaan[$kunci][1],
+                        idBatchStok: $a['IdBatchStok'],
+                    );
+                }
+            }
+
+            $hasilBaris = [];
+
+            if ($barisMutasi !== []) {
+                try {
+                    $hasilBaris = DB::transaction(fn (): array => $this->catatMutasi->Jalankan($this->BuatDokumenMutasi($data, $penjualan, $idKasir, $barisMutasi, abaikanBatasMinus: false))->baris);
+                } catch (PelanggaranAturanBisnis $e) {
+                    if ($e->kode === 'StokBatchTidakCukup' && $percobaan < self::PERCOBAAN_BATCH) {
+                        continue;
+                    }
+
+                    throw $e;
+                }
+            }
+
+            break;
+        }
+
+        $tinjauan = [];
+        $kurang = [];
+        $kedaluwarsa = [];
+
+        foreach ($rencana['Sisa'] as $kunci => $sisa) {
+            $kurang[$infoPerKunci[$kunci]->idProduk] = $infoPerKunci[$kunci]->nama.' (kurang '.PemeriksaStokMinus::FormatJumlah($sisa).')';
+        }
+
+        foreach ($rencana['Alokasi'] as $kunci => $daftarAlokasi) {
+            foreach ($daftarAlokasi as $a) {
+                if ($a['TanggalKedaluwarsa'] !== null && $a['TanggalKedaluwarsa']->lessThan($tanggalBisnis)) {
+                    $kedaluwarsa[] = $infoPerKunci[$kunci]->nama.' batch '.$a['NomorBatch'].' (kedaluwarsa '.$a['TanggalKedaluwarsa']->toDateString().')';
+                }
+            }
+        }
+
+        if ($kurang !== []) {
+            $tinjauan['BatchTidakCukup'] = 'BatchTidakCukup: '.implode(', ', $kurang).'; bagian itu tidak mengurangi stok batch mana pun';
+        }
+
+        if ($kedaluwarsa !== []) {
+            $tinjauan['BatchKedaluwarsa'] = 'BatchKedaluwarsa: '.implode(', ', array_values(array_unique($kedaluwarsa)));
+        }
+
+        return [$hasilBaris, $asalKunci, $tinjauan];
     }
 
     private function PastikanBahanBisaDikurangi(DataKebutuhanStok $k, int $indeks): void
@@ -1295,22 +1425,23 @@ final class TerimaPenjualanPos
             throw new PelanggaranAturanBisnis('ProdukTidakBisaDijual', "{$k->nama} ({$k->jalur}) adalah barang konsinyasi yang belum bisa dijual di POS.", "Baris.{$indeks}.UuidProduk");
         }
 
-        if ($k->pelacakan !== PelacakanProduk::Tidak) {
-            throw new PelanggaranAturanBisnis('PelacakanBelumDidukung', "{$k->nama} ({$k->jalur}) memakai {$k->pelacakan->AmbilLabel()}; penjualan yang mengurangi stok berpelacakan belum didukung.", "Baris.{$indeks}.UuidProduk");
+        if ($k->pelacakan === PelacakanProduk::Seri) {
+            throw new PelanggaranAturanBisnis('PelacakanBelumDidukung', "{$k->nama} ({$k->jalur}) memakai {$k->pelacakan->AmbilLabel()}; penjualan produk bernomor seri belum didukung.", "Baris.{$indeks}.UuidProduk");
         }
     }
 
     /**
      * HPP baris = −Σ TotalHpp mutasi baris itu; HPP per satuan jual = TotalHpp ÷ Jumlah (skala 6).
      *
+     * @param  array<string, HasilBarisMutasi>  $hasilBaris
      * @param  list<PenjualanDetail>  $detail
      * @param  array<string, int>  $indeksPerKunci
      */
-    private function IsiHppBaris(HasilCatatMutasi $hasil, array $detail, array $indeksPerKunci): void
+    private function IsiHppBaris(array $hasilBaris, array $detail, array $indeksPerKunci): void
     {
         $total = [];
 
-        foreach ($hasil->baris as $kunci => $b) {
+        foreach ($hasilBaris as $kunci => $b) {
             $indeks = $indeksPerKunci[$kunci];
             $total[$indeks] = ($total[$indeks] ?? Uang::Nol())->Kurangi($b->totalHpp);
         }

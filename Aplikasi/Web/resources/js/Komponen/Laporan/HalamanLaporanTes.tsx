@@ -378,6 +378,7 @@ describe('F-14a laporan pajak & stok', () => {
                 ],
             },
             Kritis: null,
+            Kedaluwarsa: null,
         };
         RenderUji(<HalamanLaporanStok {...nilai} />);
         expect(screen.getAllByText('Rp 380.000').length).toBeGreaterThan(0);
@@ -395,5 +396,55 @@ describe('F-14a laporan pajak & stok', () => {
         expect(screen.getByRole('heading', { name: 'Stok kritis (1)' })).toBeTruthy();
         expect(screen.getByText('2 pcs')).toBeTruthy();
         expect(screen.getByText('GLP-1KG')).toBeTruthy();
+        cleanup();
+
+        // F-05g: tab kedaluwarsa memuat batch yang sudah lewat & yang mendekati.
+        RenderUji(
+            <HalamanLaporanStok
+                {...nilai}
+                Saring={{ Tab: 'kedaluwarsa', Tanggal: '2026-10-07', Gudang: '' }}
+                Nilai={null}
+                Kedaluwarsa={{
+                    Jumlah: 2,
+                    JumlahLewat: 1,
+                    Baris: [
+                        {
+                            Kunci: 'p1-g1-UHT-A',
+                            UuidProduk: 'p1',
+                            NamaProduk: 'Susu UHT Full Cream 1 Liter',
+                            Sku: null,
+                            SimbolSatuan: 'pcs',
+                            UuidGudang: 'g1',
+                            NamaGudang: 'Toko',
+                            NamaOutlet: 'Toko Kelontong Berkah Solo',
+                            NomorBatch: 'UHT-A',
+                            TanggalKedaluwarsa: '2026-10-04',
+                            SisaHari: -3,
+                            Status: 'Lewat',
+                            Sisa: '4.0000',
+                        },
+                        {
+                            Kunci: 'p1-g1-UHT-B',
+                            UuidProduk: 'p1',
+                            NamaProduk: 'Susu UHT Full Cream 1 Liter',
+                            Sku: null,
+                            SimbolSatuan: 'pcs',
+                            UuidGudang: 'g1',
+                            NamaGudang: 'Toko',
+                            NamaOutlet: 'Toko Kelontong Berkah Solo',
+                            NomorBatch: 'UHT-B',
+                            TanggalKedaluwarsa: '2026-10-12',
+                            SisaHari: 5,
+                            Status: 'Segera',
+                            Sisa: '10.0000',
+                        },
+                    ],
+                }}
+            />,
+        );
+        expect(screen.getByRole('heading', { name: 'Batch kedaluwarsa (2)' })).toBeTruthy();
+        expect(screen.getByText('Batch UHT-A')).toBeTruthy();
+        expect(screen.getByText(/Sudah lewat \(3 hari lalu\)/)).toBeTruthy();
+        expect(screen.getByText(/Segera \(5 hari lagi\)/)).toBeTruthy();
     });
 });

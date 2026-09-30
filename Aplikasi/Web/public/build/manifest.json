@@ -1756,7 +1756,7 @@
     "src": "node_modules/@fontsource-variable/atkinson-hyperlegible-next/files/atkinson-hyperlegible-next-latin-wght-normal.woff2"
   },
   "resources/js/Aplikasi.tsx": {
-    "file": "assets/Aplikasi-DZmr2HoJ.js",
+    "file": "assets/Aplikasi-D6jR1orR.js",
     "name": "Aplikasi",
     "src": "resources/js/Aplikasi.tsx",
     "isEntry": true,
@@ -3397,7 +3397,7 @@
     ]
   },
   "resources/js/Halaman/Kelola/Laporan/Stok.tsx": {
-    "file": "assets/Stok-CzP9uS_q.js",
+    "file": "assets/Stok-ChsSq0xe.js",
     "name": "Stok",
     "src": "resources/js/Halaman/Kelola/Laporan/Stok.tsx",
     "isDynamicEntry": true,

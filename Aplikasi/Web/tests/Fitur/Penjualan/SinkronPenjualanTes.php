@@ -432,11 +432,13 @@ describe('F-07b aturan penolakan', function (): void {
             ->and(PemeriksaInvarian::PeriksaSemua($k['Tenant']->Id))->toBe([]);
     });
 
-    it('produk: bahan baku, induk varian, konsinyasi = ProdukTidakBisaDijual; batch/seri (juga sebagai bahan resep) = PelacakanBelumDidukung; produk diarsipkan/dihapus setelah dijual offline tetap diterima (dihapus: stok tidak dikurangi, ditinjau)', function (): void {
+    it('produk: bahan baku, induk varian, konsinyasi = ProdukTidakBisaDijual; seri (juga sebagai bahan resep) = PelacakanBelumDidukung, batch diterima (F-05g, tanpa stok batch = ditinjau BatchTidakCukup); produk diarsipkan/dihapus setelah dijual offline tetap diterima (dihapus: stok tidak dikurangi, ditinjau)', function (): void {
         $k = BantuanPenjualan::Siapkan($this);
         $semua = BantuanPersediaan::BuatProdukSemuaJenis(BantuanKomposisi::Satuan('Pieces', 'pcs', false), BantuanKomposisi::Satuan('Kilogram', 'kg'));
         $induk = BantuanKatalog::BuatProduk(['Nama' => 'Kaos Polos Katun Combed 30s', 'Jenis' => JenisProduk::IndukVarian]);
         $resepBatch = BantuanKomposisi::BuatProdukResep('Susu Segar Karamel Dingin');
+        $resepSeri = BantuanKomposisi::BuatProdukResep('Paket Servis Rice Cooker');
+        BantuanKomposisi::SimpanResep($resepSeri, [[$semua['Seri'], '1']]);
         BantuanKomposisi::SimpanResep($resepBatch, [[$semua['Batch'], '1']]);
         $diarsipkan = BantuanPenjualan::BuatProdukBerstok($k['Gudang'], $k['Pemilik']->Id, 'Sabun Cuci Piring Jeruk Nipis 800 ml', '5', '12000', '15500.00');
         $diarsipkan->forceFill(['DiarsipkanPada' => now(), 'Aktif' => false])->save();
@@ -453,14 +455,16 @@ describe('F-07b aturan penolakan', function (): void {
             $item($semua['Batch']),
             $item($semua['Seri']),
             $item($resepBatch),
+            $item($resepSeri),
             $item($diarsipkan),
             $itemDihapus = $item($dihapus),
         ]))->toBe([
             ['Ditolak', 'ProdukTidakBisaDijual'],
             ['Ditolak', 'ProdukTidakBisaDijual'],
             ['Ditolak', 'ProdukTidakBisaDijual'],
+            ['Diterima', null],
             ['Ditolak', 'PelacakanBelumDidukung'],
-            ['Ditolak', 'PelacakanBelumDidukung'],
+            ['Diterima', null],
             ['Ditolak', 'PelacakanBelumDidukung'],
             ['Diterima', null],
             ['Diterima', null],

@@ -50,6 +50,7 @@ use App\Domain\Persediaan\Data\DataDokumenMutasi;
 use App\Domain\Persediaan\Enum\JenisMutasi;
 use App\Domain\Persediaan\Enum\JenisReferensiMutasi;
 use App\Domain\Persediaan\Enum\ModeNilaiMutasi;
+use App\Domain\Persediaan\Kueri\InfoBatchStok;
 use App\Domain\Persediaan\Kueri\MutasiDokumen;
 use App\Domain\Persediaan\Layanan\PemeriksaStokMinus;
 use App\Domain\Persediaan\Layanan\PetaAkunPersediaan;
@@ -105,6 +106,7 @@ final class TerimaReturPenjualanPos
         private readonly PencatatKomisiPenjualan $komisi,
         private readonly PencatatDepositPenjualan $deposit,
         private readonly PencatatSesiPenjualan $sesi,
+        private readonly InfoBatchStok $infoBatch,
     ) {}
 
     public function Jalankan(DataReturPenjualanPos $data): StatusItemSinkron
@@ -455,7 +457,7 @@ final class TerimaReturPenjualanPos
      *
      * @param  list<PenjualanDetail>  $detail
      * @param  array<int, DataSudahDiretur>  $sudah
-     * @return list<array{Indeks: int, KunciBaris: string, IdProduk: int, IdGudang: int, Jumlah: Kuantitas, Nilai: Uang, HppSatuan: BigDecimal}>
+     * @return list<array{Indeks: int, KunciBaris: string, IdProduk: int, IdGudang: int, Jumlah: Kuantitas, Nilai: Uang, HppSatuan: BigDecimal, IdBatchStok: int|null}>
      */
     private function RencanakanStok(DataReturPenjualanPos $data, array $detail, array $sudah, ?int $idGudangRusak): array
     {
@@ -478,18 +480,24 @@ final class TerimaReturPenjualanPos
             $sesudah = $sebelum->plus($baris->jumlah->KeDesimal());
             $terakhir = $sesudah->isEqualTo($jual);
 
+            $bagianBatch = self::BagiKeBatch($mutasi[$d->Id] ?? [], $sebelum, $sesudah, $jual, $terakhir);
+
             foreach ($mutasi[$d->Id] ?? [] as $m) {
-                $asalJumlah = BigDecimal::of($m['Jumlah'])->abs();
-                $asalNilai = BigDecimal::of($m['TotalHpp'])->abs();
-                $jumlah = ($terakhir ? $asalJumlah : self::Bagian($asalJumlah, $sesudah, $jual, Kuantitas::SKALA))
-                    ->minus(self::Bagian($asalJumlah, $sebelum, $jual, Kuantitas::SKALA));
+                if ($m['IdBatchStok'] !== null) {
+                    [$jumlah, $nilai] = $bagianBatch[$m['Id']];
+                } else {
+                    $asalJumlah = BigDecimal::of($m['Jumlah'])->abs();
+                    $asalNilai = BigDecimal::of($m['TotalHpp'])->abs();
+                    $jumlah = ($terakhir ? $asalJumlah : self::Bagian($asalJumlah, $sesudah, $jual, Kuantitas::SKALA))
+                        ->minus(self::Bagian($asalJumlah, $sebelum, $jual, Kuantitas::SKALA));
+                    $nilai = ($terakhir ? $asalNilai->toScale(Uang::SKALA) : self::Bagian($asalNilai, $sesudah, $jual, Uang::SKALA))
+                        ->minus(self::Bagian($asalNilai, $sebelum, $jual, Uang::SKALA));
+                }
 
                 if ($jumlah->isZero()) {
                     continue;
                 }
 
-                $nilai = ($terakhir ? $asalNilai->toScale(Uang::SKALA) : self::Bagian($asalNilai, $sesudah, $jual, Uang::SKALA))
-                    ->minus(self::Bagian($asalNilai, $sebelum, $jual, Uang::SKALA));
                 $rusak = $baris->kondisi === KondisiBarangRetur::Rusak && $idGudangRusak !== null;
 
                 $rencana[] = [
@@ -500,6 +508,7 @@ final class TerimaReturPenjualanPos
                     'Jumlah' => Kuantitas::Dari($jumlah),
                     'Nilai' => Uang::Dari($nilai),
                     'HppSatuan' => BigDecimal::of($m['HppSatuan'])->abs(),
+                    'IdBatchStok' => $m['IdBatchStok'],
                 ];
             }
         }
@@ -510,7 +519,7 @@ final class TerimaReturPenjualanPos
     /**
      * @param  list<DataNilaiReturBaris>  $nilai
      * @param  array<string, MetodePembayaran>  $metode
-     * @param  list<array{Indeks: int, KunciBaris: string, IdProduk: int, IdGudang: int, Jumlah: Kuantitas, Nilai: Uang, HppSatuan: BigDecimal}>  $rencana
+     * @param  list<array{Indeks: int, KunciBaris: string, IdProduk: int, IdGudang: int, Jumlah: Kuantitas, Nilai: Uang, HppSatuan: BigDecimal, IdBatchStok: int|null}>  $rencana
      * @param  list<string>  $tinjauan
      */
     private function SimpanRetur(
@@ -576,7 +585,7 @@ final class TerimaReturPenjualanPos
     /**
      * @param  list<PenjualanDetail>  $detail
      * @param  list<DataNilaiReturBaris>  $nilai
-     * @param  list<array{Indeks: int, KunciBaris: string, IdProduk: int, IdGudang: int, Jumlah: Kuantitas, Nilai: Uang, HppSatuan: BigDecimal}>  $rencana
+     * @param  list<array{Indeks: int, KunciBaris: string, IdProduk: int, IdGudang: int, Jumlah: Kuantitas, Nilai: Uang, HppSatuan: BigDecimal, IdBatchStok: int|null}>  $rencana
      * @return list<int> Id baris retur, urutan sama dengan baris masukan
      */
     private function SimpanDetail(DataReturPenjualanPos $data, ReturPenjualan $retur, array $detail, array $nilai, array $rencana): array
@@ -633,7 +642,7 @@ final class TerimaReturPenjualanPos
     /**
      * Mutasi `ReturPenjualan` (masuk, nilai ditentukan HPP snapshot) lalu perubahan nilai per peran akun persediaan.
      *
-     * @param  list<array{Indeks: int, KunciBaris: string, IdProduk: int, IdGudang: int, Jumlah: Kuantitas, Nilai: Uang, HppSatuan: BigDecimal}>  $rencana
+     * @param  list<array{Indeks: int, KunciBaris: string, IdProduk: int, IdGudang: int, Jumlah: Kuantitas, Nilai: Uang, HppSatuan: BigDecimal, IdBatchStok: int|null}>  $rencana
      * @param  list<int>  $idDetailRetur
      * @return array<string, Uang> nilai PeranAkun persediaan → nilai stok yang kembali
      */
@@ -642,6 +651,9 @@ final class TerimaReturPenjualanPos
         if ($rencana === []) {
             return [];
         }
+
+        // F-05g: barang ber-batch kembali ke batch asalnya (pecahan FEFO saat dijual dikembalikan sebanding).
+        $batch = $this->infoBatch->AmbilBanyak(array_values(array_filter(array_map(fn (array $r): ?int => $r['IdBatchStok'], $rencana))));
 
         $hasil = $this->catatMutasi->Jalankan(new DataDokumenMutasi(
             jenisReferensi: JenisReferensiMutasi::ReturPenjualan,
@@ -661,6 +673,7 @@ final class TerimaReturPenjualanPos
                 nilai: $r['Nilai'],
                 hppSatuan: $r['HppSatuan'],
                 idReferensiDetail: $idDetailRetur[$r['Indeks']],
+                batchMasuk: $r['IdBatchStok'] === null ? null : $batch[$r['IdBatchStok']],
             ), $rencana),
         ));
 
@@ -773,6 +786,52 @@ final class TerimaReturPenjualanPos
     private static function Bagian(BigDecimal $nilai, BigDecimal $bagian, BigDecimal $total, int $skala): BigDecimal
     {
         return $nilai->multipliedBy($bagian)->dividedBy($total, $skala, RoundingMode::HalfUp);
+    }
+
+    /**
+     * F-05g: pembagian retur untuk mutasi penjualan **ber-batch**. Penjualan FEFO memecah satu baris ke beberapa batch
+     * (mis. 3 pcs dari batch A lalu 2 pcs dari batch B); membagi sebanding per batch menghasilkan pecahan (0,6 pcs), jadi
+     * batch diperlakukan berurutan: unit ke-1…n hasil penjualan kembali ke batch tempat unit itu diambil (urutan mutasi).
+     * Nilai HPP dibagi sebanding dalam satu batch, dan bagian terakhir sebuah batch mengambil sisanya (Σ = asal).
+     *
+     * @param  list<array<string, mixed>>  $mutasi  ringkasan mutasi penjualan untuk satu baris detail
+     * @return array<int, array{0: BigDecimal, 1: BigDecimal}> IdMutasi asal → [jumlah, nilai]
+     */
+    private static function BagiKeBatch(array $mutasi, BigDecimal $sebelum, BigDecimal $sesudah, BigDecimal $jual, bool $terakhir): array
+    {
+        $perProduk = [];
+
+        foreach ($mutasi as $m) {
+            if ($m['IdBatchStok'] !== null) {
+                $perProduk[$m['IdProduk']][] = $m;
+            }
+        }
+
+        $hasil = [];
+
+        foreach ($perProduk as $baris) {
+            $total = array_reduce($baris, fn (BigDecimal $t, array $m): BigDecimal => $t->plus(BigDecimal::of($m['Jumlah'])->abs()), BigDecimal::zero());
+            $awalRetur = self::Bagian($total, $sebelum, $jual, Kuantitas::SKALA);
+            $akhirRetur = $terakhir ? $total : self::Bagian($total, $sesudah, $jual, Kuantitas::SKALA);
+            $mulai = BigDecimal::zero();
+
+            foreach ($baris as $m) {
+                $asalJumlah = BigDecimal::of($m['Jumlah'])->abs();
+                $asalNilai = BigDecimal::of($m['TotalHpp'])->abs();
+                $r0 = self::Jepit($awalRetur->minus($mulai), $asalJumlah);
+                $r1 = self::Jepit($akhirRetur->minus($mulai), $asalJumlah);
+                $nilaiBagian = fn (BigDecimal $r): BigDecimal => $r->isEqualTo($asalJumlah) ? $asalNilai->toScale(Uang::SKALA) : self::Bagian($asalNilai, $r, $asalJumlah, Uang::SKALA);
+                $hasil[$m['Id']] = [$r1->minus($r0), $nilaiBagian($r1)->minus($nilaiBagian($r0))];
+                $mulai = $mulai->plus($asalJumlah);
+            }
+        }
+
+        return $hasil;
+    }
+
+    private static function Jepit(BigDecimal $nilai, BigDecimal $maks): BigDecimal
+    {
+        return $nilai->isNegative() ? BigDecimal::zero() : ($nilai->isGreaterThan($maks) ? $maks : $nilai);
     }
 
     private static function GalatNomorDipakai(string $nomor): PelanggaranAturanBisnis

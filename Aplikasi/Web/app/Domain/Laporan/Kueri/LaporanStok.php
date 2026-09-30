@@ -21,6 +21,10 @@ use Carbon\CarbonImmutable;
  */
 final class LaporanStok
 {
+    public const HARI_MUKA_KEDALUWARSA = 30;
+
+    public const HARI_SEGERA_KEDALUWARSA = 7;
+
     public function __construct(
         private readonly InfoGudang $infoGudang,
         private readonly StokUntukLaporan $stok,
@@ -153,5 +157,44 @@ final class LaporanStok
         }
 
         return ['Jumlah' => $jumlahKritis, 'Baris' => $baris];
+    }
+
+    /**
+     * F-05g: batch yang sudah lewat atau akan kedaluwarsa dalam `$hariMuka` hari (bawaan 30), per lokasi stok.
+     * `SisaHari` negatif = sudah lewat. `Status`: `Lewat`, `Segera` (≤ 7 hari), `Mendekati`.
+     *
+     * @param  list<int>|null  $idOutletBoleh
+     * @return array{Jumlah: int, JumlahLewat: int, Baris: list<array{Kunci: string, UuidProduk: string, NamaProduk: string, Sku: string|null, SimbolSatuan: string, UuidGudang: string, NamaGudang: string, NamaOutlet: string, NomorBatch: string, TanggalKedaluwarsa: string, SisaHari: int, Status: string, Sisa: string}>}
+     */
+    public function BatchKedaluwarsa(?array $idOutletBoleh, CarbonImmutable $hariIni, string $uuidGudang = '', int $hariMuka = self::HARI_MUKA_KEDALUWARSA, ?int $batas = null): array
+    {
+        $gudang = $this->AmbilGudang($idOutletBoleh, $uuidGudang);
+        $hasil = $this->stok->AmbilBatchMendekatiKedaluwarsa(array_keys($gudang), $hariIni->addDays($hariMuka), $batas);
+        $info = $this->infoProduk->AmbilBanyak(array_values(array_unique(array_column($hasil['Baris'], 'IdProduk'))));
+        $lewat = $this->stok->AmbilBatchMendekatiKedaluwarsa(array_keys($gudang), $hariIni->subDay(), 0)['Jumlah'];
+        $baris = [];
+
+        foreach ($hasil['Baris'] as $b) {
+            $p = $info[$b['IdProduk']] ?? null;
+            $g = $gudang[$b['IdGudang']] ?? null;
+            $sisaHari = (int) $hariIni->startOfDay()->diffInDays(CarbonImmutable::parse($b['TanggalKedaluwarsa'])->startOfDay(), false);
+            $baris[] = [
+                'Kunci' => ($p->uuid ?? (string) $b['IdProduk']).'-'.($g->uuid ?? (string) $b['IdGudang']).'-'.$b['NomorBatch'],
+                'UuidProduk' => $p->uuid ?? '',
+                'NamaProduk' => $p->nama ?? 'Produk tidak dikenal',
+                'Sku' => $p?->sku,
+                'SimbolSatuan' => $p->simbolSatuan ?? '',
+                'UuidGudang' => $g->uuid ?? '',
+                'NamaGudang' => $g->nama ?? '',
+                'NamaOutlet' => $g->namaOutlet ?? '',
+                'NomorBatch' => $b['NomorBatch'],
+                'TanggalKedaluwarsa' => $b['TanggalKedaluwarsa'],
+                'SisaHari' => $sisaHari,
+                'Status' => $sisaHari < 0 ? 'Lewat' : ($sisaHari <= self::HARI_SEGERA_KEDALUWARSA ? 'Segera' : 'Mendekati'),
+                'Sisa' => $b['JumlahSisa'],
+            ];
+        }
+
+        return ['Jumlah' => $hasil['Jumlah'], 'JumlahLewat' => $lewat, 'Baris' => $baris];
     }
 }
