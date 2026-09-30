@@ -11,6 +11,7 @@ import {
     RingkasanNilaiGrosir,
     RiwayatGrosirDokumen,
 } from '@/Komponen/Grosir/BagianDokumenGrosir';
+import AksiHalaman from '@/Komponen/Kelola/AksiHalaman';
 import Panel from '@/Komponen/Kelola/Panel';
 import TabelData from '@/Komponen/TabelData/TabelData';
 import type { KolomTabel } from '@/Komponen/TabelData/Tipe';
@@ -112,7 +113,7 @@ export default function HalamanDetailReturGrosir({ Retur, Baris, Jurnal, Riwayat
                 </Pemberitahuan>
             ) : null}
 
-            <div className="flex flex-wrap gap-2">
+            <AksiHalaman>
                 <Button asChild variant="outline" className="h-8 pointer-coarse:h-11">
                     <a href={`${alamat}/${Retur.Uuid}/cetak`} target="_blank" rel="noreferrer">
                         {Retur.MengurangiPiutang ? 'Cetak nota kredit' : 'Cetak tanda terima retur'}
@@ -127,7 +128,7 @@ export default function HalamanDetailReturGrosir({ Retur, Baris, Jurnal, Riwayat
                         Batalkan retur
                     </Button>
                 ) : null}
-            </div>
+            </AksiHalaman>
 
             <KartuKeteranganGrosir>
                 <KeteranganGrosir label="Pelanggan">{Retur.NamaPelanggan}</KeteranganGrosir>

@@ -11,6 +11,7 @@ import {
     RingkasanNilaiGrosir,
     RiwayatGrosirDokumen,
 } from '@/Komponen/Grosir/BagianDokumenGrosir';
+import AksiHalaman from '@/Komponen/Kelola/AksiHalaman';
 import Panel from '@/Komponen/Kelola/Panel';
 import TabelData from '@/Komponen/TabelData/TabelData';
 import type { KolomTabel } from '@/Komponen/TabelData/Tipe';
@@ -113,7 +114,7 @@ export default function HalamanDetailSuratJalan({
                 </Pemberitahuan>
             ) : null}
 
-            <div className="flex flex-wrap gap-2">
+            <AksiHalaman>
                 <Button asChild variant="outline" className="h-8 pointer-coarse:h-11">
                     <a href={`${alamat}/${SuratJalan.Uuid}/cetak`} target="_blank" rel="noreferrer">
                         Cetak surat jalan
@@ -133,7 +134,7 @@ export default function HalamanDetailSuratJalan({
                         Batalkan surat jalan
                     </Button>
                 ) : null}
-            </div>
+            </AksiHalaman>
 
             <KartuKeteranganGrosir>
                 <KeteranganGrosir label="Pelanggan">{SuratJalan.NamaPelanggan}</KeteranganGrosir>

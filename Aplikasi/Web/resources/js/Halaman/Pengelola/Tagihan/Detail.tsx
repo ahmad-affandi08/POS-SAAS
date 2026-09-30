@@ -105,7 +105,8 @@ function KartuPembayaran({
                             <div>
                                 <dt className="text-keterangan text-teks-sekunder">Rekening tujuan</dt>
                                 <dd>
-                                    {pembayaran.BankTujuan} <span className="font-mono">{pembayaran.NomorRekeningTujuan}</span>
+                                    {pembayaran.BankTujuan}{' '}
+                                    <span className="font-mono">{pembayaran.NomorRekeningTujuan}</span>
                                 </dd>
                             </div>
                         </>

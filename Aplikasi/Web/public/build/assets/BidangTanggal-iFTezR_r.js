@@ -1,1 +1,0 @@
-import{t as e}from"./jsx-runtime-C33xwjU7.js";import{t}from"./PemilihTanggal-hwbe2V_G.js";var n=e();function r(e){return(0,n.jsx)(t,{...e})}export{r as t};

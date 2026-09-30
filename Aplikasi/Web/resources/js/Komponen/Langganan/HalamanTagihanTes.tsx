@@ -2,7 +2,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import HalamanTagihanLangganan from '@/Halaman/Kelola/Langganan/Tagihan';
-import { AturHalamanUji, kirimanForm, tiruanRouter } from '@/Komponen/Katalog/TiruanInertia';
+import { AturHalamanUji, tiruanRouter } from '@/Komponen/Katalog/TiruanInertia';
 import type { TagihanLangganan } from '@/Tipe/TagihanLangganan';
 
 vi.mock('@inertiajs/react', async () => (await import('@/Komponen/Katalog/TiruanInertia')).TiruanInertia);

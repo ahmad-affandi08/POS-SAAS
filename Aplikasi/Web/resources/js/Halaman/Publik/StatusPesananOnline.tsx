@@ -161,7 +161,7 @@ export default function StatusPesananOnline({ Ditemukan, Slug, KodeAkses, Toko, 
                                     <img
                                         src={`data:image/svg+xml;charset=utf-8,${encodeURIComponent(tagihan.Qr)}`}
                                         alt={`QRIS pembayaran pesanan ${p.Nomor}`}
-                                        className="h-64 w-64 rounded-md bg-white p-3"
+                                        className="h-64 w-64 rounded-md bg-permukaan p-3"
                                     />
                                     <p className="text-subjudul font-semibold">{FormatRupiah(tagihan.Jumlah)}</p>
                                     <p className="text-keterangan text-teks-sekunder">

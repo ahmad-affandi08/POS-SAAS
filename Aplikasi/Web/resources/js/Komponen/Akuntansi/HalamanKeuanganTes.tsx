@@ -103,6 +103,8 @@ describe('F-13a menu Akuntansi', () => {
         expect(akuntansi?.sub.map((m) => m.label)).toEqual([
             'Jurnal',
             'Kas & bank',
+            // F-08 BR-08.4 (v2.83): pencairan dana non-tunai, pekerjaan pembukuan sejenis Kas & bank.
+            'Pencairan dana',
             'Buku besar',
             'Neraca saldo',
             'Tutup buku',

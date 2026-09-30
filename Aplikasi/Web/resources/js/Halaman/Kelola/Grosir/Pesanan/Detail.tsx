@@ -11,6 +11,7 @@ import {
     RiwayatGrosirDokumen,
 } from '@/Komponen/Grosir/BagianDokumenGrosir';
 import DialogKirimGrosir from '@/Komponen/Grosir/DialogKirimGrosir';
+import AksiHalaman from '@/Komponen/Kelola/AksiHalaman';
 import Panel from '@/Komponen/Kelola/Panel';
 import TabelData from '@/Komponen/TabelData/TabelData';
 import type { KolomTabel } from '@/Komponen/TabelData/Tipe';
@@ -122,7 +123,7 @@ export default function HalamanDetailPesananGrosir({
                 </Pemberitahuan>
             ) : null}
 
-            <div className="flex flex-wrap gap-2">
+            <AksiHalaman>
                 {Tindakan.Ubah ? (
                     <Button asChild variant="outline" className="h-8 pointer-coarse:h-11">
                         <Link href={`${alamat}/${Pesanan.Uuid}/ubah`}>Ubah draf</Link>
@@ -155,7 +156,7 @@ export default function HalamanDetailPesananGrosir({
                         Batalkan
                     </Button>
                 ) : null}
-            </div>
+            </AksiHalaman>
 
             <KartuKeteranganGrosir>
                 <KeteranganGrosir label="Pelanggan">{Pesanan.NamaPelanggan}</KeteranganGrosir>

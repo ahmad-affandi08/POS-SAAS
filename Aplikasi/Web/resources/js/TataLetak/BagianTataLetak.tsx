@@ -13,7 +13,7 @@ import {
 import { Fragment, useState, type ReactNode } from 'react';
 import { toast } from 'sonner';
 
-import { Avatar, AvatarFallback, AvatarImage } from '@/Komponen/Ui/avatar';
+import { Avatar, AvatarFallback } from '@/Komponen/Ui/avatar';
 import { Badge } from '@/Komponen/Ui/badge';
 import { FormatRupiah } from '@/Pustaka/Format';
 import { FormatTanggal } from '@/Pustaka/FormatWaktu';
@@ -149,7 +149,7 @@ export function KepalaTataLetak({
                                 className="size-full object-contain p-0.5"
                             />
                         ) : (
-                            <span className="flex size-full items-center justify-center rounded-lg bg-brand-lembut text-brand font-bold text-xs uppercase">
+                            <span className="flex size-full items-center justify-center rounded-lg bg-brand-lembut text-brand font-bold text-keterangan uppercase">
                                 {AmbilInisial(identitasUsaha.nama)}
                             </span>
                         )}
@@ -280,6 +280,9 @@ export function MenuAkun({ nama, email, gelap = false, tenant, bolehKelolaLangga
     };
 
     const adaTagihan = tenant?.TagihanTertunda !== null && tenant?.TagihanTertunda !== undefined;
+    // Dipersempit sekali di sini: penyempitan `tenant?.KodePelanggan` di JSX tidak terbawa ke dalam closure
+    // onClick, dan menambal itu dengan `!` menyembunyikan kemungkinan null alih-alih menghilangkannya.
+    const kodePelanggan = tenant?.KodePelanggan ?? null;
 
     return (
         <DropdownMenu modal={false}>
@@ -347,19 +350,17 @@ export function MenuAkun({ nama, email, gelap = false, tenant, bolehKelolaLangga
                                 <span className="truncate text-label font-bold text-teks-utama">
                                     {tenant?.Nama ?? nama}
                                 </span>
-                                <span className="truncate text-keterangan text-teks-sekunder">
-                                    {email ?? nama}
-                                </span>
+                                <span className="truncate text-keterangan text-teks-sekunder">{email ?? nama}</span>
                             </div>
                         </div>
-                        {tenant?.KodePelanggan ? (
+                        {kodePelanggan !== null ? (
                             <button
                                 type="button"
-                                onClick={(e) => SalinId(tenant.KodePelanggan!, e)}
+                                onClick={(e) => SalinId(kodePelanggan, e)}
                                 title="Salin ID Pelanggan"
                                 className="flex items-center gap-1 rounded bg-latar px-2 py-1 text-[11px] font-mono font-medium text-teks-sekunder hover:text-teks-utama hover:bg-garis transition cursor-pointer shrink-0"
                             >
-                                <span>{tenant.KodePelanggan}</span>
+                                <span>{kodePelanggan}</span>
                                 {sudahSalin ? (
                                     <CheckIcon className="size-3 text-sukses shrink-0" />
                                 ) : (
@@ -381,7 +382,10 @@ export function MenuAkun({ nama, email, gelap = false, tenant, bolehKelolaLangga
                                 {tenant.StatusLangganan ? (
                                     <Badge
                                         variant="outline"
-                                        className={cn('text-[10px] px-1.5 py-0 font-medium', KelasStatusLangganan(tenant.StatusLangganan))}
+                                        className={cn(
+                                            'text-[10px] px-1.5 py-0 font-medium',
+                                            KelasStatusLangganan(tenant.StatusLangganan),
+                                        )}
                                     >
                                         {tenant.StatusLangganan}
                                     </Badge>
@@ -390,29 +394,30 @@ export function MenuAkun({ nama, email, gelap = false, tenant, bolehKelolaLangga
                             {bolehKelolaLangganan ? (
                                 <Link
                                     href="/kelola/langganan"
-                                    className="inline-flex items-center gap-0.5 text-xs font-semibold text-brand hover:underline shrink-0"
+                                    className="inline-flex items-center gap-0.5 text-keterangan font-semibold text-brand hover:underline shrink-0"
                                 >
                                     Perpanjang
                                     <ArrowUpRightIcon className="size-3" />
                                 </Link>
                             ) : null}
                         </div>
-                        <p className="text-keterangan text-teks-sekunder">
-                            {TeksMasaAktif(tenant)}
-                        </p>
+                        <p className="text-keterangan text-teks-sekunder">{TeksMasaAktif(tenant)}</p>
 
                         {tenant.TagihanTertunda ? (
-                            <div className="flex items-center justify-between gap-2 rounded-md border border-bahaya/30 bg-bahaya-lembut/70 p-2 text-xs">
+                            <div className="flex items-center justify-between gap-2 rounded-md border border-bahaya/30 bg-bahaya-lembut/70 p-2 text-keterangan">
                                 <div className="min-w-0">
                                     <p className="font-semibold text-bahaya">Tagihan {tenant.TagihanTertunda.Nomor}</p>
                                     <p className="text-teks-utama tabular-nums font-medium">
                                         {FormatRupiah(tenant.TagihanTertunda.Total)}
                                     </p>
                                 </div>
-                                <Button asChild size="sm" variant="destructive" className="h-7 px-2.5 text-xs font-semibold shrink-0">
-                                    <Link href={`/kelola/langganan/tagihan/${tenant.TagihanTertunda.Uuid}`}>
-                                        Bayar
-                                    </Link>
+                                <Button
+                                    asChild
+                                    size="sm"
+                                    variant="destructive"
+                                    className="h-7 px-2.5 text-keterangan font-semibold shrink-0"
+                                >
+                                    <Link href={`/kelola/langganan/tagihan/${tenant.TagihanTertunda.Uuid}`}>Bayar</Link>
                                 </Button>
                             </div>
                         ) : null}
@@ -444,7 +449,10 @@ export function MenuAkun({ nama, email, gelap = false, tenant, bolehKelolaLangga
                     </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-label text-destructive focus:text-destructive cursor-pointer" onSelect={() => router.post('/keluar')}>
+                <DropdownMenuItem
+                    className="text-label text-destructive focus:text-destructive cursor-pointer"
+                    onSelect={() => router.post('/keluar')}
+                >
                     <LogOutIcon aria-hidden="true" />
                     Keluar
                 </DropdownMenuItem>

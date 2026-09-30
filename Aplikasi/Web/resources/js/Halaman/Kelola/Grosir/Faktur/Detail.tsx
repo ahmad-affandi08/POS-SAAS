@@ -13,6 +13,7 @@ import {
     RingkasanNilaiGrosir,
     RiwayatGrosirDokumen,
 } from '@/Komponen/Grosir/BagianDokumenGrosir';
+import AksiHalaman from '@/Komponen/Kelola/AksiHalaman';
 import Panel from '@/Komponen/Kelola/Panel';
 import { Button } from '@/Komponen/Ui/button';
 import JudulHalaman from '@/Komponen/Umpan/JudulHalaman';
@@ -66,7 +67,7 @@ export default function HalamanDetailFakturGrosir({
                 </Pemberitahuan>
             ) : null}
 
-            <div className="flex flex-wrap gap-2">
+            <AksiHalaman>
                 <Button asChild variant="outline" className="h-8 pointer-coarse:h-11">
                     <a href={`${alamat}/${Faktur.Uuid}/cetak`} target="_blank" rel="noreferrer">
                         Cetak faktur
@@ -81,7 +82,7 @@ export default function HalamanDetailFakturGrosir({
                         Batalkan faktur
                     </Button>
                 ) : null}
-            </div>
+            </AksiHalaman>
 
             <KartuKeteranganGrosir>
                 <KeteranganGrosir label="Pelanggan">{Faktur.NamaPelanggan}</KeteranganGrosir>

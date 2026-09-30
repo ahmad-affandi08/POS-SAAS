@@ -73,7 +73,9 @@ export default function BidangTeks({
 
     return (
         <KerangkaBidang galat={galat}>
-            <LabelBidang htmlFor={id} tersembunyi={labelTersembunyi}>{label}</LabelBidang>
+            <LabelBidang htmlFor={id} tersembunyi={labelTersembunyi}>
+                {label}
+            </LabelBidang>
             {kataSandi ? (
                 <div className="relative">
                     {bidang}
