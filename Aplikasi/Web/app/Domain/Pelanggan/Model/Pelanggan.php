@@ -20,6 +20,10 @@ use Illuminate\Support\Carbon;
  * @property string|null $Email
  * @property Carbon|null $TanggalLahir
  * @property string|null $Alamat
+ * @property string|null $Npwp terenkripsi; 15–16 digit, identitas pembeli Faktur Pajak (v3.11)
+ * @property string|null $Nik terenkripsi; 16 digit, pembeli tanpa NPWP (v3.11)
+ * @property string|null $NamaNpwp nama sesuai DJP; kosong = `Nama`
+ * @property string|null $AlamatNpwp alamat sesuai DJP; kosong = `Alamat`
  * @property list<string>|null $Tag
  * @property string|null $Catatan
  * @property bool $SetujuPemasaran
@@ -51,6 +55,8 @@ final class Pelanggan extends ModelDasar
     {
         return [
             'TanggalLahir' => 'date',
+            'Npwp' => 'encrypted',
+            'Nik' => 'encrypted',
             'Tag' => 'array',
             'SetujuPemasaran' => 'boolean',
             'TierTetap' => 'boolean',

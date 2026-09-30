@@ -124,6 +124,9 @@ final class SimpanProduk
             'TampilOnline' => $data->tampilOnline,
             'DurasiMenit' => $data->jenis === JenisProduk::Jasa ? $data->durasiMenit : null,
             // F-05h: hanya produk bernomor seri; impor & panduan awal tidak mengubah garansi yang sudah diatur.
+            // Kode Coretax (v3.11): hanya form back-office; impor & panduan awal tidak menimpa yang sudah diatur.
+            'KodeBarangJasaCoretax' => $data->sumber === SumberPerubahanKatalog::Manual ? $data->kodeBarangJasaCoretax : $produk->KodeBarangJasaCoretax,
+            'KodeUnitCoretax' => $data->sumber === SumberPerubahanKatalog::Manual ? $data->kodeUnitCoretax : $produk->KodeUnitCoretax,
             'MasaGaransiBulan' => $pelacakan === PelacakanProduk::Seri
                 ? ($data->sumber === SumberPerubahanKatalog::Manual ? $data->masaGaransiBulan : $produk->MasaGaransiBulan)
                 : null,

@@ -13,6 +13,8 @@ use App\Domain\Laporan\Layanan\PenulisCsvLaporan;
 use App\Domain\Organisasi\Kueri\PetaUuidOutlet;
 use App\Domain\Organisasi\Kueri\TanggalBisnisOutlet;
 use App\Domain\Penjualan\Kueri\AgregatPenjualan;
+use App\Domain\Penjualan\Layanan\PenulisXmlCoretax;
+use App\Domain\Penjualan\Layanan\PenyusunFakturPajakCoretax;
 use App\Http\Kontroler\Kelola\DasarKelolaKontroler;
 use App\Http\Respons\ResponsTabel;
 use Carbon\CarbonImmutable;
@@ -20,13 +22,15 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * Laporan back-office F-14a ("Rincian F-14a"), baca saja, dibatasi outlet akses pelaku:
  * - penjualan (`laporan.penjualan.lihat`): tab ringkasan harian, per produk (TabelData mode server lewat URL yang sama
  *   dengan `Accept: application/json`), kategori, jam, kasir, kanal, metode bayar, diskon; ekspor CSV sesuai saring;
- * - pajak (`laporan.keuangan.lihat`): PB1/PBJT per outlet per bulan & PPN keluaran per bulan; ekspor CSV;
+ * - pajak (`laporan.keuangan.lihat`): PB1/PBJT per outlet per bulan & PPN keluaran per bulan; ekspor CSV; ringkasan & ekspor
+ *   XML Faktur Pajak Keluaran Coretax dari faktur grosir (PRD v3.12);
  * - stok (`persediaan.lihat`): nilai persediaan pada tanggal, stok kritis & batch kedaluwarsa (F-05g); ekspor CSV.
  */
 final class LaporanKontroler extends DasarKelolaKontroler
@@ -82,6 +86,36 @@ final class LaporanKontroler extends DasarKelolaKontroler
         $baris = array_map(fn (array $b): array => array_map(fn (string $k): string|int|null => self::Sel($b[$k] ?? null), $kolom), $ppn ? $isi['Ppn'] : $isi['Pbjt']);
 
         return PenulisCsvLaporan::Alirkan('laporan-pajak-'.($ppn ? 'ppn' : 'pbjt')."-{$periode->dari->toDateString()}-{$periode->sampai->toDateString()}", $judul, $baris);
+    }
+
+    /** Ringkasan kesiapan ekspor Faktur Pajak Coretax untuk periode & outlet terpilih (JSON; dimuat panel di halaman pajak). */
+    public function RingkasFakturKeluaran(Request $permintaan, PenyusunFakturPajakCoretax $penyusun, PetaUuidOutlet $outlet, TanggalBisnisOutlet $tanggal): JsonResponse
+    {
+        [$periode, , $idOutlet] = $this->BacaSaringPajak($permintaan, $outlet, $tanggal->Hitung(null));
+
+        return response()->json($penyusun->Susun($periode->dari, $periode->sampai, $idOutlet)->KeRingkasan());
+    }
+
+    public function EksporFakturKeluaran(
+        Request $permintaan,
+        PenyusunFakturPajakCoretax $penyusun,
+        PenulisXmlCoretax $penulis,
+        PetaUuidOutlet $outlet,
+        TanggalBisnisOutlet $tanggal,
+    ): SymfonyResponse {
+        [$periode, , $idOutlet] = $this->BacaSaringPajak($permintaan, $outlet, $tanggal->Hitung(null));
+        $hasil = $penyusun->Susun($periode->dari, $periode->sampai, $idOutlet);
+
+        if (! $hasil->BisaDiekspor()) {
+            abort(422, $hasil->masalahUmum[0] ?? 'Tidak ada faktur yang siap diekspor pada periode ini.');
+        }
+
+        return response($penulis->Tulis($hasil), 200, [
+            'Content-Type' => 'application/xml; charset=UTF-8',
+            'Content-Disposition' => "attachment; filename=\"faktur-pajak-keluaran-{$periode->dari->toDateString()}-{$periode->sampai->toDateString()}.xml\"",
+            'X-Content-Type-Options' => 'nosniff',
+            'Cache-Control' => 'no-store',
+        ]);
     }
 
     public function Stok(Request $permintaan, LaporanStok $laporan, TanggalBisnisOutlet $tanggal): Response

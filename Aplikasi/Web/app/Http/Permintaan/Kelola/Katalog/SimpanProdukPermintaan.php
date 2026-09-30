@@ -56,6 +56,9 @@ final class SimpanProdukPermintaan extends FormRequest
             'TampilOnline' => ['required', 'boolean'],
             'DurasiMenit' => ['nullable', 'integer', 'min:5', 'max:720'],
             'MasaGaransiBulan' => ['nullable', 'integer', 'min:1', 'max:240'],
+            // Faktur Pajak Coretax (v3.11): kode barang/jasa 6 digit dan kode unit `UM.00xx` dari daftar DJP.
+            'KodeBarangJasaCoretax' => ['nullable', 'string', 'regex:/^\d{6}$/'],
+            'KodeUnitCoretax' => ['nullable', 'string', 'regex:/^UM\.\d{4}$/'],
             'Satuan' => ['required', 'array', 'min:1', 'max:10'],
             'Satuan.*.Uuid' => ['nullable', 'ulid'],
             'Satuan.*.UuidSatuan' => ['required', 'ulid'],
@@ -170,6 +173,8 @@ final class SimpanProdukPermintaan extends FormRequest
             bolehUbahHarga: $bolehUbahHarga,
             durasiMenit: $this->filled('DurasiMenit') ? $this->integer('DurasiMenit') : null,
             masaGaransiBulan: $this->filled('MasaGaransiBulan') ? $this->integer('MasaGaransiBulan') : null,
+            kodeBarangJasaCoretax: $this->filled('KodeBarangJasaCoretax') ? $this->string('KodeBarangJasaCoretax')->toString() : null,
+            kodeUnitCoretax: $this->filled('KodeUnitCoretax') ? $this->string('KodeUnitCoretax')->toString() : null,
         );
     }
 

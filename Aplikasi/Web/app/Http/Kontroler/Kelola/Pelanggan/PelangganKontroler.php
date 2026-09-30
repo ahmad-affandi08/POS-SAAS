@@ -76,6 +76,11 @@ final class PelangganKontroler extends DasarKelolaKontroler
         return Inertia::render('Kelola/Pelanggan/Detail', [
             'Pelanggan' => [
                 ...DaftarPelanggan::Petakan($data, $tierPelanggan, $buku->AmbilSaldo($data->Id)),
+                // Identitas pajak (Faktur Pajak Coretax): utuh hanya untuk yang boleh mengelola pelanggan, selain itu empat digit terakhir.
+                'Npwp' => self::TampilkanDigit($data->Npwp, $izin['Kelola']),
+                'Nik' => self::TampilkanDigit($data->Nik, $izin['Kelola']),
+                'NamaNpwp' => $data->NamaNpwp,
+                'AlamatNpwp' => $data->AlamatNpwp,
                 ...($belanja->AmbilRingkasan([$data->Id])[$data->Id] ?? ['JumlahTransaksi' => 0, 'TotalBelanja' => '0.00', 'TerakhirPada' => null]),
             ],
             'Riwayat' => $belanja->AmbilRiwayat($data->Id),
@@ -174,6 +179,11 @@ final class PelangganKontroler extends DasarKelolaKontroler
     /**
      * @return array{Kelola: bool, LihatPenjualan: bool, KelolaDeposit: bool}
      */
+    private static function TampilkanDigit(?string $digit, bool $utuh): ?string
+    {
+        return $digit === null || $utuh ? $digit : SimpanPelanggan::SamarkanDigit($digit);
+    }
+
     private function AmbilIzin(): array
     {
         $akses = app(AksesPengguna::class);

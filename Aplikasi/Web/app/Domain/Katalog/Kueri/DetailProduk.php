@@ -61,6 +61,8 @@ final class DetailProduk
             'TampilOnline' => $produk->TampilOnline,
             'DurasiMenit' => $produk->DurasiMenit,
             'MasaGaransiBulan' => $produk->MasaGaransiBulan,
+            'KodeBarangJasaCoretax' => $produk->KodeBarangJasaCoretax,
+            'KodeUnitCoretax' => $produk->KodeUnitCoretax,
             'UrlGambar' => PenyimpanGambarProduk::BuatUrl($produk, 'besar'),
             'UrlGambarKecil' => PenyimpanGambarProduk::BuatUrl($produk, 'kecil'),
             'Satuan' => $this->AmbilSatuan($produk),
@@ -167,6 +169,8 @@ final class DetailProduk
             'TampilOnline' => $produk->TampilOnline,
             'DurasiMenit' => $produk->DurasiMenit,
             'MasaGaransiBulan' => $produk->MasaGaransiBulan,
+            'KodeBarangJasaCoretax' => $produk->KodeBarangJasaCoretax,
+            'KodeUnitCoretax' => $produk->KodeUnitCoretax,
             'Satuan' => array_values(ProdukSatuan::query()->where('IdProduk', $produk->Id)->orderBy('Id')->get()
                 ->sortBy(fn (ProdukSatuan $s): int => $s->IdSatuan === $produk->IdSatuanDasar ? 0 : 1)
                 ->map(fn (ProdukSatuan $s): array => [
@@ -209,6 +213,8 @@ final class DetailProduk
             'TampilOnline' => false,
             'DurasiMenit' => null,
             'MasaGaransiBulan' => null,
+            'KodeBarangJasaCoretax' => null,
+            'KodeUnitCoretax' => null,
             'Satuan' => [[
                 'Uuid' => null,
                 'UuidSatuan' => $uuidSatuan,

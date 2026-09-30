@@ -1,5 +1,6 @@
 import { KolomBilangan, KolomUang } from '@/Komponen/Laporan/KolomLaporan';
 import { TautanEkspor } from '@/Komponen/Laporan/NavigasiTab';
+import PanelFakturPajakCoretax from '@/Komponen/Laporan/PanelFakturPajakCoretax';
 import SaringLaporan from '@/Komponen/Laporan/SaringLaporan';
 import TabelData from '@/Komponen/TabelData/TabelData';
 import type { KolomTabel } from '@/Komponen/TabelData/Tipe';
@@ -138,6 +139,8 @@ export default function HalamanLaporanPajak({ Saring, Peringatan, OpsiOutlet, Pb
                     kosong={{ ilustrasi: true, judul: 'Tidak ada PPN keluaran pada periode ini.' }}
                 />
             </section>
+
+            <PanelFakturPajakCoretax query={query} />
         </TataLetakAplikasi>
     );
 }

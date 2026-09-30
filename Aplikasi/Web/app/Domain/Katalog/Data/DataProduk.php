@@ -42,5 +42,8 @@ final readonly class DataProduk
         public ?int $durasiMenit = null,
         // F-05h: masa garansi standar (bulan) produk bernomor seri; null = tanpa garansi.
         public ?int $masaGaransiBulan = null,
+        // Kode Coretax (v3.11): kode barang/jasa 6 digit & unit `UM.00xx`; null = kode umum saat ekspor.
+        public ?string $kodeBarangJasaCoretax = null,
+        public ?string $kodeUnitCoretax = null,
     ) {}
 }

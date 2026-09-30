@@ -84,6 +84,8 @@ final class Produk extends ModelDasar
         'TampilOnline' => false,
         'DurasiMenit' => null,
         'MasaGaransiBulan' => null,
+        'KodeBarangJasaCoretax' => null,
+        'KodeUnitCoretax' => null,
         'PathGambar' => null,
         'DiarsipkanPada' => null,
     ];

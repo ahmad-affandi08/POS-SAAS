@@ -9,6 +9,7 @@ use App\Domain\Pelanggan\Layanan\NomorHp;
 use App\Domain\Pelanggan\Model\Pelanggan;
 use App\Domain\Pelanggan\Model\PelangganAlias;
 use App\Domain\Penjualan\Model\Penjualan;
+use Illuminate\Support\Facades\DB;
 use Inertia\Testing\AssertableInertia;
 use Tests\Pendukung\Kasir\BantuanKasir;
 use Tests\Pendukung\Katalog\BantuanKatalog;
@@ -232,5 +233,51 @@ describe('F-16a pelanggan di POS', function (): void {
             ->and($cari('7890'))->toHaveCount(1)
             ->and($cari('arsip'))->toBe([]);
         unset($lain);
+    });
+});
+
+describe('Identitas pajak pelanggan (Faktur Pajak Coretax, v3.11)', function (): void {
+    it('NPWP & NIK disimpan sebagai digit terenkripsi, audit tersamar, nama/alamat sesuai NPWP; panjang salah ditolak; ubah tanpa bidang pajak tidak menghapusnya', function (): void {
+        $t = BantuanKatalog::SiapkanTenantProduk('Toko Bangunan Makmur Jaya');
+        BantuanKatalog::MasukSebagai($this, $t['Tenant']->Id);
+
+        $this->post('/kelola/pelanggan', IsianPelanggan(['Npwp' => '0123456789', 'Nik' => '']))->assertSessionHasErrors('Npwp');
+        $this->post('/kelola/pelanggan', IsianPelanggan(['NoHp' => '081300000001', 'Nik' => '320101']))->assertSessionHasErrors('Nik');
+        $this->post('/kelola/pelanggan', IsianPelanggan(['NoHp' => '081300000002', 'Npwp' => 'ABC']))->assertSessionHasErrors('Npwp');
+
+        $this->post('/kelola/pelanggan', IsianPelanggan([
+            'Nama' => 'Budi (proyek Jl. Melati)',
+            'NoHp' => '081300000003',
+            'Npwp' => '01.234.567.8-901.000',
+            'Nik' => '',
+            'NamaNpwp' => 'CV Bangun Sejahtera',
+            'AlamatNpwp' => 'Jl. Melati No. 10, Solo',
+        ]))->assertSessionHasNoErrors();
+        $budi = Pelanggan::query()->where('NoHp', '6281300000003')->sole();
+
+        // 15 digit (NPWP lama) diterima; tersimpan hanya angka dan terenkripsi di database.
+        expect($budi->Npwp)->toBe('012345678901000')
+            ->and($budi->Nik)->toBeNull()
+            ->and($budi->NamaNpwp)->toBe('CV Bangun Sejahtera')
+            ->and(DB::table('Pelanggan')->where('Id', $budi->Id)->value('Npwp'))->not->toContain('012345678901000');
+
+        $audit = LogAudit::query()->where('Peristiwa', 'pelanggan.tambah')->orderByDesc('Id')->firstOrFail();
+        expect(json_encode($audit->NilaiBaru))->not->toContain('012345678901000')->toContain('***********1000');
+
+        // Ubah dari formulir lain (tanpa bidang pajak, mis. sinkron POS) tidak menghapus identitas pajak.
+        $this->put("/kelola/pelanggan/{$budi->Uuid}", IsianPelanggan(['Nama' => 'Budi Santoso', 'NoHp' => '081300000003']))->assertSessionHasNoErrors();
+        expect($budi->refresh()->Npwp)->toBe('012345678901000');
+    });
+
+    it('detail: utuh untuk pengelola pelanggan, tersamar empat digit terakhir untuk yang hanya melihat', function (): void {
+        $t = BantuanKatalog::SiapkanTenantProduk('Toko Bangunan Makmur Jaya');
+        BantuanKatalog::MasukSebagai($this, $t['Tenant']->Id);
+        $this->post('/kelola/pelanggan', IsianPelanggan(['NoHp' => '081300000004', 'Npwp' => '0123456789012345']))->assertSessionHasNoErrors();
+        $p = Pelanggan::query()->where('NoHp', '6281300000004')->sole();
+
+        $this->get("/kelola/pelanggan/{$p->Uuid}")->assertOk()->assertInertia(fn (AssertableInertia $h) => $h->where('Pelanggan.Npwp', '0123456789012345'));
+
+        BantuanKatalog::MasukSebagai($this, $t['Tenant']->Id, PeranTenantBawaan::Supervisor);
+        $this->get("/kelola/pelanggan/{$p->Uuid}")->assertOk()->assertInertia(fn (AssertableInertia $h) => $h->where('Pelanggan.Npwp', '************2345'));
     });
 });

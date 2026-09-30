@@ -210,6 +210,19 @@ export type PropsLaporanPajak = {
     Ppn: BarisPajakLaporan[];
 };
 
+/** Ringkasan kesiapan ekspor Faktur Pajak Keluaran Coretax (GET /kelola/laporan/pajak/faktur-keluaran, PRD v3.12). */
+export type RingkasanFakturPajak = {
+    JumlahDiperiksa: number;
+    JumlahSiap: number;
+    TotalDpp: string;
+    TotalPpn: string;
+    BisaDiekspor: boolean;
+    MasalahUmum: string[];
+    MasalahFaktur: { Nomor: string; Alasan: string[] }[];
+    Peringatan: string[];
+    Selisih: { Nomor: string; SelisihDpp: string; SelisihPpn: string }[];
+};
+
 export type NilaiPersediaan = {
     Total: { Nilai: string; JumlahProduk: number };
     PerGudang: { Kunci: string; NamaGudang: string; NamaOutlet: string; JumlahProduk: number; Nilai: string }[];

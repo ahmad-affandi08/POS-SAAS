@@ -62,3 +62,21 @@ it('produk tanpa pelacakan seri mengabaikan masa garansi; nilai di luar 1–240 
     $masuk()->post('/kelola/produk', IsiFormGaransi($t, ['Nama' => 'Ponsel Uji Nol', 'MasaGaransiBulan' => 0]))->assertSessionHasErrors('MasaGaransiBulan');
     $masuk()->post('/kelola/produk', IsiFormGaransi($t, ['Nama' => 'Ponsel Uji Besar', 'MasaGaransiBulan' => 241]))->assertSessionHasErrors('MasaGaransiBulan');
 });
+
+it('kode barang/jasa dan kode satuan Coretax disimpan dari form produk (format dicek); impor tidak menimpanya', function (): void {
+    $t = BantuanKatalog::SiapkanTenantProduk('Toko Ponsel Nusantara Solo');
+    $masuk = fn () => BantuanKatalog::MasukSebagai($this, $t['Tenant']->Id);
+
+    $form = IsiFormGaransi($t, ['Nama' => 'Kabel Data USB-C 1 m', 'Pelacakan' => PelacakanProduk::Tidak->value, 'KodeBarangJasaCoretax' => '720200', 'KodeUnitCoretax' => 'UM.0021']);
+    $masuk()->post('/kelola/produk', $form)->assertSessionHasNoErrors();
+    BantuanOrganisasi::AturKonteks($t['Tenant']->Id);
+    $produk = Produk::query()->where('Uuid', $form['Uuid'])->sole();
+    expect($produk->KodeBarangJasaCoretax)->toBe('720200')->and($produk->KodeUnitCoretax)->toBe('UM.0021');
+
+    $masuk()->post('/kelola/produk', IsiFormGaransi($t, ['Nama' => 'Kode Salah Satu', 'Pelacakan' => PelacakanProduk::Tidak->value, 'KodeBarangJasaCoretax' => '72A']))->assertSessionHasErrors('KodeBarangJasaCoretax');
+    $masuk()->post('/kelola/produk', IsiFormGaransi($t, ['Nama' => 'Kode Salah Dua', 'Pelacakan' => PelacakanProduk::Tidak->value, 'KodeUnitCoretax' => 'pcs']))->assertSessionHasErrors('KodeUnitCoretax');
+
+    $masuk()->put("/kelola/produk/{$form['Uuid']}", [...$form, 'KodeBarangJasaCoretax' => null, 'KodeUnitCoretax' => null])->assertSessionHasNoErrors();
+    BantuanOrganisasi::AturKonteks($t['Tenant']->Id);
+    expect($produk->refresh()->KodeBarangJasaCoretax)->toBeNull()->and($produk->KodeUnitCoretax)->toBeNull();
+});

@@ -25,6 +25,10 @@ type IsianPelanggan = {
     SetujuPemasaran: boolean;
     LimitKredit: string;
     TerminHari: string;
+    Npwp: string;
+    Nik: string;
+    NamaNpwp: string;
+    AlamatNpwp: string;
 };
 
 function BuatIsian(p: BarisPelanggan | null): IsianPelanggan {
@@ -39,6 +43,10 @@ function BuatIsian(p: BarisPelanggan | null): IsianPelanggan {
         SetujuPemasaran: p?.SetujuPemasaran ?? false,
         LimitKredit: (p?.LimitKredit ?? '').replace(/\.00$/, ''),
         TerminHari: String(p?.TerminHari ?? 30),
+        Npwp: p?.Npwp ?? '',
+        Nik: p?.Nik ?? '',
+        NamaNpwp: p?.NamaNpwp ?? '',
+        AlamatNpwp: p?.AlamatNpwp ?? '',
     };
 }
 
@@ -163,6 +171,43 @@ export function IsiFormulirPelanggan({
                     keterangan="Jatuh tempo = tanggal penjualan + termin."
                     inputMode="numeric"
                     maxLength={3}
+                />
+            </fieldset>
+            <fieldset className="grid gap-3 sm:grid-cols-2">
+                <legend className="mb-1 text-label font-semibold">Identitas pajak (Faktur Pajak)</legend>
+                <BidangTeks
+                    label="NPWP (opsional)"
+                    nilai={isian.Npwp}
+                    saatBerubah={(nilai) => Ubah({ Npwp: nilai })}
+                    galat={galat.Npwp}
+                    keterangan="15 atau 16 digit. Diisi bila pelanggan meminta Faktur Pajak."
+                    inputMode="numeric"
+                    maxLength={30}
+                />
+                <BidangTeks
+                    label="NIK (opsional)"
+                    nilai={isian.Nik}
+                    saatBerubah={(nilai) => Ubah({ Nik: nilai })}
+                    galat={galat.Nik}
+                    keterangan="16 digit, untuk pembeli tanpa NPWP."
+                    inputMode="numeric"
+                    maxLength={30}
+                />
+                <BidangTeks
+                    label="Nama sesuai NPWP (opsional)"
+                    nilai={isian.NamaNpwp}
+                    saatBerubah={(nilai) => Ubah({ NamaNpwp: nilai })}
+                    galat={galat.NamaNpwp}
+                    keterangan="Kosong = memakai nama pelanggan."
+                    maxLength={150}
+                />
+                <BidangTeksPanjang
+                    label="Alamat sesuai NPWP (opsional)"
+                    nilai={isian.AlamatNpwp}
+                    saatBerubah={(nilai) => Ubah({ AlamatNpwp: nilai })}
+                    galat={galat.AlamatNpwp}
+                    maksimal={500}
+                    baris={2}
                 />
             </fieldset>
             <KotakCentang

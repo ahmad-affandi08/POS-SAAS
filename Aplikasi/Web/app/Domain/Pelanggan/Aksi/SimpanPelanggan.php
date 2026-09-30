@@ -58,6 +58,13 @@ final class SimpanPelanggan
                 'SetujuPemasaran' => $data->setujuPemasaran,
             ];
 
+            if ($data->aturIdentitasPajak) {
+                $isian['Npwp'] = self::BersihkanDigit($data->npwp, [15, 16], 'NpwpTidakValid', 'NPWP harus 15 atau 16 digit angka.', 'Npwp');
+                $isian['Nik'] = self::BersihkanDigit($data->nik, [16], 'NikTidakValid', 'NIK harus 16 digit angka.', 'Nik');
+                $isian['NamaNpwp'] = self::Bersihkan($data->namaNpwp);
+                $isian['AlamatNpwp'] = self::Bersihkan($data->alamatNpwp);
+            }
+
             if ($data->aturKredit) {
                 $isian['LimitKredit'] = $data->limitKredit === null || $data->limitKredit->BernilaiNol() ? null : $data->limitKredit->KeString();
                 $isian['TerminHari'] = $data->terminHari;
@@ -116,7 +123,39 @@ final class SimpanPelanggan
             $nilai['NoHp'] = NomorHp::Samarkan($nilai['NoHp']);
         }
 
+        // NPWP & NIK juga data pribadi: log audit hanya menyimpan empat digit terakhir.
+        foreach (['Npwp', 'Nik'] as $kolom) {
+            if (isset($nilai[$kolom]) && is_string($nilai[$kolom])) {
+                $nilai[$kolom] = self::SamarkanDigit($nilai[$kolom]);
+            }
+        }
+
         return $nilai;
+    }
+
+    /**
+     * Angka saja (pemisah dibuang); kosong = null. Panjang di luar `$panjang` ditolak.
+     *
+     * @param  list<int>  $panjang
+     */
+    private static function BersihkanDigit(?string $nilai, array $panjang, string $kode, string $pesan, string $bidang): ?string
+    {
+        $digit = $nilai === null ? '' : (string) preg_replace('/\D+/', '', $nilai);
+
+        if ($digit === '') {
+            return null;
+        }
+
+        if (! in_array(strlen($digit), $panjang, true)) {
+            throw new PelanggaranAturanBisnis($kode, $pesan, $bidang);
+        }
+
+        return $digit;
+    }
+
+    public static function SamarkanDigit(string $digit): string
+    {
+        return str_repeat('*', max(0, strlen($digit) - 4)).substr($digit, -4);
     }
 
     private static function Bersihkan(?string $teks): ?string

@@ -29,5 +29,11 @@ final readonly class DataPelanggan
         public bool $aturKredit = false,
         public ?Uang $limitKredit = null,
         public int $terminHari = 30,
+        // Identitas pajak pembeli (Faktur Pajak Coretax, v3.11): hanya disimpan bila `aturIdentitasPajak`.
+        public bool $aturIdentitasPajak = false,
+        public ?string $npwp = null,
+        public ?string $nik = null,
+        public ?string $namaNpwp = null,
+        public ?string $alamatNpwp = null,
     ) {}
 }

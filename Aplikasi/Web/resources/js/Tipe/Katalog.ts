@@ -118,6 +118,9 @@ export type FormProduk = {
     DurasiMenit?: number | null;
     /** F-05h: masa garansi standar (bulan) produk bernomor seri; null = tanpa garansi. */
     MasaGaransiBulan?: number | null;
+    /** Faktur Pajak Coretax: kode barang/jasa 6 digit dan kode satuan `UM.00xx`; null = kode umum. */
+    KodeBarangJasaCoretax?: string | null;
+    KodeUnitCoretax?: string | null;
     /** D-23 B: "Jual sebagai paket sesi" saat membuat produk Jasa; tidak ada/null = bukan paket. */
     PaketSesi?: { JumlahSesi: string; MasaBerlakuHari: string } | null;
 };

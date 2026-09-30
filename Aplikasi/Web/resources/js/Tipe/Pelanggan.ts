@@ -13,6 +13,11 @@ export type BarisPelanggan = {
     Email: string | null;
     TanggalLahir: string | null;
     Alamat: string | null;
+    /** Identitas pajak pembeli (Faktur Pajak Coretax); hanya di halaman detail. Tersamar bila tanpa izin kelola. */
+    Npwp?: string | null;
+    Nik?: string | null;
+    NamaNpwp?: string | null;
+    AlamatNpwp?: string | null;
     Tag: string[];
     Catatan: string | null;
     SetujuPemasaran: boolean;

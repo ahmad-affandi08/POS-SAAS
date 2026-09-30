@@ -55,7 +55,15 @@ const galatPerTab: Record<KunciTab, string[]> = {
     Satuan: ['Satuan'],
     Harga: [],
     Varian: ['AtributVarian'],
-    Pajak: ['UuidKelompokPajak', 'HargaTermasukPajak', 'BolehMinus', 'TampilDiPos', 'TampilOnline'],
+    Pajak: [
+        'UuidKelompokPajak',
+        'HargaTermasukPajak',
+        'BolehMinus',
+        'TampilDiPos',
+        'TampilOnline',
+        'KodeBarangJasaCoretax',
+        'KodeUnitCoretax',
+    ],
 };
 
 /** Galat harga awal (`Satuan.{i}.HargaAwal…`) tampil di tab Harga, bukan tab Satuan. */
@@ -718,6 +726,27 @@ export default function HalamanFormProduk({
                     disabled={data.Pelacakan === 'Seri'}
                 />
             ) : null}
+            <BidangTeks
+                label="Kode barang/jasa Coretax (opsional)"
+                nilai={data.KodeBarangJasaCoretax ?? ''}
+                saatBerubah={(nilai) =>
+                    Atur('KodeBarangJasaCoretax', nilai.replace(/\D/g, '') === '' ? null : nilai.replace(/\D/g, ''))
+                }
+                galat={galat.KodeBarangJasaCoretax}
+                keterangan="6 digit dari daftar DJP, dipakai di Faktur Pajak. Kosong = kode umum 000000."
+                inputMode="numeric"
+                maxLength={6}
+            />
+            <BidangTeks
+                label="Kode satuan Coretax (opsional)"
+                nilai={data.KodeUnitCoretax ?? ''}
+                saatBerubah={(nilai) =>
+                    Atur('KodeUnitCoretax', nilai.trim() === '' ? null : nilai.trim().toUpperCase())
+                }
+                galat={galat.KodeUnitCoretax}
+                keterangan="Format UM.0021 (pcs). Kosong = UM.0021."
+                maxLength={10}
+            />
             <FieldSet className="gap-1 sm:col-span-2">
                 <FieldLegend variant="label" className="mb-1 text-label font-semibold text-teks-utama">
                     Tampilkan produk
