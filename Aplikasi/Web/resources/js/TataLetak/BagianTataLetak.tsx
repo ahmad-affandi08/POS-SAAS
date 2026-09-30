@@ -313,7 +313,7 @@ export function MenuAkun({ nama, email, gelap = false, tenant, bolehKelolaLangga
                             {tenant?.Nama ?? nama}
                         </span>
                         {tenant?.Nama ? (
-                            <span className="max-w-40 truncate text-[11px] font-normal text-teks-sekunder leading-tight">
+                            <span className="max-w-40 truncate text-keterangan font-normal text-teks-sekunder leading-tight">
                                 {nama}
                             </span>
                         ) : null}
@@ -321,7 +321,7 @@ export function MenuAkun({ nama, email, gelap = false, tenant, bolehKelolaLangga
                     {tenant?.NamaPaket ? (
                         <Badge
                             variant="outline"
-                            className="hidden md:inline-flex text-[10px] px-1.5 py-0 h-4 border-brand/30 bg-brand/5 text-brand font-semibold shrink-0"
+                            className="hidden md:inline-flex text-keterangan px-1.5 py-0 h-4 border-brand/30 bg-brand/5 text-brand font-semibold shrink-0"
                         >
                             {tenant.NamaPaket}
                         </Badge>
@@ -358,7 +358,7 @@ export function MenuAkun({ nama, email, gelap = false, tenant, bolehKelolaLangga
                                 type="button"
                                 onClick={(e) => SalinId(kodePelanggan, e)}
                                 title="Salin ID Pelanggan"
-                                className="flex items-center gap-1 rounded bg-latar px-2 py-1 text-[11px] font-mono font-medium text-teks-sekunder hover:text-teks-utama hover:bg-garis transition cursor-pointer shrink-0"
+                                className="flex items-center gap-1 rounded bg-latar px-2 py-1 text-keterangan font-mono font-medium text-teks-sekunder hover:text-teks-utama hover:bg-garis transition cursor-pointer shrink-0"
                             >
                                 <span>{kodePelanggan}</span>
                                 {sudahSalin ? (
@@ -383,7 +383,7 @@ export function MenuAkun({ nama, email, gelap = false, tenant, bolehKelolaLangga
                                     <Badge
                                         variant="outline"
                                         className={cn(
-                                            'text-[10px] px-1.5 py-0 font-medium',
+                                            'text-keterangan px-1.5 py-0 font-medium',
                                             KelasStatusLangganan(tenant.StatusLangganan),
                                         )}
                                     >

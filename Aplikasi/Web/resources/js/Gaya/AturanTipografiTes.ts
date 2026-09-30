@@ -11,6 +11,12 @@ import { describe, expect, it } from 'vitest';
  *
  * Aturannya: di luar `Komponen/Ui/` (hasil CLI shadcn, dikecualikan), setiap `text-*` wajib berasal dari token
  * `@theme` — ukuran (`--text-*`) atau warna (`--color-*`) — kecuali utilitas yang memang bukan keduanya.
+ *
+ * Lubang yang ditutup kemudian: pola nama token tidak pernah cocok dengan **nilai sembarang** `text-[11px]`, karena
+ * setelah `text-` yang datang `[`. Empat ukuran di luar skala (`text-[11px]` & `text-[10px]` di `BagianTataLetak`)
+ * lolos begitu saja sampai ada yang membacanya dengan mata. Nilai sembarang sekarang ditolak terpisah, dan §17.5
+ * memang tidak menyisakan ruang untuknya: "maksimal 6 token di atas, tidak membuat ukuran baru di luar token",
+ * pengecualiannya hanya judul hero situs pemasaran (D-25) yang tokennya pun tetap dideklarasikan di `@theme`.
  */
 
 const AKAR = 'resources/js';
@@ -68,7 +74,9 @@ describe('Skala tipografi', () => {
                 continue;
             }
 
-            for (const cocok of readFileSync(jalur, 'utf8').matchAll(/\btext-([a-z0-9-]+)/g)) {
+            const isi = readFileSync(jalur, 'utf8');
+
+            for (const cocok of isi.matchAll(/\btext-([a-z0-9-]+)/g)) {
                 const nama = cocok[1];
 
                 if (nama === undefined) {
@@ -78,6 +86,11 @@ describe('Skala tipografi', () => {
                 if (!token.has(nama) && !utilitasBukanToken.has(nama)) {
                     pelanggar.push(`${jalur.replace(`${AKAR}/`, '')}: text-${nama}`);
                 }
+            }
+
+            // Nilai sembarang `text-[...]`: ukuran di luar skala §17.5 maupun warna di luar palet, keduanya dilarang.
+            for (const cocok of isi.matchAll(/\btext-\[[^\]]*\]/g)) {
+                pelanggar.push(`${jalur.replace(`${AKAR}/`, '')}: ${cocok[0]}`);
             }
         }
 
