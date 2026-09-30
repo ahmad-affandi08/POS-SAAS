@@ -21,6 +21,10 @@ class Penjualan extends Table {
   TextColumn get Subtotal => text()();
   TextColumn get TotalDiskon => text()();
   TextColumn get BiayaLayanan => text()();
+
+  /// Skema 20 (F-17 bagian 3): ongkir kotor & potongannya (gratis ongkir) supaya struk cetak ulang memuatnya.
+  TextColumn get BiayaKirim => text().withDefault(const Constant('0.00'))();
+  TextColumn get DiskonKirim => text().withDefault(const Constant('0.00'))();
   TextColumn get TotalPajak => text()();
   TextColumn get Pembulatan => text()();
   TextColumn get TotalAkhir => text()();
@@ -59,6 +63,9 @@ class PenjualanDetail extends Table {
   TextColumn get PajakEksklusif => text()();
   TextColumn get TotalBaris => text()();
   TextColumn get Catatan => text().nullable()();
+
+  /// Skema 20 (F-05h): JSON daftar nomor seri/IMEI yang dijual; null = produk tanpa nomor seri.
+  TextColumn get NomorSeri => text().nullable()();
 
   @override
   Set<Column<Object>> get primaryKey => {Uuid};

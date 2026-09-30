@@ -121,6 +121,12 @@ abstract final class PenyusunStrukPenjualan {
       if (!diskon.BernilaiNol()) {
         baris.add(BarisDuaKolom('  Diskon', '-${_Angka(diskon)}'));
       }
+      final nomorSeri = d.NomorSeri == null
+          ? const <String>[]
+          : (jsonDecode(d.NomorSeri!) as List<Object?>).whereType<String>();
+      if (nomorSeri.isNotEmpty) {
+        baris.add(BarisTeks('  No. seri: ${nomorSeri.join(', ')}'));
+      }
       final catatan = d.Catatan?.trim();
       if (catatan != null && catatan.isNotEmpty) {
         baris.add(BarisTeks('  Catatan: $catatan'));
@@ -132,6 +138,8 @@ abstract final class PenyusunStrukPenjualan {
     final totalPajak = Uang.Dari(jual.TotalPajak);
     final biayaLayanan = Uang.Dari(jual.BiayaLayanan);
     final pembulatan = Uang.Dari(jual.Pembulatan);
+    final biayaKirim = Uang.Dari(jual.BiayaKirim);
+    final diskonKirim = Uang.Dari(jual.DiskonKirim);
     baris
       ..add(const BarisGaris())
       ..add(BarisDuaKolom('Subtotal', _Angka(Uang.Dari(jual.Subtotal))));
@@ -140,6 +148,12 @@ abstract final class PenyusunStrukPenjualan {
     }
     if (!biayaLayanan.BernilaiNol()) {
       baris.add(BarisDuaKolom('Biaya layanan', _Angka(biayaLayanan)));
+    }
+    if (!biayaKirim.BernilaiNol()) {
+      baris.add(BarisDuaKolom('Ongkir', _Angka(biayaKirim)));
+    }
+    if (!diskonKirim.BernilaiNol()) {
+      baris.add(BarisDuaKolom('Diskon ongkir', '-${_Angka(diskonKirim)}'));
     }
     if (!pajakEksklusif.BernilaiNol()) {
       baris.add(BarisDuaKolom('Pajak', _Angka(pajakEksklusif)));

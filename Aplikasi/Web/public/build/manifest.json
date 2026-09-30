@@ -1756,7 +1756,7 @@
     "src": "node_modules/@fontsource-variable/atkinson-hyperlegible-next/files/atkinson-hyperlegible-next-latin-wght-normal.woff2"
   },
   "resources/js/Aplikasi.tsx": {
-    "file": "assets/Aplikasi-BL4kK_3P.js",
+    "file": "assets/Aplikasi-l8IBUfvZ.js",
     "name": "Aplikasi",
     "src": "resources/js/Aplikasi.tsx",
     "isEntry": true,
@@ -6466,7 +6466,7 @@
     ]
   },
   "resources/js/Halaman/Publik/StrukDigital.tsx": {
-    "file": "assets/StrukDigital-lMFR96MQ.js",
+    "file": "assets/StrukDigital-D4GZ3IbM.js",
     "name": "StrukDigital",
     "src": "resources/js/Halaman/Publik/StrukDigital.tsx",
     "isDynamicEntry": true,

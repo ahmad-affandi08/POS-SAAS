@@ -1177,6 +1177,8 @@ class LayananPenjualan {
         Subtotal: hasil.subtotal.KeString(),
         TotalDiskon: hasil.totalDiskon.KeString(),
         BiayaLayanan: hasil.biayaLayanan.KeString(),
+        BiayaKirim: Value(hasil.biayaKirim.KeString()),
+        DiskonKirim: Value(hasil.diskonKirim.KeString()),
         TotalPajak: hasil.totalPajak.KeString(),
         Pembulatan: hasil.pembulatan.KeString(),
         TotalAkhir: hasil.totalAkhir.KeString(),
@@ -1208,6 +1210,7 @@ class LayananPenjualan {
             PajakEksklusif: hasil.baris[i].pajakEksklusif.KeString(),
             TotalBaris: hasil.baris[i].totalBaris.KeString(),
             Catatan: Value(keranjang.baris[i].catatan),
+            NomorSeri: Value(keranjang.baris[i].nomorSeri.isEmpty ? null : jsonEncode(keranjang.baris[i].nomorSeri)),
           ),
       ],
       pembayaran: [

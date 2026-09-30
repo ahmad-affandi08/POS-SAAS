@@ -125,6 +125,47 @@ void main() {
     expect(baris, isNot(contains('Poin masuk setelah transaksi tersinkron')));
   });
 
+  test('skema 20: ongkir, diskon ongkir, dan nomor seri tersimpan di penjualan lokal dan tercetak di struk', () async {
+    await Siapkan();
+    await u.SiapkanKatalog(KatalogPonselUji());
+    katalog = await u.MuatKatalog();
+    var keranjang = u.penjualan.TambahBaris(
+      Keranjang.kosong,
+      u.penjualan.BuatBaris(katalog, k, katalog.CariProduk(ponsel)!, nomorSeri: ['IMEI-0001', 'IMEI-0002']),
+      katalog,
+      k,
+    );
+    keranjang = keranjang.Salin(biayaKirim: Uang.DariBulat(20000), diskonKirim: Uang.DariBulat(5000));
+    final tunai = k.metodePembayaran.firstWhere((m) => m.Jenis == JenisMetodeBayar.tunai);
+    final hasil = await u.penjualan.Bayar(
+      keranjang: keranjang,
+      pembayaran: [PembayaranMasukan(metode: tunai, jumlah: Uang.DariBulat(20000000))],
+      kasir: rina,
+      k: k,
+      katalog: katalog,
+    );
+
+    final jual = (await u.repositoriPenjualan.CariPenjualan(hasil.uuid))!;
+    expect((jual.BiayaKirim, jual.DiskonKirim), ('20000.00', '5000.00'));
+    final detail = await u.repositoriPenjualan.AmbilDetail(hasil.uuid);
+    expect(jsonDecode(detail.single.NomorSeri!), ['IMEI-0001', 'IMEI-0002']);
+
+    final baris = TataLetakStruk.KeTeks(
+      PenyusunStrukPenjualan.Susun(
+        await IdentitasStruk.Muat(u.repositori),
+        DataStrukPenjualan(
+          penjualan: jual,
+          detail: detail,
+          pembayaran: await u.repositoriPenjualan.AmbilPembayaran(hasil.uuid),
+        ),
+      ),
+      LebarKertas.Mm58,
+    ).map((b) => b.trim()).toList();
+    expect(baris, contains('No. seri: IMEI-0001, IMEI-0002'), reason: baris.join('\n'));
+    expect(baris.any((b) => b.startsWith('Ongkir') && b.endsWith('20.000')), isTrue, reason: baris.join('\n'));
+    expect(baris.any((b) => b.startsWith('Diskon ongkir') && b.endsWith('-5.000')), isTrue, reason: baris.join('\n'));
+  });
+
   test('F-16c bagian 4a: promo poin berlipat dicetak di bawah total; tidak dicetak pada penjualan void', () async {
     await Siapkan();
     final hasil = await Jual(JenisMetodeBayar.tunai);

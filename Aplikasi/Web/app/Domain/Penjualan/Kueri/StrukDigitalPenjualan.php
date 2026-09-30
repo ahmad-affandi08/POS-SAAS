@@ -89,6 +89,9 @@ final class StrukDigitalPenjualan
             'Subtotal' => $p->Subtotal,
             'TotalDiskon' => $p->TotalDiskon,
             'BiayaLayanan' => $p->BiayaLayanan,
+            // F-17 bagian 3: ongkir kotor & potongannya (promo gratis ongkir), terpisah dari subtotal barang.
+            'BiayaKirim' => $p->BiayaKirim,
+            'DiskonKirim' => $p->DiskonKirim,
             'Pajak' => array_values(PenjualanPajak::query()->where('IdPenjualan', $p->Id)->orderBy('Id')->get()->map(fn (PenjualanPajak $pajak): array => [
                 'Kode' => $pajak->KodeJenisPajak,
                 'Tarif' => $pajak->Tarif,

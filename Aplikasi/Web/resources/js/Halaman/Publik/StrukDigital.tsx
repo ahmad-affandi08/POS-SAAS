@@ -32,6 +32,9 @@ export type StrukDigital = {
     Subtotal: string;
     TotalDiskon: string;
     BiayaLayanan: string;
+    /** F-17 bagian 3: ongkir kotor dan potongannya (gratis ongkir); "0.00" = tanpa ongkir. */
+    BiayaKirim: string;
+    DiskonKirim: string;
     Pajak: { Kode: string; Tarif: string; Jumlah: string }[];
     Pembulatan: string;
     TotalAkhir: string;
@@ -144,6 +147,12 @@ export default function HalamanStrukDigital({ Struk }: { Struk: StrukDigital | n
                         )}
                         {CekNol(Struk.BiayaLayanan) ? null : (
                             <Baris kiri="Biaya layanan" kanan={FormatRupiah(Struk.BiayaLayanan)} />
+                        )}
+                        {CekNol(Struk.BiayaKirim) ? null : (
+                            <Baris kiri="Ongkir" kanan={FormatRupiah(Struk.BiayaKirim)} />
+                        )}
+                        {CekNol(Struk.DiskonKirim) ? null : (
+                            <Baris kiri="Diskon ongkir" kanan={`-${FormatRupiah(Struk.DiskonKirim)}`} />
                         )}
                         {Struk.Pajak.map((p) => (
                             <Baris

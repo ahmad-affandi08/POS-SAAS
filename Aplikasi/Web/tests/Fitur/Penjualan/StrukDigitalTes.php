@@ -38,6 +38,18 @@ describe('POS-11 struk digital /s/{kodeStruk}', function (): void {
         $this->get('/s/'.$kode)->assertOk()->assertInertia(fn (AssertableInertia $h) => $h->where('Struk.Dibatalkan', true));
     });
 
+    it('F-17 bagian 3: ongkir dan diskon ongkir ikut di struk (Total = barang + ongkir − diskon ongkir)', function (): void {
+        $k = BantuanPenjualan::Siapkan($this);
+        $minyak = BantuanPenjualan::BuatProdukBerstok($k['Gudang'], $k['Pemilik']->Id);
+        $p = BantuanPenjualan::Jual($this, $k, ['BiayaKirim' => '20000.00', 'DiskonKirim' => '5000.00', 'Baris' => [['Produk' => $minyak, 'Jumlah' => '1', 'Harga' => '38500.00']]]);
+
+        $this->get('/s/'.KodeStrukDigital::Buat($k['Tenant']->Id, $p->Uuid))->assertOk()->assertInertia(fn (AssertableInertia $h) => $h
+            ->where('Struk.Subtotal', '38500.00')
+            ->where('Struk.BiayaKirim', '20000.00')
+            ->where('Struk.DiskonKirim', '5000.00')
+            ->where('Struk.TotalAkhir', '53500.00'));
+    });
+
     it('tidak dikenal, tenant lain, dan struk digital dimatikan = halaman belum tersedia (404)', function (): void {
         $a = BantuanPenjualan::Siapkan($this, 'Kopi Senja Solo');
         $b = BantuanPenjualan::Siapkan($this, 'Warung Bakso Pak Kumis');

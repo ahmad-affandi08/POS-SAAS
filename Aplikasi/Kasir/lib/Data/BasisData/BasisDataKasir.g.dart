@@ -8354,6 +8354,26 @@ class $PenjualanTable extends Penjualan with TableInfo<$PenjualanTable, BarisPen
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _BiayaKirimMeta = const VerificationMeta('BiayaKirim');
+  @override
+  late final GeneratedColumn<String> BiayaKirim = GeneratedColumn<String>(
+    'BiayaKirim',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('0.00'),
+  );
+  static const VerificationMeta _DiskonKirimMeta = const VerificationMeta('DiskonKirim');
+  @override
+  late final GeneratedColumn<String> DiskonKirim = GeneratedColumn<String>(
+    'DiskonKirim',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('0.00'),
+  );
   static const VerificationMeta _TotalPajakMeta = const VerificationMeta('TotalPajak');
   @override
   late final GeneratedColumn<String> TotalPajak = GeneratedColumn<String>(
@@ -8440,6 +8460,8 @@ class $PenjualanTable extends Penjualan with TableInfo<$PenjualanTable, BarisPen
     Subtotal,
     TotalDiskon,
     BiayaLayanan,
+    BiayaKirim,
+    DiskonKirim,
     TotalPajak,
     Pembulatan,
     TotalAkhir,
@@ -8521,6 +8543,12 @@ class $PenjualanTable extends Penjualan with TableInfo<$PenjualanTable, BarisPen
     } else if (isInserting) {
       context.missing(_BiayaLayananMeta);
     }
+    if (data.containsKey('BiayaKirim')) {
+      context.handle(_BiayaKirimMeta, BiayaKirim.isAcceptableOrUnknown(data['BiayaKirim']!, _BiayaKirimMeta));
+    }
+    if (data.containsKey('DiskonKirim')) {
+      context.handle(_DiskonKirimMeta, DiskonKirim.isAcceptableOrUnknown(data['DiskonKirim']!, _DiskonKirimMeta));
+    }
     if (data.containsKey('TotalPajak')) {
       context.handle(_TotalPajakMeta, TotalPajak.isAcceptableOrUnknown(data['TotalPajak']!, _TotalPajakMeta));
     } else if (isInserting) {
@@ -8579,6 +8607,8 @@ class $PenjualanTable extends Penjualan with TableInfo<$PenjualanTable, BarisPen
       Subtotal: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}Subtotal'])!,
       TotalDiskon: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}TotalDiskon'])!,
       BiayaLayanan: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}BiayaLayanan'])!,
+      BiayaKirim: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}BiayaKirim'])!,
+      DiskonKirim: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}DiskonKirim'])!,
       TotalPajak: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}TotalPajak'])!,
       Pembulatan: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}Pembulatan'])!,
       TotalAkhir: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}TotalAkhir'])!,
@@ -8614,6 +8644,10 @@ class BarisPenjualan extends DataClass implements Insertable<BarisPenjualan> {
   final String Subtotal;
   final String TotalDiskon;
   final String BiayaLayanan;
+
+  /// Skema 20 (F-17 bagian 3): ongkir kotor & potongannya (gratis ongkir) supaya struk cetak ulang memuatnya.
+  final String BiayaKirim;
+  final String DiskonKirim;
   final String TotalPajak;
   final String Pembulatan;
   final String TotalAkhir;
@@ -8637,6 +8671,8 @@ class BarisPenjualan extends DataClass implements Insertable<BarisPenjualan> {
     required this.Subtotal,
     required this.TotalDiskon,
     required this.BiayaLayanan,
+    required this.BiayaKirim,
+    required this.DiskonKirim,
     required this.TotalPajak,
     required this.Pembulatan,
     required this.TotalAkhir,
@@ -8661,6 +8697,8 @@ class BarisPenjualan extends DataClass implements Insertable<BarisPenjualan> {
     map['Subtotal'] = Variable<String>(Subtotal);
     map['TotalDiskon'] = Variable<String>(TotalDiskon);
     map['BiayaLayanan'] = Variable<String>(BiayaLayanan);
+    map['BiayaKirim'] = Variable<String>(BiayaKirim);
+    map['DiskonKirim'] = Variable<String>(DiskonKirim);
     map['TotalPajak'] = Variable<String>(TotalPajak);
     map['Pembulatan'] = Variable<String>(Pembulatan);
     map['TotalAkhir'] = Variable<String>(TotalAkhir);
@@ -8692,6 +8730,8 @@ class BarisPenjualan extends DataClass implements Insertable<BarisPenjualan> {
       Subtotal: Value(Subtotal),
       TotalDiskon: Value(TotalDiskon),
       BiayaLayanan: Value(BiayaLayanan),
+      BiayaKirim: Value(BiayaKirim),
+      DiskonKirim: Value(DiskonKirim),
       TotalPajak: Value(TotalPajak),
       Pembulatan: Value(Pembulatan),
       TotalAkhir: Value(TotalAkhir),
@@ -8720,6 +8760,8 @@ class BarisPenjualan extends DataClass implements Insertable<BarisPenjualan> {
       Subtotal: serializer.fromJson<String>(json['Subtotal']),
       TotalDiskon: serializer.fromJson<String>(json['TotalDiskon']),
       BiayaLayanan: serializer.fromJson<String>(json['BiayaLayanan']),
+      BiayaKirim: serializer.fromJson<String>(json['BiayaKirim']),
+      DiskonKirim: serializer.fromJson<String>(json['DiskonKirim']),
       TotalPajak: serializer.fromJson<String>(json['TotalPajak']),
       Pembulatan: serializer.fromJson<String>(json['Pembulatan']),
       TotalAkhir: serializer.fromJson<String>(json['TotalAkhir']),
@@ -8746,6 +8788,8 @@ class BarisPenjualan extends DataClass implements Insertable<BarisPenjualan> {
       'Subtotal': serializer.toJson<String>(Subtotal),
       'TotalDiskon': serializer.toJson<String>(TotalDiskon),
       'BiayaLayanan': serializer.toJson<String>(BiayaLayanan),
+      'BiayaKirim': serializer.toJson<String>(BiayaKirim),
+      'DiskonKirim': serializer.toJson<String>(DiskonKirim),
       'TotalPajak': serializer.toJson<String>(TotalPajak),
       'Pembulatan': serializer.toJson<String>(Pembulatan),
       'TotalAkhir': serializer.toJson<String>(TotalAkhir),
@@ -8770,6 +8814,8 @@ class BarisPenjualan extends DataClass implements Insertable<BarisPenjualan> {
     String? Subtotal,
     String? TotalDiskon,
     String? BiayaLayanan,
+    String? BiayaKirim,
+    String? DiskonKirim,
     String? TotalPajak,
     String? Pembulatan,
     String? TotalAkhir,
@@ -8791,6 +8837,8 @@ class BarisPenjualan extends DataClass implements Insertable<BarisPenjualan> {
     Subtotal: Subtotal ?? this.Subtotal,
     TotalDiskon: TotalDiskon ?? this.TotalDiskon,
     BiayaLayanan: BiayaLayanan ?? this.BiayaLayanan,
+    BiayaKirim: BiayaKirim ?? this.BiayaKirim,
+    DiskonKirim: DiskonKirim ?? this.DiskonKirim,
     TotalPajak: TotalPajak ?? this.TotalPajak,
     Pembulatan: Pembulatan ?? this.Pembulatan,
     TotalAkhir: TotalAkhir ?? this.TotalAkhir,
@@ -8814,6 +8862,8 @@ class BarisPenjualan extends DataClass implements Insertable<BarisPenjualan> {
       Subtotal: data.Subtotal.present ? data.Subtotal.value : this.Subtotal,
       TotalDiskon: data.TotalDiskon.present ? data.TotalDiskon.value : this.TotalDiskon,
       BiayaLayanan: data.BiayaLayanan.present ? data.BiayaLayanan.value : this.BiayaLayanan,
+      BiayaKirim: data.BiayaKirim.present ? data.BiayaKirim.value : this.BiayaKirim,
+      DiskonKirim: data.DiskonKirim.present ? data.DiskonKirim.value : this.DiskonKirim,
       TotalPajak: data.TotalPajak.present ? data.TotalPajak.value : this.TotalPajak,
       Pembulatan: data.Pembulatan.present ? data.Pembulatan.value : this.Pembulatan,
       TotalAkhir: data.TotalAkhir.present ? data.TotalAkhir.value : this.TotalAkhir,
@@ -8840,6 +8890,8 @@ class BarisPenjualan extends DataClass implements Insertable<BarisPenjualan> {
           ..write('Subtotal: $Subtotal, ')
           ..write('TotalDiskon: $TotalDiskon, ')
           ..write('BiayaLayanan: $BiayaLayanan, ')
+          ..write('BiayaKirim: $BiayaKirim, ')
+          ..write('DiskonKirim: $DiskonKirim, ')
           ..write('TotalPajak: $TotalPajak, ')
           ..write('Pembulatan: $Pembulatan, ')
           ..write('TotalAkhir: $TotalAkhir, ')
@@ -8853,7 +8905,7 @@ class BarisPenjualan extends DataClass implements Insertable<BarisPenjualan> {
   }
 
   @override
-  int get hashCode => Object.hash(
+  int get hashCode => Object.hashAll([
     Uuid,
     Nomor,
     UuidShift,
@@ -8866,6 +8918,8 @@ class BarisPenjualan extends DataClass implements Insertable<BarisPenjualan> {
     Subtotal,
     TotalDiskon,
     BiayaLayanan,
+    BiayaKirim,
+    DiskonKirim,
     TotalPajak,
     Pembulatan,
     TotalAkhir,
@@ -8874,7 +8928,7 @@ class BarisPenjualan extends DataClass implements Insertable<BarisPenjualan> {
     UuidPenyetujuDiskon,
     Catatan,
     Laundry,
-  );
+  ]);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -8891,6 +8945,8 @@ class BarisPenjualan extends DataClass implements Insertable<BarisPenjualan> {
           other.Subtotal == this.Subtotal &&
           other.TotalDiskon == this.TotalDiskon &&
           other.BiayaLayanan == this.BiayaLayanan &&
+          other.BiayaKirim == this.BiayaKirim &&
+          other.DiskonKirim == this.DiskonKirim &&
           other.TotalPajak == this.TotalPajak &&
           other.Pembulatan == this.Pembulatan &&
           other.TotalAkhir == this.TotalAkhir &&
@@ -8914,6 +8970,8 @@ class PenjualanCompanion extends UpdateCompanion<BarisPenjualan> {
   final Value<String> Subtotal;
   final Value<String> TotalDiskon;
   final Value<String> BiayaLayanan;
+  final Value<String> BiayaKirim;
+  final Value<String> DiskonKirim;
   final Value<String> TotalPajak;
   final Value<String> Pembulatan;
   final Value<String> TotalAkhir;
@@ -8936,6 +8994,8 @@ class PenjualanCompanion extends UpdateCompanion<BarisPenjualan> {
     this.Subtotal = const Value.absent(),
     this.TotalDiskon = const Value.absent(),
     this.BiayaLayanan = const Value.absent(),
+    this.BiayaKirim = const Value.absent(),
+    this.DiskonKirim = const Value.absent(),
     this.TotalPajak = const Value.absent(),
     this.Pembulatan = const Value.absent(),
     this.TotalAkhir = const Value.absent(),
@@ -8959,6 +9019,8 @@ class PenjualanCompanion extends UpdateCompanion<BarisPenjualan> {
     required String Subtotal,
     required String TotalDiskon,
     required String BiayaLayanan,
+    this.BiayaKirim = const Value.absent(),
+    this.DiskonKirim = const Value.absent(),
     required String TotalPajak,
     required String Pembulatan,
     required String TotalAkhir,
@@ -8998,6 +9060,8 @@ class PenjualanCompanion extends UpdateCompanion<BarisPenjualan> {
     Expression<String>? Subtotal,
     Expression<String>? TotalDiskon,
     Expression<String>? BiayaLayanan,
+    Expression<String>? BiayaKirim,
+    Expression<String>? DiskonKirim,
     Expression<String>? TotalPajak,
     Expression<String>? Pembulatan,
     Expression<String>? TotalAkhir,
@@ -9021,6 +9085,8 @@ class PenjualanCompanion extends UpdateCompanion<BarisPenjualan> {
       if (Subtotal != null) 'Subtotal': Subtotal,
       if (TotalDiskon != null) 'TotalDiskon': TotalDiskon,
       if (BiayaLayanan != null) 'BiayaLayanan': BiayaLayanan,
+      if (BiayaKirim != null) 'BiayaKirim': BiayaKirim,
+      if (DiskonKirim != null) 'DiskonKirim': DiskonKirim,
       if (TotalPajak != null) 'TotalPajak': TotalPajak,
       if (Pembulatan != null) 'Pembulatan': Pembulatan,
       if (TotalAkhir != null) 'TotalAkhir': TotalAkhir,
@@ -9046,6 +9112,8 @@ class PenjualanCompanion extends UpdateCompanion<BarisPenjualan> {
     Value<String>? Subtotal,
     Value<String>? TotalDiskon,
     Value<String>? BiayaLayanan,
+    Value<String>? BiayaKirim,
+    Value<String>? DiskonKirim,
     Value<String>? TotalPajak,
     Value<String>? Pembulatan,
     Value<String>? TotalAkhir,
@@ -9069,6 +9137,8 @@ class PenjualanCompanion extends UpdateCompanion<BarisPenjualan> {
       Subtotal: Subtotal ?? this.Subtotal,
       TotalDiskon: TotalDiskon ?? this.TotalDiskon,
       BiayaLayanan: BiayaLayanan ?? this.BiayaLayanan,
+      BiayaKirim: BiayaKirim ?? this.BiayaKirim,
+      DiskonKirim: DiskonKirim ?? this.DiskonKirim,
       TotalPajak: TotalPajak ?? this.TotalPajak,
       Pembulatan: Pembulatan ?? this.Pembulatan,
       TotalAkhir: TotalAkhir ?? this.TotalAkhir,
@@ -9120,6 +9190,12 @@ class PenjualanCompanion extends UpdateCompanion<BarisPenjualan> {
     if (BiayaLayanan.present) {
       map['BiayaLayanan'] = Variable<String>(BiayaLayanan.value);
     }
+    if (BiayaKirim.present) {
+      map['BiayaKirim'] = Variable<String>(BiayaKirim.value);
+    }
+    if (DiskonKirim.present) {
+      map['DiskonKirim'] = Variable<String>(DiskonKirim.value);
+    }
     if (TotalPajak.present) {
       map['TotalPajak'] = Variable<String>(TotalPajak.value);
     }
@@ -9165,6 +9241,8 @@ class PenjualanCompanion extends UpdateCompanion<BarisPenjualan> {
           ..write('Subtotal: $Subtotal, ')
           ..write('TotalDiskon: $TotalDiskon, ')
           ..write('BiayaLayanan: $BiayaLayanan, ')
+          ..write('BiayaKirim: $BiayaKirim, ')
+          ..write('DiskonKirim: $DiskonKirim, ')
           ..write('TotalPajak: $TotalPajak, ')
           ..write('Pembulatan: $Pembulatan, ')
           ..write('TotalAkhir: $TotalAkhir, ')
@@ -9356,6 +9434,15 @@ class $PenjualanDetailTable extends PenjualanDetail with TableInfo<$PenjualanDet
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _NomorSeriMeta = const VerificationMeta('NomorSeri');
+  @override
+  late final GeneratedColumn<String> NomorSeri = GeneratedColumn<String>(
+    'NomorSeri',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     Uuid,
@@ -9377,6 +9464,7 @@ class $PenjualanDetailTable extends PenjualanDetail with TableInfo<$PenjualanDet
     PajakEksklusif,
     TotalBaris,
     Catatan,
+    NomorSeri,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -9488,6 +9576,9 @@ class $PenjualanDetailTable extends PenjualanDetail with TableInfo<$PenjualanDet
     if (data.containsKey('Catatan')) {
       context.handle(_CatatanMeta, Catatan.isAcceptableOrUnknown(data['Catatan']!, _CatatanMeta));
     }
+    if (data.containsKey('NomorSeri')) {
+      context.handle(_NomorSeriMeta, NomorSeri.isAcceptableOrUnknown(data['NomorSeri']!, _NomorSeriMeta));
+    }
     return context;
   }
 
@@ -9519,6 +9610,7 @@ class $PenjualanDetailTable extends PenjualanDetail with TableInfo<$PenjualanDet
       PajakEksklusif: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}PajakEksklusif'])!,
       TotalBaris: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}TotalBaris'])!,
       Catatan: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}Catatan']),
+      NomorSeri: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}NomorSeri']),
     );
   }
 
@@ -9550,6 +9642,9 @@ class BarisPenjualanDetail extends DataClass implements Insertable<BarisPenjuala
   final String PajakEksklusif;
   final String TotalBaris;
   final String? Catatan;
+
+  /// Skema 20 (F-05h): JSON daftar nomor seri/IMEI yang dijual; null = produk tanpa nomor seri.
+  final String? NomorSeri;
   const BarisPenjualanDetail({
     required this.Uuid,
     required this.UuidPenjualan,
@@ -9570,6 +9665,7 @@ class BarisPenjualanDetail extends DataClass implements Insertable<BarisPenjuala
     required this.PajakEksklusif,
     required this.TotalBaris,
     this.Catatan,
+    this.NomorSeri,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -9599,6 +9695,9 @@ class BarisPenjualanDetail extends DataClass implements Insertable<BarisPenjuala
     if (!nullToAbsent || Catatan != null) {
       map['Catatan'] = Variable<String>(Catatan);
     }
+    if (!nullToAbsent || NomorSeri != null) {
+      map['NomorSeri'] = Variable<String>(NomorSeri);
+    }
     return map;
   }
 
@@ -9623,6 +9722,7 @@ class BarisPenjualanDetail extends DataClass implements Insertable<BarisPenjuala
       PajakEksklusif: Value(PajakEksklusif),
       TotalBaris: Value(TotalBaris),
       Catatan: Catatan == null && nullToAbsent ? const Value.absent() : Value(Catatan),
+      NomorSeri: NomorSeri == null && nullToAbsent ? const Value.absent() : Value(NomorSeri),
     );
   }
 
@@ -9648,6 +9748,7 @@ class BarisPenjualanDetail extends DataClass implements Insertable<BarisPenjuala
       PajakEksklusif: serializer.fromJson<String>(json['PajakEksklusif']),
       TotalBaris: serializer.fromJson<String>(json['TotalBaris']),
       Catatan: serializer.fromJson<String?>(json['Catatan']),
+      NomorSeri: serializer.fromJson<String?>(json['NomorSeri']),
     );
   }
   @override
@@ -9673,6 +9774,7 @@ class BarisPenjualanDetail extends DataClass implements Insertable<BarisPenjuala
       'PajakEksklusif': serializer.toJson<String>(PajakEksklusif),
       'TotalBaris': serializer.toJson<String>(TotalBaris),
       'Catatan': serializer.toJson<String?>(Catatan),
+      'NomorSeri': serializer.toJson<String?>(NomorSeri),
     };
   }
 
@@ -9696,6 +9798,7 @@ class BarisPenjualanDetail extends DataClass implements Insertable<BarisPenjuala
     String? PajakEksklusif,
     String? TotalBaris,
     Value<String?> Catatan = const Value.absent(),
+    Value<String?> NomorSeri = const Value.absent(),
   }) => BarisPenjualanDetail(
     Uuid: Uuid ?? this.Uuid,
     UuidPenjualan: UuidPenjualan ?? this.UuidPenjualan,
@@ -9716,6 +9819,7 @@ class BarisPenjualanDetail extends DataClass implements Insertable<BarisPenjuala
     PajakEksklusif: PajakEksklusif ?? this.PajakEksklusif,
     TotalBaris: TotalBaris ?? this.TotalBaris,
     Catatan: Catatan.present ? Catatan.value : this.Catatan,
+    NomorSeri: NomorSeri.present ? NomorSeri.value : this.NomorSeri,
   );
   BarisPenjualanDetail copyWithCompanion(PenjualanDetailCompanion data) {
     return BarisPenjualanDetail(
@@ -9738,6 +9842,7 @@ class BarisPenjualanDetail extends DataClass implements Insertable<BarisPenjuala
       PajakEksklusif: data.PajakEksklusif.present ? data.PajakEksklusif.value : this.PajakEksklusif,
       TotalBaris: data.TotalBaris.present ? data.TotalBaris.value : this.TotalBaris,
       Catatan: data.Catatan.present ? data.Catatan.value : this.Catatan,
+      NomorSeri: data.NomorSeri.present ? data.NomorSeri.value : this.NomorSeri,
     );
   }
 
@@ -9762,7 +9867,8 @@ class BarisPenjualanDetail extends DataClass implements Insertable<BarisPenjuala
           ..write('JumlahPajak: $JumlahPajak, ')
           ..write('PajakEksklusif: $PajakEksklusif, ')
           ..write('TotalBaris: $TotalBaris, ')
-          ..write('Catatan: $Catatan')
+          ..write('Catatan: $Catatan, ')
+          ..write('NomorSeri: $NomorSeri')
           ..write(')'))
         .toString();
   }
@@ -9788,6 +9894,7 @@ class BarisPenjualanDetail extends DataClass implements Insertable<BarisPenjuala
     PajakEksklusif,
     TotalBaris,
     Catatan,
+    NomorSeri,
   );
   @override
   bool operator ==(Object other) =>
@@ -9811,7 +9918,8 @@ class BarisPenjualanDetail extends DataClass implements Insertable<BarisPenjuala
           other.JumlahPajak == this.JumlahPajak &&
           other.PajakEksklusif == this.PajakEksklusif &&
           other.TotalBaris == this.TotalBaris &&
-          other.Catatan == this.Catatan);
+          other.Catatan == this.Catatan &&
+          other.NomorSeri == this.NomorSeri);
 }
 
 class PenjualanDetailCompanion extends UpdateCompanion<BarisPenjualanDetail> {
@@ -9834,6 +9942,7 @@ class PenjualanDetailCompanion extends UpdateCompanion<BarisPenjualanDetail> {
   final Value<String> PajakEksklusif;
   final Value<String> TotalBaris;
   final Value<String?> Catatan;
+  final Value<String?> NomorSeri;
   final Value<int> rowid;
   const PenjualanDetailCompanion({
     this.Uuid = const Value.absent(),
@@ -9855,6 +9964,7 @@ class PenjualanDetailCompanion extends UpdateCompanion<BarisPenjualanDetail> {
     this.PajakEksklusif = const Value.absent(),
     this.TotalBaris = const Value.absent(),
     this.Catatan = const Value.absent(),
+    this.NomorSeri = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   PenjualanDetailCompanion.insert({
@@ -9877,6 +9987,7 @@ class PenjualanDetailCompanion extends UpdateCompanion<BarisPenjualanDetail> {
     required String PajakEksklusif,
     required String TotalBaris,
     this.Catatan = const Value.absent(),
+    this.NomorSeri = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : Uuid = Value(Uuid),
        UuidPenjualan = Value(UuidPenjualan),
@@ -9914,6 +10025,7 @@ class PenjualanDetailCompanion extends UpdateCompanion<BarisPenjualanDetail> {
     Expression<String>? PajakEksklusif,
     Expression<String>? TotalBaris,
     Expression<String>? Catatan,
+    Expression<String>? NomorSeri,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -9936,6 +10048,7 @@ class PenjualanDetailCompanion extends UpdateCompanion<BarisPenjualanDetail> {
       if (PajakEksklusif != null) 'PajakEksklusif': PajakEksklusif,
       if (TotalBaris != null) 'TotalBaris': TotalBaris,
       if (Catatan != null) 'Catatan': Catatan,
+      if (NomorSeri != null) 'NomorSeri': NomorSeri,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -9960,6 +10073,7 @@ class PenjualanDetailCompanion extends UpdateCompanion<BarisPenjualanDetail> {
     Value<String>? PajakEksklusif,
     Value<String>? TotalBaris,
     Value<String?>? Catatan,
+    Value<String?>? NomorSeri,
     Value<int>? rowid,
   }) {
     return PenjualanDetailCompanion(
@@ -9982,6 +10096,7 @@ class PenjualanDetailCompanion extends UpdateCompanion<BarisPenjualanDetail> {
       PajakEksklusif: PajakEksklusif ?? this.PajakEksklusif,
       TotalBaris: TotalBaris ?? this.TotalBaris,
       Catatan: Catatan ?? this.Catatan,
+      NomorSeri: NomorSeri ?? this.NomorSeri,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -10046,6 +10161,9 @@ class PenjualanDetailCompanion extends UpdateCompanion<BarisPenjualanDetail> {
     if (Catatan.present) {
       map['Catatan'] = Variable<String>(Catatan.value);
     }
+    if (NomorSeri.present) {
+      map['NomorSeri'] = Variable<String>(NomorSeri.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -10074,6 +10192,7 @@ class PenjualanDetailCompanion extends UpdateCompanion<BarisPenjualanDetail> {
           ..write('PajakEksklusif: $PajakEksklusif, ')
           ..write('TotalBaris: $TotalBaris, ')
           ..write('Catatan: $Catatan, ')
+          ..write('NomorSeri: $NomorSeri, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -22386,6 +22505,8 @@ typedef $$PenjualanTableCreateCompanionBuilder = PenjualanCompanion Function({
   required String Subtotal,
   required String TotalDiskon,
   required String BiayaLayanan,
+  Value<String> BiayaKirim,
+  Value<String> DiskonKirim,
   required String TotalPajak,
   required String Pembulatan,
   required String TotalAkhir,
@@ -22409,6 +22530,8 @@ typedef $$PenjualanTableUpdateCompanionBuilder = PenjualanCompanion Function({
   Value<String> Subtotal,
   Value<String> TotalDiskon,
   Value<String> BiayaLayanan,
+  Value<String> BiayaKirim,
+  Value<String> DiskonKirim,
   Value<String> TotalPajak,
   Value<String> Pembulatan,
   Value<String> TotalAkhir,
@@ -22497,6 +22620,12 @@ class $$PenjualanTableFilterComposer extends Composer<_$BasisDataKasir, $Penjual
 
   ColumnFilters<String> get BiayaLayanan =>
       $composableBuilder(column: $table.BiayaLayanan, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get BiayaKirim =>
+      $composableBuilder(column: $table.BiayaKirim, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get DiskonKirim =>
+      $composableBuilder(column: $table.DiskonKirim, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get TotalPajak =>
       $composableBuilder(column: $table.TotalPajak, builder: (column) => ColumnFilters(column));
@@ -22603,6 +22732,12 @@ class $$PenjualanTableOrderingComposer extends Composer<_$BasisDataKasir, $Penju
   ColumnOrderings<String> get BiayaLayanan =>
       $composableBuilder(column: $table.BiayaLayanan, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get BiayaKirim =>
+      $composableBuilder(column: $table.BiayaKirim, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get DiskonKirim =>
+      $composableBuilder(column: $table.DiskonKirim, builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<String> get TotalPajak =>
       $composableBuilder(column: $table.TotalPajak, builder: (column) => ColumnOrderings(column));
 
@@ -22664,6 +22799,11 @@ class $$PenjualanTableAnnotationComposer extends Composer<_$BasisDataKasir, $Pen
 
   GeneratedColumn<String> get BiayaLayanan =>
       $composableBuilder(column: $table.BiayaLayanan, builder: (column) => column);
+
+  GeneratedColumn<String> get BiayaKirim => $composableBuilder(column: $table.BiayaKirim, builder: (column) => column);
+
+  GeneratedColumn<String> get DiskonKirim =>
+      $composableBuilder(column: $table.DiskonKirim, builder: (column) => column);
 
   GeneratedColumn<String> get TotalPajak => $composableBuilder(column: $table.TotalPajak, builder: (column) => column);
 
@@ -22761,6 +22901,8 @@ class $$PenjualanTableTableManager
                 Value<String> Subtotal = const Value.absent(),
                 Value<String> TotalDiskon = const Value.absent(),
                 Value<String> BiayaLayanan = const Value.absent(),
+                Value<String> BiayaKirim = const Value.absent(),
+                Value<String> DiskonKirim = const Value.absent(),
                 Value<String> TotalPajak = const Value.absent(),
                 Value<String> Pembulatan = const Value.absent(),
                 Value<String> TotalAkhir = const Value.absent(),
@@ -22783,6 +22925,8 @@ class $$PenjualanTableTableManager
                 Subtotal: Subtotal,
                 TotalDiskon: TotalDiskon,
                 BiayaLayanan: BiayaLayanan,
+                BiayaKirim: BiayaKirim,
+                DiskonKirim: DiskonKirim,
                 TotalPajak: TotalPajak,
                 Pembulatan: Pembulatan,
                 TotalAkhir: TotalAkhir,
@@ -22807,6 +22951,8 @@ class $$PenjualanTableTableManager
                 required String Subtotal,
                 required String TotalDiskon,
                 required String BiayaLayanan,
+                Value<String> BiayaKirim = const Value.absent(),
+                Value<String> DiskonKirim = const Value.absent(),
                 required String TotalPajak,
                 required String Pembulatan,
                 required String TotalAkhir,
@@ -22829,6 +22975,8 @@ class $$PenjualanTableTableManager
                 Subtotal: Subtotal,
                 TotalDiskon: TotalDiskon,
                 BiayaLayanan: BiayaLayanan,
+                BiayaKirim: BiayaKirim,
+                DiskonKirim: DiskonKirim,
                 TotalPajak: TotalPajak,
                 Pembulatan: Pembulatan,
                 TotalAkhir: TotalAkhir,
@@ -22914,6 +23062,7 @@ typedef $$PenjualanDetailTableCreateCompanionBuilder = PenjualanDetailCompanion 
   required String PajakEksklusif,
   required String TotalBaris,
   Value<String?> Catatan,
+  Value<String?> NomorSeri,
   Value<int> rowid,
 });
 typedef $$PenjualanDetailTableUpdateCompanionBuilder = PenjualanDetailCompanion Function({
@@ -22936,6 +23085,7 @@ typedef $$PenjualanDetailTableUpdateCompanionBuilder = PenjualanDetailCompanion 
   Value<String> PajakEksklusif,
   Value<String> TotalBaris,
   Value<String?> Catatan,
+  Value<String?> NomorSeri,
   Value<int> rowid,
 });
 
@@ -23016,6 +23166,9 @@ class $$PenjualanDetailTableFilterComposer extends Composer<_$BasisDataKasir, $P
 
   ColumnFilters<String> get Catatan =>
       $composableBuilder(column: $table.Catatan, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get NomorSeri =>
+      $composableBuilder(column: $table.NomorSeri, builder: (column) => ColumnFilters(column));
 
   $$PenjualanTableFilterComposer get UuidPenjualan {
     final $$PenjualanTableFilterComposer composer = $composerBuilder(
@@ -23098,6 +23251,9 @@ class $$PenjualanDetailTableOrderingComposer extends Composer<_$BasisDataKasir, 
   ColumnOrderings<String> get Catatan =>
       $composableBuilder(column: $table.Catatan, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get NomorSeri =>
+      $composableBuilder(column: $table.NomorSeri, builder: (column) => ColumnOrderings(column));
+
   $$PenjualanTableOrderingComposer get UuidPenjualan {
     final $$PenjualanTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -23168,6 +23324,8 @@ class $$PenjualanDetailTableAnnotationComposer extends Composer<_$BasisDataKasir
 
   GeneratedColumn<String> get Catatan => $composableBuilder(column: $table.Catatan, builder: (column) => column);
 
+  GeneratedColumn<String> get NomorSeri => $composableBuilder(column: $table.NomorSeri, builder: (column) => column);
+
   $$PenjualanTableAnnotationComposer get UuidPenjualan {
     final $$PenjualanTableAnnotationComposer composer = $composerBuilder(
       composer: this,
@@ -23231,6 +23389,7 @@ class $$PenjualanDetailTableTableManager
                 Value<String> PajakEksklusif = const Value.absent(),
                 Value<String> TotalBaris = const Value.absent(),
                 Value<String?> Catatan = const Value.absent(),
+                Value<String?> NomorSeri = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => PenjualanDetailCompanion(
                 Uuid: Uuid,
@@ -23252,6 +23411,7 @@ class $$PenjualanDetailTableTableManager
                 PajakEksklusif: PajakEksklusif,
                 TotalBaris: TotalBaris,
                 Catatan: Catatan,
+                NomorSeri: NomorSeri,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -23275,6 +23435,7 @@ class $$PenjualanDetailTableTableManager
                 required String PajakEksklusif,
                 required String TotalBaris,
                 Value<String?> Catatan = const Value.absent(),
+                Value<String?> NomorSeri = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => PenjualanDetailCompanion.insert(
                 Uuid: Uuid,
@@ -23296,6 +23457,7 @@ class $$PenjualanDetailTableTableManager
                 PajakEksklusif: PajakEksklusif,
                 TotalBaris: TotalBaris,
                 Catatan: Catatan,
+                NomorSeri: NomorSeri,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

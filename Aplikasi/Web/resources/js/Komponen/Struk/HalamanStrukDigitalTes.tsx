@@ -32,6 +32,8 @@ const struk: StrukDigital = {
     Subtotal: '36000.00',
     TotalDiskon: '2000.00',
     BiayaLayanan: '0.00',
+    BiayaKirim: '0.00',
+    DiskonKirim: '0.00',
     Pajak: [{ Kode: 'PB1', Tarif: '10.00', Jumlah: '3400.00' }],
     Pembulatan: '0.00',
     TotalAkhir: '37400.00',
@@ -55,6 +57,18 @@ describe('Struk digital publik (POS-11)', () => {
         expect(screen.getByText('Rp 12.600')).toBeTruthy();
         expect(screen.getByText('Terima kasih atas kunjungan Anda')).toBeTruthy();
         expect(screen.queryByText('TRANSAKSI DIBATALKAN')).toBeNull();
+    });
+
+    it('F-17 bagian 3: ongkir dan diskon ongkir tampil hanya bila ada', () => {
+        RenderUji(<HalamanStrukDigital Struk={{ ...struk, BiayaKirim: '15000.00', DiskonKirim: '15000.00' }} />);
+        expect(screen.getByText('Ongkir')).toBeTruthy();
+        expect(screen.getByText('Diskon ongkir')).toBeTruthy();
+        expect(screen.getAllByText('Rp 15.000').length).toBe(1);
+        expect(screen.getByText('-Rp 15.000')).toBeTruthy();
+        cleanup();
+
+        RenderUji(<HalamanStrukDigital Struk={struk} />);
+        expect(screen.queryByText('Ongkir')).toBeNull();
     });
 
     it('F-05h: nomor seri dan garansi sampai tampil di baris produk bernomor seri', () => {
