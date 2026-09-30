@@ -27,7 +27,8 @@ Directory CariFolderVektor() {
 ///
 /// Baris tanpa kunci `Pajak` = semua pajak dokumen; `Pajak: []` = tanpa pajak. Promo item berlaku ke baris pertama
 /// dengan `Sku` sama; promo pesanan dan `DiskonManualPesanan` menjadi potongan pesanan. `Pembayaran` boleh objek
-/// tunggal atau daftar.
+/// tunggal atau daftar. `BiayaKirim`/`DiskonKirim` (F-17 bagian 3) data transaksi di tingkat vektor seperti
+/// `TukarPoin`, bukan pengaturan outlet; `KenaBiayaKirim` bendera per jenis pajak.
 DataKalkulasi SusunDataKalkulasi(Map<String, Object?> vektor) {
   final pengaturan = vektor['Pengaturan']! as Map<String, Object?>;
   final pembulatan = pengaturan['PembulatanTunai'] as Map<String, Object?>?;
@@ -83,6 +84,7 @@ DataKalkulasi SusunDataKalkulasi(Map<String, Object?> vektor) {
           tarif: Decimal.parse(pajak['Tarif']! as String),
           pengaliDpp: UraiPecahan((pajak['PengaliDpp'] as String?) ?? '1/1'),
           dasarPengenaan: DasarPengenaanPajak.values.byName((pajak['DasarPengenaan'] as String?) ?? 'Subtotal'),
+          kenaBiayaKirim: (pajak['KenaBiayaKirim'] as bool?) ?? false,
         ),
     ],
     baris: [
@@ -98,6 +100,8 @@ DataKalkulasi SusunDataKalkulasi(Map<String, Object?> vektor) {
     ],
     potonganPesanan: potonganPesanan,
     tukarPoin: vektor['TukarPoin'] == null ? null : Uang.Dari(vektor['TukarPoin']! as String),
+    biayaKirim: vektor['BiayaKirim'] == null ? null : Uang.Dari(vektor['BiayaKirim']! as String),
+    diskonKirim: vektor['DiskonKirim'] == null ? null : Uang.Dari(vektor['DiskonKirim']! as String),
     pembayaran: [
       for (final item in daftarBayar)
         DataPembayaranKalkulasi(
@@ -123,6 +127,8 @@ Map<String, Object?> UbahHasilKePeta(HasilKalkulasi hasil) => {
   'DiskonPoin': hasil.diskonPoin.KeString(),
   'TotalDiskon': hasil.totalDiskon.KeString(),
   'BiayaLayanan': hasil.biayaLayanan.KeString(),
+  'BiayaKirim': hasil.biayaKirim.KeString(),
+  'DiskonKirim': hasil.diskonKirim.KeString(),
   'TotalPajak': hasil.totalPajak.KeString(),
   'TotalPajakEksklusif': hasil.totalPajakEksklusif.KeString(),
   'Pembulatan': hasil.pembulatan.KeString(),
@@ -132,6 +138,9 @@ Map<String, Object?> UbahHasilKePeta(HasilKalkulasi hasil) => {
     for (final MapEntry(:key, :value) in hasil.pajak.entries)
       key: {'Dpp': value.dpp.KeString(), 'Jumlah': value.jumlah.KeString()},
   },
+  // `baris.biayaKirim` sengaja tidak ikut: pemeriksa membandingkan `Harapan.Baris` persis, jadi kunci baru akan
+  // mengubah nilai harapan vektor lama (dilarang `.claude/rules/Pengujian.md`). Alokasi ongkir per baris tetap teruji
+  // lewat `TotalBaris`. Bentuk peta ini wajib sama dengan `HasilBarisKalkulasi::KeLarik()` di PHP.
   'Baris': [
     for (final baris in hasil.baris)
       {

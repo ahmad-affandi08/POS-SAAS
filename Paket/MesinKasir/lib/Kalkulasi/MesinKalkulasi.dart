@@ -16,11 +16,17 @@ import 'HasilKalkulasi.dart';
 /// 4. Diskon pesanan = Σ potongan pesanan (persen dari Subtotal), dibatasi Subtotal; lalu `DiskonPoin` = nilai tukar
 ///    poin (F-16b) dibatasi sisa Subtotal dan ditambahkan ke diskon pesanan; dialokasikan sebanding Netto.
 /// 5. `BiayaLayanan` = bulat(persen × (Subtotal − DiskonPesanan)), dialokasikan sebanding Netto akhir.
+/// 5b. `BiayaKirimNetto` = `BiayaKirim − DiskonKirim` (F-17 bagian 3), dialokasikan sebanding Netto akhir seperti
+///    biaya layanan — bukan karena kemiripan bentuk, tetapi karena pajak dihitung **per baris**: kode pajak boleh
+///    berbeda antar baris, jadi ongkir harus punya bagian per baris agar DPP-nya benar. Bila seluruh Netto akhir nol
+///    (pesanan habis didiskon) ongkirnya dibagi **rata**, sebab alokasi sebanding bobot nol mengembalikan nol semua
+///    dan Σ baris tidak lagi sama dengan dokumennya.
 /// 6. Pajak per baris dengan pecahan eksak. Eksklusif: DPP = (NettoAkhir + [biaya layanan baris bila
-///    `SubtotalPlusLayanan`]) × p/q. Inklusif: Dasar = NettoAkhir ÷ (1 + Σ tarif × p/q), DPP = Dasar × p/q, dan
-///    pajak atas biaya layanan selalu ditambahkan (biaya layanan tidak termasuk harga).
+///    `SubtotalPlusLayanan`] + [ongkir baris bila `kenaBiayaKirim`]) × p/q. Inklusif: Dasar = NettoAkhir ÷ (1 + Σ
+///    tarif × p/q), DPP = Dasar × p/q, dan pajak atas biaya layanan serta ongkir selalu ditambahkan sebagai bagian
+///    eksklusif (keduanya di luar harga barang).
 /// 7. Pembulatan per dokumen per jenis pajak, terpisah bagian eksklusif dan inklusif; baris menerima alokasi.
-/// 8. `TotalAkhir` = Subtotal − DiskonPesanan + BiayaLayanan + pajak eksklusif + Pembulatan tunai.
+/// 8. `TotalAkhir` = Subtotal − DiskonPesanan + BiayaLayanan + BiayaKirimNetto + pajak eksklusif + Pembulatan tunai.
 ///
 /// Alokasi ke baris memakai metode sisa terbesar sehingga Σ baris selalu sama dengan angka dokumen.
 final class MesinKalkulasi {
@@ -69,6 +75,10 @@ final class MesinKalkulasi {
     );
     final biayaLayananBaris = AlokasikanSebanding(biayaLayanan, nettoAkhir);
 
+    // Langkah 5b: ongkir netto, dialokasikan sebanding netto akhir (bagi rata bila semua netto akhir nol).
+    final biayaKirimNetto = data.biayaKirim.Kurangi(data.diskonKirim);
+    final biayaKirimBaris = AlokasikanBiayaKirim(biayaKirimNetto, nettoAkhir);
+
     // Langkah 6: pajak eksak per baris, dipisah bagian eksklusif dan inklusif per kode pajak.
     final tepatEksklusif = {for (final pajak in daftarPajak) pajak.kode: List.filled(jumlahBaris, Rational.zero)};
     final tepatInklusif = {for (final pajak in daftarPajak) pajak.kode: List.filled(jumlahBaris, Rational.zero)};
@@ -85,18 +95,21 @@ final class MesinKalkulasi {
       }
       final dasar = inklusif ? nilaiAkhir / (Rational.one + faktor) : nilaiAkhir;
       final layanan = biayaLayananBaris[i].KeDesimal().toRational();
+      final kirim = biayaKirimBaris[i].KeDesimal().toRational();
       for (final pajak in pajakBerlaku) {
         final tarif = HitungTarif(pajak);
         final dppBarang = dasar * pajak.pengaliDpp;
         final dppLayanan = pajak.dasarPengenaan == DasarPengenaanPajak.SubtotalPlusLayanan
             ? layanan * pajak.pengaliDpp
             : Rational.zero;
-        dppTepat[pajak.kode] = dppTepat[pajak.kode]! + dppBarang + dppLayanan;
+        final dppKirim = pajak.kenaBiayaKirim ? kirim * pajak.pengaliDpp : Rational.zero;
+        final dppLuarBarang = dppLayanan + dppKirim;
+        dppTepat[pajak.kode] = dppTepat[pajak.kode]! + dppBarang + dppLuarBarang;
         if (inklusif) {
           tepatInklusif[pajak.kode]![i] += dppBarang * tarif;
-          tepatEksklusif[pajak.kode]![i] += dppLayanan * tarif;
+          tepatEksklusif[pajak.kode]![i] += dppLuarBarang * tarif;
         } else {
-          tepatEksklusif[pajak.kode]![i] += (dppBarang + dppLayanan) * tarif;
+          tepatEksklusif[pajak.kode]![i] += (dppBarang + dppLuarBarang) * tarif;
         }
       }
     }
@@ -127,7 +140,11 @@ final class MesinKalkulasi {
     }
 
     // Langkah 8: total, pembulatan tunai (BR-08.6), kembalian.
-    final totalSebelumPembulatan = subtotal.Kurangi(diskonPesanan).Tambah(biayaLayanan).Tambah(totalPajakEksklusif);
+    final totalSebelumPembulatan = subtotal
+        .Kurangi(diskonPesanan)
+        .Tambah(biayaLayanan)
+        .Tambah(biayaKirimNetto)
+        .Tambah(totalPajakEksklusif);
     var nonTunai = Uang.Nol();
     for (final bayar in data.pembayaran.where((bayar) => !bayar.CekTunai())) {
       nonTunai = nonTunai.Tambah(bayar.jumlah!);
@@ -154,6 +171,8 @@ final class MesinKalkulasi {
       totalAkhir: totalAkhir,
       kembalian: kembalian,
       pajak: rincianPajak,
+      biayaKirim: data.biayaKirim,
+      diskonKirim: data.diskonKirim,
       baris: [
         for (var i = 0; i < jumlahBaris; i++)
           HasilBarisKalkulasi(
@@ -163,7 +182,11 @@ final class MesinKalkulasi {
             biayaLayanan: biayaLayananBaris[i],
             pajak: pajakBaris[i],
             pajakEksklusif: pajakEksklusifBaris[i],
-            totalBaris: nettoAkhir[i].Tambah(biayaLayananBaris[i]).Tambah(pajakEksklusifBaris[i]),
+            totalBaris: nettoAkhir[i]
+                .Tambah(biayaLayananBaris[i])
+                .Tambah(biayaKirimBaris[i])
+                .Tambah(pajakEksklusifBaris[i]),
+            biayaKirim: biayaKirimBaris[i],
           ),
       ],
     );
@@ -201,6 +224,18 @@ final class MesinKalkulasi {
     data.potonganPesanan.forEach(CekPotongan);
     if (data.tukarPoin.BernilaiNegatif()) {
       throw ArgumentError.value(data.tukarPoin.KeString(), 'tukarPoin', 'Nilai tukar poin tidak boleh negatif');
+    }
+    if (data.biayaKirim.BernilaiNegatif() || data.diskonKirim.BernilaiNegatif()) {
+      throw ArgumentError.value(data.biayaKirim.KeString(), 'biayaKirim', 'Biaya kirim tidak boleh negatif');
+    }
+    // Diskon ongkir yang melebihi ongkirnya membuat ongkir netto negatif, dan itu bukan gratis ongkir melainkan toko
+    // membayar pembeli untuk dikirimi barang.
+    if (data.diskonKirim.Bandingkan(data.biayaKirim) > 0) {
+      throw ArgumentError.value(
+        data.diskonKirim.KeString(),
+        'diskonKirim',
+        'Diskon kirim melebihi biaya kirim ${data.biayaKirim.KeString()}',
+      );
     }
     for (final bayar in data.pembayaran) {
       final jumlah = bayar.jumlah;
@@ -278,6 +313,17 @@ final class MesinKalkulasi {
       diterima = diterima.Tambah(bayar.jumlah!);
     }
     return diterima.Kurangi(tagihanTunai);
+  }
+
+  /// Alokasi ongkir netto ke baris: sebanding [nettoAkhir], atau **rata** bila semua netto akhir nol. Alokasi sebanding
+  /// bobot nol mengembalikan nol semua, sehingga Σ ongkir baris tidak lagi sama dengan ongkir dokumen.
+  static List<Uang> AlokasikanBiayaKirim(Uang biayaKirimNetto, List<Uang> nettoAkhir) {
+    if (nettoAkhir.isEmpty) {
+      return const [];
+    }
+    final adaBobot = nettoAkhir.any((satu) => !satu.BernilaiNol());
+    final bobot = adaBobot ? nettoAkhir : List.filled(nettoAkhir.length, Uang.DariBulat(1));
+    return AlokasikanSebanding(biayaKirimNetto, bobot);
   }
 
   /// Membagi [total] ke baris sebanding [bobot] dengan metode sisa terbesar. Σ hasil = [total].

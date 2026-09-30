@@ -10,12 +10,17 @@ enum DasarPengenaanPajak { Subtotal, SubtotalPlusLayanan }
 /// Satu jenis pajak dokumen, misal PPN 12% DPP nilai lain 11/12 atau PB1 10% atas subtotal + biaya layanan.
 ///
 /// [tarif] dalam persen (tidak pernah di-hard-code, diambil dari `TarifPajak` bertanggal berlaku, CLAUDE.md #12).
+///
+/// [kenaBiayaKirim] (F-17 bagian 3) bendera tersendiri, bukan case baru [DasarPengenaanPajak]: dengan/tanpa layanan x
+/// dengan/tanpa kirim akan menjadi empat case pada enum yang nilainya tersimpan di DB dan dibaca Dart, FE, serta
+/// template sektor. Dua pertanyaan yang berdiri sendiri lebih baik diwakili dua bendera.
 final class DataPajakKalkulasi {
   DataPajakKalkulasi({
     required this.kode,
     required this.tarif,
     Rational? pengaliDpp,
     this.dasarPengenaan = DasarPengenaanPajak.Subtotal,
+    this.kenaBiayaKirim = false,
   }) : pengaliDpp = pengaliDpp ?? Rational.one;
 
   final String kode;
@@ -24,6 +29,9 @@ final class DataPajakKalkulasi {
   /// Pengali DPP pecahan eksak (bawaan 1/1), misal 11/12 untuk PPN DPP nilai lain.
   final Rational pengaliDpp;
   final DasarPengenaanPajak dasarPengenaan;
+
+  /// Ongkir ikut DPP pajak ini (F-17 bagian 3). Pajak ongkir selalu bagian eksklusif: ongkir di luar harga barang.
+  final bool kenaBiayaKirim;
 }
 
 /// Potongan (diskon manual atau promo yang sudah diterapkan): persen dari dasar, atau nominal tetap.
@@ -103,7 +111,11 @@ final class DataKalkulasi {
     this.potonganPesanan = const [],
     this.pembayaran = const [],
     Uang? tukarPoin,
+    Uang? biayaKirim,
+    Uang? diskonKirim,
   }) : tukarPoin = tukarPoin ?? Uang.Nol(),
+       biayaKirim = biayaKirim ?? Uang.Nol(),
+       diskonKirim = diskonKirim ?? Uang.Nol(),
        persenBiayaLayanan = persenBiayaLayanan ?? Decimal.zero;
 
   /// Pengaturan bawaan harga termasuk pajak (baris boleh menimpa).
@@ -126,4 +138,12 @@ final class DataKalkulasi {
   /// Nilai Rupiah penukaran poin loyalti (F-16b, J-16.4; bawaan 0): potongan pesanan sebelum pajak yang diterapkan
   /// setelah potongan pesanan lain dan dibatasi sisa `Subtotal`.
   final Uang tukarPoin;
+
+  /// Ongkir yang ditagih ke pembeli (F-17 bagian 3; bawaan 0), **nominal** bukan persen karena datang dari tarif
+  /// kurir/jarak.
+  final Uang biayaKirim;
+
+  /// Diskon ongkir, misal promo gratis ongkir (F-16c; bawaan 0, tidak boleh melebihi [biayaKirim]). Dipisah supaya
+  /// gratis ongkir tetap terlihat: ongkir yang langsung ditulis nol tidak bisa dibedakan dari "tidak ada ongkir".
+  final Uang diskonKirim;
 }

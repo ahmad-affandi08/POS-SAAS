@@ -1,0 +1,77 @@
+{
+  "Id": "RTL-ONGKIR-PPN-001",
+  "Keterangan": "Ongkir Rp 25.000 ditagih ke pembeli dan ikut DPP PPN 12% nilai lain 11/12 (KenaBiayaKirim true, F-17 bagian 3): ongkir dibagi ke baris sebanding netto 3:1 supaya DPP per baris benar, pajak ongkir selalu eksklusif",
+  "Pengaturan": {
+    "HargaTermasukPajak": false,
+    "PembulatanTunai": null
+  },
+  "Pajak": [
+    {
+      "Kode": "PPN",
+      "Tarif": "12",
+      "PengaliDpp": "11/12",
+      "DasarPengenaan": "Subtotal",
+      "KenaBiayaKirim": true
+    }
+  ],
+  "Baris": [
+    {
+      "Sku": "BRS-5KG",
+      "Jumlah": "2",
+      "HargaSatuan": "75000"
+    },
+    {
+      "Sku": "MYK-2L",
+      "Jumlah": "1",
+      "HargaSatuan": "50000"
+    }
+  ],
+  "BiayaKirim": "25000",
+  "DiskonKirim": "0",
+  "Pembayaran": [
+    {
+      "Metode": "Tunai",
+      "Jumlah": "250000"
+    }
+  ],
+  "Harapan": {
+    "Subtotal": "200000.00",
+    "DiskonBaris": "0.00",
+    "DiskonPesanan": "0.00",
+    "TotalDiskon": "0.00",
+    "BiayaLayanan": "0.00",
+    "BiayaKirim": "25000.00",
+    "DiskonKirim": "0.00",
+    "TotalPajak": "24750.00",
+    "TotalPajakEksklusif": "24750.00",
+    "Pembulatan": "0.00",
+    "TotalAkhir": "249750.00",
+    "Kembalian": "250.00",
+    "Pajak": {
+      "PPN": {
+        "Dpp": "206250.00",
+        "Jumlah": "24750.00"
+      }
+    },
+    "Baris": [
+      {
+        "Bruto": "150000.00",
+        "Diskon": "0.00",
+        "DiskonPesanan": "0.00",
+        "BiayaLayanan": "0.00",
+        "Pajak": "18562.50",
+        "PajakEksklusif": "18562.50",
+        "TotalBaris": "187312.50"
+      },
+      {
+        "Bruto": "50000.00",
+        "Diskon": "0.00",
+        "DiskonPesanan": "0.00",
+        "BiayaLayanan": "0.00",
+        "Pajak": "6187.50",
+        "PajakEksklusif": "6187.50",
+        "TotalBaris": "62437.50"
+      }
+    ]
+  }
+}

@@ -1,0 +1,82 @@
+{
+  "Id": "RTL-ONGKIR-ALOKASI-SEN-001",
+  "Keterangan": "Ongkir Rp 10.000 dibagi ke tiga baris sama besar: 3333,34 / 3333,33 / 3333,33 (metode sisa terbesar, seri ke baris lebih awal) sehingga Σ ongkir baris tetap sama dengan ongkir dokumen; pajaknya ikut terbagi sesen",
+  "Pengaturan": {
+    "HargaTermasukPajak": false,
+    "PembulatanTunai": null
+  },
+  "Pajak": [
+    {
+      "Kode": "PJK",
+      "Tarif": "10",
+      "DasarPengenaan": "Subtotal",
+      "KenaBiayaKirim": true
+    }
+  ],
+  "Baris": [
+    {
+      "Sku": "A",
+      "Jumlah": "1",
+      "HargaSatuan": "1000"
+    },
+    {
+      "Sku": "B",
+      "Jumlah": "1",
+      "HargaSatuan": "1000"
+    },
+    {
+      "Sku": "C",
+      "Jumlah": "1",
+      "HargaSatuan": "1000"
+    }
+  ],
+  "BiayaKirim": "10000",
+  "Harapan": {
+    "Subtotal": "3000.00",
+    "DiskonBaris": "0.00",
+    "DiskonPesanan": "0.00",
+    "TotalDiskon": "0.00",
+    "BiayaLayanan": "0.00",
+    "BiayaKirim": "10000.00",
+    "DiskonKirim": "0.00",
+    "TotalPajak": "1300.00",
+    "TotalPajakEksklusif": "1300.00",
+    "Pembulatan": "0.00",
+    "TotalAkhir": "14300.00",
+    "Pajak": {
+      "PJK": {
+        "Dpp": "13000.00",
+        "Jumlah": "1300.00"
+      }
+    },
+    "Baris": [
+      {
+        "Bruto": "1000.00",
+        "Diskon": "0.00",
+        "DiskonPesanan": "0.00",
+        "BiayaLayanan": "0.00",
+        "Pajak": "433.34",
+        "PajakEksklusif": "433.34",
+        "TotalBaris": "4766.68"
+      },
+      {
+        "Bruto": "1000.00",
+        "Diskon": "0.00",
+        "DiskonPesanan": "0.00",
+        "BiayaLayanan": "0.00",
+        "Pajak": "433.33",
+        "PajakEksklusif": "433.33",
+        "TotalBaris": "4766.66"
+      },
+      {
+        "Bruto": "1000.00",
+        "Diskon": "0.00",
+        "DiskonPesanan": "0.00",
+        "BiayaLayanan": "0.00",
+        "Pajak": "433.33",
+        "PajakEksklusif": "433.33",
+        "TotalBaris": "4766.66"
+      }
+    ]
+  }
+}

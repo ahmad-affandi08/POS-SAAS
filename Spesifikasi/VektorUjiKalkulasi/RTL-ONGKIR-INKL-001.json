@@ -1,0 +1,55 @@
+{
+  "Id": "RTL-ONGKIR-INKL-001",
+  "Keterangan": "Harga barang termasuk PPN tetapi ongkir tidak: pajak ongkir selalu bagian eksklusif karena ongkir di luar harga barang, jadi TotalAkhir = harga inklusif + ongkir + pajak ongkir",
+  "Pengaturan": {
+    "HargaTermasukPajak": true,
+    "PembulatanTunai": null
+  },
+  "Pajak": [
+    {
+      "Kode": "PPN",
+      "Tarif": "12",
+      "PengaliDpp": "11/12",
+      "DasarPengenaan": "Subtotal",
+      "KenaBiayaKirim": true
+    }
+  ],
+  "Baris": [
+    {
+      "Sku": "KIPAS-16",
+      "Jumlah": "1",
+      "HargaSatuan": "111000"
+    }
+  ],
+  "BiayaKirim": "20000",
+  "Harapan": {
+    "Subtotal": "111000.00",
+    "DiskonBaris": "0.00",
+    "DiskonPesanan": "0.00",
+    "TotalDiskon": "0.00",
+    "BiayaLayanan": "0.00",
+    "BiayaKirim": "20000.00",
+    "DiskonKirim": "0.00",
+    "TotalPajak": "13200.00",
+    "TotalPajakEksklusif": "2200.00",
+    "Pembulatan": "0.00",
+    "TotalAkhir": "133200.00",
+    "Pajak": {
+      "PPN": {
+        "Dpp": "110000.00",
+        "Jumlah": "13200.00"
+      }
+    },
+    "Baris": [
+      {
+        "Bruto": "111000.00",
+        "Diskon": "0.00",
+        "DiskonPesanan": "0.00",
+        "BiayaLayanan": "0.00",
+        "Pajak": "13200.00",
+        "PajakEksklusif": "2200.00",
+        "TotalBaris": "133200.00"
+      }
+    ]
+  }
+}

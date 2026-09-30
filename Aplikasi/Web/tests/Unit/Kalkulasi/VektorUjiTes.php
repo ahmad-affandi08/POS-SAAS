@@ -47,7 +47,8 @@ function BacaPotonganVektor(?array $potongan): ?DataPotongan
 /**
  * Menerjemahkan format vektor ke masukan mesin: promo item berlaku ke baris pertama ber-Sku sama, promo pesanan dan
  * `DiskonManualPesanan` menjadi potongan pesanan, `TukarPoin` menjadi nilai penukaran poin (F-16b), `Pembayaran` boleh
- * objek tunggal atau daftar.
+ * objek tunggal atau daftar. `BiayaKirim`/`DiskonKirim` (F-17 bagian 3) data transaksi di tingkat vektor seperti
+ * `TukarPoin`, bukan pengaturan outlet; `KenaBiayaKirim` bendera per jenis pajak.
  *
  * @param  array<string, mixed>  $vektor
  */
@@ -55,7 +56,7 @@ function BacaMasukanKalkulasiVektor(array $vektor): DataKalkulasi
 {
     /** @var array{HargaTermasukPajak: bool, PersenBiayaLayanan?: string, PembulatanTunai?: array{Kelipatan: int, Arah: string}|null} $pengaturan */
     $pengaturan = $vektor['Pengaturan'];
-    /** @var list<array{Kode: string, Tarif: string, PengaliDpp?: string, DasarPengenaan?: string}> $daftarPajak */
+    /** @var list<array{Kode: string, Tarif: string, PengaliDpp?: string, DasarPengenaan?: string, KenaBiayaKirim?: bool}> $daftarPajak */
     $daftarPajak = $vektor['Pajak'] ?? [];
     /** @var list<array{Sku: string, Jumlah: string, HargaSatuan: string, HargaPilihan?: string, HargaTermasukPajak?: bool, Pajak?: list<string>, DiskonManual?: array<string, mixed>}> $daftarBaris */
     $daftarBaris = $vektor['Baris'];
@@ -91,6 +92,10 @@ function BacaMasukanKalkulasiVektor(array $vektor): DataKalkulasi
     $pembulatanTunai = $pengaturan['PembulatanTunai'] ?? null;
     /** @var string|null $tukarPoin */
     $tukarPoin = $vektor['TukarPoin'] ?? null;
+    /** @var string|null $biayaKirim */
+    $biayaKirim = $vektor['BiayaKirim'] ?? null;
+    /** @var string|null $diskonKirim */
+    $diskonKirim = $vektor['DiskonKirim'] ?? null;
 
     return new DataKalkulasi(
         $pengaturan['HargaTermasukPajak'],
@@ -111,6 +116,7 @@ function BacaMasukanKalkulasiVektor(array $vektor): DataKalkulasi
                 DasarPengenaanPajak::from($pajak['DasarPengenaan'] ?? 'Subtotal'),
                 (int) $pembilang,
                 (int) $penyebut,
+                $pajak['KenaBiayaKirim'] ?? false,
             );
         }, $daftarPajak),
         $pengaturan['PersenBiayaLayanan'] ?? '0',
@@ -121,6 +127,8 @@ function BacaMasukanKalkulasiVektor(array $vektor): DataKalkulasi
             isset($bayar['Jumlah']) ? Uang::Dari($bayar['Jumlah']) : null,
         ), $daftarPembayaran),
         $tukarPoin === null ? null : Uang::Dari($tukarPoin),
+        $biayaKirim === null ? null : Uang::Dari($biayaKirim),
+        $diskonKirim === null ? null : Uang::Dari($diskonKirim),
     );
 }
 

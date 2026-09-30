@@ -1,0 +1,70 @@
+{
+  "Id": "RTL-ONGKIR-GRATIS-001",
+  "Keterangan": "Promo gratis ongkir: DiskonKirim sama dengan BiayaKirim, jadi ongkir netto nol dan tidak menambah DPP PPN. Keduanya tetap dilaporkan apa adanya supaya struk bisa menulis ongkir Rp 25.000 dan diskonnya, bukan ongkir yang hilang",
+  "Pengaturan": {
+    "HargaTermasukPajak": false,
+    "PembulatanTunai": null
+  },
+  "Pajak": [
+    {
+      "Kode": "PPN",
+      "Tarif": "12",
+      "PengaliDpp": "11/12",
+      "DasarPengenaan": "Subtotal",
+      "KenaBiayaKirim": true
+    }
+  ],
+  "Baris": [
+    {
+      "Sku": "BRS-5KG",
+      "Jumlah": "2",
+      "HargaSatuan": "75000"
+    },
+    {
+      "Sku": "MYK-2L",
+      "Jumlah": "1",
+      "HargaSatuan": "50000"
+    }
+  ],
+  "BiayaKirim": "25000",
+  "DiskonKirim": "25000",
+  "Harapan": {
+    "Subtotal": "200000.00",
+    "DiskonBaris": "0.00",
+    "DiskonPesanan": "0.00",
+    "TotalDiskon": "0.00",
+    "BiayaLayanan": "0.00",
+    "BiayaKirim": "25000.00",
+    "DiskonKirim": "25000.00",
+    "TotalPajak": "22000.00",
+    "TotalPajakEksklusif": "22000.00",
+    "Pembulatan": "0.00",
+    "TotalAkhir": "222000.00",
+    "Pajak": {
+      "PPN": {
+        "Dpp": "183333.33",
+        "Jumlah": "22000.00"
+      }
+    },
+    "Baris": [
+      {
+        "Bruto": "150000.00",
+        "Diskon": "0.00",
+        "DiskonPesanan": "0.00",
+        "BiayaLayanan": "0.00",
+        "Pajak": "16500.00",
+        "PajakEksklusif": "16500.00",
+        "TotalBaris": "166500.00"
+      },
+      {
+        "Bruto": "50000.00",
+        "Diskon": "0.00",
+        "DiskonPesanan": "0.00",
+        "BiayaLayanan": "0.00",
+        "Pajak": "5500.00",
+        "PajakEksklusif": "5500.00",
+        "TotalBaris": "55500.00"
+      }
+    ]
+  }
+}

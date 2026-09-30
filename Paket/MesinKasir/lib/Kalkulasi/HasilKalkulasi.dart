@@ -18,6 +18,7 @@ final class HasilBarisKalkulasi {
     required this.pajak,
     required this.pajakEksklusif,
     required this.totalBaris,
+    required this.biayaKirim,
   });
 
   /// (HargaSatuan + HargaPilihan) × Jumlah, dibulatkan ke sen.
@@ -38,8 +39,11 @@ final class HasilBarisKalkulasi {
   /// Bagian pajak yang ditambahkan di atas harga.
   final Uang pajakEksklusif;
 
-  /// Bruto − diskon − diskon pesanan + biaya layanan + pajak eksklusif (tanpa pembulatan tunai).
+  /// Bruto − diskon − diskon pesanan + biaya layanan + biaya kirim + pajak eksklusif (tanpa pembulatan tunai).
   final Uang totalBaris;
+
+  /// Bagian ongkir netto yang dialokasikan ke baris ini (F-17 bagian 3); dasar pajak ongkirnya.
+  final Uang biayaKirim;
 }
 
 /// Keluaran mesin kalkulasi penjualan F-07a. Σ `totalBaris` = `totalAkhir` − `pembulatan`.
@@ -58,6 +62,8 @@ final class HasilKalkulasi {
     required this.kembalian,
     required this.pajak,
     required this.baris,
+    required this.biayaKirim,
+    required this.diskonKirim,
   });
 
   /// Σ netto baris (bruto − diskon baris).
@@ -82,4 +88,11 @@ final class HasilKalkulasi {
   /// Rincian per kode pajak, urut sesuai daftar pajak dokumen.
   final Map<String, HasilPajakKalkulasi> pajak;
   final List<HasilBarisKalkulasi> baris;
+
+  /// Ongkir yang ditagih ke pembeli (F-17 bagian 3), apa adanya dari masukan.
+  final Uang biayaKirim;
+
+  /// Diskon ongkir, apa adanya dari masukan. Yang masuk [totalAkhir] adalah selisih keduanya; dipisah supaya gratis
+  /// ongkir tetap terlihat di struk, bukan ongkir yang hilang.
+  final Uang diskonKirim;
 }

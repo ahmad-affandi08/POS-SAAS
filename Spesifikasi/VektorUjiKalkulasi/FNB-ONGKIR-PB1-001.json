@@ -1,0 +1,75 @@
+{
+  "Id": "FNB-ONGKIR-PB1-001",
+  "Keterangan": "Pesan antar restoran: PB1 10% dikenakan atas subtotal + biaya layanan saja, ongkir TIDAK ikut DPP (KenaBiayaKirim false) karena PB1 pajak atas jasa penyajian makanan, bukan atas jasa antar. Ongkir tetap dialokasikan ke baris dan masuk TotalAkhir",
+  "Pengaturan": {
+    "HargaTermasukPajak": false,
+    "PersenBiayaLayanan": "5",
+    "PembulatanTunai": null
+  },
+  "Pajak": [
+    {
+      "Kode": "PB1",
+      "Tarif": "10",
+      "DasarPengenaan": "SubtotalPlusLayanan",
+      "KenaBiayaKirim": false
+    }
+  ],
+  "Baris": [
+    {
+      "Sku": "NSG",
+      "Jumlah": "2",
+      "HargaSatuan": "30000"
+    },
+    {
+      "Sku": "TEH",
+      "Jumlah": "2",
+      "HargaSatuan": "10000"
+    }
+  ],
+  "BiayaKirim": "15000",
+  "Pembayaran": [
+    {
+      "Metode": "Qris",
+      "Jumlah": "107400"
+    }
+  ],
+  "Harapan": {
+    "Subtotal": "80000.00",
+    "DiskonBaris": "0.00",
+    "DiskonPesanan": "0.00",
+    "TotalDiskon": "0.00",
+    "BiayaLayanan": "4000.00",
+    "BiayaKirim": "15000.00",
+    "DiskonKirim": "0.00",
+    "TotalPajak": "8400.00",
+    "TotalPajakEksklusif": "8400.00",
+    "Pembulatan": "0.00",
+    "TotalAkhir": "107400.00",
+    "Pajak": {
+      "PB1": {
+        "Dpp": "84000.00",
+        "Jumlah": "8400.00"
+      }
+    },
+    "Baris": [
+      {
+        "Bruto": "60000.00",
+        "Diskon": "0.00",
+        "DiskonPesanan": "0.00",
+        "BiayaLayanan": "3000.00",
+        "Pajak": "6300.00",
+        "PajakEksklusif": "6300.00",
+        "TotalBaris": "80550.00"
+      },
+      {
+        "Bruto": "20000.00",
+        "Diskon": "0.00",
+        "DiskonPesanan": "0.00",
+        "BiayaLayanan": "1000.00",
+        "Pajak": "2100.00",
+        "PajakEksklusif": "2100.00",
+        "TotalBaris": "26850.00"
+      }
+    ]
+  }
+}
