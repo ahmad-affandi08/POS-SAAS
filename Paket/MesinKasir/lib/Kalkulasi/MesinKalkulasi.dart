@@ -140,8 +140,7 @@ final class MesinKalkulasi {
     }
 
     // Langkah 8: total, pembulatan tunai (BR-08.6), kembalian.
-    final totalSebelumPembulatan = subtotal
-        .Kurangi(diskonPesanan)
+    final totalSebelumPembulatan = subtotal.Kurangi(diskonPesanan)
         .Tambah(biayaLayanan)
         .Tambah(biayaKirimNetto)
         .Tambah(totalPajakEksklusif);
