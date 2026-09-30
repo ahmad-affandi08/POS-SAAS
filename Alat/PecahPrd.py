@@ -5,7 +5,8 @@ PRD.md tetap SATU-SATUNYA sumber kebenaran. Dokumen/ adalah hasil generate:
 jangan diedit langsung. Setelah mengubah PRD.md, jalankan:
 
     python3 Alat/PecahPrd.py          # tulis ulang Dokumen/
-    python3 Alat/PecahPrd.py --cek    # CI: gagal jika Dokumen/ tidak sinkron dengan PRD.md
+    python3 Alat/PecahPrd.py --cek    # CI: gagal jika Dokumen/ tidak sinkron, nomor versi ganda,
+                                      #     atau ada rujukan vX.YY tanpa entri
 """
 import os
 import re
@@ -78,13 +79,50 @@ def BacaDokumenLama():
     return Lama
 
 
+def PeriksaRiwayatVersi():
+    """Memeriksa tabel "Riwayat perubahan" di PRD.md; mengembalikan daftar masalah (kosong = sehat).
+
+    Dua kegagalan yang benar-benar pernah terjadi, dan keduanya lolos dari semua penjaga lain:
+
+    1. **Nomor versi terpakai dua kali dengan isi berbeda.** Tabelnya punya urutan campur karena sejarahnya
+       (1.0-1.71 & 2.29-2.70 naik, lalu blok turun), jadi dua sesi yang menyisipkan di dua tempat berbeda
+       masing-masing mengira nomor berikutnya adalah nomor yang sama. 2.80, 2.81, dan 2.86 pernah terpakai ganda;
+       akibatnya setiap rujukan "vX.YY" bisa menunjuk dua entri yang berbeda isi.
+    2. **Rujukan menggantung.** Badan PRD menyebut "(v2.87)" untuk versi yang tidak punya entri sama sekali,
+       biasanya karena salah tulis atau karena entrinya dinomori ulang tanpa memperbarui rujukannya.
+
+    Yang **tidak** diperiksa: urutan naik/turun. Strukturnya memang campur sejak lama dan itu bukan bagian yang
+    rusak; memaksakan satu urutan berarti menulis ulang 90-an baris riwayat tanpa alasan.
+    """
+    Isi = open(PathPrd, encoding="utf-8").read()
+    Nomor = re.findall(r"^\| (\d+\.\d+) \|", Isi, re.MULTILINE)
+    Masalah = []
+
+    Ganda = sorted({N for N in Nomor if Nomor.count(N) > 1}, key=lambda N: [int(B) for B in N.split(".")])
+    for N in Ganda:
+        Masalah.append(f"Versi {N} punya {Nomor.count(N)} entri di tabel Riwayat perubahan; satu nomor = satu entri.")
+
+    Ada = set(Nomor)
+    for Rujukan in sorted(set(re.findall(r"\bv(\d+\.\d+)\b", Isi))):
+        if Rujukan not in Ada:
+            Masalah.append(f"Rujukan v{Rujukan} tidak punya entri di tabel Riwayat perubahan.")
+
+    return Masalah
+
+
 def Utama(Argumen):
     Baru = BuatDokumen()
     if Argumen[:1] == ["--cek"]:
+        Masalah = PeriksaRiwayatVersi()
+        if Masalah:
+            print("Tabel Riwayat perubahan PRD.md bermasalah:")
+            for Satu in Masalah:
+                print(f"  - {Satu}")
+            return 1
         if BacaDokumenLama() != Baru:
             print("Dokumen/ tidak sinkron dengan PRD.md. Jalankan: python3 Alat/PecahPrd.py")
             return 1
-        print(f"Dokumen/ sinkron dengan PRD.md ({len(Baru)} file).")
+        print(f"Dokumen/ sinkron dengan PRD.md ({len(Baru)} file), riwayat versi tanpa nomor ganda & rujukan menggantung.")
         return 0
     for NamaLama in BacaDokumenLama():
         if NamaLama not in Baru:
