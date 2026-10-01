@@ -98,7 +98,8 @@ type Dialog = { jenis: 'ubah'; baris: BarisGajiKaryawan } | { jenis: 'bayar' } |
 
 /**
  * Rincian rekap gaji (F-18 bagian 3). Draf: ubah tambahan & potongan per karyawan, bayar (jurnal gaji + potong
- * kasbon), atau hapus. Setelah dibayar hanya bisa dilihat dan diekspor.
+ * kasbon), atau hapus. Setelah dibayar hanya bisa dilihat dan diekspor. Slip gaji per karyawan bisa dicetak kapan saja
+ * (v3.35; draf bertanda DRAF).
  */
 export default function HalamanDetailRekapGaji({ Rekap, Baris, OpsiAkunKasBank, OpsiAkunBeban }: PropsDetailRekapGaji) {
     const [dialog, AturDialog] = useState<Dialog | null>(null);
@@ -122,6 +123,13 @@ export default function HalamanDetailRekapGaji({ Rekap, Baris, OpsiAkunKasBank, 
                     <Button asChild variant="outline">
                         <a href={`${alamat}/ekspor`}>Ekspor CSV</a>
                     </Button>
+                    {Baris.length > 0 ? (
+                        <Button asChild variant="outline">
+                            <a href={`${alamat}/slip`} target="_blank" rel="noreferrer">
+                                Cetak semua slip
+                            </a>
+                        </Button>
+                    ) : null}
                     {draf ? (
                         <>
                             <Tombol varian="sekunder" onClick={() => AturDialog({ jenis: 'hapus' })}>
@@ -195,15 +203,20 @@ export default function HalamanDetailRekapGaji({ Rekap, Baris, OpsiAkunKasBank, 
                 ambilIdBaris={(b) => b.UuidKaryawan}
                 labelBaris={(b) => `gaji ${b.Nama}`}
                 cari="Cari nama karyawan"
-                {...(draf
-                    ? {
-                          aksiBaris: (b: BarisGajiKaryawan) => (
-                              <DropdownMenuItem onSelect={() => AturDialog({ jenis: 'ubah', baris: b })}>
-                                  Ubah tambahan & potongan
-                              </DropdownMenuItem>
-                          ),
-                      }
-                    : {})}
+                aksiBaris={(b: BarisGajiKaryawan) => (
+                    <>
+                        {draf ? (
+                            <DropdownMenuItem onSelect={() => AturDialog({ jenis: 'ubah', baris: b })}>
+                                Ubah tambahan & potongan
+                            </DropdownMenuItem>
+                        ) : null}
+                        <DropdownMenuItem asChild>
+                            <a href={`${alamat}/slip?karyawan=${b.UuidKaryawan}`} target="_blank" rel="noreferrer">
+                                Cetak slip gaji
+                            </a>
+                        </DropdownMenuItem>
+                    </>
+                )}
                 kosong={{ judul: 'Tidak ada karyawan dengan gaji pokok atau komisi di periode ini.' }}
             />
 

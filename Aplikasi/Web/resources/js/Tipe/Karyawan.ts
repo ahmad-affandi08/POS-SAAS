@@ -225,3 +225,10 @@ export type PropsTargetPenjualan = {
     OpsiKaryawan: OpsiUuidNama[];
     Izin: { Kelola: boolean };
 };
+
+/** v3.35: slip gaji per karyawan (halaman cetak). */
+export type PropsSlipGaji = {
+    Rekap: PropsDetailRekapGaji['Rekap'];
+    Baris: BarisGajiKaryawan[];
+    Usaha: { Nama: string | null; Npwp: string | null };
+};

@@ -105,11 +105,18 @@ describe('Rekap gaji (F-18 bagian 3)', () => {
         });
     });
 
-    it('sudah dibayar: tanpa tombol bayar/hapus & aksi baris; tautan jurnal tampil', () => {
+    it('sudah dibayar: tanpa tombol bayar/hapus & tanpa ubah baris (hanya cetak slip, v3.35); tautan jurnal tampil', () => {
         RenderUji(<HalamanDetailRekapGaji {...PropsDetail('Dibayar')} />);
         expect(screen.queryByRole('button', { name: 'Bayar gaji' })).toBeNull();
         expect(screen.queryByRole('button', { name: 'Hapus draf' })).toBeNull();
-        expect(screen.queryAllByRole('button', { name: /Aksi gaji/ })).toHaveLength(0);
+        const [aksi] = screen.getAllByRole('button', { name: /Aksi gaji/ });
+        expect(aksi).toBeTruthy();
+        fireEvent.keyDown(aksi as HTMLElement, { key: 'Enter' });
+        expect(screen.queryByRole('menuitem', { name: 'Ubah tambahan & potongan' })).toBeNull();
+        expect(screen.getByRole('menuitem', { name: 'Cetak slip gaji' }).getAttribute('href')).toMatch(
+            /\/kelola\/karyawan\/gaji\/.+\/slip\?karyawan=/,
+        );
+        expect(screen.getByRole('link', { name: 'Cetak semua slip' }).getAttribute('href')).toMatch(/\/slip$/);
         expect(screen.getByRole('link', { name: 'JU-2610-0001' }).getAttribute('href')).toBe(
             '/kelola/akuntansi/jurnal/J1',
         );

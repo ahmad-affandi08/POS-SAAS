@@ -12,6 +12,7 @@ use App\Domain\Karyawan\Aksi\KelolaRekapGaji;
 use App\Domain\Karyawan\Enum\StatusRekapGaji;
 use App\Domain\Karyawan\Kueri\DaftarRekapGaji;
 use App\Domain\Karyawan\Model\RekapGaji;
+use App\Domain\Tenant\Kueri\ProfilTenant;
 use App\Http\Kontroler\Kelola\DasarKelolaKontroler;
 use App\Http\Respons\ResponsTabel;
 use Carbon\CarbonImmutable;
@@ -102,6 +103,28 @@ final class RekapGajiKontroler extends DasarKelolaKontroler
         $kelola->Hapus($model);
 
         return to_route('kelola.karyawan.gaji')->with('Kilat', "Draf rekap gaji {$model->Periode} dihapus.");
+    }
+
+    /**
+     * v3.35: slip gaji per karyawan untuk dicetak atau disimpan PDF (satu slip per halaman kertas). Tanpa `?karyawan=`
+     * semua karyawan rekap ini. Draf tetap bisa dicetak sebagai pratinjau, bertanda DRAF.
+     */
+    public function Slip(string $rekap, Request $permintaan, DaftarRekapGaji $daftar, ProfilTenant $profil): Response
+    {
+        $model = RekapGaji::query()->where('Uuid', $rekap)->firstOrFail();
+        $detail = $daftar->AmbilDetail($model);
+        $pilih = $permintaan->query('karyawan');
+        $baris = is_string($pilih) && $pilih !== ''
+            ? array_values(array_filter($detail['Baris'], fn (array $b): bool => $b['UuidKaryawan'] === strtoupper($pilih)))
+            : $detail['Baris'];
+        abort_if($baris === [], 404);
+        $usaha = $profil->Ambil($this->IdTenant());
+
+        return Inertia::render('Kelola/Karyawan/SlipGaji', [
+            'Rekap' => $detail['Rekap'],
+            'Baris' => $baris,
+            'Usaha' => ['Nama' => $usaha['Nama'], 'Npwp' => $usaha['Npwp']],
+        ]);
     }
 
     public function Ekspor(string $rekap, DaftarRekapGaji $daftar): StreamedResponse
