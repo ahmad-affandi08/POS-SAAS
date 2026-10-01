@@ -543,6 +543,26 @@ class _LayarJualState extends ConsumerState<LayarJual> {
     _TampilPesan('Kanal ${LayananPenjualan.AmbilLabelKanal(kanal)}. Harga keranjang disesuaikan.');
   }
 
+  /// v3.29: isi ongkir kotor kanal Antar. Potongan gratis ongkir dihitung mesin promo dari promo yang berlaku.
+  Future<void> _IsiOngkir() async {
+    final awal = ref.read(penyediaKeranjang).biayaKirim;
+    final teks = await showDialog<String>(
+      context: context,
+      builder: (_) => _DialogOngkir(awal: awal),
+    );
+    if (teks == null || !mounted) {
+      return;
+    }
+    try {
+      final ongkir = teks.isEmpty ? Uang.Nol() : Uang.Dari(teks);
+      ref
+          .read(penyediaKeranjang.notifier)
+          .Ganti(ref.read(penyediaLayananPenjualan).AturOngkir(ref.read(penyediaKeranjang), ongkir));
+    } on GalatKasir catch (galat) {
+      _TampilPesan(galat.pesan);
+    }
+  }
+
   void _BukaTertahan() => setState(() {
     _panel = _JenisPanel.Tertahan;
     _pesan = null;
@@ -1027,6 +1047,14 @@ class _LayarJualState extends ConsumerState<LayarJual> {
               _AmbilPilihanKanal().isEmpty
           ? null
           : () => unawaited(_PilihKanal()),
+      // v3.29: ongkir penjualan yang diantar toko sendiri (kanal Antar); pesanan online membawa ongkirnya sendiri.
+      saatOngkir:
+          widget.modePelayan ||
+              pesanan != null ||
+              keranjang.praPesan != null ||
+              LayananPenjualan.AmbilKanal(keranjang) != KanalPenjualan.Antar
+          ? null
+          : () => unawaited(_IsiOngkir()),
       // Laundry (§9.9): tiket laundry untuk penjualan langsung (bukan pesanan meja/pengambilan pre-order).
       saatLaundry:
           widget.modePelayan ||
@@ -1413,4 +1441,55 @@ class _InisialProduk extends StatelessWidget {
       ),
     );
   }
+}
+
+/// v3.29: isian ongkir (rupiah bulat) untuk penjualan kanal Antar. Kosong = tanpa ongkir.
+class _DialogOngkir extends StatefulWidget {
+  const _DialogOngkir({required this.awal});
+
+  final Uang awal;
+
+  @override
+  State<_DialogOngkir> createState() => _DialogOngkirState();
+}
+
+class _DialogOngkirState extends State<_DialogOngkir> {
+  late final TextEditingController _ongkir = TextEditingController(
+    text: widget.awal.BernilaiNol() ? '' : widget.awal.KeDesimal().truncate().toString(),
+  );
+
+  @override
+  void dispose() {
+    _ongkir.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AlertDialog(
+    title: const Text('Ongkir'),
+    content: Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        TextField(
+          key: const ValueKey('NilaiOngkir'),
+          controller: _ongkir,
+          autofocus: true,
+          keyboardType: TextInputType.number,
+          inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(9)],
+          decoration: const InputDecoration(labelText: 'Ongkir (Rp)', prefixText: 'Rp ', border: OutlineInputBorder()),
+          onSubmitted: (_) => Navigator.of(context).pop(_ongkir.text.trim()),
+        ),
+        const SizedBox(height: TokenJarak.jarak8),
+        Text(
+          'Promo gratis ongkir yang berlaku dipotong otomatis di keranjang.',
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+      ],
+    ),
+    actions: [
+      TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Batal')),
+      FilledButton(onPressed: () => Navigator.of(context).pop(_ongkir.text.trim()), child: const Text('Simpan')),
+    ],
+  );
 }

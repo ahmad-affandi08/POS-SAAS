@@ -28,6 +28,7 @@ class PanelKeranjang extends StatelessWidget {
     this.saatPelanggan,
     this.saatLaundry,
     this.saatKanal,
+    this.saatOngkir,
   });
 
   final Keranjang keranjang;
@@ -65,6 +66,9 @@ class PanelKeranjang extends StatelessWidget {
   /// X8: pilih kanal (bawa pulang, GoFood, …). Null = tidak ditampilkan (tidak ada kanal platform/harga berkanal, mode
   /// meja, atau mode Pelayan).
   final VoidCallback? saatKanal;
+
+  /// v3.29: isi ongkir penjualan kanal Antar. Null = tidak ditampilkan (kanal lain, pesanan online, mode Pelayan).
+  final VoidCallback? saatOngkir;
 
   static List<String> AmbilRincian(ItemKeranjang b) => [
     if (b.namaSatuan != null && b.namaSatuan!.isNotEmpty) '@ ${b.hargaSatuan.FormatRupiah()}/${b.namaSatuan}',
@@ -151,6 +155,44 @@ class PanelKeranjang extends StatelessWidget {
                       Expanded(
                         child: Text(
                           'Kanal: ${LayananPenjualan.AmbilLabelKanal(LayananPenjualan.AmbilKanal(keranjang))} · ketuk untuk mengganti',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: teks.bodyMedium,
+                        ),
+                      ),
+                      Icon(Icons.chevron_right, color: warna.teksSekunder),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          if (saatOngkir != null)
+            Material(
+              color: warna.permukaan,
+              child: InkWell(
+                key: const ValueKey('IsiOngkir'),
+                onTap: saatOngkir,
+                child: Container(
+                  constraints: const BoxConstraints(minHeight: TokenJarak.targetSentuh),
+                  padding: const EdgeInsets.symmetric(horizontal: TokenJarak.jarak16, vertical: TokenJarak.jarak8),
+                  decoration: BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(color: warna.garis, width: TokenJarak.tebalGaris),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.local_shipping_outlined,
+                        size: TokenJarak.ikonSedang,
+                        color: keranjang.biayaKirim.BernilaiNol() ? warna.teksSekunder : warna.brand,
+                      ),
+                      const SizedBox(width: TokenJarak.jarak8),
+                      Expanded(
+                        child: Text(
+                          keranjang.biayaKirim.BernilaiNol()
+                              ? 'Tanpa ongkir · ketuk untuk mengisi'
+                              : 'Ongkir ${keranjang.biayaKirim.FormatRupiah()} · ketuk untuk mengubah',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: teks.bodyMedium,

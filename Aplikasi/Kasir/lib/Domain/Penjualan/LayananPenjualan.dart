@@ -218,16 +218,49 @@ class LayananPenjualan {
           kanal,
     ];
     const kanalToko = [KanalPenjualan.BawaPulang, KanalPenjualan.MakanDiTempat, KanalPenjualan.Antar];
-    if (platform.isEmpty && !berharga.any(kanalToko.contains)) {
+    // v3.29: toko yang punya promo gratis ongkir mengantar sendiri, jadi kanal Antar (dengan ongkir) ikut ditawarkan.
+    final adaGratisOngkir = k.promo.any((p) => p.aksi == JenisAksiPromo.GratisOngkir);
+    if (platform.isEmpty && !adaGratisOngkir && !berharga.any(kanalToko.contains)) {
       return const [];
     }
     return [...kanalToko, ...platform];
   }
 
   /// X8: ganti kanal keranjang lalu harga ulang semua baris menurut daftar harga kanal baru. Baris tanpa harga di kanal
-  /// baru memakai harga dasar (sama seperti `HitungUlangHarga`).
+  /// baru memakai harga dasar (sama seperti `HitungUlangHarga`). Ongkir hanya milik kanal Antar (v3.29): keluar dari
+  /// kanal Antar menghapus ongkir yang diisi kasir.
   Keranjang GantiKanal(Keranjang keranjang, KanalPenjualan kanal, KatalogLokal katalog, KonteksPenjualan k) =>
-      HitungUlangHarga(keranjang.Salin(kanal: () => kanal == KanalPenjualan.BawaPulang ? null : kanal), katalog, k);
+      HitungUlangHarga(
+        keranjang.Salin(
+          kanal: () => kanal == KanalPenjualan.BawaPulang ? null : kanal,
+          biayaKirim: kanal == KanalPenjualan.Antar ? keranjang.biayaKirim : Uang.Nol(),
+          diskonKirim: kanal == KanalPenjualan.Antar ? keranjang.diskonKirim : Uang.Nol(),
+        ),
+        katalog,
+        k,
+      );
+
+  /// Batas wajar ongkir yang diisi kasir (salah ketik nol berlebih tertangkap sebelum masuk dokumen).
+  static final Uang ongkirMaksimal = Uang.DariBulat(5000000);
+
+  /// v3.29 (F-17 bagian 3, F-16c gratis ongkir): ongkir penjualan kasir yang diantar toko sendiri (kanal Antar, bukan
+  /// pesanan online). Yang diisi kasir hanya ongkir **kotor**; potongannya (`DiskonKirim`) selalu dari promo gratis
+  /// ongkir yang dihitung mesin promo, bukan isian manual, supaya biaya promo tercatat dan diperiksa ulang server.
+  Keranjang AturOngkir(Keranjang keranjang, Uang ongkir) {
+    if (LayananPenjualan.AmbilKanal(keranjang) != KanalPenjualan.Antar || keranjang.praPesan != null) {
+      throw const GalatKasir(
+        'OngkirHanyaAntar',
+        'Ongkir hanya untuk penjualan yang diantar toko. Pilih kanal Antar dulu.',
+      );
+    }
+    if (ongkir.Bandingkan(Uang.Nol()) < 0 || ongkir.Bandingkan(ongkirMaksimal) > 0) {
+      throw GalatKasir('OngkirTidakWajar', 'Ongkir 0 sampai ${ongkirMaksimal.FormatRupiah()}.');
+    }
+    if (ongkir.KeDesimal() != ongkir.KeDesimal().truncate()) {
+      throw const GalatKasir('OngkirTidakWajar', 'Ongkir dalam rupiah bulat, tanpa sen.');
+    }
+    return keranjang.Salin(biayaKirim: ongkir, diskonKirim: Uang.Nol());
+  }
 
   /// X8: metode yang boleh dipakai untuk [kanal]: metode platform hanya untuk kanal miliknya.
   static List<BarisMetodePembayaran> SaringMetodeKanal(List<BarisMetodePembayaran> metode, KanalPenjualan kanal) => [
