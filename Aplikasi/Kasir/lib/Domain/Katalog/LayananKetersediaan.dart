@@ -34,7 +34,7 @@ class LayananKetersediaan {
     try {
       return await klien.UbahKetersediaanProduk(uuidProduk, habis: habis, uuidPengguna: kasir.uuid);
     } on GalatJaringan {
-      throw GalatKasir(
+      throw const GalatKasir(
         'PerluOnline',
         'Mengubah ketersediaan produk perlu koneksi internet. Coba lagi saat perangkat online.',
       );
