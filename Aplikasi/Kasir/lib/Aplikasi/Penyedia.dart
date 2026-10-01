@@ -37,6 +37,7 @@ import '../Domain/Dapur/LayananDapur.dart';
 import '../Domain/GalatKasir.dart';
 import '../Domain/Katalog/KatalogLokal.dart';
 import '../Domain/Katalog/LayananKatalog.dart';
+import '../Domain/Katalog/LayananKetersediaan.dart';
 import '../Domain/Meja/LayananPesanSendiri.dart';
 import '../Domain/Meja/LayananPesananMeja.dart';
 import '../Domain/Pelanggan/LayananDeposit.dart';
@@ -431,6 +432,31 @@ final penyediaLayananLaundry = Provider<LayananLaundry>(
 final penyediaLayananReservasi = Provider<LayananReservasi>(
   (ref) => LayananReservasi(klien: ref.watch(penyediaKlienPos), penjualan: ref.watch(penyediaLayananPenjualan)),
 );
+
+final penyediaLayananKetersediaan = Provider<LayananKetersediaan>(
+  (ref) => LayananKetersediaan(klien: ref.watch(penyediaKlienPos)),
+);
+
+/// F-17 BR-17.2: Uuid produk yang ditandai habis di outlet perangkat. Dimuat saat online (bersama pembaruan katalog);
+/// offline memakai keadaan terakhir.
+class PengaturProdukHabis extends Notifier<Set<String>> {
+  @override
+  Set<String> build() => const <String>{};
+
+  Future<void> Muat() async {
+    final baru = await ref.read(penyediaLayananKetersediaan).Muat();
+    if (baru != null) {
+      state = baru;
+    }
+  }
+
+  Future<void> Ubah(String uuidProduk, {required bool habis, required StafLokal kasir}) async {
+    final akhir = await ref.read(penyediaLayananKetersediaan).Ubah(uuidProduk, habis: habis, kasir: kasir);
+    state = akhir ? <String>{...state, uuidProduk} : (Set<String>.of(state)..remove(uuidProduk));
+  }
+}
+
+final penyediaProdukHabis = NotifierProvider<PengaturProdukHabis, Set<String>>(PengaturProdukHabis.new);
 
 final penyediaLayananKatalog = Provider<LayananKatalog>(
   (ref) => LayananKatalog(

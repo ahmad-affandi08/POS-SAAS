@@ -441,6 +441,20 @@ class KlienPos {
     return UraiJson.AmbilTeks(json['Status'], status);
   }
 
+  /// F-17 BR-17.2 ("86"): Uuid produk yang ditandai habis di outlet perangkat. Offline → `GalatJaringan`.
+  Future<Set<String>> AmbilProdukHabis() async =>
+      UraiJson.AmbilDaftarTeks((await _Kirim('GET', 'produk-habis', null))['Produk']).toSet();
+
+  /// Tandai produk habis ([habis] true) atau tersedia lagi di outlet perangkat (idempoten). Mengembalikan keadaan
+  /// terbaru menurut server. Pelaku tanpa izin → `GalatApi` 403/422.
+  Future<bool> UbahKetersediaanProduk(String uuidProduk, {required bool habis, required String uuidPengguna}) async {
+    final json = await _Kirim('POST', 'produk/${Uri.encodeComponent(uuidProduk)}/habis', {
+      'UuidPengguna': uuidPengguna,
+      'Habis': habis,
+    });
+    return UraiJson.AmbilBenar(json['Habis'], habis);
+  }
+
   /// Laporkan profil hardware & hasil Wizard Uji Perangkat (PRD v1.96) untuk dukungan teknis. Offline → `GalatJaringan`.
   Future<void> KirimProfilHardware(Map<String, Object?> profil) async {
     await _Kirim('POST', 'perangkat/profil-hardware', profil);

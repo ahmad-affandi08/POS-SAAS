@@ -29,8 +29,16 @@ void main() {
   Future<http.Response> Function(http.Request) PenanganServer({
     Map<String, Object?>? dataAwal,
     Map<String, Object?>? katalog,
+    Set<String> produkHabis = const {},
   }) => (p) async {
     final jalur = p.url.path;
+    if (jalur.endsWith('/produk-habis')) {
+      return JsonUji({'Produk': produkHabis.toList()});
+    }
+    if (jalur.endsWith('/habis') && p.method == 'POST') {
+      final isi = jsonDecode(p.body) as Map<String, Object?>;
+      return JsonUji({'Uuid': jalur.split('/')[jalur.split('/').length - 2], 'Habis': isi['Habis']});
+    }
     if (jalur.endsWith('/data-awal')) {
       return JsonUji(dataAwal ?? DataAwalUji());
     }
@@ -52,13 +60,14 @@ void main() {
     Size ukuran = ukuranDesktop,
     Map<String, Object?>? dataAwal,
     Map<String, Object?>? katalog,
+    Set<String> produkHabis = const {},
   }) async {
     final u = LingkunganUji.Buat();
     await tester.runAsync(() async {
       await u.SiapkanAktif(dataAwal: dataAwal);
       await u.shift.BukaShift(kasir: await u.Staf('Rina Wulandari'), kasAwal: Uang.DariBulat(500000));
     });
-    u.server.penangan = PenanganServer(dataAwal: dataAwal, katalog: katalog);
+    u.server.penangan = PenanganServer(dataAwal: dataAwal, katalog: katalog, produkHabis: produkHabis);
     await PasangAplikasi(tester, u, ukuran: ukuran);
     await Tunggu(tester, const Duration(milliseconds: 600));
     await tester.tap(find.text('Rina Wulandari'));
@@ -84,6 +93,31 @@ void main() {
     expect(permintaanGambar.url.host, isNot('server-internal'));
     expect(permintaanGambar.url.path, contains('/api/pos/v1/katalog/gambar/'));
     expect(permintaanGambar.headers['Authorization'], startsWith('Bearer '));
+    await Lepas(tester, u);
+  });
+
+  testWidgets('F-17 BR-17.2: produk habis tampil "Habis" dan tidak bisa ditambah; tahan ubin menandai tersedia lagi', (
+    tester,
+  ) async {
+    final u = await MasukJual(tester, produkHabis: {UuidUji.americano});
+    expect(find.descendant(of: Ubin('Americano Panas'), matching: find.text('Habis')), findsOneWidget);
+
+    await tester.ensureVisible(Ubin('Americano Panas'));
+    await tester.pump();
+    await tester.tap(Ubin('Americano Panas'));
+    await Tunggu(tester);
+    expect(find.textContaining('ditandai habis di outlet ini'), findsOneWidget);
+
+    await tester.longPress(Ubin('Americano Panas'));
+    await Tunggu(tester);
+    expect(find.text('Tandai Americano Panas tersedia lagi?'), findsOneWidget);
+    await tester.tap(find.widgetWithText(FilledButton, 'Tandai tersedia'));
+    await Tunggu(tester);
+
+    final kirim = u.server.permintaan.lastWhere((p) => p.method == 'POST' && p.url.path.endsWith('/habis'));
+    expect(kirim.url.path, '/api/pos/v1/produk/${UuidUji.americano}/habis');
+    expect(jsonDecode(kirim.body), containsPair('Habis', false));
+    expect(find.descendant(of: Ubin('Americano Panas'), matching: find.text('Habis')), findsNothing);
     await Lepas(tester, u);
   });
 

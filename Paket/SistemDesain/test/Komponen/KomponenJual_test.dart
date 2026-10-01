@@ -54,6 +54,28 @@ void main() {
     expect(UbinProduk.AmbilInisial('  '), '?');
   });
 
+  testWidgets('UbinProduk: tahan lama memicu aksi tambahan (tandai habis) tanpa ikut mengetuk', (tester) async {
+    var diketuk = 0;
+    var ditahan = 0;
+    await Pasang(
+      tester,
+      SizedBox(
+        width: 160,
+        child: UbinProduk(
+          nama: 'Teh Tarik',
+          harga: Uang.DariBulat(12000),
+          keterangan: 'Habis',
+          nonaktif: true,
+          saatDiketuk: () => diketuk++,
+          saatDitahan: () => ditahan++,
+        ),
+      ),
+    );
+    await tester.longPress(find.byType(UbinProduk));
+    expect(ditahan, 1);
+    expect(diketuk, 0);
+  });
+
   testWidgets('UbinProduk tanpa harga menampilkan status berteks', (tester) async {
     await Pasang(
       tester,

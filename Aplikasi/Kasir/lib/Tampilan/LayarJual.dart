@@ -139,6 +139,7 @@ class _LayarJualState extends ConsumerState<LayarJual> {
     super.initState();
     HardwareKeyboard.instance.addHandler(_SaatTombolPemindai);
     _pewaktuKatalog = Timer.periodic(LayarJual.selangKatalog, (_) => unawaited(_PerbaruiBerkala()));
+    unawaited(ref.read(penyediaProdukHabis.notifier).Muat());
     if (widget.aktif) {
       _FokusAkar();
     }
@@ -684,6 +685,8 @@ class _LayarJualState extends ConsumerState<LayarJual> {
     if (!mounted) {
       return;
     }
+    // F-17 BR-17.2: keadaan "habis" ikut disegarkan bersama katalog (gagal/offline = keadaan terakhir tetap dipakai).
+    unawaited(ref.read(penyediaProdukHabis.notifier).Muat());
     setState(() => _memperbarui = false);
     if (manual) {
       switch (hasil) {
@@ -693,6 +696,43 @@ class _LayarJualState extends ConsumerState<LayarJual> {
           _TampilPesan('Belum tersambung ke server. Katalog di perangkat tetap dipakai.');
         case HasilPerbaruiKatalog.Gagal:
           _TampilPesan('Katalog gagal diperbarui. Coba lagi beberapa saat lagi.');
+      }
+    }
+  }
+
+  /// F-17 BR-17.2: tandai [produk] habis atau tersedia lagi di outlet ini (wajib online; keadaannya dipakai bersama
+  /// semua perangkat, menu self-order, dan toko online).
+  Future<void> _UbahKetersediaan(ProdukJual produk, {required bool habis}) async {
+    final lanjut = await showDialog<bool>(
+      context: context,
+      builder: (konteks) => AlertDialog(
+        title: Text(habis ? 'Tandai ${produk.nama} habis?' : 'Tandai ${produk.nama} tersedia lagi?'),
+        content: Text(
+          habis
+              ? 'Produk tidak bisa ditambahkan di kasir dan hilang dari menu self-order dan toko online outlet ini. '
+                    'Stok tidak berubah.'
+              : 'Produk bisa dijual lagi di kasir, menu self-order, dan toko online outlet ini.',
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(konteks).pop(false), child: const Text('Batal')),
+          FilledButton(
+            onPressed: () => Navigator.of(konteks).pop(true),
+            child: Text(habis ? 'Tandai habis' : 'Tandai tersedia'),
+          ),
+        ],
+      ),
+    );
+    if (lanjut != true || !mounted) {
+      return;
+    }
+    try {
+      await ref.read(penyediaProdukHabis.notifier).Ubah(produk.uuid, habis: habis, kasir: widget.kasir);
+      if (mounted) {
+        _TampilPesan(habis ? '${produk.nama} ditandai habis.' : '${produk.nama} tersedia lagi.', galat: false);
+      }
+    } on GalatKasir catch (galat) {
+      if (mounted) {
+        _TampilPesan(galat.pesan);
       }
     }
   }
@@ -718,6 +758,7 @@ class _LayarJualState extends ConsumerState<LayarJual> {
     final layanan = ref.read(penyediaLayananPenjualan);
     final kanal = LayananPenjualan.AmbilKanal(ref.watch(penyediaKeranjang));
     final tier = ref.watch(penyediaKeranjang.select((k) => k.pelanggan?.kodeTier));
+    final habis = ref.watch(penyediaProdukHabis);
     final pesan = _pesan;
 
     return Column(
@@ -871,6 +912,7 @@ class _LayarJualState extends ConsumerState<LayarJual> {
                         final p = daftar[i];
                         final satuan = p.AmbilSatuanBawaan();
                         final alasan = p.AmbilAlasanTidakBisaDijual();
+                        final tandaiHabis = habis.contains(p.uuid);
                         return UbinProduk(
                           key: ValueKey(p.uuid),
                           nama: p.nama,
@@ -886,13 +928,20 @@ class _LayarJualState extends ConsumerState<LayarJual> {
                                   kanal: kanal,
                                   tierPelanggan: tier,
                                 ),
-                          nonaktif: alasan != null,
+                          nonaktif: alasan != null || tandaiHabis,
                           keterangan: alasan != null
                               ? 'Tidak bisa dijual'
+                              : tandaiHabis
+                              ? 'Habis'
                               : p.kelompokPilihan.isNotEmpty
                               ? 'Ada pilihan'
                               : null,
-                          saatDiketuk: () => _TambahProduk(p),
+                          saatDiketuk: tandaiHabis
+                              ? () => _TampilPesan(
+                                  '${p.nama} ditandai habis di outlet ini. Tahan ubinnya untuk menandai tersedia lagi.',
+                                )
+                              : () => _TambahProduk(p),
+                          saatDitahan: () => unawaited(_UbahKetersediaan(p, habis: !tandaiHabis)),
                         );
                       },
                     );

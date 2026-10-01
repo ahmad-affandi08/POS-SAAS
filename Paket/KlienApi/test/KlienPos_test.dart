@@ -726,6 +726,32 @@ void main() {
     expect(hadir.status, 'Hadir');
   });
 
+  test('F-17 BR-17.2: daftar produk habis outlet dan tandai habis / tersedia lagi', () async {
+    final dikirim = <http.Request>[];
+    final klien = BuatKlien((permintaan) async {
+      dikirim.add(permintaan);
+      if (permintaan.method == 'GET') {
+        return Json({
+          'Produk': ['P1', 'P2'],
+        }, 200);
+      }
+      final isi = jsonDecode(permintaan.body) as Map<String, Object?>;
+      return Json({'Uuid': 'P1', 'Habis': isi['Habis']}, 200);
+    });
+
+    final habis = await klien.AmbilProdukHabis();
+    expect(dikirim.last.url.path, '/api/pos/v1/produk-habis');
+    expect(habis, {'P1', 'P2'});
+
+    expect(await klien.UbahKetersediaanProduk('P1', habis: true, uuidPengguna: 'U1'), isTrue);
+    expect(dikirim.last.url.path, '/api/pos/v1/produk/P1/habis');
+    expect(jsonDecode(dikirim.last.body), {'UuidPengguna': 'U1', 'Habis': true});
+    expect(dikirim.last.headers['Idempotency-Key'], startsWith('pos-'));
+
+    expect(await klien.UbahKetersediaanProduk('P1', habis: false, uuidPengguna: 'U1'), isFalse);
+    expect(jsonDecode(dikirim.last.body), {'UuidPengguna': 'U1', 'Habis': false});
+  });
+
   test('laundry: cari cucian (kosong = siap), ubah status, data awal membawa pengaturan laundry', () async {
     final dikirim = <http.Request>[];
     final tiket = {

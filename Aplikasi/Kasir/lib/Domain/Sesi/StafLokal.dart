@@ -35,6 +35,9 @@ abstract final class IzinKasir {
 
   /// POS-25 modul Gudang: terima barang dari PO yang sudah disetujui.
   static const String pembelianKelola = 'pembelian.kelola';
+
+  /// F-17 BR-17.2: menandai produk habis / tersedia lagi (juga boleh dengan `penjualan.buat` atau `pesanan.meja.catat`).
+  static const String produkKelola = 'produk.kelola';
 }
 
 /// Staf dari data awal (tabel `Staf` lokal).

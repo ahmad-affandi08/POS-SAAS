@@ -25,6 +25,7 @@ class UbinProduk extends StatelessWidget {
     this.keterangan,
     this.nonaktif = false,
     this.gambar,
+    this.saatDitahan,
   });
 
   /// Tinggi blok teks di bawah gambar: nama dua baris + harga, tanpa saling tabrak di ubin tersempit.
@@ -57,6 +58,9 @@ class UbinProduk extends StatelessWidget {
   /// Foto produk bila sudah tersedia di perangkat; null = pakai inisial.
   final Widget? gambar;
 
+  /// Aksi tahan-lama (misal tandai habis); null = ubin tidak punya aksi tambahan.
+  final VoidCallback? saatDitahan;
+
   /// Inisial dua huruf pertama kata (misal "Es Kopi Susu" → "EK").
   static String AmbilInisial(String nama) {
     final kata = nama.trim().split(RegExp(r'\s+')).where((k) => k.isNotEmpty).toList();
@@ -77,6 +81,7 @@ class UbinProduk extends StatelessWidget {
       button: true,
       label: [nama, hargaTeks == null ? 'harga belum diatur' : hargaTeks.FormatRupiah(), ?keterangan].join(', '),
       excludeSemantics: true,
+      onLongPress: saatDitahan,
       child: Material(
         color: warna.permukaan,
         shape: RoundedRectangleBorder(
@@ -86,6 +91,7 @@ class UbinProduk extends StatelessWidget {
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: saatDiketuk,
+          onLongPress: saatDitahan,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
