@@ -401,12 +401,23 @@ final class PenyusunFakturPajakCoretax
             nama: $d->NamaProduk,
             satuan: $satuan ?? self::KODE_SATUAN_BAWAAN,
             harga: $harga->toScale(2)->__toString(),
-            jumlah: $jumlah->stripTrailingZeros()->toScale(max(0, $jumlah->stripTrailingZeros()->getScale()))->__toString(),
+            jumlah: self::RingkasAngka($jumlah),
             totalDiskon: $totalDiskon->__toString(),
             dpp: $dpp,
             dppNilaiLain: $dppNilaiLain->__toString(),
-            tarifPpn: $tarif->stripTrailingZeros()->toScale(max(0, $tarif->stripTrailingZeros()->getScale()))->__toString(),
+            tarifPpn: self::RingkasAngka($tarif),
             ppn: $ppn->__toString(),
         );
+    }
+
+    /**
+     * Angka tanpa nol di belakang koma (`200.0000` → `200`, `12.500000` → `12.5`), tidak pernah bernotasi ilmiah.
+     * Memakai `strippedOfTrailingZeros()` (brick/math 1.x; `stripTrailingZeros()` hanya ada di 0.x dan di sini menjadi Error).
+     */
+    public static function RingkasAngka(BigDecimal $angka): string
+    {
+        $ringkas = $angka->strippedOfTrailingZeros();
+
+        return (string) ($ringkas->getScale() < 0 ? $ringkas->toScale(0) : $ringkas);
     }
 }

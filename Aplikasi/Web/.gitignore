@@ -33,3 +33,6 @@ Homestead.json
 Homestead.yaml
 Thumbs.db
 /PosSaasTes*
+
+# Basis data SQLite uji yang tak sengaja ter-commit (audit PAY-P2-03); test memakai MySQL.
+/PosSaasTes*

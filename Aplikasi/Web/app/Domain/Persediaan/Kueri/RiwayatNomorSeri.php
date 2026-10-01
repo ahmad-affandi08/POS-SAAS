@@ -61,7 +61,7 @@ final class RiwayatNomorSeri
 
         if ($uuidProduk !== null) {
             $produk = $this->infoProduk->AmbilDariUuid([$uuidProduk])[$uuidProduk] ?? null;
-            $kueri->where('IdProduk', $produk?->id ?? 0);
+            $kueri->where('IdProduk', $produk === null ? 0 : $produk->id);
         }
 
         $statusSah = $status === null ? null : StatusNomorSeri::tryFrom($status);

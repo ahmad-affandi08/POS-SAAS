@@ -8,7 +8,7 @@ Abstraksi perangkat keras aplikasi kasir (PRD §17.2.5, §17.2.5a). Kode fitur t
 - `Printer/PengodeEscPos.dart`: dokumen → byte ESC/POS (teks ASCII, tebal/besar, QR `GS ( k`, gambar `GS v 0`,
   potong kertas, buka laci `ESC p`).
 - `Printer/TransportPrinter.dart`: antarmuka pengiriman byte. `TransportJaringan` = printer LAN/Wi-Fi port 9100
-  (Android, iOS, Windows). Bluetooth, USB, SDK vendor (Sunmi, iMin), dan printer sistem menyusul.
+  (Android, iOS, Windows). Transport lain (Bluetooth Classic & LE, USB, SDK vendor Sunmi/iMin, printer sistem PDF/AirPrint) sudah tersedia di berkas transport masing-masing; status per platform ada di `CLAUDE.md` dan PRD §17.2.5a.
 - `Printer/PrinterStruk.dart`: port printer (cetak, cetak uji, buka laci) di atas transport.
 
 Dart murni: `dart test` dari folder ini.

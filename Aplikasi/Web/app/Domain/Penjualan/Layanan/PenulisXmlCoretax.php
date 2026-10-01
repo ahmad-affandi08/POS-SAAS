@@ -8,6 +8,7 @@ use App\Domain\Penjualan\Data\DataBarisFakturPajak;
 use App\Domain\Penjualan\Data\DataFakturPajak;
 use App\Domain\Penjualan\Data\HasilFakturPajakCoretax;
 use Brick\Math\BigDecimal;
+use Brick\Math\RoundingMode;
 use InvalidArgumentException;
 use XMLWriter;
 
@@ -104,11 +105,11 @@ final class PenulisXmlCoretax
     }
 
     /** Angka tanpa nol di belakang koma yang tidak perlu (`100000.00` → `100000`). */
-    private static function Angka(string $nilai): string
+    public static function Angka(string $nilai): string
     {
         $angka = BigDecimal::of($nilai);
 
-        return $angka->hasNonZeroFractionalPart() ? (string) $angka->stripTrailingZeros() : (string) $angka->toScale(0);
+        return $angka->getFractionalPart()->isZero() ? (string) $angka->toScale(0, RoundingMode::Down) : PenyusunFakturPajakCoretax::RingkasAngka($angka);
     }
 
     private static function BersihkanTeks(string $teks): string

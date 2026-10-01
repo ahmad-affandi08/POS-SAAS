@@ -120,7 +120,9 @@ const kolomKedaluwarsa: KolomTabel<BarisBatchKedaluwarsa>[] = [
                 <span className="block text-teks-utama">{FormatTanggal(b.TanggalKedaluwarsa)}</span>
                 <span className="block text-label text-teks-sekunder">
                     {labelStatusKedaluwarsa[b.Status]}
-                    {b.SisaHari < 0 ? ` (${String(Math.abs(b.SisaHari))} hari lalu)` : ` (${String(b.SisaHari)} hari lagi)`}
+                    {b.SisaHari < 0
+                        ? ` (${String(Math.abs(b.SisaHari))} hari lalu)`
+                        : ` (${String(b.SisaHari)} hari lagi)`}
                 </span>
             </>
         ),
