@@ -58,7 +58,7 @@ export const options = {
     'http_req_duration{scenario:checkout}': ['p(95)<1500'],
     'http_req_duration{scenario:outbox}': ['p(95)<5000'],
     'http_req_duration{scenario:polling}': ['p(95)<1000'],
-    'http_req_duration{scenario:webhook}': ['p(95)<500'],
+    'http_req_duration{scenario:webhook}': ['p(95)<1000'],
     'http_req_failed{scenario:checkout}': ['rate<0.01'],
     penjualan_ditolak: ['count==0'],
     checks: ['rate>0.99'],

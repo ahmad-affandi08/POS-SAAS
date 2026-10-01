@@ -108,7 +108,10 @@ jobs:
         if: ${{ !cancelled() }}
         run: |
           echo "--- Galat di log aplikasi (maks. 150 baris) ---"
-          grep -hE -A10 "ERROR|CRITICAL" storage/logs/laravel*.log 2>/dev/null | head -150 || true
+          # Server berjalan di APP_ENV=production, jadi galat requestnya berkanal `production.`; baris `testing.` berasal dari penyiap data.
+          grep -hE -A12 "production\.(ERROR|CRITICAL)" storage/logs/laravel*.log 2>/dev/null | head -150 || true
+          echo "--- Deadlock terakhir menurut InnoDB ---"
+          mysql -h 127.0.0.1 -uroot -proot -e "SHOW ENGINE INNODB STATUS\\G" 2>&1 | sed -n '/LATEST DETECTED DEADLOCK/,/WE ROLL BACK/p' | head -80 || true
           echo "--- Log server (galat PHP) ---"
           grep -iE "fatal|error" storage/logs/server.log 2>/dev/null | head -20 || true
           {
@@ -116,7 +119,7 @@ jobs:
             echo '```'
             mysql -h 127.0.0.1 -upos_saas -prahasia-lokal-tes PosSaasTes -e "SELECT COUNT(*) AS pekerjaan_tertunda FROM jobs; SELECT COUNT(*) AS pekerjaan_gagal FROM failed_jobs; SELECT COUNT(*) AS penjualan FROM Penjualan;" 2>&1 || true
             echo '```'
-            echo "Galat di log aplikasi: $(grep -c 'ERROR\|CRITICAL' storage/logs/laravel*.log 2>/dev/null || echo 0)"
+            echo "Galat di log aplikasi (production): $(grep -hc 'production\.\(ERROR\|CRITICAL\)' storage/logs/laravel*.log 2>/dev/null | paste -sd+ | bc 2>/dev/null || echo 0)"
           } >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}

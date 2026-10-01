@@ -33,7 +33,7 @@ final class PemrosesSinkron
 {
     use DetectsConcurrencyErrors;
 
-    public const PERCOBAAN_KONKURENSI = 3;
+    public const PERCOBAAN_KONKURENSI = 5;
 
     /** @var array<string, PenanganItemSinkron>|null */
     private ?array $penangan = null;
