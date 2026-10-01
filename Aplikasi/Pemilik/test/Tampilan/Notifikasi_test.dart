@@ -27,7 +27,10 @@ void main() {
             ),
           ),
         ],
-        child: MaterialApp(theme: BuatTema(), home: const Scaffold(body: LayarNotifikasi())),
+        child: MaterialApp(
+          theme: BuatTema(),
+          home: const Scaffold(body: LayarNotifikasi()),
+        ),
       ),
     );
     await tester.pumpAndSettle();

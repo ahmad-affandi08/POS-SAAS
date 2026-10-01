@@ -1486,7 +1486,7 @@ final class TerimaPenjualanPos
             foreach ($permintaan as $kunci => [$nomor, $idDetail]) {
                 $tersedia = $this->infoSeri->CariTersedia($infoPerKunci[$kunci]->idProduk, $idGudang, $nomor, $percobaan > 1);
 
-                foreach (array_values($nomor) as $n => $no) {
+                foreach ($nomor as $n => $no) {
                     if (! isset($tersedia[mb_strtoupper($no)])) {
                         $bermasalah[] = $infoPerKunci[$kunci]->nama.' '.$no;
 

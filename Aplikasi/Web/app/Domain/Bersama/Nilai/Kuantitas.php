@@ -72,6 +72,11 @@ final readonly class Kuantitas implements JsonSerializable, Stringable
         return $this->nilai->isNegative();
     }
 
+    public function BernilaiNol(): bool
+    {
+        return $this->nilai->isZero();
+    }
+
     public function KeDesimal(): BigDecimal
     {
         return $this->nilai;

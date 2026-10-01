@@ -271,6 +271,9 @@ final class MesinKalkulasi
         return $this->pengalokasi->AlokasikanSebanding($biayaKirimNetto, $bobot);
     }
 
+    /**
+     * @param  list<string>  $kodeBaris  kode pajak yang berlaku untuk baris ini
+     */
     private function HitungDasarPajakBaris(Uang $nettoAkhir, array $kodeBaris, DataKalkulasi $data, bool $termasukPajak): BigRational
     {
         $netto = $this->UbahKeRasional($nettoAkhir);

@@ -176,14 +176,14 @@ final class PelangganKontroler extends DasarKelolaKontroler
         return Pelanggan::query()->where('Uuid', $uuid)->firstOrFail();
     }
 
-    /**
-     * @return array{Kelola: bool, LihatPenjualan: bool, KelolaDeposit: bool}
-     */
     private static function TampilkanDigit(?string $digit, bool $utuh): ?string
     {
         return $digit === null || $utuh ? $digit : SimpanPelanggan::SamarkanDigit($digit);
     }
 
+    /**
+     * @return array{Kelola: bool, LihatPenjualan: bool, KelolaDeposit: bool}
+     */
     private function AmbilIzin(): array
     {
         $akses = app(AksesPengguna::class);

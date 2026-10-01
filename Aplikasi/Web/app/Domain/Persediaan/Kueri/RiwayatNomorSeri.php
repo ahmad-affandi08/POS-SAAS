@@ -73,7 +73,7 @@ final class RiwayatNomorSeri
         $total = (clone $kueri)->count();
         $seri = $kueri->orderBy('Nomor')->orderBy('Id')->limit(max(1, $batas))->get();
 
-        return ['Baris' => $this->Petakan($seri->all()), 'Total' => $total];
+        return ['Baris' => $this->Petakan(array_values($seri->all())), 'Total' => $total];
     }
 
     /**

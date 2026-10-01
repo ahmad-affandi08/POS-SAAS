@@ -92,7 +92,7 @@ final class PenyusunFakturPajakCoretax
         }
 
         $daftarFaktur = $query->get();
-        $suratJalanPerFaktur = $this->AmbilSuratJalan($daftarFaktur->pluck('Id')->all());
+        $suratJalanPerFaktur = $this->AmbilSuratJalan(array_values(array_map('intval', $daftarFaktur->pluck('Id')->all())));
         $pembeli = $this->identitasPelanggan->AmbilBanyak(array_values(array_unique($daftarFaktur->pluck('IdPelanggan')->all())));
         $semuaDetail = [];
 
