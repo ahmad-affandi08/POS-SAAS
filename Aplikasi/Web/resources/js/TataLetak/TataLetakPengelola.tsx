@@ -99,13 +99,13 @@ export const daftarMenuPengelola: GrupMenu[] = [
                 izin: IzinPengelola.TemplateLihat,
                 ikon: 'Lapisan',
             },
-            // P-10: rilis, flag fitur, dan HCL adalah satu subjek, jadi satu entri dengan tab halaman (TabRilis).
+            // P-10: rilis, flag fitur, HCL, dan pengumuman adalah satu subjek, jadi satu entri dengan tab halaman (TabRilis).
             {
                 label: 'Rilis aplikasi',
                 href: '/rilis',
                 izin: IzinPengelola.RilisLihat,
                 ikon: 'Retur',
-                alamatLain: ['/flag-fitur', '/kompatibilitas-perangkat'],
+                alamatLain: ['/flag-fitur', '/kompatibilitas-perangkat', '/pengumuman'],
             },
             // D-21 Situs pemasaran (payou.id).
             { label: 'Situs pemasaran', href: '/situs/halaman', izin: IzinPengelola.SitusLihat, ikon: 'Lokasi' },

@@ -8,8 +8,11 @@ use App\Domain\Bersama\Tenant\KonteksTenant;
 use App\Domain\Organisasi\Kueri\AksesPengguna;
 use App\Domain\Organisasi\Kueri\KeanggotaanPengguna;
 use App\Domain\Organisasi\Kueri\PemilikTenant;
+use App\Domain\Organisasi\Kueri\SektorOutletTenant;
 use App\Domain\Organisasi\Model\Pengguna;
+use App\Domain\Tenant\Enum\PlatformPengumuman;
 use App\Domain\Tenant\Kueri\PenawaranFiturTenant;
+use App\Domain\Tenant\Kueri\PengumumanBerlaku;
 use App\Domain\Tenant\Kueri\PersetujuanLegalTertunda;
 use App\Domain\Tenant\Kueri\RingkasanLanggananTenant;
 use App\Domain\Tenant\Kueri\RingkasanTenant;
@@ -110,6 +113,18 @@ final class BagikanDataInertia extends Middleware
                 $idTenant = app(KonteksTenant::class)->Ambil();
 
                 return $pengguna instanceof Pengguna && $idTenant !== null ? app(PenawaranFiturTenant::class)->Ambil($idTenant) : null;
+            },
+            // P-10 PGL-19: pengumuman & banner pemeliharaan platform untuk paket & sektor tenant aktif.
+            'PengumumanPlatform' => function () use ($pengguna): array {
+                $idTenant = app(KonteksTenant::class)->Ambil();
+
+                if (! $pengguna instanceof Pengguna || $idTenant === null) {
+                    return [];
+                }
+
+                $kodePaket = $this->ringkasanLangganan->Ambil($idTenant)['KodePaket'] ?? null;
+
+                return app(PengumumanBerlaku::class)->AmbilUntuk(PlatformPengumuman::Web, $kodePaket, app(SektorOutletTenant::class)->AmbilKode(), null);
             },
         ];
     }

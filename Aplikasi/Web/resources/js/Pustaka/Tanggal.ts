@@ -111,3 +111,28 @@ export function PecahRentang(nilai: string): [string, string] {
 export function GabungRentang(dari: string, sampai: string): string {
     return dari === '' && sampai === '' ? '' : `${dari}..${sampai}`;
 }
+
+/** Waktu lokal peramban `TTTT-BB-HHTjj:mm` (isian `PemilihTanggalWaktu`) → ISO UTC untuk server; null bila kosong/salah. */
+export function UbahWaktuLokalKeIsoUtc(nilai: string): string | null {
+    if (nilai === '') {
+        return null;
+    }
+
+    const waktu = new Date(nilai);
+
+    return Number.isNaN(waktu.getTime()) ? null : waktu.toISOString();
+}
+
+/** ISO UTC dari server → waktu lokal peramban `TTTT-BB-HHTjj:mm` untuk `PemilihTanggalWaktu`; kosong bila null. */
+export function UbahIsoKeWaktuLokal(iso: string | null): string {
+    if (iso === null) {
+        return '';
+    }
+
+    const w = new Date(iso);
+    const Dua = (n: number) => String(n).padStart(2, '0');
+
+    return Number.isNaN(w.getTime())
+        ? ''
+        : `${String(w.getFullYear())}-${Dua(w.getMonth() + 1)}-${Dua(w.getDate())}T${Dua(w.getHours())}:${Dua(w.getMinutes())}`;
+}

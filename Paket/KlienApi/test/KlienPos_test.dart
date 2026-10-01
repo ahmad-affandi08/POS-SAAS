@@ -586,6 +586,22 @@ void main() {
               'WajibPembaruan': true,
             },
             'FlagFitur': {'pos.mode-meja': false, 'kasir.struk-digital': true, 'rusak': 'ya'},
+            'Pengumuman': [
+              {
+                'Uuid': 'P1',
+                'Judul': 'Pemeliharaan server',
+                'Isi': 'Sinkron berhenti sebentar.',
+                'Jenis': 'Pemeliharaan',
+                'LabelJenis': 'Pemeliharaan terjadwal',
+                'Tautan': null,
+                'BolehDitutup': false,
+                'PemeliharaanMulai': '2026-10-10T16:00:00Z',
+                'PemeliharaanSelesai': '2026-10-10T18:00:00Z',
+                'TampilSampai': '2026-10-10T18:00:00Z',
+              },
+              {'Uuid': 'P2', 'Judul': 'Fitur baru', 'Isi': 'Cetak ulang struk.', 'Jenis': 'JenisMasaDepan'},
+              {'Uuid': '', 'Judul': 'Rusak'},
+            ],
           }, 200);
         }),
       );
@@ -600,6 +616,13 @@ void main() {
       expect(konfigurasi.flagFitur, {'pos.mode-meja': false, 'kasir.struk-digital': true});
       expect(konfigurasi.CekFlag('pos.mode-meja'), isFalse);
       expect(konfigurasi.CekFlag('tidak.ada'), isTrue);
+      // v3.45 PGL-19: pengumuman; jenis tak dikenal = Info (boleh ditutup), baris rusak dibuang.
+      expect(konfigurasi.pengumuman.map((p) => p.uuid), ['P1', 'P2']);
+      expect(konfigurasi.pengumuman.first.jenis, JenisPengumuman.Pemeliharaan);
+      expect(konfigurasi.pengumuman.first.bolehDitutup, isFalse);
+      expect(konfigurasi.pengumuman.first.pemeliharaanMulai, DateTime.utc(2026, 10, 10, 16).toLocal());
+      expect(konfigurasi.pengumuman.last.jenis, JenisPengumuman.Info);
+      expect(konfigurasi.pengumuman.last.bolehDitutup, isTrue);
     },
   );
 
@@ -618,6 +641,7 @@ void main() {
       expect(konfigurasi.wajibPembaruan, isFalse);
       expect(konfigurasi.adaPembaruan, isFalse);
       expect(konfigurasi.flagFitur, isEmpty);
+      expect(konfigurasi.pengumuman, isEmpty);
     },
   );
 

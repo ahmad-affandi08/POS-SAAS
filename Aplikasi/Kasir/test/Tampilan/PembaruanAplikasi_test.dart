@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:inti/Inti.dart';
 import 'package:kasir/Data/RepositoriKasir.dart';
 import 'package:kasir/Tampilan/LayarJual.dart';
+import 'package:kasir/Tampilan/RuangKerja/BannerPengumuman.dart';
 import 'package:kasir/Tampilan/RuangKerja/PanelWajibPembaruan.dart';
 import 'package:kasir/Tampilan/RuangKerja/RuangKerja.dart';
 
@@ -15,7 +16,11 @@ import '../Pendukung/PasangAplikasi.dart';
 /// (`X-Outbox-Tertunda`), menandai versi baru di bilah status, dan mengunci layar jual bila di bawah versi minimal
 /// sambil tetap mengirim outbox.
 void main() {
-  Future<LingkunganUji> MasukDenganKonfigurasi(WidgetTester tester, Map<String, Object?> aplikasi) async {
+  Future<LingkunganUji> MasukDenganKonfigurasi(
+    WidgetTester tester,
+    Map<String, Object?> aplikasi, {
+    List<Map<String, Object?>> pengumuman = const [],
+  }) async {
     final u = LingkunganUji.Buat();
     await tester.runAsync(() async {
       await u.SiapkanAktif();
@@ -37,6 +42,7 @@ void main() {
         return JsonUji({
           'Aplikasi': aplikasi,
           'FlagFitur': {'pos.mode-meja': false},
+          'Pengumuman': pengumuman,
         });
       }
       throw http.ClientException('offline');
@@ -95,4 +101,48 @@ void main() {
     expect(find.byType(PanelWajibPembaruan), findsNothing);
     await Lepas(tester, u);
   });
+
+  testWidgets(
+    'P-10 PGL-19: banner pengumuman di atas area kerja; Penting tidak bisa ditutup, Info bisa; Lihat membuka semua',
+    (tester) async {
+      final u = await MasukDenganKonfigurasi(
+        tester,
+        {'VersiSaatIni': '0.2.0', 'VersiTerbaru': '0.2.0', 'VersiMinimal': '0.1.0'},
+        pengumuman: [
+          {
+            'Uuid': 'P1',
+            'Judul': 'Pemeliharaan server Sabtu malam',
+            'Isi': 'Sinkron berhenti sebentar; transaksi tetap tersimpan di perangkat.',
+            'Jenis': 'Pemeliharaan',
+            'LabelJenis': 'Pemeliharaan terjadwal',
+            'BolehDitutup': false,
+            'PemeliharaanMulai': '2026-10-10T16:00:00Z',
+            'PemeliharaanSelesai': '2026-10-10T18:00:00Z',
+          },
+          {
+            'Uuid': 'P2',
+            'Judul': 'Cetak ulang struk lebih cepat',
+            'Isi': 'Tahan ubin riwayat untuk cetak ulang.',
+            'Jenis': 'YangBaru',
+            'LabelJenis': 'Yang baru',
+            'BolehDitutup': true,
+          },
+        ],
+      );
+
+      expect(find.byType(BannerPengumuman), findsOneWidget);
+      expect(find.textContaining('Pemeliharaan server Sabtu malam'), findsOneWidget);
+      expect(find.byTooltip('Tutup pengumuman'), findsNothing);
+      expect(find.byType(LayarJual), findsOneWidget);
+
+      await tester.tap(find.text('Lihat (2)'));
+      await tester.pumpAndSettle();
+      expect(find.text('Pengumuman PAYOU'), findsOneWidget);
+      expect(find.text('Yang baru: Cetak ulang struk lebih cepat'), findsOneWidget);
+      expect(find.textContaining('Sinkron berhenti sebentar'), findsOneWidget);
+      await tester.tap(find.text('Tutup'));
+      await tester.pumpAndSettle();
+      await Lepas(tester, u);
+    },
+  );
 }

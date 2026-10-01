@@ -11,6 +11,7 @@ import DialogKonfirmasi from '@/Komponen/Tindakan/DialogKonfirmasi';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import { FormatTanggalWaktu } from '@/Pustaka/FormatWaktu';
+import { UbahWaktuLokalKeIsoUtc as UbahKeIsoUtc } from '@/Pustaka/Tanggal';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
 import type { PropsBersamaAplikasi } from '@/Tipe/Aplikasi';
 import type { BarisPenerimaKampanye, PropsDetailKampanye, StatusPenerimaKampanye } from '@/Tipe/Kampanye';
@@ -56,16 +57,7 @@ const kolomPenerima: KolomTabel<BarisPenerimaKampanye>[] = [
     },
 ];
 
-/** Waktu lokal peramban `TTTT-BB-HHTjj:mm` → ISO UTC untuk server. */
-export function UbahKeIsoUtc(nilai: string): string | null {
-    if (nilai === '') {
-        return null;
-    }
-
-    const waktu = new Date(nilai);
-
-    return Number.isNaN(waktu.getTime()) ? null : waktu.toISOString();
-}
+export { UbahWaktuLokalKeIsoUtc as UbahKeIsoUtc } from '@/Pustaka/Tanggal';
 
 /**
  * CRM-07 rincian kampanye: isi & contoh pesan, segmen, progres kirim, daftar penerima (tanpa nomor/email), serta aksi

@@ -1,7 +1,7 @@
 import 'UraiJson.dart';
 
 /// Isi `GET /api/pos/v1/konfigurasi-aplikasi` yang dipakai aplikasi (§14.6, P-10): versi terbaru & minimal untuk
-/// perangkat ini, tautan unduh, catatan rilis ("Yang baru"), dan flag fitur tenant.
+/// perangkat ini, tautan unduh, catatan rilis ("Yang baru"), flag fitur tenant, dan pengumuman platform (v3.45).
 class KonfigurasiAplikasi {
   const KonfigurasiAplikasi({
     required this.versiSaatIni,
@@ -12,6 +12,7 @@ class KonfigurasiAplikasi {
     required this.adaPembaruan,
     required this.wajibPembaruan,
     required this.flagFitur,
+    this.pengumuman = const [],
   });
 
   final String? versiSaatIni;
@@ -26,6 +27,10 @@ class KonfigurasiAplikasi {
 
   /// Kunci → hidup/mati. Kunci tanpa aturan tidak dikirim (dianggap hidup).
   final Map<String, bool> flagFitur;
+
+  /// P-10 PGL-19: banner pengumuman/pemeliharaan untuk perangkat ini, urut prioritas dari server (Penting dulu).
+  /// Server lama tidak mengirimnya → kosong.
+  final List<PengumumanAplikasi> pengumuman;
 
   /// Flag dengan kunci [kunci]; tanpa aturan = [bawaan].
   bool CekFlag(String kunci, {bool bawaan = true}) => flagFitur[kunci] ?? bawaan;
@@ -47,6 +52,61 @@ class KonfigurasiAplikasi {
       adaPembaruan: UraiJson.AmbilBenar(aplikasi['AdaPembaruan']),
       wajibPembaruan: UraiJson.AmbilBenar(aplikasi['WajibPembaruan']),
       flagFitur: Map.unmodifiable(flag),
+      pengumuman: List.unmodifiable(
+        UraiJson.AmbilDaftarPeta(json['Pengumuman'])
+            .map(PengumumanAplikasi.DariJson)
+            .where((p) => p.uuid.isNotEmpty && p.judul.isNotEmpty),
+      ),
+    );
+  }
+}
+
+/// Jenis pengumuman platform. Nilai tak dikenal dari server yang lebih baru diperlakukan sebagai [Info].
+enum JenisPengumuman { Info, YangBaru, Pemeliharaan, Penting }
+
+/// Satu pengumuman platform (P-10 PGL-19). [bolehDitutup] false untuk Penting & Pemeliharaan.
+class PengumumanAplikasi {
+  const PengumumanAplikasi({
+    required this.uuid,
+    required this.judul,
+    required this.isi,
+    required this.jenis,
+    required this.labelJenis,
+    required this.bolehDitutup,
+    this.tautan,
+    this.pemeliharaanMulai,
+    this.pemeliharaanSelesai,
+  });
+
+  final String uuid;
+  final String judul;
+  final String isi;
+  final JenisPengumuman jenis;
+  final String labelJenis;
+  final bool bolehDitutup;
+  final String? tautan;
+  final DateTime? pemeliharaanMulai;
+  final DateTime? pemeliharaanSelesai;
+
+  static PengumumanAplikasi DariJson(Map<String, Object?> json) {
+    final jenis = JenisPengumuman.values.firstWhere(
+      (j) => j.name == UraiJson.AmbilTeks(json['Jenis']),
+      orElse: () => JenisPengumuman.Info,
+    );
+    DateTime? UraiWaktu(Object? nilai) => nilai is String ? DateTime.tryParse(nilai)?.toLocal() : null;
+    return PengumumanAplikasi(
+      uuid: UraiJson.AmbilTeks(json['Uuid']),
+      judul: UraiJson.AmbilTeks(json['Judul']),
+      isi: UraiJson.AmbilTeks(json['Isi']),
+      jenis: jenis,
+      labelJenis: UraiJson.AmbilTeks(json['LabelJenis'], 'Info'),
+      bolehDitutup: UraiJson.AmbilBenar(
+        json['BolehDitutup'],
+        jenis == JenisPengumuman.Info || jenis == JenisPengumuman.YangBaru,
+      ),
+      tautan: UraiJson.AmbilTeksAtauNull(json['Tautan']),
+      pemeliharaanMulai: UraiWaktu(json['PemeliharaanMulai']),
+      pemeliharaanSelesai: UraiWaktu(json['PemeliharaanSelesai']),
     );
   }
 }

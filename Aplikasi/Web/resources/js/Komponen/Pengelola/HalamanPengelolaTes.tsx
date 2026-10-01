@@ -11,13 +11,20 @@ import HalamanWilayah from '@/Halaman/Pengelola/Referensi/Wilayah';
 import HalamanRilis, { AmbilStatusRilis } from '@/Halaman/Pengelola/Rilis/Daftar';
 import HalamanFlagFitur, { AmbilNilaiFlag } from '@/Halaman/Pengelola/Rilis/FlagFitur';
 import HalamanKompatibilitasPerangkat from '@/Halaman/Pengelola/Rilis/KompatibilitasPerangkat';
+import HalamanPengumumanPlatform, { RingkasSasaran } from '@/Halaman/Pengelola/Rilis/Pengumuman';
 import HalamanEditorTemplate from '@/Halaman/Pengelola/TemplateSektor/Editor';
 import BidangTanggal, { TulisTanggal, UraiTanggal } from '@/Komponen/Pengelola/BidangTanggal';
 import TabReferensi from '@/Komponen/Pengelola/TabReferensi';
 import FormAkun from '@/Komponen/Pengelola/TemplateSektor/FormAkun';
 import type { HasilTabel } from '@/Komponen/TabelData/Tipe';
 import { BukaMenu } from '@/Pengujian/InteraksiRadix';
-import { IzinPengelola, type AturanFlagFitur, type PropsBersamaPengelola, type RilisAplikasi } from '@/Tipe/Pengelola';
+import {
+    IzinPengelola,
+    type AturanFlagFitur,
+    type BarisPengumumanPlatform,
+    type PropsBersamaPengelola,
+    type RilisAplikasi,
+} from '@/Tipe/Pengelola';
 import type { BarisKompatibilitas } from '@/Tipe/Kompatibilitas';
 import type { IsiTemplate, PilihanEditorTemplate } from '@/Tipe/TemplateSektor';
 import { UbahNilai } from '@/Pengujian/InteraksiPilihan';
@@ -661,5 +668,88 @@ describe('v1.98 kompatibilitas perangkat (HCL)', () => {
         AturHalaman([IzinPengelola.RilisLihat], '/kompatibilitas-perangkat');
         RenderDenganKueri(<HalamanKompatibilitasPerangkat Baris={[printer]} />);
         expect(screen.queryByRole('button', { name: 'Segarkan sekarang' })).toBeNull();
+    });
+});
+
+describe('P-10 PGL-19 pengumuman platform', () => {
+    const opsi = {
+        OpsiJenis: [
+            { Nilai: 'Info', Label: 'Info' },
+            { Nilai: 'Pemeliharaan', Label: 'Pemeliharaan terjadwal' },
+        ],
+        OpsiPaket: [{ Nilai: 'BISNIS', Label: 'Bisnis' }],
+        OpsiSektor: [{ Nilai: 'FNB-CAF', Label: 'Kafe' }],
+        OpsiPlatform: [
+            { Nilai: 'Web', Label: 'Back-office web' },
+            { Nilai: 'Android', Label: 'Kasir Android' },
+        ],
+    };
+    const draf: BarisPengumumanPlatform = {
+        Uuid: '01J9PGM0000000000000000001',
+        Judul: 'Pemeliharaan server Sabtu malam',
+        Isi: 'Sinkron berhenti sebentar.',
+        Jenis: 'Pemeliharaan',
+        LabelJenis: 'Pemeliharaan terjadwal',
+        Sasaran: {
+            KodePaket: ['BISNIS'],
+            Sektor: [],
+            Platform: ['Android'],
+            VersiMinimal: null,
+            VersiMaksimal: '1.2.0',
+        },
+        Tautan: null,
+        TampilMulai: '2026-10-07T00:00:00Z',
+        TampilSampai: '2026-10-10T18:00:00Z',
+        PemeliharaanMulai: '2026-10-10T16:00:00Z',
+        PemeliharaanSelesai: '2026-10-10T18:00:00Z',
+        Status: 'Draf',
+        LabelStatus: 'Draf',
+        DiterbitkanPada: null,
+        DiterbitkanOleh: null,
+        AlasanCabut: null,
+    };
+
+    it('ringkasan sasaran memakai label; kosong = semua', () => {
+        expect(RingkasSasaran(draf, opsi)).toBe('Kasir Android · paket Bisnis · semua sektor · versi …–1.2.0');
+        expect(
+            RingkasSasaran(
+                {
+                    ...draf,
+                    Sasaran: { KodePaket: [], Sektor: [], Platform: [], VersiMinimal: null, VersiMaksimal: null },
+                },
+                opsi,
+            ),
+        ).toBe('semua platform · semua paket · semua sektor');
+    });
+
+    it('daftar & formulir: pemeliharaan meminta jadwal, simpan mengirim sasaran & waktu ISO UTC', () => {
+        AturHalaman([IzinPengelola.RilisLihat, IzinPengelola.RilisKelola], '/pengumuman');
+        RenderDenganKueri(<HalamanPengumumanPlatform Pengumuman={[draf]} {...opsi} />);
+
+        expect(screen.getAllByText('Pemeliharaan server Sabtu malam').length).toBeGreaterThan(0);
+        expect(screen.getAllByText('Draf').length).toBeGreaterThan(0);
+
+        fireEvent.click(screen.getByRole('button', { name: 'Buat pengumuman' }));
+        expect(screen.queryByText('Pemeliharaan mulai')).toBeNull();
+        fireEvent.change(screen.getByLabelText(/Judul/), { target: { value: 'Fitur baru di kasir' } });
+        fireEvent.click(screen.getByLabelText('Kasir Android'));
+        fireEvent.click(screen.getByRole('button', { name: 'Simpan draf' }));
+
+        expect(uji.router.post).toHaveBeenCalledTimes(1);
+        const [alamat, data] = uji.router.post.mock.calls[0] as [string, Record<string, unknown>];
+        expect(alamat).toBe('/pengumuman');
+        expect(data).toMatchObject({
+            Judul: 'Fitur baru di kasir',
+            Jenis: 'Info',
+            PemeliharaanMulai: null,
+            Sasaran: { KodePaket: [], Sektor: [], Platform: ['Android'], VersiMinimal: null, VersiMaksimal: null },
+        });
+    });
+
+    it('tanpa izin rilis.kelola: tidak ada tombol buat', () => {
+        AturHalaman([IzinPengelola.RilisLihat], '/pengumuman');
+        RenderDenganKueri(<HalamanPengumumanPlatform Pengumuman={[]} {...opsi} />);
+        expect(screen.queryByRole('button', { name: 'Buat pengumuman' })).toBeNull();
+        expect(screen.getByText('Belum ada pengumuman platform.')).toBeTruthy();
     });
 });

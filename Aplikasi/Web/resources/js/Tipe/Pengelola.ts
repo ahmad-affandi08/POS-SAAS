@@ -125,6 +125,41 @@ export type AturanFlagFitur = {
     DiubahPada: string | null;
 };
 
+/** P-10 PGL-19 pengumuman platform (waktu ISO UTC). */
+export type JenisPengumumanPlatform = 'Info' | 'YangBaru' | 'Pemeliharaan' | 'Penting';
+export type SasaranPengumuman = {
+    KodePaket: string[];
+    Sektor: string[];
+    Platform: string[];
+    VersiMinimal: string | null;
+    VersiMaksimal: string | null;
+};
+export type BarisPengumumanPlatform = {
+    Uuid: string;
+    Judul: string;
+    Isi: string;
+    Jenis: JenisPengumumanPlatform;
+    LabelJenis: string;
+    Sasaran: SasaranPengumuman;
+    Tautan: string | null;
+    TampilMulai: string;
+    TampilSampai: string;
+    PemeliharaanMulai: string | null;
+    PemeliharaanSelesai: string | null;
+    Status: 'Draf' | 'Terbit' | 'Dicabut';
+    LabelStatus: string;
+    DiterbitkanPada: string | null;
+    DiterbitkanOleh: string | null;
+    AlasanCabut: string | null;
+};
+export type PropsPengumumanPlatform = {
+    Pengumuman: BarisPengumumanPlatform[];
+    OpsiJenis: Pilihan[];
+    OpsiPaket: Pilihan[];
+    OpsiSektor: Pilihan[];
+    OpsiPlatform: Pilihan[];
+};
+
 export type PropsFlagFitur = {
     Aturan: AturanFlagFitur[];
     OpsiKunci: Pilihan[];

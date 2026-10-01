@@ -28,6 +28,7 @@ use App\Http\Kontroler\Pengelola\Referensi\TarifPajakKontroler;
 use App\Http\Kontroler\Pengelola\Referensi\WilayahKontroler;
 use App\Http\Kontroler\Pengelola\Rilis\FlagFiturKontroler;
 use App\Http\Kontroler\Pengelola\Rilis\KompatibilitasPerangkatKontroler;
+use App\Http\Kontroler\Pengelola\Rilis\PengumumanPlatformKontroler;
 use App\Http\Kontroler\Pengelola\Rilis\RilisAplikasiKontroler;
 use App\Http\Kontroler\Pengelola\SesiKontroler;
 use App\Http\Kontroler\Pengelola\Tagihan\TagihanKontroler;
@@ -236,6 +237,8 @@ Route::middleware(['auth:pengelola', PastikanPenggunaPengelola::class, WajibGant
         Route::middleware($izin(IzinPengelola::RilisLihat))->group(function () use ($izin): void {
             Route::get('/rilis', [RilisAplikasiKontroler::class, 'Daftar'])->name('pengelola.rilis.daftar');
             Route::get('/flag-fitur', [FlagFiturKontroler::class, 'Daftar'])->name('pengelola.flag-fitur.daftar');
+            // v3.45 PGL-19: pengumuman & banner pemeliharaan per segmen.
+            Route::get('/pengumuman', [PengumumanPlatformKontroler::class, 'Daftar'])->name('pengelola.pengumuman.daftar');
             // v1.98 Hardware Compatibility List (PRD §17.2.5a).
             Route::get('/kompatibilitas-perangkat', [KompatibilitasPerangkatKontroler::class, 'Daftar'])->name('pengelola.kompatibilitas-perangkat.daftar');
             Route::middleware($izin(IzinPengelola::FlagFiturKelola))->group(function (): void {
@@ -244,6 +247,10 @@ Route::middleware(['auth:pengelola', PastikanPenggunaPengelola::class, WajibGant
             });
             Route::middleware($izin(IzinPengelola::RilisKelola))->group(function (): void {
                 Route::post('/rilis', [RilisAplikasiKontroler::class, 'Simpan'])->name('pengelola.rilis.simpan');
+                Route::post('/pengumuman', [PengumumanPlatformKontroler::class, 'Simpan'])->name('pengelola.pengumuman.simpan');
+                Route::put('/pengumuman/{pengumuman}', [PengumumanPlatformKontroler::class, 'Ubah'])->name('pengelola.pengumuman.ubah');
+                Route::post('/pengumuman/{pengumuman}/terbitkan', [PengumumanPlatformKontroler::class, 'Terbitkan'])->name('pengelola.pengumuman.terbitkan');
+                Route::post('/pengumuman/{pengumuman}/cabut', [PengumumanPlatformKontroler::class, 'Cabut'])->name('pengelola.pengumuman.cabut');
                 Route::post('/kompatibilitas-perangkat/segarkan', [KompatibilitasPerangkatKontroler::class, 'Segarkan'])->name('pengelola.kompatibilitas-perangkat.segarkan');
                 Route::put('/kompatibilitas-perangkat/{kompatibilitasPerangkat}', [KompatibilitasPerangkatKontroler::class, 'Tandai'])->name('pengelola.kompatibilitas-perangkat.tandai');
                 Route::put('/rilis/{rilis}', [RilisAplikasiKontroler::class, 'Ubah'])->name('pengelola.rilis.ubah');

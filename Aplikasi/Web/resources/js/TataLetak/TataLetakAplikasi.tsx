@@ -24,6 +24,7 @@ import {
     useSidebar,
 } from '@/Komponen/Ui/sidebar';
 import { cn } from '@/Komponen/Ui/utils';
+import BannerPengumuman from '@/Komponen/Umpan/BannerPengumuman';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import { FormatTanggal, FormatTanggalWaktu } from '@/Pustaka/FormatWaktu';
 import type { FiturPaket, PropsBersamaAplikasi, TenantAktif } from '@/Tipe/Aplikasi';
@@ -826,6 +827,10 @@ export default function TataLetakAplikasi({ judul, jejak = [], children }: Props
                                 </Tombol>
                             </div>
                         </Pemberitahuan>
+                    ) : null}
+                    {/* P-10 PGL-19: pengumuman & jadwal pemeliharaan dari pengelola platform. */}
+                    {props.PengumumanPlatform && props.PengumumanPlatform.length > 0 ? (
+                        <BannerPengumuman pengumuman={props.PengumumanPlatform} />
                     ) : null}
                     {/* BR-P06.5: pengumuman versi materiil dokumen legal selama masa pengumuman. */}
                     {props.PengumumanLegal.length > 0 ? (

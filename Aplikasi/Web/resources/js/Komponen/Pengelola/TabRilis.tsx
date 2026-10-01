@@ -4,9 +4,10 @@ export const daftarTab = [
     { label: 'Versi aplikasi', href: '/rilis' },
     { label: 'Flag fitur', href: '/flag-fitur' },
     { label: 'Kompatibilitas perangkat', href: '/kompatibilitas-perangkat' },
+    { label: 'Pengumuman', href: '/pengumuman' },
 ];
 
-/** Navigasi antar halaman rilis aplikasi P-10 (versi & rollout, flag fitur/kill switch, HCL). */
+/** Navigasi antar halaman rilis aplikasi P-10 (versi & rollout, flag fitur/kill switch, HCL, pengumuman). */
 export default function TabRilis() {
     return <NavigasiTab label="Rilis aplikasi" daftarTab={daftarTab} />;
 }

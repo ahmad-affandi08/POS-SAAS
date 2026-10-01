@@ -4,6 +4,20 @@ export type PenggunaAplikasi = { Uuid: string; Nama: string; Email: string; Emai
 /** BR-P06.5: versi materiil dokumen legal yang diumumkan dan belum berlaku (hanya untuk Owner). */
 export type PengumumanLegal = { Label: string; Versi: number; BerlakuMulai: string; Tautan: string };
 
+/** P-10 PGL-19: pengumuman platform yang berlaku untuk tenant aktif (waktu ISO UTC). */
+export type PengumumanPlatform = {
+    Uuid: string;
+    Judul: string;
+    Isi: string;
+    Jenis: 'Info' | 'YangBaru' | 'Pemeliharaan' | 'Penting';
+    LabelJenis: string;
+    Tautan: string | null;
+    BolehDitutup: boolean;
+    PemeliharaanMulai: string | null;
+    PemeliharaanSelesai: string | null;
+    TampilSampai: string;
+};
+
 /** F-00 (BR-00.7): status `Langganan` tenant aktif, untuk banner Tertunggak/Ditangguhkan. */
 export type StatusLanggananTenant = 'Trial' | 'Aktif' | 'Tertunggak' | 'Ditangguhkan' | 'Berhenti' | 'Gratis';
 
@@ -37,6 +51,8 @@ export type PropsBersamaAplikasi = {
     Pengguna: PenggunaAplikasi | null;
     TenantAktif: TenantAktif | null;
     PengumumanLegal: PengumumanLegal[];
+    /** P-10 PGL-19: banner pengumuman & pemeliharaan platform (kosong/absen di luar back-office). */
+    PengumumanPlatform?: PengumumanPlatform[];
     /** F-02: hak akses di tenant aktif (null di luar back-office). */
     Akses: { Pemilik: boolean; Izin: string[] } | null;
     /** D-23: fitur di luar paket (menu tetap tampil; klik = dialog naik paket / add-on). */
