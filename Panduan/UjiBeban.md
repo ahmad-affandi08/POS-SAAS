@@ -20,8 +20,8 @@ test yang sama dengan suite Fitur lalu menekan API POS dengan [k6](https://k6.io
   Itu perilaku yang diharapkan, bukan galat; angkanya menunjukkan apakah laju uji melewati batas perangkat.
 - Deadlock: ringkasan mencetak `lock_deadlocks` & `lock_timeouts` InnoDB sejak penghitung dinyalakan, plus dump deadlock
   terakhir. Deadlock yang diserap percobaan ulang tidak menjadi HTTP 500, tetapi tetap membuang waktu; angkanya dipakai
-  untuk membandingkan perubahan kode (acuan 1 Okt 2026: 2 tenant, 25 penjualan/detik, 90 detik = 42 sisa setelah v3.27,
-  220 sebelumnya). Untuk membandingkan dua versi sekaligus, dorong keduanya ke branch sementara dan jalankan
+  untuk membandingkan perubahan kode (acuan 1 Okt 2026: 2 tenant, 25 penjualan/detik, 90 detik = ±40–75 setelah v3.27 (tiga run: 42, 75, 97 untuk
+  varian lain), 220 sebelumnya; variasi antar-run besar, jadi ulangi 2–3 kali sebelum menyimpulkan). Untuk membandingkan dua versi sekaligus, dorong keduanya ke branch sementara dan jalankan
   workflow di masing-masing (**Run workflow → Use workflow from**), lalu hapus branchnya.
 - Langkah terakhir menjalankan `tests/Konkurensi/KonkurensiTes.php` (dua proses PHP mengirim item yang sama). Suite ini
   **tidak** ada di `phpunit.xml`, jadi panggil per berkas dan jalankan terakhir: ia menyisakan data uji di basis data.
