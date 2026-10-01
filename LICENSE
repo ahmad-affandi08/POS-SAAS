@@ -1,0 +1,25 @@
+PAYOU — Lisensi Proprietary
+
+Hak Cipta (c) 2026 Ahmad Affandi. Seluruh hak dilindungi.
+
+Perangkat lunak ini, berikut seluruh kode sumber, dokumentasi, desain, aset
+merek, dan berkas pendukungnya (selanjutnya "Perangkat Lunak"), adalah milik
+eksklusif pemegang hak cipta di atas dan bersifat rahasia.
+
+Tanpa izin tertulis dari pemegang hak cipta, dilarang:
+  1. menyalin, menggandakan, atau mendistribusikan Perangkat Lunak;
+  2. memodifikasi atau membuat karya turunan dari Perangkat Lunak;
+  3. menjual, menyewakan, melisensikan ulang, atau menyediakan Perangkat Lunak
+     kepada pihak ketiga, termasuk sebagai layanan (SaaS);
+  4. menggunakan merek, nama, atau logo PAYOU;
+  5. membuka atau membagikan kode sumber kepada pihak yang tidak berwenang.
+
+Akses bagi pengembang, kontraktor, dan mitra diberikan terbatas untuk keperluan
+pengembangan PAYOU dan tunduk pada perjanjian kerahasiaan yang berlaku.
+
+PERANGKAT LUNAK DISEDIAKAN "APA ADANYA", TANPA JAMINAN APA PUN, TERSURAT MAUPUN
+TERSIRAT. PEMEGANG HAK CIPTA TIDAK BERTANGGUNG JAWAB ATAS KLAIM, KERUGIAN, ATAU
+KEWAJIBAN APA PUN YANG TIMBUL DARI PENGGUNAAN PERANGKAT LUNAK INI.
+
+Komponen pihak ketiga (misalnya paket Composer, npm, dan Pub) tetap tunduk pada
+lisensinya masing-masing.
