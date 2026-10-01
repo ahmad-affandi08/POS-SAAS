@@ -43,7 +43,10 @@ final class DokumenKonsinyasi extends ModelDasar
     /** @var array<string, mixed> */
     protected $attributes = ['Catatan' => null, 'IdOutlet' => null];
 
-    /** Kolom total diisi setelah baris dicatat, di transaksi yang sama. */
+    /** Kolom total diisi setelah baris dicatat, di transaksi yang sama.
+     *
+     * @return list<string>
+     */
     public function AmbilKolomBolehBerubah(): array
     {
         return ['TotalNilai'];

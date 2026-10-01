@@ -134,7 +134,7 @@ Dipakai tim internal {{APP}} (§8 Bagian A, §13.8, §19.3).
 | INV-11 | Produksi/rakitan | P1 |
 | INV-12 | Konsinyasi (selesai v3.40) | P2 |
 | INV-13 | Smart restock & forecast → draft PO | P2 |
-| INV-14 | Landed cost (alokasi ongkir/bea ke HPP) | P2 |
+| INV-14 | Landed cost (alokasi ongkir/bea ke HPP; biaya pihak ketiga setelah GRN selesai v3.41) | P2 |
 | INV-15 | Portal supplier (lihat PO, konfirmasi) | P3 |
 
 ### 10.5 Modul Penjualan Lanjutan & Channel

@@ -49,4 +49,39 @@ final class SaldoStokPasangan
 
         return $hasil;
     }
+
+    /**
+     * v3.41: Id mutasi stok terakhir per (produk, lokasi stok) tenant aktif, untuk memeriksa apakah stok sudah bergerak
+     * sejak dokumen tertentu (pembatalan penilaian ulang). Pasangan tanpa saldo = null.
+     *
+     * @param  list<array{0: int, 1: int}>  $pasangan  [IdProduk, IdGudang]
+     * @return array<string, int|null> kunci = "IdProduk:IdGudang"
+     */
+    public function AmbilIdMutasiTerakhir(array $pasangan): array
+    {
+        $hasil = [];
+
+        foreach ($pasangan as [$idProduk, $idGudang]) {
+            $hasil[SaldoStok::BuatKunciPasangan($idProduk, $idGudang)] = null;
+        }
+
+        if ($hasil === []) {
+            return [];
+        }
+
+        $baris = SaldoStok::query()
+            ->whereIn('IdProduk', array_values(array_unique(array_column($pasangan, 0))))
+            ->whereIn('IdGudang', array_values(array_unique(array_column($pasangan, 1))))
+            ->get(['IdProduk', 'IdGudang', 'IdMutasiStokTerakhir']);
+
+        foreach ($baris as $s) {
+            $k = SaldoStok::BuatKunciPasangan($s->IdProduk, $s->IdGudang);
+
+            if (array_key_exists($k, $hasil)) {
+                $hasil[$k] = $s->IdMutasiStokTerakhir;
+            }
+        }
+
+        return $hasil;
+    }
 }

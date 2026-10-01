@@ -10,34 +10,33 @@ use App\Domain\Bersama\Tenant\MilikTenant;
 use Illuminate\Support\Carbon;
 
 /**
- * Baris dokumen konsinyasi (F-05i): jumlah dalam satuan dasar, harga titip per satuan dasar (Retur: HPP berjalan
- * saat keluar), nilai = jumlah × harga.
+ * Alokasi biaya tambahan ke satu baris penerimaan barang (v3.41): `Alokasi` = `KePersediaan` + `KeHpp`.
  *
  * @property int $Id
  * @property int $IdTenant
- * @property int $IdDokumenKonsinyasi
+ * @property int $IdBiayaTambahanPembelian
+ * @property int $IdPenerimaanBarangDetail
  * @property int $IdProduk
- * @property string $Jumlah
- * @property string $HargaSatuan
- * @property string $Nilai
+ * @property string $Alokasi
+ * @property string $KePersediaan
+ * @property string $KeHpp
  * @property Carbon|null $DibuatPada
  * @property Carbon|null $DiubahPada
  */
-final class DokumenKonsinyasiDetail extends ModelDasar
+final class BiayaTambahanPembelianDetail extends ModelDasar
 {
     use JagaDokumenTerposting;
     use MilikTenant;
 
-    protected $table = 'DokumenKonsinyasiDetail';
+    protected $table = 'BiayaTambahanPembelianDetail';
 
     protected bool $pakaiUuid = false;
 
-    /** Nilai baris Retur baru diketahui setelah mutasinya dinilai (HPP berjalan), di transaksi yang sama.
-     *
+    /**
      * @return list<string>
      */
     public function AmbilKolomBolehBerubah(): array
     {
-        return ['HargaSatuan', 'Nilai'];
+        return [];
     }
 }

@@ -355,7 +355,7 @@ export type PropsDetailPenerimaanData = {
 };
 export type PropsDetailPenerimaan = PropsDetailPenerimaanData & {
     Izin: IzinPembelian;
-    Tindakan: { Batalkan: boolean; Retur: boolean; Fakturkan: boolean };
+    Tindakan: { Batalkan: boolean; Retur: boolean; Fakturkan: boolean; BiayaTambahan?: boolean };
 };
 
 /* Faktur */
@@ -648,4 +648,81 @@ export type PropsPenitipKonsinyasi = {
     OpsiAkun: OpsiAkunKas[];
     HariIni: string;
     Izin: IzinPembelian;
+};
+
+/* v3.41 (INV-14): biaya tambahan pembelian. */
+export type JenisBiayaTambahan = 'Ongkir' | 'BeaMasuk' | 'Asuransi' | 'BongkarMuat' | 'Lainnya';
+export type DasarAlokasiBiaya = 'Nilai' | 'Jumlah';
+export type BarisBiayaTambahan = {
+    Uuid: string;
+    Nomor: string;
+    Tanggal: string;
+    Jenis: JenisBiayaTambahan;
+    LabelJenis: string;
+    NomorPenerimaan: string;
+    NamaPenagih: string | null;
+    Jumlah: string;
+    KePersediaan: string;
+    KeHpp: string;
+    Status: StatusDokumenPembelian;
+};
+export type PropsDaftarBiayaTambahan = {
+    Biaya: HasilTabel<BarisBiayaTambahan>;
+    OpsiJenis: Opsi<JenisBiayaTambahan>[];
+    OpsiStatus: Opsi<StatusDokumenPembelian>[];
+    Izin: IzinPembelian;
+};
+export type PropsBuatBiayaTambahan = {
+    Penerimaan: {
+        Uuid: string;
+        Nomor: string;
+        Tanggal: string;
+        Status: StatusDokumenPembelian;
+        NamaGudang: string;
+        NamaPemasok: string | null;
+        Baris: {
+            Id: number;
+            NamaProduk: string;
+            Sku: string | null;
+            Jumlah: string;
+            Nilai: string;
+            Pelacakan: boolean;
+        }[];
+    };
+    OpsiJenis: Opsi<JenisBiayaTambahan>[];
+    OpsiDasar: Opsi<DasarAlokasiBiaya>[];
+    OpsiAkun: OpsiAkunKas[];
+    OpsiPemasok: OpsiPemasok[];
+    HariIni: string;
+};
+export type PropsDetailBiayaTambahan = {
+    Biaya: {
+        Uuid: string;
+        Nomor: string;
+        Tanggal: string;
+        Jenis: JenisBiayaTambahan;
+        LabelJenis: string;
+        LabelDasarAlokasi: string;
+        Jumlah: string;
+        KePersediaan: string;
+        KeHpp: string;
+        Status: StatusDokumenPembelian;
+        Catatan: string | null;
+        AlasanBatal: string | null;
+        NamaPenagih: string | null;
+        UuidPenerimaan: string | null;
+        NomorPenerimaan: string;
+        NamaGudang: string;
+    };
+    Baris: {
+        Id: number;
+        NamaProduk: string;
+        Sku: string | null;
+        Alokasi: string;
+        KePersediaan: string;
+        KeHpp: string;
+    }[];
+    Jurnal: JurnalSetoranKonsinyasi[];
+    Izin: IzinPembelian;
+    Tindakan: { Batalkan: boolean };
 };

@@ -154,6 +154,13 @@ export default function HalamanDetailPenerimaan({
                         <Link href={`${AlamatPembelian}/retur/buat?penerimaan=${p.Uuid}`}>Retur ke pemasok</Link>
                     </Button>
                 ) : null}
+                {Tindakan.BiayaTambahan === true ? (
+                    <Button asChild variant="outline">
+                        <Link href={`${AlamatPembelian}/biaya-tambahan/buat?penerimaan=${p.Uuid}`}>
+                            Catat biaya tambahan
+                        </Link>
+                    </Button>
+                ) : null}
                 {Tindakan.Batalkan ? (
                     <Button variant="destructive" onClick={() => AturBatalkan(true)}>
                         Batalkan penerimaan

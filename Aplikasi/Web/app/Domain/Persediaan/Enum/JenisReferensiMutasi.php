@@ -29,6 +29,8 @@ enum JenisReferensiMutasi: string
     // Grosir bagian 2 (BR-12.7): barang kembali dari pembeli grosir; mutasinya `JenisMutasi::ReturPenjualan` karena
     // efek stoknya memang retur penjualan.
     case ReturGrosir = 'ReturGrosir';
+    // v3.41 (INV-14): biaya tambahan pembelian dari pihak ketiga (ekspedisi, bea masuk) yang menilai ulang stok.
+    case BiayaTambahanPembelian = 'BiayaTambahanPembelian';
 
     public function AmbilLabel(): string
     {
@@ -47,6 +49,7 @@ enum JenisReferensiMutasi: string
             self::Konsinyasi => 'Konsinyasi',
             self::SuratJalan => 'Surat jalan grosir',
             self::ReturGrosir => 'Retur grosir',
+            self::BiayaTambahanPembelian => 'Biaya tambahan pembelian',
         };
     }
 
@@ -75,7 +78,9 @@ enum JenisReferensiMutasi: string
             self::SuratJalan => '/kelola/grosir/surat-jalan/'.$uuid,
             self::ReturGrosir => '/kelola/grosir/retur/'.$uuid,
             self::BahanTerbuang => '/kelola/persediaan/bahan-terbuang?cari='.$uuid,
-            default => null,
+            // F-05i (v3.40) & v3.41.
+            self::Konsinyasi => '/kelola/pembelian/konsinyasi/dokumen/'.$uuid,
+            self::BiayaTambahanPembelian => '/kelola/pembelian/biaya-tambahan/'.$uuid,
         };
     }
 }

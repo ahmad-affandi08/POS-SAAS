@@ -20,6 +20,7 @@ use App\Domain\Organisasi\Kueri\TanggalBisnisOutlet;
 use App\Domain\Pembelian\Enum\StatusFakturPembelian;
 use App\Domain\Pembelian\Layanan\PemrosesPenerimaanBarang;
 use App\Domain\Pembelian\Layanan\PenyusunJurnalPembelian;
+use App\Domain\Pembelian\Model\BiayaTambahanPembelian;
 use App\Domain\Pembelian\Model\FakturPembelian;
 use App\Domain\Pembelian\Model\PembayaranHutang;
 use App\Domain\Pembelian\Model\PembayaranHutangAlokasi;
@@ -99,6 +100,11 @@ final class BatalkanPenerimaanBarang
 
         if (ReturPembelian::query()->where('IdPenerimaanBarang', $dokumen->Id)->where('Status', StatusDokumenTerposting::Diposting->value)->exists()) {
             throw new PelanggaranAturanBisnis('SudahDiretur', 'Penerimaan ini punya retur pembelian aktif. Batalkan returnya dulu.');
+        }
+
+        // v3.41: biaya tambahan menilai ulang stok penerimaan ini; batalkan dulu supaya nilainya ikut kembali.
+        if (BiayaTambahanPembelian::query()->where('IdPenerimaanBarang', $dokumen->Id)->where('Status', StatusDokumenTerposting::Diposting->value)->exists()) {
+            throw new PelanggaranAturanBisnis('AdaBiayaTambahan', 'Penerimaan ini punya biaya tambahan aktif. Batalkan biaya tambahannya dulu.');
         }
 
         $asal = array_values(array_filter($this->mutasiDokumen->AmbilRingkasan(JenisReferensiMutasi::PenerimaanBarang, $dokumen->Id), fn (array $m): bool => str_starts_with($m['KunciBaris'], 'P/')));

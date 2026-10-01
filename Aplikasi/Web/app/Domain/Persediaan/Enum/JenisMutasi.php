@@ -27,6 +27,10 @@ enum JenisMutasi: string
     case Susut = 'Susut';
     case KonsinyasiMasuk = 'KonsinyasiMasuk';
     case KonsinyasiRetur = 'KonsinyasiRetur';
+    // v3.41 biaya tambahan pembelian (INV-14): penilaian ulang stok yang masih ada = seluruh saldo keluar pada nilai
+    // berjalan lalu masuk lagi pada nilai + biaya. Jumlah bersih nol, nilai bertambah sebesar biaya.
+    case RevaluasiKeluar = 'RevaluasiKeluar';
+    case RevaluasiMasuk = 'RevaluasiMasuk';
 
     public function AmbilLabel(): string
     {
@@ -47,6 +51,8 @@ enum JenisMutasi: string
             self::Susut => 'Susut/terbuang',
             self::KonsinyasiMasuk => 'Konsinyasi masuk',
             self::KonsinyasiRetur => 'Retur konsinyasi',
+            self::RevaluasiKeluar => 'Penilaian ulang (keluar)',
+            self::RevaluasiMasuk => 'Penilaian ulang (masuk)',
         };
     }
 
@@ -62,6 +68,7 @@ enum JenisMutasi: string
             self::OpnameLebih,
             self::ProduksiHasil,
             self::KonsinyasiMasuk,
+            self::RevaluasiMasuk,
         ], true);
     }
 
@@ -78,6 +85,7 @@ enum JenisMutasi: string
             self::ProduksiPakai,
             self::Susut,
             self::KonsinyasiRetur,
+            self::RevaluasiKeluar,
         ], true);
     }
 }

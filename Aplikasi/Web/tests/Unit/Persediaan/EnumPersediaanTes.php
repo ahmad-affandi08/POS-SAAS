@@ -19,11 +19,11 @@ use App\Domain\Persediaan\Enum\StatusStokAwal;
 use Brick\Math\BigDecimal;
 
 describe('F-05a enum persediaan (DesainF05a B.4)', function (): void {
-    it('BR-05.1: JenisMutasi punya 16 jenis F-05; StokAwal dua arah, sisanya satu arah sesuai tabel', function (): void {
-        $masuk = ['StokAwal', 'PenerimaanPembelian', 'ReturPenjualan', 'TransferMasuk', 'PenyesuaianMasuk', 'OpnameLebih', 'ProduksiHasil', 'KonsinyasiMasuk'];
-        $keluar = ['StokAwal', 'ReturPembelian', 'Penjualan', 'TransferKeluar', 'PenyesuaianKeluar', 'OpnameKurang', 'ProduksiPakai', 'Susut', 'KonsinyasiRetur'];
+    it('BR-05.1: JenisMutasi punya 18 jenis (16 F-05 + 2 penilaian ulang biaya tambahan v3.41); StokAwal dua arah, sisanya satu arah sesuai tabel', function (): void {
+        $masuk = ['StokAwal', 'PenerimaanPembelian', 'ReturPenjualan', 'TransferMasuk', 'PenyesuaianMasuk', 'OpnameLebih', 'ProduksiHasil', 'KonsinyasiMasuk', 'RevaluasiMasuk'];
+        $keluar = ['StokAwal', 'ReturPembelian', 'Penjualan', 'TransferKeluar', 'PenyesuaianKeluar', 'OpnameKurang', 'ProduksiPakai', 'Susut', 'KonsinyasiRetur', 'RevaluasiKeluar'];
 
-        expect(JenisMutasi::cases())->toHaveCount(16);
+        expect(JenisMutasi::cases())->toHaveCount(18);
 
         foreach (JenisMutasi::cases() as $jenis) {
             expect($jenis->CekBolehMasuk())->toBe(in_array($jenis->value, $masuk, true), $jenis->value)
@@ -97,8 +97,9 @@ describe('F-05a enum persediaan (DesainF05a B.4)', function (): void {
             ->and(JenisReferensiMutasi::ReturPembelian->BuatTautan($uuid))->toBe("/kelola/pembelian/retur/{$uuid}")
             // F-05e: order produksi.
             ->and(JenisReferensiMutasi::Produksi->BuatTautan($uuid))->toBe('/kelola/persediaan/produksi/'.$uuid)
-            // Dokumen yang halamannya belum ada tetap tanpa tautan.
-            ->and(JenisReferensiMutasi::Konsinyasi->BuatTautan($uuid))->toBeNull()
+            // F-05i (v3.40): dokumen titipan kini punya halaman rincian; v3.41 biaya tambahan pembelian.
+            ->and(JenisReferensiMutasi::Konsinyasi->BuatTautan($uuid))->toBe('/kelola/pembelian/konsinyasi/dokumen/'.$uuid)
+            ->and(JenisReferensiMutasi::BiayaTambahanPembelian->BuatTautan($uuid))->toBe('/kelola/pembelian/biaya-tambahan/'.$uuid)
             ->and(JenisSumberJurnal::ReturPenjualan->BuatTautan($uuid))->toBe("/kelola/penjualan/retur/{$uuid}")
             ->and(JenisSumberJurnal::Penjualan->BuatTautan($uuid))->toBe("/kelola/penjualan/{$uuid}")
             ->and(JenisSumberJurnal::StokAwal->BuatTautan($uuid))->toBe("/kelola/persediaan/stok-awal/{$uuid}")

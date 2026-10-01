@@ -74,6 +74,9 @@ enum JenisSumberJurnal: string
     // F-05i (v3.40): setoran hasil penjualan barang titipan ke penitip (Dr Hutang Konsinyasi, Cr kas/bank).
     case PembayaranKonsinyasi = 'PembayaranKonsinyasi';
 
+    // v3.41 (INV-14): biaya tambahan pembelian pihak ketiga (Dr persediaan/HPP, Cr kas/bank) dan pembatalannya.
+    case BiayaTambahanPembelian = 'BiayaTambahanPembelian';
+
     public function AmbilLabel(): string
     {
         return match ($this) {
@@ -111,6 +114,7 @@ enum JenisSumberJurnal: string
             self::AsetTetap => 'Aset tetap',
             self::PenyusutanAset => 'Penyusutan aset tetap',
             self::PembayaranKonsinyasi => 'Setoran konsinyasi',
+            self::BiayaTambahanPembelian => 'Biaya tambahan pembelian',
         };
     }
 
@@ -155,6 +159,7 @@ enum JenisSumberJurnal: string
             // Penyusutan memakai Uuid asetnya sebagai `UuidSumber`, jadi keduanya menuju rincian aset.
             self::AsetTetap, self::PenyusutanAset => '/kelola/akuntansi/aset-tetap/'.$uuid,
             self::PembayaranKonsinyasi => '/kelola/pembelian/konsinyasi/setoran/'.$uuid,
+            self::BiayaTambahanPembelian => '/kelola/pembelian/biaya-tambahan/'.$uuid,
         };
     }
 }

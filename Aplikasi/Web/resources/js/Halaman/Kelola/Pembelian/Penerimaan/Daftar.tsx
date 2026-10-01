@@ -1,3 +1,5 @@
+import { Link } from '@inertiajs/react';
+
 import AksiHalaman from '@/Komponen/Kelola/AksiHalaman';
 import { AlamatPembelian } from '@/Komponen/Pembelian/BagianDokumenPembelian';
 import {
@@ -12,6 +14,7 @@ import {
 } from '@/Komponen/Pembelian/DaftarPembelian';
 import TabelData from '@/Komponen/TabelData/TabelData';
 import type { KolomTabel } from '@/Komponen/TabelData/Tipe';
+import { Button } from '@/Komponen/Ui/button';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import type { BarisDaftarPenerimaan, PropsDaftarPenerimaan } from '@/Tipe/Pembelian';
 
@@ -73,7 +76,12 @@ export default function HalamanDaftarPenerimaan({ Penerimaan, OpsiStatus, OpsiPe
             izin={Izin}
             objek="penerimaan barang"
         >
-            <AksiHalaman>{Izin.Kelola ? tombol : null}</AksiHalaman>
+            <AksiHalaman>
+                <Button asChild variant="outline" className="h-8 pointer-coarse:h-11">
+                    <Link href={`${AlamatPembelian}/biaya-tambahan`}>Biaya tambahan</Link>
+                </Button>
+                {Izin.Kelola ? tombol : null}
+            </AksiHalaman>
             <TabelData
                 id="pembelian-penerimaan"
                 label="Daftar penerimaan barang"

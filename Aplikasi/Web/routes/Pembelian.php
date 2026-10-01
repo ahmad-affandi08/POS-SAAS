@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Domain\Organisasi\Enum\IzinTenant;
+use App\Http\Kontroler\Kelola\Pembelian\BiayaTambahanKontroler;
 use App\Http\Kontroler\Kelola\Pembelian\FakturPembelianKontroler;
 use App\Http\Kontroler\Kelola\Pembelian\HutangKontroler;
 use App\Http\Kontroler\Kelola\Pembelian\KonsinyasiKontroler;
@@ -73,6 +74,13 @@ Route::middleware([SiapkanAuditTenant::class, $izin(IzinTenant::PembelianKelola)
     Route::get('/pembayaran/{pembayaran}', [HutangKontroler::class, 'Detail'])->where('pembayaran', $ulid)->name('kelola.pembelian.pembayaran.detail');
     Route::post('/pembayaran/{pembayaran}/batalkan', [HutangKontroler::class, 'Batalkan'])->where('pembayaran', $ulid)->name('kelola.pembelian.pembayaran.batalkan');
     Route::get('/pembayaran/{pembayaran}/lampiran', [HutangKontroler::class, 'Lampiran'])->where('pembayaran', $ulid)->name('kelola.pembelian.pembayaran.lampiran');
+
+    // v3.41 (INV-14): biaya tambahan pembelian dari pihak ketiga (landed cost setelah GRN).
+    Route::get('/biaya-tambahan', [BiayaTambahanKontroler::class, 'Daftar'])->name('kelola.pembelian.biaya-tambahan.daftar');
+    Route::get('/biaya-tambahan/buat', [BiayaTambahanKontroler::class, 'Buat'])->name('kelola.pembelian.biaya-tambahan.buat');
+    Route::post('/biaya-tambahan', [BiayaTambahanKontroler::class, 'Simpan'])->name('kelola.pembelian.biaya-tambahan.simpan');
+    Route::get('/biaya-tambahan/{biaya}', [BiayaTambahanKontroler::class, 'Detail'])->where('biaya', $ulid)->name('kelola.pembelian.biaya-tambahan.detail');
+    Route::post('/biaya-tambahan/{biaya}/batalkan', [BiayaTambahanKontroler::class, 'Batalkan'])->where('biaya', $ulid)->name('kelola.pembelian.biaya-tambahan.batalkan');
 
     // F-05i konsinyasi: penitip & hutang, dokumen titipan masuk/retur, rincian penitip, setoran.
     Route::get('/konsinyasi', [KonsinyasiKontroler::class, 'Daftar'])->name('kelola.pembelian.konsinyasi.daftar');
