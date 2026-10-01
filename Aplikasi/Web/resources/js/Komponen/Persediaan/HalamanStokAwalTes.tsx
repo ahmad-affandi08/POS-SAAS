@@ -17,6 +17,7 @@ import {
     BuatHasilCari,
     BuatPropsDetail,
     GudangLama,
+    GudangKedua,
     GudangUtama,
     IzinLihat,
     IzinPenuh,
@@ -206,8 +207,19 @@ describe('Kelola/Persediaan/StokAwal/Form (F-05a)', () => {
         vi.unstubAllGlobals();
     });
 
-    it('buat: kirim kosong menampilkan galat lokal dan tidak mengirim', () => {
+    it('buat: hanya satu lokasi aktif terisi otomatis, terkunci, dan menjadi bidang pertama', () => {
         RenderUji(<HalamanFormStokAwal {...PropsForm()} />);
+
+        const lokasi = screen.getByRole<HTMLButtonElement>('combobox', { name: 'Lokasi stok' });
+        expect(lokasi.disabled).toBe(true);
+        expect(lokasi.textContent).toContain(GudangUtama.Nama);
+        expect(screen.getAllByRole('combobox')[0]).toBe(lokasi);
+        fireEvent.click(screen.getByRole('button', { name: 'Simpan draf' }));
+        expect(screen.queryByText('Pilih lokasi stok.')).toBeNull();
+    });
+
+    it('buat: kirim kosong menampilkan galat lokal dan tidak mengirim', () => {
+        RenderUji(<HalamanFormStokAwal {...PropsForm({ OpsiGudang: [GudangUtama, GudangKedua] })} />);
 
         fireEvent.click(screen.getByRole('button', { name: 'Simpan draf' }));
 
@@ -225,7 +237,7 @@ describe('Kelola/Persediaan/StokAwal/Form (F-05a)', () => {
                 json: () => Promise.resolve({ Data: [BuatHasilCari({ HppRataRata: '1200.000000' })] }),
             }),
         );
-        RenderUji(<HalamanFormStokAwal {...PropsForm()} />);
+        RenderUji(<HalamanFormStokAwal {...PropsForm({ OpsiGudang: [GudangUtama, GudangKedua] })} />);
 
         UbahNilai(screen.getByRole('combobox', { name: 'Lokasi stok' }), GudangUtama.Uuid);
         // Pemilih produk memakai pola PilihanCari, tetapi opsinya dari server: buka dulu, lalu ketik di kotak cari

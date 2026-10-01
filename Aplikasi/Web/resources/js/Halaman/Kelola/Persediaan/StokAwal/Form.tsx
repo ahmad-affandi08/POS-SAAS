@@ -5,7 +5,7 @@ import { Fragment, useState, type FormEvent } from 'react';
 import TabelForm from '@/Komponen/TabelData/TabelForm';
 import BilahAksiForm from '@/Komponen/Formulir/BilahAksiForm';
 import { GalatBidang } from '@/Komponen/Formulir/BagianBidang';
-import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
+import BidangOutlet from '@/Komponen/Formulir/BidangOutlet';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import BidangTeksPanjang from '@/Komponen/Formulir/BidangTeksPanjang';
 import Tombol from '@/Komponen/Formulir/Tombol';
@@ -199,7 +199,7 @@ export default function HalamanFormStokAwal({
                     keterangan="Satu dokumen untuk satu lokasi stok. Jumlah dan harga modal memakai satuan dasar produk."
                 >
                     <div className="grid gap-3 sm:grid-cols-2">
-                        <BidangPilihan
+                        <BidangOutlet
                             label="Lokasi stok"
                             nilai={uuidGudang}
                             kosong="Pilih lokasi stok"
@@ -208,7 +208,6 @@ export default function HalamanFormStokAwal({
                                 Label: FormatLabelGudang(gudang),
                             }))}
                             saatBerubah={GantiGudang}
-                            required
                             galat={galatGudang}
                         />
                         <PemilihTanggal

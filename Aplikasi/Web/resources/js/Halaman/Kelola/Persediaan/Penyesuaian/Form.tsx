@@ -4,6 +4,7 @@ import { useState, type FormEvent } from 'react';
 
 import BilahAksiForm from '@/Komponen/Formulir/BilahAksiForm';
 import { GalatBidang } from '@/Komponen/Formulir/BagianBidang';
+import BidangOutlet from '@/Komponen/Formulir/BidangOutlet';
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import BidangTeksPanjang from '@/Komponen/Formulir/BidangTeksPanjang';
@@ -190,7 +191,7 @@ export default function HalamanFormPenyesuaianStok({
                     keterangan="Stok berubah setelah penyesuaian diajukan dan diposting, bukan saat draf disimpan."
                 >
                     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                        <BidangPilihan
+                        <BidangOutlet
                             label="Lokasi stok"
                             nilai={gudang}
                             kosong="Pilih lokasi stok"
@@ -209,7 +210,6 @@ export default function HalamanFormPenyesuaianStok({
                                     })),
                                 );
                             }}
-                            required
                             galat={
                                 galatServer.UuidGudang ?? (periksa && gudang === '' ? 'Pilih lokasi stok.' : undefined)
                             }

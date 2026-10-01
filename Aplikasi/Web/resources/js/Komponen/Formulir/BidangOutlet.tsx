@@ -20,7 +20,8 @@ type PropsBidangOutlet = {
 /**
  * Pilihan outlet untuk form input. Aturan tampilan: bidang ini **selalu bidang pertama** form (outlet menentukan isi
  * bidang lain: lokasi stok, staf, slot, daftar harga), dan bila tenant hanya punya satu outlet yang boleh dipilih,
- * nilainya diisi otomatis dan dikunci supaya pengguna tidak perlu memilih apa-apa.
+ * nilainya diisi otomatis dan dikunci supaya pengguna tidak perlu memilih apa-apa. Aturan yang sama dipakai untuk
+ * pilihan **lokasi stok** (gudang milik outlet) di form persediaan dan pembelian: [label] & [kosong] disesuaikan.
  */
 export default function BidangOutlet({
     nilai,

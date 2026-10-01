@@ -5,7 +5,7 @@ import HalamanDaftarOrderProduksi from '@/Halaman/Kelola/Persediaan/Produksi/Daf
 import HalamanDetailOrderProduksi from '@/Halaman/Kelola/Persediaan/Produksi/Detail';
 import HalamanFormOrderProduksi, { CekJumlahProduksi } from '@/Halaman/Kelola/Persediaan/Produksi/Form';
 import { AturHalamanUji, RenderUji, tiruanRouter } from '@/Komponen/Katalog/TiruanInertia';
-import { BuatHasilTabel, GudangUtama } from '@/Komponen/Persediaan/DataUjiPersediaan';
+import { BuatHasilTabel, GudangKedua, GudangUtama } from '@/Komponen/Persediaan/DataUjiPersediaan';
 import type { IzinDokumenPersediaan } from '@/Tipe/DokumenPersediaan';
 import type { PropsDetailOrderProduksi } from '@/Tipe/Produksi';
 
@@ -132,7 +132,7 @@ describe('F-05e produksi: halaman', () => {
             <HalamanFormOrderProduksi
                 Mode="Buat"
                 Order={null}
-                OpsiGudang={[GudangUtama]}
+                OpsiGudang={[GudangUtama, GudangKedua]}
                 HariIni="2026-09-27"
                 MaksBahan={100}
                 WajibKedaluwarsaBatch

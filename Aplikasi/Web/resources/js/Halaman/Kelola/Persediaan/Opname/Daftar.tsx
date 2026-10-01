@@ -2,6 +2,7 @@ import { Link, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
 import AksiHalaman from '@/Komponen/Kelola/AksiHalaman';
+import BidangOutlet from '@/Komponen/Formulir/BidangOutlet';
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeksPanjang from '@/Komponen/Formulir/BidangTeksPanjang';
 import KotakCentang from '@/Komponen/Formulir/KotakCentang';
@@ -175,7 +176,7 @@ export default function HalamanDaftarStokOpname({
                 >
                     <div className="flex flex-col gap-3">
                         <DaftarGalatServer galat={galat} kecuali={['Umum', 'UuidGudang', 'UuidKategori']} />
-                        <BidangPilihan
+                        <BidangOutlet
                             label="Lokasi stok"
                             nilai={gudang}
                             kosong="Pilih lokasi stok"
@@ -184,7 +185,6 @@ export default function HalamanDaftarStokOpname({
                                 Label: FormatLabelGudang(g),
                             }))}
                             saatBerubah={AturGudang}
-                            required
                             galat={galat.UuidGudang ?? (periksa && gudang === '' ? 'Pilih lokasi stok.' : undefined)}
                         />
                         <BidangPilihan

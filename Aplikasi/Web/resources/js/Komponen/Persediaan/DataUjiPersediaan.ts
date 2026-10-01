@@ -52,6 +52,15 @@ export const GudangUtama: OpsiGudang = {
     NamaOutlet: 'Kopi Nusantara Solo',
     Aktif: true,
 };
+/** Lokasi aktif kedua: dengan dua lokasi aktif form tidak mengisi lokasi otomatis. */
+export const GudangKedua: OpsiGudang = {
+    Uuid: '01J9GDG0000000000000000003',
+    Kode: 'GD',
+    Nama: 'Gudang Dapur',
+    Jenis: 'Gudang',
+    NamaOutlet: 'Kopi Nusantara Solo',
+    Aktif: true,
+};
 export const GudangLama: OpsiGudang = {
     Uuid: '01J9GDG0000000000000000002',
     Kode: 'GL',

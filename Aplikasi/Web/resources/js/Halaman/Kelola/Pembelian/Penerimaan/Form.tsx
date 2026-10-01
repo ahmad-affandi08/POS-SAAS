@@ -3,6 +3,7 @@ import { useState, type FormEvent } from 'react';
 
 import BilahAksiForm from '@/Komponen/Formulir/BilahAksiForm';
 import BidangBerkas from '@/Komponen/Formulir/BidangBerkas';
+import BidangOutlet from '@/Komponen/Formulir/BidangOutlet';
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import BidangTeksPanjang from '@/Komponen/Formulir/BidangTeksPanjang';
@@ -218,16 +219,30 @@ export default function HalamanFormPenerimaan({
                         {Pesanan ? (
                             <>
                                 <div className="flex flex-col gap-1">
-                                    <span className="text-label font-semibold text-teks-sekunder">Pemasok</span>
-                                    <span>{Pesanan.NamaPemasok}</span>
-                                </div>
-                                <div className="flex flex-col gap-1">
                                     <span className="text-label font-semibold text-teks-sekunder">Lokasi tujuan</span>
                                     <span>{Pesanan.NamaGudang}</span>
+                                </div>
+                                <div className="flex flex-col gap-1">
+                                    <span className="text-label font-semibold text-teks-sekunder">Pemasok</span>
+                                    <span>{Pesanan.NamaPemasok}</span>
                                 </div>
                             </>
                         ) : (
                             <>
+                                <BidangOutlet
+                                    label="Lokasi stok"
+                                    nilai={gudang}
+                                    kosong="Pilih lokasi stok"
+                                    opsi={OpsiGudang.filter((g) => g.Aktif).map((g) => ({
+                                        Nilai: g.Uuid,
+                                        Label: FormatLabelGudang(g),
+                                    }))}
+                                    saatBerubah={AturGudang}
+                                    galat={
+                                        galat.UuidGudang ??
+                                        (periksa && gudang === '' ? 'Pilih lokasi stok.' : undefined)
+                                    }
+                                />
                                 <BidangPilihan
                                     label={belanja ? 'Pemasok (opsional)' : 'Pemasok'}
                                     nilai={pemasok}
@@ -239,21 +254,6 @@ export default function HalamanFormPenerimaan({
                                     }))}
                                     saatBerubah={AturPemasok}
                                     galat={galat.UuidPemasok}
-                                />
-                                <BidangPilihan
-                                    label="Lokasi stok"
-                                    nilai={gudang}
-                                    kosong="Pilih lokasi stok"
-                                    opsi={OpsiGudang.filter((g) => g.Aktif).map((g) => ({
-                                        Nilai: g.Uuid,
-                                        Label: FormatLabelGudang(g),
-                                    }))}
-                                    saatBerubah={AturGudang}
-                                    required
-                                    galat={
-                                        galat.UuidGudang ??
-                                        (periksa && gudang === '' ? 'Pilih lokasi stok.' : undefined)
-                                    }
                                 />
                             </>
                         )}

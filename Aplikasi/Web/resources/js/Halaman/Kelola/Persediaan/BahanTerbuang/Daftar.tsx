@@ -2,6 +2,7 @@ import { router, useForm, usePage } from '@inertiajs/react';
 import { useState, type FormEvent } from 'react';
 
 import AksiHalaman from '@/Komponen/Kelola/AksiHalaman';
+import BidangOutlet from '@/Komponen/Formulir/BidangOutlet';
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import Tombol from '@/Komponen/Formulir/Tombol';
@@ -290,7 +291,7 @@ function FormCatat({
     return (
         <DialogFormulir judul="Catat bahan terbuang" saatTutup={saatTutup} galatUmum={galat.Umum}>
             <form onSubmit={Kirim} className="flex flex-col gap-4" noValidate>
-                <BidangPilihan
+                <BidangOutlet
                     label="Lokasi stok"
                     nilai={d.UuidGudang}
                     kosong="Pilih lokasi stok"
@@ -298,7 +299,6 @@ function FormCatat({
                         .filter((g) => g.Aktif)
                         .map((g) => ({ Nilai: g.Uuid, Label: FormatLabelGudang(g) }))}
                     saatBerubah={(v) => formulir.setData('UuidGudang', v)}
-                    required
                     galat={galat.UuidGudang ?? (periksa && d.UuidGudang === '' ? 'Pilih lokasi stok.' : undefined)}
                 />
                 {produk === null ? (

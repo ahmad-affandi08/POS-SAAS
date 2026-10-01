@@ -4,7 +4,7 @@ import { useState, type FormEvent } from 'react';
 
 import BilahAksiForm from '@/Komponen/Formulir/BilahAksiForm';
 import { GalatBidang } from '@/Komponen/Formulir/BagianBidang';
-import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
+import BidangOutlet from '@/Komponen/Formulir/BidangOutlet';
 import BidangTeksPanjang from '@/Komponen/Formulir/BidangTeksPanjang';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import BidangJumlah from '@/Komponen/Katalog/BidangJumlah';
@@ -168,7 +168,7 @@ export default function HalamanFormTransferStok({
                     keterangan="Stok berpindah saat transfer dikirim, bukan saat draf disimpan."
                 >
                     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                        <BidangPilihan
+                        <BidangOutlet
                             label="Dari lokasi"
                             nilai={asal}
                             kosong="Pilih lokasi asal"
@@ -177,10 +177,9 @@ export default function HalamanFormTransferStok({
                                 Label: FormatLabelGudang(g),
                             }))}
                             saatBerubah={GantiAsal}
-                            required
                             galat={galatAsal}
                         />
-                        <BidangPilihan
+                        <BidangOutlet
                             label="Ke lokasi"
                             nilai={tujuan}
                             kosong="Pilih lokasi tujuan"
@@ -188,7 +187,6 @@ export default function HalamanFormTransferStok({
                                 (g) => ({ Nilai: g.Uuid, Label: FormatLabelGudang(g) }),
                             )}
                             saatBerubah={AturTujuan}
-                            required
                             galat={galatTujuan}
                         />
                         <PemilihTanggal

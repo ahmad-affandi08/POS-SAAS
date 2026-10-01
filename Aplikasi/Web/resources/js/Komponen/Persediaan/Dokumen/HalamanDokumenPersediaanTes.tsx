@@ -11,7 +11,7 @@ import HalamanDetailTransferStok, { PeriksaJumlahTerima } from '@/Halaman/Kelola
 import { PeriksaBarisTransfer } from '@/Halaman/Kelola/Persediaan/Transfer/Form';
 import { AturHalamanUji, RenderUji, tiruanRouter } from '@/Komponen/Katalog/TiruanInertia';
 import { AmbilJenisLabelDokumen, PeriksaAlasan } from '@/Komponen/Persediaan/Dokumen/KomponenDokumen';
-import { BuatHasilTabel, GudangUtama, NamaPanjang } from '@/Komponen/Persediaan/DataUjiPersediaan';
+import { BuatHasilTabel, GudangKedua, GudangUtama, NamaPanjang } from '@/Komponen/Persediaan/DataUjiPersediaan';
 import { PilihOpsi, UbahNilai } from '@/Pengujian/InteraksiPilihan';
 import type {
     BarisDetailTransferStok,
@@ -462,7 +462,7 @@ describe('Kelola/Persediaan/Opname (F-05b, BR-05.3)', () => {
         RenderUji(
             <HalamanDaftarStokOpname
                 Opname={BuatHasilTabel([])}
-                OpsiGudang={[GudangUtama]}
+                OpsiGudang={[GudangUtama, GudangKedua]}
                 OpsiKategori={[]}
                 OpsiStatus={[]}
                 Izin={IzinPenuh}

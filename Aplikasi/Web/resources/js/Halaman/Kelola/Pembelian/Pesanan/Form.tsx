@@ -2,6 +2,7 @@ import { Link, router, usePage } from '@inertiajs/react';
 import { useState, type FormEvent } from 'react';
 
 import BilahAksiForm from '@/Komponen/Formulir/BilahAksiForm';
+import BidangOutlet from '@/Komponen/Formulir/BidangOutlet';
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeksPanjang from '@/Komponen/Formulir/BidangTeksPanjang';
 import BidangUang from '@/Komponen/Formulir/BidangUang';
@@ -123,6 +124,17 @@ export default function HalamanFormPesanan({
                     keterangan="Pesanan tidak mengubah stok. Stok bertambah saat barang diterima."
                 >
                     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                        <BidangOutlet
+                            label="Lokasi tujuan"
+                            nilai={gudang}
+                            kosong="Pilih lokasi stok"
+                            opsi={OpsiGudang.filter((g) => g.Aktif || g.Uuid === gudang).map((g) => ({
+                                Nilai: g.Uuid,
+                                Label: FormatLabelGudang(g),
+                            }))}
+                            saatBerubah={AturGudang}
+                            galat={galat.UuidGudang ?? (periksa && gudang === '' ? 'Pilih lokasi tujuan.' : undefined)}
+                        />
                         <BidangPilihan
                             label="Pemasok"
                             nilai={pemasok}
@@ -135,18 +147,6 @@ export default function HalamanFormPesanan({
                             saatBerubah={PilihPemasok}
                             required
                             galat={galat.UuidPemasok ?? (periksa && pemasok === '' ? 'Pilih pemasok.' : undefined)}
-                        />
-                        <BidangPilihan
-                            label="Lokasi tujuan"
-                            nilai={gudang}
-                            kosong="Pilih lokasi stok"
-                            opsi={OpsiGudang.filter((g) => g.Aktif || g.Uuid === gudang).map((g) => ({
-                                Nilai: g.Uuid,
-                                Label: FormatLabelGudang(g),
-                            }))}
-                            saatBerubah={AturGudang}
-                            required
-                            galat={galat.UuidGudang ?? (periksa && gudang === '' ? 'Pilih lokasi tujuan.' : undefined)}
                         />
                         <PemilihTanggal
                             id="tanggal-pesanan"

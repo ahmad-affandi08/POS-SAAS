@@ -4,7 +4,7 @@ import { useState, type FormEvent } from 'react';
 
 import BilahAksiForm from '@/Komponen/Formulir/BilahAksiForm';
 import { GalatBidang } from '@/Komponen/Formulir/BagianBidang';
-import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
+import BidangOutlet from '@/Komponen/Formulir/BidangOutlet';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import BidangTeksPanjang from '@/Komponen/Formulir/BidangTeksPanjang';
 import BidangUang from '@/Komponen/Formulir/BidangUang';
@@ -219,7 +219,7 @@ export default function HalamanFormOrderProduksi({
                     keterangan="Stok berubah setelah order diposting dari halaman detail, bukan saat draf disimpan."
                 >
                     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                        <BidangPilihan
+                        <BidangOutlet
                             label="Lokasi produksi"
                             nilai={gudang}
                             kosong="Pilih lokasi stok"
@@ -228,7 +228,6 @@ export default function HalamanFormOrderProduksi({
                                 Label: FormatLabelGudang(g),
                             }))}
                             saatBerubah={AturGudang}
-                            required
                             galat={
                                 galatServer.UuidGudang ??
                                 (periksa && gudang === '' ? 'Pilih lokasi produksi.' : undefined)
