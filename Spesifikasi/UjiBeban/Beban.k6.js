@@ -22,6 +22,8 @@ const ditolak = new Counter('penjualan_ditolak');
 const dibatasi = new Counter('permintaan_dibatasi_429');
 
 export const options = {
+  // p(99) ikut dicetak di ringkasan (bawaan k6 hanya sampai p(95)).
+  summaryTrendStats: ['avg', 'min', 'med', 'max', 'p(90)', 'p(95)', 'p(99)'],
   scenarios: {
     checkout: {
       executor: 'constant-arrival-rate',

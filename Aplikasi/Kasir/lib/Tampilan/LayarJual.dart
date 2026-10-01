@@ -69,6 +69,10 @@ class LayarJual extends ConsumerStatefulWidget {
   static const double lebarDuaPanel = 600;
   static const Duration selangKatalog = Duration(seconds: 60);
 
+  /// F-17 BR-17.2: daftar produk habis lebih ringan daripada katalog, jadi disegarkan lebih sering supaya produk yang
+  /// baru ditandai habis di perangkat lain (atau back-office) cepat terlihat di kasir ini.
+  static const Duration selangProdukHabis = Duration(seconds: 20);
+
   final StafLokal kasir;
 
   /// Layar Jual sedang tampil dan tidak tertutup layar kunci/panel bingkai (pemindai & pintasan aktif).
@@ -98,6 +102,7 @@ class _LayarJualState extends ConsumerState<LayarJual> {
   final _pemindai = PengenalPemindai();
   final _kunciBayar = GlobalKey<PanelBayarState>();
   Timer? _pewaktuKatalog;
+  Timer? _pewaktuProdukHabis;
   Timer? _pewaktuKunciBayar;
 
   /// Pesanan meja yang kunci bayarnya sedang dipegang perangkat ini.
@@ -140,6 +145,7 @@ class _LayarJualState extends ConsumerState<LayarJual> {
     HardwareKeyboard.instance.addHandler(_SaatTombolPemindai);
     _pewaktuKatalog = Timer.periodic(LayarJual.selangKatalog, (_) => unawaited(_PerbaruiBerkala()));
     unawaited(ref.read(penyediaProdukHabis.notifier).Muat());
+    _pewaktuProdukHabis = Timer.periodic(LayarJual.selangProdukHabis, (_) => unawaited(_SegarkanProdukHabis()));
     if (widget.aktif) {
       _FokusAkar();
     }
@@ -160,6 +166,7 @@ class _LayarJualState extends ConsumerState<LayarJual> {
   void dispose() {
     HardwareKeyboard.instance.removeHandler(_SaatTombolPemindai);
     _pewaktuKatalog?.cancel();
+    _pewaktuProdukHabis?.cancel();
     _pewaktuKunciBayar?.cancel();
     final kunci = _uuidKunciBayar;
     if (kunci != null) {
@@ -734,6 +741,12 @@ class _LayarJualState extends ConsumerState<LayarJual> {
       if (mounted) {
         _TampilPesan(galat.pesan);
       }
+    }
+  }
+
+  Future<void> _SegarkanProdukHabis() async {
+    if (widget.aktif && ref.read(penyediaKoneksi) == StatusKoneksi.Online) {
+      await ref.read(penyediaProdukHabis.notifier).Muat();
     }
   }
 
