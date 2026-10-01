@@ -19,6 +19,7 @@ use App\Domain\Katalog\Kueri\DaftarProduk;
 use App\Domain\Katalog\Kueri\DaftarSatuan;
 use App\Domain\Katalog\Kueri\DetailProduk;
 use App\Domain\Katalog\Kueri\KepalaProduk;
+use App\Domain\Katalog\Kueri\KetersediaanProdukPerOutlet;
 use App\Domain\Katalog\Kueri\PemakaianSku;
 use App\Domain\Katalog\Kueri\PohonKategori;
 use App\Domain\Katalog\Layanan\OpsiKelompokPajakKatalog;
@@ -99,7 +100,7 @@ final class ProdukKontroler extends DasarKatalogKontroler
             ->with('Kilat', "Produk {$produk->Nama} disimpan sebagai paket {$paket['JumlahSesi']} sesi ({$masa}).");
     }
 
-    public function Detail(string $produk, DetailProduk $detail, KepalaProduk $kepala): Response
+    public function Detail(string $produk, DetailProduk $detail, KepalaProduk $kepala, KetersediaanProdukPerOutlet $ketersediaan): Response
     {
         $baris = $this->CariProduk($produk);
 
@@ -108,6 +109,7 @@ final class ProdukKontroler extends DasarKatalogKontroler
             'Produk' => $detail->Ambil($baris),
             'Varian' => $detail->AmbilVarian($baris),
             'BatasStok' => $detail->AmbilBatasStok($baris),
+            'Ketersediaan' => $ketersediaan->Ambil($baris, $this->IdOutletBoleh()),
             'Riwayat' => $detail->AmbilRiwayat($baris),
             'Jenis' => JenisProduk::AmbilDaftarAturan(),
             'BatasSku' => $this->AmbilBatasSku(),

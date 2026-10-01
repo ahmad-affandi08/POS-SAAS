@@ -58,6 +58,23 @@ describe('F-17 BR-17.2 tandai habis dari back-office', function (): void {
         BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
         expect(ProdukHabis::query()->count())->toBe(0);
     });
+    it('halaman detail produk memuat keadaan habis per outlet; induk varian tanpa panel', function (): void {
+        $k = BantuanTokoOnline::Siapkan($this);
+        BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+        $masuk = fn () => $this->actingAs($k['Pemilik'])->withSession(['IdTenantAktif' => $k['Tenant']->Id]);
+        $induk = BantuanKatalog::BuatProduk(['Nama' => 'Kaos Polos Katun Combed 30s', 'Jenis' => JenisProduk::IndukVarian]);
+
+        $masuk()->get("/kelola/produk/{$k['Kopi']->Uuid}")->assertOk()->assertInertia(fn (AssertableInertia $h) => $h
+            ->where('Ketersediaan.0.UuidOutlet', $k['Outlet']->Uuid)->where('Ketersediaan.0.Habis', false));
+
+        $masuk()->post("/kelola/produk/{$k['Kopi']->Uuid}/habis", ['UuidOutlet' => $k['Outlet']->Uuid, 'Habis' => true])->assertSessionHasNoErrors();
+
+        BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+        $masuk()->get("/kelola/produk/{$k['Kopi']->Uuid}")->assertOk()->assertInertia(fn (AssertableInertia $h) => $h
+            ->where('Ketersediaan.0.Habis', true));
+        $masuk()->get("/kelola/produk/{$induk->Uuid}")->assertOk()->assertInertia(fn (AssertableInertia $h) => $h
+            ->where('Ketersediaan', null));
+    });
 });
 
 describe('F-17 BR-17.2 dampak ke toko online dan self-order', function (): void {

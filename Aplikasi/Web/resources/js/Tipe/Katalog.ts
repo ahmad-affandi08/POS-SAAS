@@ -169,6 +169,11 @@ export type BarisBatasStok = {
     /** "" = kosong. */
     StokMaksimum: string;
 };
+export type BarisKetersediaanOutlet = {
+    UuidOutlet: string;
+    NamaOutlet: string;
+    Habis: boolean;
+};
 export type DetailProduk = {
     Uuid: string;
     Nama: string;
@@ -201,6 +206,8 @@ export type PropsDetailProduk = {
     Varian: BarisVarian[];
     /** null = bukan jenis yang punya stok. */
     BatasStok: BarisBatasStok[] | null;
+    /** null = produk induk varian (ditandai per varian). */
+    Ketersediaan: BarisKetersediaanOutlet[] | null;
     Riwayat: { Peristiwa: string; NamaPengguna: string | null; DibuatPada: string }[];
     Jenis: AturanJenisProduk[];
     BatasSku: Batas;

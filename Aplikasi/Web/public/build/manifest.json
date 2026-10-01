@@ -1770,7 +1770,7 @@
     "src": "node_modules/@fontsource-variable/atkinson-hyperlegible-next/files/atkinson-hyperlegible-next-latin-wght-normal.woff2"
   },
   "resources/js/Aplikasi.tsx": {
-    "file": "assets/Aplikasi-Cf3bEW7k.js",
+    "file": "assets/Aplikasi-C0t8EPzv.js",
     "name": "Aplikasi",
     "src": "resources/js/Aplikasi.tsx",
     "isEntry": true,
@@ -5149,7 +5149,7 @@
     ]
   },
   "resources/js/Halaman/Kelola/Produk/Detail.tsx": {
-    "file": "assets/Detail-BloIlbcA.js",
+    "file": "assets/Detail-iVB3EVOZ.js",
     "name": "Detail",
     "src": "resources/js/Halaman/Kelola/Produk/Detail.tsx",
     "isDynamicEntry": true,

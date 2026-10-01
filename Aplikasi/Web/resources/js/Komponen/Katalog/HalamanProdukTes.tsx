@@ -441,6 +441,10 @@ function PropsDetail(perubahan: Partial<PropsDetailProduk> = {}): PropsDetailPro
         BatasStok: [
             { UuidGudang: 'G-1', NamaGudang: 'Gudang utama', NamaOutlet: 'Solo', StokMinimum: '10', StokMaksimum: '' },
         ],
+        Ketersediaan: [
+            { UuidOutlet: 'O-1', NamaOutlet: 'Outlet Solo Baru', Habis: false },
+            { UuidOutlet: 'O-2', NamaOutlet: 'Outlet Yogyakarta', Habis: true },
+        ],
         Riwayat: [],
         Jenis: AturanJenis,
         BatasSku: { Batas: 100, Terpakai: 12 },
@@ -480,6 +484,34 @@ describe('Kelola/Produk/Detail (DesainF03 E.4)', () => {
             {},
             expect.anything(),
         );
+    });
+
+    it('F-17 BR-17.2: tandai habis & tersedia lagi per outlet lewat POST; tanpa izin hanya baca; induk varian tanpa panel', () => {
+        RenderUji(<HalamanDetailProduk {...PropsDetail()} />);
+
+        expect(screen.getByText('Tersedia')).toBeTruthy();
+        expect(screen.getByText('Habis')).toBeTruthy();
+        fireEvent.click(screen.getByRole('button', { name: 'Tandai habis di Outlet Solo Baru' }));
+        expect(tiruanRouter.post).toHaveBeenCalledWith(
+            '/kelola/produk/01J9PRODUK00000000000000001/habis',
+            { UuidOutlet: 'O-1', Habis: true },
+            expect.anything(),
+        );
+        fireEvent.click(screen.getByRole('button', { name: 'Tersedia lagi di Outlet Yogyakarta' }));
+        expect(tiruanRouter.post).toHaveBeenCalledWith(
+            '/kelola/produk/01J9PRODUK00000000000000001/habis',
+            { UuidOutlet: 'O-2', Habis: false },
+            expect.anything(),
+        );
+        cleanup();
+
+        RenderUji(<HalamanDetailProduk {...PropsDetail({ Izin: { ...IzinPenuh, Kelola: false } })} />);
+        expect(screen.queryByRole('button', { name: /Tandai habis di/ })).toBeNull();
+        expect(screen.getByText('Habis')).toBeTruthy();
+        cleanup();
+
+        RenderUji(<HalamanDetailProduk {...PropsDetail({ Ketersediaan: null })} />);
+        expect(screen.queryByText('Ketersediaan per outlet')).toBeNull();
     });
 
     it('batas stok: min > maks ditolak di peramban; tanpa izin persediaan hanya baca', () => {

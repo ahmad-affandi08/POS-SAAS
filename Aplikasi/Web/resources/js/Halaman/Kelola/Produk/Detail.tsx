@@ -8,6 +8,7 @@ import DaftarGalatServer from '@/Komponen/Katalog/DaftarGalatServer';
 import FormBatasStok from '@/Komponen/Katalog/FormBatasStok';
 import PembuatVarian from '@/Komponen/Katalog/PembuatVarian';
 import KepalaProduk from '@/Komponen/Katalog/KepalaProduk';
+import PanelKetersediaan from '@/Komponen/Katalog/PanelKetersediaan';
 import PesanHanyaLihat from '@/Komponen/Katalog/PesanHanyaLihat';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import Panel from '@/Komponen/Kelola/Panel';
@@ -99,6 +100,7 @@ export default function HalamanDetailProduk({
     Produk,
     Varian,
     BatasStok,
+    Ketersediaan,
     Riwayat,
     Jenis,
     BatasSku,
@@ -385,6 +387,10 @@ export default function HalamanDetailProduk({
                     bolehUbah={Izin.KelolaPersediaan}
                     galat={props.errors}
                 />
+            ) : null}
+
+            {Ketersediaan !== null ? (
+                <PanelKetersediaan uuidProduk={Produk.Uuid} baris={Ketersediaan} bolehUbah={Izin.Kelola} />
             ) : null}
 
             <Panel judul="Riwayat perubahan" idJudul="judul-riwayat">
