@@ -173,6 +173,10 @@ function kirim(p, item, tag) {
 
   check(res, { 'sinkron 200': (r) => r.status === 200 });
 
+  if (res.status !== 200) {
+    console.error(`sinkron ${tag} -> ${res.status} ${String(res.body).slice(0, 300)}`);
+  }
+
   if (res.status === 200) {
     for (const h of res.json('Hasil') || []) {
       if (h.Status === 'Diterima' || h.Status === 'Duplikat') {
@@ -212,6 +216,10 @@ export function polling() {
       dibatasi.add(1);
     } else {
       check(res, { 'polling 200': (r) => r.status === 200 });
+
+      if (res.status !== 200) {
+        console.error(`polling ${jalur.split('?')[0]} -> ${res.status} ${String(res.body).slice(0, 300)}`);
+      }
     }
   }
   sleep(10);
