@@ -29,10 +29,13 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Events\DiagnosingHealth;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use LogicException;
+use Throwable;
 
 final class PenyediaAplikasi extends ServiceProvider
 {
@@ -68,6 +71,19 @@ final class PenyediaAplikasi extends ServiceProvider
 
         // Mencegah lazy loading (N+1), atribut tak dikenal, dan mass assignment diam-diam saat pengembangan.
         Model::shouldBeStrict(! $this->app->isProduction());
+
+        // Audit PAY-P2-06: di produksi pelanggaran yang sama TERLIHAT (log), tidak lagi diam, tanpa menjatuhkan
+        // permintaan: lazy loading (N+1) dan atribut yang dibuang diam-diam saat mass assignment.
+        if ($this->app->isProduction()) {
+            Model::preventLazyLoading();
+            Model::handleLazyLoadingViolationUsing(static function (Model $model, string $relasi): void {
+                Log::warning('Lazy loading terdeteksi (N+1).', ['Model' => $model::class, 'Relasi' => $relasi]);
+            });
+            Model::preventSilentlyDiscardingAttributes();
+            Model::handleDiscardedAttributeViolationUsing(static function (Model $model, array $atribut): void {
+                Log::warning('Atribut dibuang diam-diam saat mass assignment.', ['Model' => $model::class, 'Atribut' => $atribut]);
+            });
+        }
 
         // BR-00.4: batas percobaan registrasi per IP; pesan tampil di formulir, bukan halaman galat 429.
         RateLimiter::for('pendaftaran', static fn (Request $permintaan) => Limit::perHour((int) config('tenant.BatasRegistrasiPerJam'))
@@ -111,6 +127,11 @@ final class PenyediaAplikasi extends ServiceProvider
         RateLimiter::for('webhook', static fn (Request $permintaan): Limit => Limit::perMinute(300)
             ->by((string) $permintaan->route('penyedia').'|'.$permintaan->ip()));
 
+        // Audit PAY-P1-04: laporan CSP Report-Only dari peramban; batas per IP supaya tidak jadi pengisi log.
+        RateLimiter::for('laporan-csp', static fn (Request $permintaan): Limit => Limit::perMinute(30)->by((string) $permintaan->ip()));
+
+        $this->PeringatiKonfigurasiProduksiBerbahaya();
+
         // P-05: email, CAPTCHA, dan penyimpanan objek memakai konfigurasi aktif dari Platform Pengelola.
         $this->app->make(PenerapKonfigurasiIntegrasi::class)->Terapkan();
 
@@ -125,6 +146,37 @@ final class PenyediaAplikasi extends ServiceProvider
 
         if ($this->app->runningUnitTests()) {
             $this->loadMigrationsFrom(base_path('tests/Pendukung/Migrasi'));
+        }
+    }
+
+    /**
+     * Audit PAY-P2-09: contoh pengembangan bernilai `APP_DEBUG=true` dan email ke log. Bila ikut tersalin ke produksi,
+     * jejak galat bocor dan email tidak terkirim (nilai produksi yang benar: Panduan/PasangDiHosting.md §7b). Dicatat
+     * kritis (sekali sehari, lewat cache), bukan menghentikan aplikasi: menjatuhkan situs yang sedang berjalan lebih
+     * buruk daripada peringatannya.
+     */
+    private function PeringatiKonfigurasiProduksiBerbahaya(): void
+    {
+        if (! $this->app->isProduction() || $this->app->runningInConsole()) {
+            return;
+        }
+
+        $masalah = array_keys(array_filter([
+            'APP_DEBUG=true' => config('app.debug') === true,
+            'MAIL_MAILER=log (email tidak terkirim)' => config('mail.default') === 'log',
+            'SESSION_SECURE_COOKIE tidak true' => config('session.secure') !== true,
+        ]));
+
+        if ($masalah === []) {
+            return;
+        }
+
+        try {
+            if (Cache::add('peringatan-konfigurasi-produksi', 1, 86400)) {
+                Log::critical('Konfigurasi produksi berbahaya; periksa nilai lingkungan (Panduan/PasangDiHosting.md §7b).', ['Masalah' => $masalah]);
+            }
+        } catch (Throwable) {
+            // Cache (database) belum siap, misalnya saat migrasi pertama: peringatan ini tidak boleh menggagalkan boot.
         }
     }
 }

@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Domain\Integrasi\Layanan\PencariGerbangWebhook;
+use App\Http\Kontroler\Publik\LaporanCspKontroler;
 use App\Http\Kontroler\Publik\WebhookBillingKontroler;
 use App\Http\Kontroler\Publik\WebhookGerbangPembayaranKontroler;
 use Illuminate\Support\Facades\Route;
@@ -33,3 +34,8 @@ Route::post('/webhook/{penyedia}', [WebhookGerbangPembayaranKontroler::class, 'T
     ->where('penyedia', $penyedia)
     ->middleware('throttle:webhook')
     ->name('webhook.gerbang-pembayaran');
+
+// Audit PAY-P1-04: laporan pelanggaran CSP Report-Only dari peramban (`report-uri`), publik & tanpa sesi.
+Route::post('/laporan-csp', [LaporanCspKontroler::class, 'Terima'])
+    ->middleware('throttle:laporan-csp')
+    ->name('publik.laporan-csp');

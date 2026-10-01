@@ -178,6 +178,16 @@ describe('BR-P08.11 membuat transaksi di gerbang', function (): void {
 });
 
 describe('BR-P08.11 notifikasi webhook', function (): void {
+    it('notifikasi uji coba (order_id test/sample) tetap wajib bertanda tangan sah (audit PAY-P2-07)', function (): void {
+        // Tanpa tanda tangan sah: ditolak, tidak lagi dibalas "siap menerima".
+        KirimNotifikasiBilling($this, 'test-123', 'settlement', '10000.00', ['signature_key' => 'palsu'])->assertStatus(401);
+        KirimNotifikasiBilling($this, 'sample-1', 'settlement', '10000.00', ['signature_key' => 'palsu'])->assertStatus(401);
+        $this->postJson('/webhook/billing/midtrans', [])->assertStatus(401);
+
+        // Uji dari dasbor Midtrans memakai kunci server yang sama, jadi lolos dan tidak mengubah pembayaran apa pun.
+        KirimNotifikasiBilling($this, 'test-123', 'settlement', '10000.00')->assertOk()->assertJson(['Diterima' => true]);
+    });
+
     it('settlement melunasi tagihan, mengaktifkan langganan, dan tercatat di audit tanpa pelaku orang', function (): void {
         ['Tenant' => $tenant, 'Pengguna' => $pemilik] = BantuanTagihan::DaftarTenant();
         $tagihan = BuatTagihanGerbangUji($this, $pemilik, $tenant);

@@ -79,7 +79,43 @@ jobs:
         run: composer audit --no-dev --locked
       - name: Pint + Larastan level 8
         run: composer analisis
+      # Audit PAY-P2-01: Pest tetap berjalan walau analisis statis gagal, supaya satu error PHPStan tidak
+      # menyembunyikan regresi perilaku (job tetap merah bila salah satunya gagal).
       - name: Pest (Unit, Fitur di MySQL, Arsitektur)
+        if: ${{ !cancelled() }}
+        run: composer tes:cepat
+
+  backend-mariadb:
+    name: "Aplikasi Web: PHP (8.3, MariaDB 11.8) — informasi, tidak memblokir"
+    # Audit PAY-P1-06: produksi berjalan di MariaDB 11.8 sedangkan kontraknya MySQL 8. Job ini membuktikan (atau
+    # membantah) bahwa seluruh Pest juga lulus di MariaDB; setelah hijau konsisten, hapus `continue-on-error`.
+    continue-on-error: true
+    runs-on: ubuntu-latest
+    services:
+      mariadb:
+        image: mariadb:11.8
+        env:
+          MARIADB_ROOT_PASSWORD: root
+          MARIADB_DATABASE: PosSaasTes
+          MARIADB_USER: pos_saas
+          MARIADB_PASSWORD: rahasia-lokal-tes
+        ports: ["3306:3306"]
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+    defaults:
+      run:
+        working-directory: Aplikasi/Web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: bcmath, intl, mbstring, pdo_mysql, zip, gd
+          coverage: none
+      - name: Pasang dependensi (sesuai composer.lock)
+        run: composer install --no-interaction --no-progress --prefer-dist
+      - name: Pest (Unit, Fitur, Arsitektur di MariaDB)
         run: composer tes:cepat
 
   web:
@@ -117,8 +153,19 @@ jobs:
         run: dart pub get --enforce-lockfile
       - name: Pasang melos
         run: dart pub global activate melos 7.8.2
-      - name: dart format + flutter analyze + test (AdaptorPerangkat, Inti, MesinKasir + vektor uji, SistemDesain, Kasir, Pemilik)
-        run: melos run periksa
+      # Audit PAY-P2-02: empat pemeriksaan sebagai langkah terpisah (`melos run periksa` = keempatnya berurutan), supaya
+      # penyebab kegagalan terlihat langsung di log dan satu langkah merah tidak menyembunyikan yang lain.
+      - name: dart format
+        run: melos run format
+      - name: flutter analyze
+        if: ${{ !cancelled() }}
+        run: melos run analisis
+      - name: dart test (Inti, MesinKasir + vektor uji)
+        if: ${{ !cancelled() }}
+        run: melos run tes:dart
+      - name: flutter test (AdaptorPerangkat, SistemDesain, Kasir, Pemilik)
+        if: ${{ !cancelled() }}
+        run: melos run tes:flutter
 
   # Audit F-25: artefak rilis tunggal (PHP tanpa dev + public/build) yang terikat SHA commit, dengan checksum SHA-256.
   # Deploy memakai berkas ini, bukan build manual di tempat lain.

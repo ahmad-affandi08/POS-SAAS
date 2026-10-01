@@ -161,6 +161,43 @@ Semua domain sekarang menjalankan `index.php` yang sama. Laravel membedakan tamp
 
 hPanel → **Keamanan → SSL** → pasang SSL gratis untuk `payou.id`, `www.payou.id`, `dashboard.payou.id`, `console.payou.id`. Aktifkan **Force HTTPS**. Arahkan `www.payou.id` ke `payou.id` (hPanel → Domain → Pengalihan).
 
+## 7a. Proksi tepercaya (wajib bila di belakang Cloudflare atau reverse proxy)
+
+Di balik Cloudflare/proksi, aplikasi hanya tahu IP pengguna, skema `https`, dan host asli dari header `X-Forwarded-*`. Isi `PROKSI_TEPERCAYA` di `.env` supaya header itu dipercaya **hanya dari proksi kita**:
+
+- `PROKSI_TEPERCAYA=` (kosong) = tidak ada proksi. Bila situs sebenarnya di belakang proksi, semua pengguna akan tampak berasal dari IP proksi: batas laju saling mengunci, log audit salah, dan HSTS/tautan bertanda tangan memakai skema `http`.
+- `PROKSI_TEPERCAYA=*` = percaya pada pemanggil langsung. Hanya aman bila server **tidak bisa dijangkau selain lewat proksi** (firewall hanya menerima rentang Cloudflare).
+- `PROKSI_TEPERCAYA=173.245.48.0/20,103.21.244.0/22,…` = daftar IP/CIDR proksi (rentang Cloudflare: https://www.cloudflare.com/ips/). Ini pilihan terbaik; perbarui bila Cloudflare mengubah rentangnya.
+
+Setelah mengubah: `php artisan config:clear && php artisan config:cache`, lalu periksa `curl -sI https://dashboard.payou.id/sehat` memuat `strict-transport-security`.
+
+## 7b. Nilai lingkungan produksi (jangan menyalin contoh pengembangan)
+
+Contoh pengembangan (`Aplikasi/Web/.env.example`) bernilai `APP_DEBUG=true` (jejak galat & data sensitif tampil), `LOG_LEVEL=debug`, dan `MAIL_MAILER=log` (email **tidak terkirim**). Untuk produksi pakai nilai di bawah, isi yang bertanda `GANTI` (audit PAY-P2-09). Aplikasi mencatat peringatan kritis di log (sekali sehari) bila produksi berjalan dengan `APP_DEBUG=true`, `MAIL_MAILER=log`, atau cookie sesi tidak aman.
+
+```
+APP_ENV=production
+APP_KEY=                      # php artisan key:generate
+APP_DEBUG=false
+APP_URL=https://dashboard.payou.id
+DOMAIN_PEMASARAN=payou.id
+DOMAIN_TENANT=dashboard.payou.id
+PENGELOLA_DOMAIN=consol.payou.id
+PROKSI_TEPERCAYA=GANTI        # bagian 7a
+TENANT_TOLAK_ID_BERBEDA=false # ubah ke true setelah log "Penulisan lintas tenant terdeteksi" bersih beberapa minggu
+LOG_LEVEL=warning
+DB_CONNECTION=mysql           # MySQL 8 (kontrak); MariaDB 11.8 hanya bila job CI backend-mariadb hijau
+DB_DATABASE=GANTI
+DB_USERNAME=GANTI
+DB_PASSWORD=GANTI
+SESSION_DRIVER=database
+SESSION_ENCRYPT=true
+SESSION_SECURE_COOKIE=true
+QUEUE_CONNECTION=database
+CACHE_STORE=database
+MAIL_MAILER=smtp              # atau atur dari konsol (P-05 Integrasi)
+```
+
 ## 8. Cron (jadwal & antrean)
 
 hPanel → **Tingkat Lanjut → Cron Job** → pilih **Kustom** (mode "PHP" memakai `/usr/bin/php` yang belum tentu 8.3), jadwal sekali per menit (`* * * * *`):

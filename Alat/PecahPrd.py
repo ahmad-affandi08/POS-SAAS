@@ -110,12 +110,37 @@ def PeriksaRiwayatVersi():
     return Masalah
 
 
+BATAS_TERTINGGAL = 8
+
+
+def PeriksaDaftarKekurangan():
+    """`Panduan/DaftarKekurangan.md` tidak boleh basis (audit PAY-P1-08): versi PRD yang disebut di barisnya tidak boleh
+    tertinggal lebih dari BATAS_TERTINGGAL versi dari versi PRD terbaru. Dokumen risiko yang salah sama berbahayanya
+    dengan tidak memiliki dokumen risiko (operator mematikan fitur yang sudah ada, atau mengira daftarnya lengkap).
+    Setiap perubahan yang menutup/menambah butir wajib memperbarui dokumen itu, termasuk angka versinya."""
+    Jalur = os.path.join(os.path.dirname(PathPrd), "Panduan", "DaftarKekurangan.md")
+    if not os.path.exists(Jalur):
+        return []
+    Isi = open(PathPrd, encoding="utf-8").read()
+    Nomor = [tuple(int(B) for B in N.split(".")) for N in re.findall(r"^\| (\d+\.\d+) \|", Isi, re.MULTILINE)]
+    if not Nomor:
+        return []
+    Terbaru = max(Nomor)
+    Cocok = re.search(r"PRD v(\d+)\.(\d+)", open(Jalur, encoding="utf-8").read()[:600])
+    if not Cocok:
+        return ["Panduan/DaftarKekurangan.md tidak menyebut versi PRD di barisnya (tulis 'PRD vX.YY' di baris status)."]
+    Tertulis = (int(Cocok.group(1)), int(Cocok.group(2)))
+    if Tertulis[0] != Terbaru[0] or Terbaru[1] - Tertulis[1] > BATAS_TERTINGGAL:
+        return [f"Panduan/DaftarKekurangan.md menyebut PRD v{Tertulis[0]}.{Tertulis[1]:02d}, padahal PRD terbaru v{Terbaru[0]}.{Terbaru[1]:02d} (batas tertinggal {BATAS_TERTINGGAL} versi). Sisir butirnya lalu perbarui angka versinya."]
+    return []
+
+
 def Utama(Argumen):
     Baru = BuatDokumen()
     if Argumen[:1] == ["--cek"]:
-        Masalah = PeriksaRiwayatVersi()
+        Masalah = PeriksaRiwayatVersi() + PeriksaDaftarKekurangan()
         if Masalah:
-            print("Tabel Riwayat perubahan PRD.md bermasalah:")
+            print("PRD.md / dokumen pendamping bermasalah:")
             for Satu in Masalah:
                 print(f"  - {Satu}")
             return 1

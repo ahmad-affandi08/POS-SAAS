@@ -1,4 +1,4 @@
-package id.possaas.kasir
+package id.payou.kasir
 
 import android.app.Activity
 import android.app.PendingIntent

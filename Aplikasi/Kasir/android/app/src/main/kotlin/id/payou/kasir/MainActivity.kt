@@ -1,4 +1,4 @@
-package id.possaas.kasir
+package id.payou.kasir
 
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine

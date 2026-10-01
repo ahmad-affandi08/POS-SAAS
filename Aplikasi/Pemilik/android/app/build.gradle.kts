@@ -28,7 +28,7 @@ fun nilaiKunci(properti: String, lingkungan: String): String? =
 val berkasKeystore = nilaiKunci("storeFile", "PAYOU_KEYSTORE_FILE")
 
 android {
-    namespace = "id.possaas.pemilik"
+    namespace = "id.payou.pemilik"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -39,7 +39,7 @@ android {
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "id.possaas.pemilik"
+        applicationId = "id.payou.pemilik"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion

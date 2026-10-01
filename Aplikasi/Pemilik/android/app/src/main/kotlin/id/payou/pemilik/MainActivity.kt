@@ -1,4 +1,4 @@
-package id.possaas.pemilik
+package id.payou.pemilik
 
 import io.flutter.embedding.android.FlutterActivity
 

@@ -29,15 +29,18 @@ final class WebhookBillingKontroler extends Kontroler
 {
     public function Terima(Request $permintaan, GerbangBillingPlatform $gerbang, TerimaNotifikasiBillingLangganan $terima): JsonResponse
     {
-        $nomor = (string) $permintaan->input('order_id');
-
-        // Uji coba notifikasi dari dasbor Midtrans (tombol "Test notification URL")
-        if ($nomor === '' || str_starts_with(strtolower($nomor), 'test') || str_starts_with(strtolower($nomor), 'sample')) {
-            return response()->json(['Diterima' => true, 'Pesan' => 'Endpoint webhook billing PAYOU siap menerima notifikasi.']);
-        }
-
+        // Audit PAY-P2-07: tanda tangan diperiksa lebih dulu untuk SEMUA notifikasi, termasuk uji coba. Dulu balasan
+        // "siap menerima" untuk order_id kosong/`test*`/`sample*` keluar tanpa bukti asal sehingga endpoint publik ini
+        // bisa dipakai siapa saja untuk menguji keberadaannya. Notifikasi uji dari dasbor Midtrans ("Test notification
+        // URL") ditandatangani dengan kunci server yang sama, jadi tetap lolos.
         if (! $gerbang->CekTandaTanganSah($permintaan)) {
             return GalatApi::Buat('TandaTanganTidakSah', 'Tanda tangan notifikasi tidak sah.', 401);
+        }
+
+        $nomor = (string) $permintaan->input('order_id');
+
+        if ($nomor === '' || str_starts_with(strtolower($nomor), 'test') || str_starts_with(strtolower($nomor), 'sample')) {
+            return response()->json(['Diterima' => true, 'Pesan' => 'Endpoint webhook billing PAYOU siap menerima notifikasi.']);
         }
 
         $notifikasi = $gerbang->UraiNotifikasi($permintaan);

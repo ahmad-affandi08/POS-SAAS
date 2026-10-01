@@ -38,6 +38,13 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withCommands([__DIR__.'/../app/Console/Perintah'])
     ->withMiddleware(function (Middleware $middleware): void {
+        // Audit PAY-P1-05: header yang dipercaya dari proksi (daftar proksinya di config/trustedproxy.php, env
+        // `PROKSI_TEPERCAYA`). Header AWS ELB dan prefix sengaja tidak dipercaya: infrastruktur kita tidak memakainya,
+        // jadi tidak ada alasan membuka jalur pemalsuan tambahan.
+        $middleware->trustProxies(
+            headers: Request::HEADER_X_FORWARDED_FOR | Request::HEADER_X_FORWARDED_HOST | Request::HEADER_X_FORWARDED_PORT | Request::HEADER_X_FORWARDED_PROTO,
+        );
+
         // Harus berjalan sebelum StartSession: cookie sesi pengelola terpisah dari tenant (BR-P01.4).
         $middleware->prepend(SiapkanSesiPengelola::class);
 
