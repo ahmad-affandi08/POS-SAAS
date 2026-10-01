@@ -107,6 +107,8 @@ describe('F-13a menu Akuntansi', () => {
             'Pencairan dana',
             'Buku besar',
             'Neraca saldo',
+            // FIN-10 (v3.38): aset tetap & penyusutan, pekerjaan pembukuan berkala.
+            'Aset tetap',
             'Tutup buku',
         ]);
         // Laba rugi, Neraca, dan Arus kas dicari pemilik sebagai laporan, jadi rumahnya di menu Laporan.

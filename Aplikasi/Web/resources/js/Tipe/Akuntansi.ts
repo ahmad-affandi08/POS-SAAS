@@ -485,3 +485,48 @@ export type PropsDetailAsetTetap = {
     OpsiAkun: OpsiAkunAset[];
     Izin: { Kelola: boolean };
 };
+
+/* FIN-09 (v3.39): rekonsiliasi bank. */
+export type StatusMutasiBank = 'BelumCocok' | 'Cocok' | 'Diabaikan';
+
+export type BarisJurnalBank = {
+    Uuid: string;
+    Nomor: string;
+    Keterangan: string;
+    Tanggal: string;
+    Debit: string;
+    Kredit: string;
+};
+
+export type BarisMutasiBank = {
+    Uuid: string;
+    Tanggal: string;
+    Keterangan: string;
+    Masuk: string;
+    Keluar: string;
+    Saldo: string | null;
+    Status: StatusMutasiBank;
+    LabelStatus: string;
+    AlasanAbaikan: string | null;
+    Jurnal: BarisJurnalBank | null;
+    Kandidat: BarisJurnalBank[];
+};
+
+export type PropsRekonsiliasiBank = {
+    Mutasi: HasilTabel<BarisMutasiBank>;
+    Akun: { Uuid: string; Kode: string; Nama: string };
+    OpsiAkun: { Uuid: string; Kode: string; Nama: string }[];
+    Ringkasan: {
+        BelumCocok: number;
+        Cocok: number;
+        Diabaikan: number;
+        TanggalTerakhir: string | null;
+        SaldoRekeningKoran: string | null;
+        SaldoBuku: string | null;
+        Selisih: string | null;
+    };
+    BukuBelumCocok: BarisJurnalBank[];
+    OpsiStatus: { Nilai: StatusMutasiBank; Label: string }[];
+    HasilImpor: { Baru: number; Duplikat: number; Bermasalah: { Baris: number; Pesan: string }[] } | null;
+    Izin: { Kelola: boolean };
+};

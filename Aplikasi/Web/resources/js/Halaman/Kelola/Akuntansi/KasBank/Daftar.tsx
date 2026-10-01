@@ -159,9 +159,19 @@ export default function HalamanTransaksiKasBank({
                     <Button asChild variant="outline">
                         <Link href={`${alamat}/berulang`}>Transaksi berulang</Link>
                     </Button>
+                    <Button asChild variant="outline">
+                        <Link href="/kelola/akuntansi/rekonsiliasi">Rekonsiliasi bank</Link>
+                    </Button>
                 </div>
             ) : (
-                <PesanHanyaLihat izin="akuntansi.kelola" objek="transaksi kas & bank" />
+                <>
+                    <PesanHanyaLihat izin="akuntansi.kelola" objek="transaksi kas & bank" />
+                    <div>
+                        <Button asChild variant="outline">
+                            <Link href="/kelola/akuntansi/rekonsiliasi">Rekonsiliasi bank</Link>
+                        </Button>
+                    </div>
+                </>
             )}
 
             <TabelData

@@ -10,6 +10,7 @@ use App\Http\Kontroler\Kelola\Akuntansi\JurnalKontroler;
 use App\Http\Kontroler\Kelola\Akuntansi\LaporanKeuanganKontroler;
 use App\Http\Kontroler\Kelola\Akuntansi\PemetaanAkunKontroler;
 use App\Http\Kontroler\Kelola\Akuntansi\PencairanKontroler;
+use App\Http\Kontroler\Kelola\Akuntansi\RekonsiliasiBankKontroler;
 use App\Http\Kontroler\Kelola\Akuntansi\TransaksiKasBankKontroler;
 use App\Http\Kontroler\Kelola\Akuntansi\TutupBukuKontroler;
 use App\Http\Perantara\SiapkanAuditTenant;
@@ -54,6 +55,9 @@ Route::middleware([SiapkanAuditTenant::class, $izin(IzinTenant::LaporanKeuanganL
     // FIN-10 (v3.38): aset tetap & penyusutan (daftar & rincian).
     Route::get('/akuntansi/aset-tetap', [AsetTetapKontroler::class, 'Daftar'])->name('kelola.akuntansi.aset-tetap.daftar');
     Route::get('/akuntansi/aset-tetap/{asetTetap}', [AsetTetapKontroler::class, 'Detail'])->where('asetTetap', $ulid)->name('kelola.akuntansi.aset-tetap.detail');
+    // FIN-09 (v3.39): rekonsiliasi bank per akun kas/bank.
+    Route::get('/akuntansi/rekonsiliasi', [RekonsiliasiBankKontroler::class, 'Awal'])->name('kelola.akuntansi.rekonsiliasi.awal');
+    Route::get('/akuntansi/rekonsiliasi/{akun}', [RekonsiliasiBankKontroler::class, 'Tampilkan'])->where('akun', $ulid)->name('kelola.akuntansi.rekonsiliasi');
 
     Route::get('/akuntansi/laporan/buku-besar', [LaporanKeuanganKontroler::class, 'BukuBesar'])->name('kelola.akuntansi.laporan.buku-besar');
     Route::get('/akuntansi/laporan/buku-besar/ekspor', [LaporanKeuanganKontroler::class, 'EksporBukuBesar'])->name('kelola.akuntansi.laporan.buku-besar.ekspor');
@@ -101,4 +105,8 @@ Route::middleware([SiapkanAuditTenant::class, $izin(IzinTenant::AkuntansiKelola)
     Route::post('/akuntansi/aset-tetap/susutkan', [AsetTetapKontroler::class, 'Susutkan'])->middleware('throttle:20,1')->name('kelola.akuntansi.aset-tetap.susutkan');
     Route::post('/akuntansi/aset-tetap/{asetTetap}/lepas', [AsetTetapKontroler::class, 'Lepas'])->where('asetTetap', $ulid)->name('kelola.akuntansi.aset-tetap.lepas');
     Route::post('/akuntansi/aset-tetap/{asetTetap}/batalkan', [AsetTetapKontroler::class, 'Batalkan'])->where('asetTetap', $ulid)->name('kelola.akuntansi.aset-tetap.batalkan');
+    // FIN-09 (v3.39): impor rekening koran, cocokkan otomatis, putuskan satu mutasi.
+    Route::post('/akuntansi/rekonsiliasi/{akun}/impor', [RekonsiliasiBankKontroler::class, 'Impor'])->where('akun', $ulid)->middleware('throttle:20,1')->name('kelola.akuntansi.rekonsiliasi.impor');
+    Route::post('/akuntansi/rekonsiliasi/{akun}/cocokkan-otomatis', [RekonsiliasiBankKontroler::class, 'CocokkanOtomatis'])->where('akun', $ulid)->name('kelola.akuntansi.rekonsiliasi.otomatis');
+    Route::post('/akuntansi/rekonsiliasi/mutasi/{mutasiBank}', [RekonsiliasiBankKontroler::class, 'Putuskan'])->where('mutasiBank', $ulid)->name('kelola.akuntansi.rekonsiliasi.putuskan');
 });
