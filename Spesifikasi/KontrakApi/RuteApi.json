@@ -109,6 +109,11 @@
         "Jalur": "api/pos/v1/pesan-sendiri",
         "Nama": "pos.pesan-sendiri"
     },
+    "GET api/pos/v1/produk-habis": {
+        "Metode": "GET",
+        "Jalur": "api/pos/v1/produk-habis",
+        "Nama": "pos.produk-habis"
+    },
     "GET api/pos/v1/pesanan-penjualan": {
         "Metode": "GET",
         "Jalur": "api/pos/v1/pesanan-penjualan",
@@ -178,6 +183,11 @@
         "Metode": "POST",
         "Jalur": "api/pos/v1/perangkat/profil-hardware",
         "Nama": "pos.perangkat.profil-hardware"
+    },
+    "POST api/pos/v1/produk/{produk}/habis": {
+        "Metode": "POST",
+        "Jalur": "api/pos/v1/produk/{produk}/habis",
+        "Nama": "pos.produk.habis"
     },
     "POST api/pos/v1/pesan-sendiri/{pesananSendiri}/terima": {
         "Metode": "POST",

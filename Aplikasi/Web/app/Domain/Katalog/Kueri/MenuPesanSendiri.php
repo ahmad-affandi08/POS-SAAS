@@ -12,6 +12,7 @@ use App\Domain\Katalog\Harga\Kueri\HargaProdukBerlaku;
 use App\Domain\Katalog\Layanan\PenyimpanGambarProduk;
 use App\Domain\Katalog\Model\Kategori;
 use App\Domain\Katalog\Model\Produk;
+use App\Domain\Katalog\Model\ProdukHabis;
 use App\Domain\Katalog\Model\ProdukSatuan;
 use App\Domain\Katalog\Pilihan\Model\KelompokPilihan;
 use App\Domain\Katalog\Pilihan\Model\Pilihan;
@@ -45,9 +46,9 @@ final class MenuPesanSendiri
      */
     public function Ambil(int $idOutlet, string $dasarGambar, KanalPenjualan $kanal = KanalPenjualan::MakanDiTempat, bool $tampilOnline = false): array
     {
-        $produk = $this->KueriProduk($tampilOnline)->orderBy('Nama')->get();
+        $produk = $this->KueriProduk($tampilOnline, $idOutlet)->orderBy('Nama')->get();
         $idInduk = array_values($produk->filter(fn (Produk $p): bool => $p->Jenis === JenisProduk::IndukVarian)->map(fn (Produk $p): int => $p->Id)->all());
-        $anak = $idInduk === [] ? new Collection : $this->KueriAnak($tampilOnline)->whereIn('IdInduk', $idInduk)->orderBy('Id')->get();
+        $anak = $idInduk === [] ? new Collection : $this->KueriAnak($tampilOnline, $idOutlet)->whereIn('IdInduk', $idInduk)->orderBy('Id')->get();
         $satuan = $this->AmbilSatuanJual(collect([...$produk->all(), ...$anak->all()]));
         $anakPerInduk = $anak->groupBy('IdInduk');
         $kelompok = $this->AmbilKelompok(array_values($produk->map(fn (Produk $p): int => $p->Id)->all()));
@@ -144,8 +145,8 @@ final class MenuPesanSendiri
     {
         $uuid = array_values(array_unique(array_column($baris, 'UuidProduk')));
         $uuidVarian = array_values(array_unique(array_filter(array_map(fn (array $b): ?string => $b['UuidVarian'] ?? null, $baris), 'is_string')));
-        $produk = $this->KueriProduk($tampilOnline)->whereIn('Uuid', $uuid)->get()->keyBy('Uuid');
-        $anak = $uuidVarian === [] ? new Collection : $this->KueriAnak($tampilOnline)->whereIn('Uuid', $uuidVarian)->get()->keyBy('Uuid');
+        $produk = $this->KueriProduk($tampilOnline, $idOutlet)->whereIn('Uuid', $uuid)->get()->keyBy('Uuid');
+        $anak = $uuidVarian === [] ? new Collection : $this->KueriAnak($tampilOnline, $idOutlet)->whereIn('Uuid', $uuidVarian)->get()->keyBy('Uuid');
         $semua = collect([...$produk->values()->all(), ...$anak->values()->all()]);
         $satuan = $this->AmbilSatuanJual($semua);
         $kelompok = $this->AmbilKelompok(array_values($produk->map(fn (Produk $p): int => $p->Id)->all()));
@@ -207,15 +208,19 @@ final class MenuPesanSendiri
     }
 
     /**
+     * `$idOutlet` diisi = produk yang ditandai habis di outlet itu (BR-17.2, 86) ikut dikeluarkan. Dikosongkan hanya
+     * untuk rute gambar, yang tidak punya konteks outlet dan tidak membocorkan apa pun selain gambar produk menu.
+     *
      * @return Builder<Produk>
      */
-    private function KueriProduk(bool $tampilOnline = false): Builder
+    private function KueriProduk(bool $tampilOnline = false, ?int $idOutlet = null): Builder
     {
         return Produk::query()
             ->where('Aktif', true)
             ->where($tampilOnline ? 'TampilOnline' : 'TampilDiPos', true)
             ->whereNull('IdInduk')
-            ->whereNotIn('Jenis', self::JenisTidakDijual(JenisProduk::IndukVarian));
+            ->whereNotIn('Jenis', self::JenisTidakDijual(JenisProduk::IndukVarian))
+            ->when($idOutlet !== null, fn (Builder $k): Builder => $k->whereNotIn('Id', ProdukHabis::query()->where('IdOutlet', $idOutlet)->select('IdProduk')));
     }
 
     /**
@@ -223,13 +228,14 @@ final class MenuPesanSendiri
      *
      * @return Builder<Produk>
      */
-    private function KueriAnak(bool $tampilOnline = false): Builder
+    private function KueriAnak(bool $tampilOnline = false, ?int $idOutlet = null): Builder
     {
         return Produk::query()
             ->where('Aktif', true)
             ->where($tampilOnline ? 'TampilOnline' : 'TampilDiPos', true)
             ->whereNotNull('IdInduk')
-            ->whereNotIn('Jenis', self::JenisTidakDijual());
+            ->whereNotIn('Jenis', self::JenisTidakDijual())
+            ->when($idOutlet !== null, fn (Builder $k): Builder => $k->whereNotIn('Id', ProdukHabis::query()->where('IdOutlet', $idOutlet)->select('IdProduk')));
     }
 
     /**

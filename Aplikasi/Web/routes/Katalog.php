@@ -7,6 +7,7 @@ use App\Http\Kontroler\Kelola\Katalog\BatasStokProdukKontroler;
 use App\Http\Kontroler\Kelola\Katalog\CariProdukKontroler;
 use App\Http\Kontroler\Kelola\Katalog\GambarProdukKontroler;
 use App\Http\Kontroler\Kelola\Katalog\KategoriKontroler;
+use App\Http\Kontroler\Kelola\Katalog\KetersediaanProdukKontroler;
 use App\Http\Kontroler\Kelola\Katalog\PaketSesiKontroler;
 use App\Http\Kontroler\Kelola\Katalog\ProdukKontroler;
 use App\Http\Kontroler\Kelola\Katalog\SatuanKontroler;
@@ -46,6 +47,7 @@ Route::middleware(SiapkanAuditTenant::class)->group(function () use ($izin, $uli
     Route::get('/produk/{produk}', [ProdukKontroler::class, 'Detail'])->middleware($lihat)->where('produk', $ulid)->name('kelola.produk.detail');
     Route::get('/produk/{produk}/ubah', [ProdukKontroler::class, 'Ubah'])->middleware($kelola)->where('produk', $ulid)->name('kelola.produk.ubah');
     Route::put('/produk/{produk}', [ProdukKontroler::class, 'Perbarui'])->middleware($kelola)->where('produk', $ulid)->name('kelola.produk.perbarui');
+    Route::post('/produk/{produk}/habis', [KetersediaanProdukKontroler::class, 'Ubah'])->middleware($kelola)->where('produk', $ulid)->name('kelola.produk.habis');
     Route::post('/produk/{produk}/arsipkan', [ProdukKontroler::class, 'Arsipkan'])->middleware($kelola)->where('produk', $ulid)->name('kelola.produk.arsipkan');
     Route::post('/produk/{produk}/pulihkan', [ProdukKontroler::class, 'Pulihkan'])->middleware($kelola)->where('produk', $ulid)->name('kelola.produk.pulihkan');
     Route::delete('/produk/{produk}', [ProdukKontroler::class, 'Hapus'])->middleware($kelola)->where('produk', $ulid)->name('kelola.produk.hapus');

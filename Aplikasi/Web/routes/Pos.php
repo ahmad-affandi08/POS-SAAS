@@ -9,6 +9,7 @@ use App\Http\Kontroler\Pos\V1\GambarQrisKontroler;
 use App\Http\Kontroler\Pos\V1\GudangKontroler;
 use App\Http\Kontroler\Pos\V1\KasirKontroler;
 use App\Http\Kontroler\Pos\V1\KatalogKontroler;
+use App\Http\Kontroler\Pos\V1\KetersediaanProdukKontroler;
 use App\Http\Kontroler\Pos\V1\KonfigurasiAplikasiKontroler;
 use App\Http\Kontroler\Pos\V1\LaundryKontroler;
 use App\Http\Kontroler\Pos\V1\LogoStrukKontroler;
@@ -147,6 +148,10 @@ Route::middleware([AutentikasiPerangkat::class, IdempotensiPos::class])->group(f
         Route::post('/laundry/{tiket}/status', [LaundryKontroler::class, 'UbahStatus'])
             ->middleware('throttle:pos-60')->where('tiket', $ulid)->name('pos.laundry.status');
         // F-17 Self-Order QR Meja: pesanan tamu menunggu konfirmasi (ditarik berkala), terima/tolak oleh staf.
+        // F-17 BR-17.2: tandai habis ("86") dari POS/KDS; tercermin di menu self-order & toko online outlet.
+        Route::get('/produk-habis', [KetersediaanProdukKontroler::class, 'Ambil'])->middleware('throttle:pos-30')->name('pos.produk-habis');
+        Route::post('/produk/{produk}/habis', [KetersediaanProdukKontroler::class, 'Ubah'])
+            ->middleware('throttle:pos-60')->where('produk', $ulid)->name('pos.produk.habis');
         Route::get('/pesan-sendiri', [PesanSendiriKontroler::class, 'Ambil'])->middleware('throttle:pos-30')->name('pos.pesan-sendiri');
         Route::post('/pesan-sendiri/{pesananSendiri}/terima', [PesanSendiriKontroler::class, 'Terima'])
             ->middleware('throttle:pos-60')->where('pesananSendiri', $ulid)->name('pos.pesan-sendiri.terima');
