@@ -110,7 +110,8 @@ describe('Kerahasiaan kredensial (BR-P05.1, BR-P05.6)', function (): void {
         $mentah = (string) DB::table('KonfigurasiIntegrasi')->value('Kredensial');
         expect($mentah)->not->toContain(RAHASIA_SMTP_UJI)
             ->and(AmbilEmailStaging()->Kredensial['KataSandi'])->toBe(RAHASIA_SMTP_UJI)
-            ->and(AmbilEmailStaging()->PetunjukKredensial)->toBe(['KataSandi' => '••••9876']);
+            // T2: kata sandi/rahasia SMTP disembunyikan penuh, tanpa 4 karakter terakhir.
+            ->and(AmbilEmailStaging()->PetunjukKredensial)->toBe(['KataSandi' => '••••']);
 
         $this->get(BantuanPengelola::Url('/integrasi'))
             ->assertDontSee(RAHASIA_SMTP_UJI)
@@ -119,7 +120,8 @@ describe('Kerahasiaan kredensial (BR-P05.1, BR-P05.6)', function (): void {
                 // v2.69/v2.70: 6 jenis platform × 2 lingkungan. Gerbang pembayaran QRIS tidak termasuk (diatur
                 // tenant sejak v2.06); Push (FCM) & GerbangBilling (Midtrans penagih langganan) termasuk.
                 ->has('Integrasi', 12)
-                ->where('Integrasi.0.Konfigurasi.PetunjukKredensial.KataSandi', '••••9876'));
+                ->where('Integrasi.0.Konfigurasi.PetunjukKredensial.KataSandi', '••••'));
+        expect($this->get(BantuanPengelola::Url('/integrasi'))->getContent())->not->toContain('9876');
 
         $log = LogAuditPengelola::query()->where('Aksi', 'integrasi.buat')->sole();
         expect(json_encode([$log->NilaiLama, $log->NilaiBaru]))->not->toContain(RAHASIA_SMTP_UJI)
@@ -141,6 +143,15 @@ describe('Kerahasiaan kredensial (BR-P05.1, BR-P05.6)', function (): void {
         $this->post(BantuanPengelola::Url('/integrasi'), DataEmailUji(['Kredensial' => ['KataSandi' => 'pendek']]))->assertSessionHasNoErrors();
         expect(AmbilEmailStaging()->PetunjukKredensial)->toBe(['KataSandi' => '••••'])
             ->and(AmbilEmailStaging()->KredensialDiubahPada->greaterThan($diubahPertama))->toBeTrue();
+    });
+
+    it('T2: petunjuk kata sandi lama (tersimpan dengan 4 karakter terakhir) tetap ditampilkan tersembunyi penuh', function (): void {
+        MasukSebagaiIntegrasi($this, BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::Teknis));
+        $this->post(BantuanPengelola::Url('/integrasi'), DataEmailUji())->assertSessionHasNoErrors();
+        DB::table('KonfigurasiIntegrasi')->update(['PetunjukKredensial' => json_encode(['KataSandi' => '••••9876'])]);
+
+        $this->get(BantuanPengelola::Url('/integrasi'))
+            ->assertInertia(fn (AssertableInertia $halaman) => $halaman->where('Integrasi.0.Konfigurasi.PetunjukKredensial.KataSandi', '••••'));
     });
 
     it('konfigurasi baru wajib mengisi semua kredensial', function (): void {

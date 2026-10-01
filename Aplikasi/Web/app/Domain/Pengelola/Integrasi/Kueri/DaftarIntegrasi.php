@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Pengelola\Integrasi\Kueri;
 
+use App\Domain\Pengelola\Integrasi\Aksi\SimpanKonfigurasiIntegrasi;
 use App\Domain\Pengelola\Integrasi\Enum\JenisIntegrasi;
 use App\Domain\Pengelola\Integrasi\Enum\LingkunganIntegrasi;
 use App\Domain\Pengelola\Integrasi\Enum\PenyediaIntegrasi;
@@ -50,7 +51,11 @@ final class DaftarIntegrasi
                     'Konfigurasi' => $konfigurasi instanceof KonfigurasiIntegrasi ? [
                         'Uuid' => $konfigurasi->Uuid,
                         'Pengaturan' => $konfigurasi->Pengaturan,
-                        'PetunjukKredensial' => $konfigurasi->PetunjukKredensial,
+                        // T2: kata sandi yang tersimpan sebelum aturan ini juga disembunyikan penuh saat ditampilkan.
+                        'PetunjukKredensial' => array_merge(
+                            $konfigurasi->PetunjukKredensial,
+                            array_fill_keys(array_intersect(array_keys($konfigurasi->PetunjukKredensial), SimpanKonfigurasiIntegrasi::KUNCI_TERSEMBUNYI_PENUH), '••••'),
+                        ),
                         'Aktif' => $konfigurasi->Aktif,
                         'Status' => $konfigurasi->Status->value,
                         'LabelStatus' => $konfigurasi->Status->AmbilLabel(),

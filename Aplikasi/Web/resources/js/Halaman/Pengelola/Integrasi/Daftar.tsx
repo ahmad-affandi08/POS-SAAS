@@ -311,7 +311,9 @@ function KartuIntegrasi({ slot, bolehKelola }: { slot: SlotIntegrasi; bolehKelol
                             <div key={bidang.Kunci} className="flex flex-col">
                                 <dt className="text-teks-sekunder">{bidang.Label}</dt>
                                 <dd className="break-all text-teks-utama">
-                                    {String(konfigurasi.Pengaturan[bidang.Kunci] ?? '-')}
+                                    {bidang.Opsi && konfigurasi.Pengaturan[bidang.Kunci] !== undefined
+                                        ? LabelOpsi(String(konfigurasi.Pengaturan[bidang.Kunci]))
+                                        : String(konfigurasi.Pengaturan[bidang.Kunci] ?? '-')}
                                 </dd>
                             </div>
                         ))}

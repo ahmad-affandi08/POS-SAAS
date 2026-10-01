@@ -1,6 +1,6 @@
 # Daftar Kekurangan & Pekerjaan Tertunda PAYOU
 
-Status per 1 Oktober 2026 (PRD v3.27; butir A3, A14, dan A15 disisir ulang di v3.25, sisanya belum disisir butir demi butir sejak v2.88, lihat catatan audit di bawah). Dokumen ini mencatat apa yang **belum ada**, **belum diuji di produksi**, atau **menunggu keputusan pemilik produk**, supaya sistem bisa dibuka ke publik lebih dulu dengan risiko yang diketahui. Perbarui setiap kali satu butir selesai.
+Status per 1 Oktober 2026 (PRD v3.28; butir A3, A14, dan A15 disisir ulang di v3.25, sisanya belum disisir butir demi butir sejak v2.88, lihat catatan audit di bawah). Dokumen ini mencatat apa yang **belum ada**, **belum diuji di produksi**, atau **menunggu keputusan pemilik produk**, supaya sistem bisa dibuka ke publik lebih dulu dengan risiko yang diketahui. Perbarui setiap kali satu butir selesai.
 
 Status butir (audit F-26): **TERBUKA** = belum dikerjakan; **SELESAI @ versi** = sudah dikerjakan & ada test regresinya; **DITUNDA** = sengaja ditunda; **MENUNGGU KEPUTUSAN** = butuh pemilik produk. Butir baru ditandai SELESAI hanya bila test regresinya ada.
 
@@ -32,7 +32,7 @@ Status butir (audit F-26): **TERBUKA** = belum dikerjakan; **SELESAI @ versi** =
 | # | Pekerjaan | Rincian |
 |---|---|---|
 | T1 | Kecilkan ukuran tampilan | Situs payou.id ±169 KB gzip, dashboard ±333 KB saat pertama dibuka. Rencana: CSS situs dipisah dari CSS dashboard, pustaka JS bersama dipecah (situs tidak memuat komponen tabel/kalender), grafik Beranda dashboard dimuat belakangan, logo PNG 60 KB → WebP/SVG, kompresi & cache panjang di `.htaccess`. Target ±80–100 KB (situs), ±200 KB (dashboard). |
-| T2 | Tampilan Integrasi | Enkripsi tertulis "Ssl" → "SSL"; kata sandi SMTP/rahasia ditampilkan 4 karakter terakhir → sembunyikan penuh untuk kata sandi (kunci API boleh tetap 4 terakhir). |
+| T2 | **SELESAI @ v3.28** Tampilan Integrasi | Enkripsi tertulis "Ssl" → "SSL"; kata sandi SMTP/rahasia ditampilkan 4 karakter terakhir → sembunyikan penuh untuk kata sandi (kunci API boleh tetap 4 terakhir). |
 | T3 | **SELESAI @ v2.32** Build otomatis | Job CI `rilis` (lihat A12). |
 | T4 | **SELESAI @ v2.28** Situs pemasaran bagian B | Prospek, persetujuan cookie, analitik dari konsol, blog. |
 

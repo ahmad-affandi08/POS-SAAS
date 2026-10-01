@@ -109,7 +109,7 @@ final class SimpanKonfigurasiIntegrasi
             'Penyedia' => $penyedia,
             'Pengaturan' => $data->pengaturan,
             'Kredensial' => $kredensialBaru,
-            'PetunjukKredensial' => array_map(self::BuatPetunjuk(...), $kredensialBaru),
+            'PetunjukKredensial' => self::BuatSemuaPetunjuk($kredensialBaru),
             'RotasiSetiapHari' => $data->rotasiSetiapHari,
         ]);
 
@@ -137,9 +137,31 @@ final class SimpanKonfigurasiIntegrasi
     }
 
     /** BR-P05.1: hanya 4 karakter terakhir; nilai pendek tidak ditampilkan sama sekali. */
-    public static function BuatPetunjuk(string $nilai): string
+    /** Kredensial yang petunjuknya disembunyikan penuh: kata sandi tidak pernah ditampilkan, bahkan 4 karakter terakhir. */
+    public const KUNCI_TERSEMBUNYI_PENUH = ['KataSandi'];
+
+    public static function BuatPetunjuk(string $nilai, string $kunci = ''): string
     {
+        if (in_array($kunci, self::KUNCI_TERSEMBUNYI_PENUH, true)) {
+            return '••••';
+        }
+
         return mb_strlen($nilai) >= 12 ? '••••'.mb_substr($nilai, -4) : '••••';
+    }
+
+    /**
+     * @param  array<string, string>  $kredensial
+     * @return array<string, string>
+     */
+    public static function BuatSemuaPetunjuk(array $kredensial): array
+    {
+        $hasil = [];
+
+        foreach ($kredensial as $kunci => $nilai) {
+            $hasil[$kunci] = self::BuatPetunjuk($nilai, (string) $kunci);
+        }
+
+        return $hasil;
     }
 
     /**

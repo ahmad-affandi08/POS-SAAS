@@ -209,3 +209,45 @@ describe('Integrasi: pilih penyedia (v2.04)', () => {
         );
     });
 });
+
+describe('Integrasi: ringkasan konfigurasi (T2)', () => {
+    it('enkripsi tersimpan "Ssl" tampil sebagai SSL; kata sandi hanya tampil sebagai titik', () => {
+        const slot = Slot('Email', [{ Nilai: 'Smtp', Label: 'SMTP', Keterangan: '', Resmi: true }]);
+        const bidang = [
+            ...slot.BidangPengaturan,
+            { Kunci: 'Enkripsi', Label: 'Enkripsi', Jenis: 'Pilihan' as const, Wajib: true, Opsi: ['Ssl', 'Tls'] },
+        ];
+        render(
+            <HalamanIntegrasi
+                Integrasi={[
+                    {
+                        ...slot,
+                        BidangPengaturan: bidang,
+                        Konfigurasi: {
+                            Uuid: 'K1',
+                            Pengaturan: {
+                                Host: 'smtp.hostinger.com',
+                                Port: 465,
+                                NamaPengguna: 'halo@payou.id',
+                                Enkripsi: 'Ssl',
+                            },
+                            PetunjukKredensial: { KataSandi: '••••' },
+                            Aktif: true,
+                            Status: 'Terhubung',
+                            LabelStatus: 'Terhubung',
+                            TerakhirDiujiPada: null,
+                            HasilUji: null,
+                            KredensialDiubahPada: '2026-10-01T03:00:00Z',
+                            RotasiSetiapHari: 90,
+                            PerluRotasi: false,
+                        },
+                    },
+                ]}
+            />,
+        );
+
+        expect(screen.getByText('SSL')).toBeTruthy();
+        expect(screen.queryByText('Ssl')).toBeNull();
+        expect(screen.getByText('••••')).toBeTruthy();
+    });
+});
