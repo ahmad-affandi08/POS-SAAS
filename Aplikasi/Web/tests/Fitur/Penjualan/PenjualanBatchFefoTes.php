@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Domain\Bersama\Nilai\Uang;
 use App\Domain\Katalog\Enum\PelacakanProduk;
 use App\Domain\Katalog\Model\Produk;
 use App\Domain\Penjualan\Model\Penjualan;
@@ -183,7 +184,8 @@ describe('F-05g void & retur mengembalikan stok ke batch asal', function (): voi
         expect($kembali->map(fn (MutasiStok $m): array => [$namaBatch[$m->IdBatchStok], $m->Jumlah])->all())
             ->toBe([['A-DEKAT', '2.0000'], ['A-DEKAT', '1.0000'], ['B-LAMA', '1.0000'], ['B-LAMA', '1.0000']])
             ->and(SisaBatchJual($susu))->toBe(['A-DEKAT' => '3.0000', 'B-LAMA' => '5.0000'])
-            ->and($kembali->reduce(fn (string $t, MutasiStok $m): string => bcadd($t, $m->TotalHpp, 2), '0.00'))->toBe('50000.00')
+            // Dijumlah dengan Uang (brick/math, aturan emas #7), tidak bergantung ekstensi bcmath.
+            ->and($kembali->reduce(fn (Uang $t, MutasiStok $m): Uang => $t->Tambah(Uang::Dari((string) $m->TotalHpp)), Uang::Nol())->KeString())->toBe('50000.00')
             ->and(PemeriksaInvarian::PeriksaSemua($k['Tenant']->Id))->toBe([]);
     });
 });
