@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Domain\Organisasi\Enum\IzinTenant;
 use App\Domain\Organisasi\Kueri\MejaPesanSendiri;
+use App\Domain\Pelanggan\Layanan\TautanBerhentiLangganan;
 use App\Domain\Penjualan\Layanan\KodeStrukDigital;
 use App\Domain\Situs\Layanan\AturanSlugSitus;
 use App\Domain\Situs\Model\ArtikelSitus;
@@ -20,6 +21,7 @@ use App\Http\Kontroler\Kelola\LanggananKontroler;
 use App\Http\Kontroler\Kelola\TerimaUndanganKontroler;
 use App\Http\Kontroler\Kelola\TindakanKontroler;
 use App\Http\Kontroler\Publik\AkunTokoOnlineKontroler;
+use App\Http\Kontroler\Publik\BerhentiLanggananKontroler;
 use App\Http\Kontroler\Publik\DokumenLegalPublikKontroler;
 use App\Http\Kontroler\Publik\KompatibilitasPerangkatKontroler as KompatibilitasPerangkatPublikKontroler;
 use App\Http\Kontroler\Publik\PesanSendiriKontroler;
@@ -95,6 +97,15 @@ Route::middleware([TolakDomainPengelola::class, ArahkanDomainAplikasi::class, Ba
         ->where('kodeStruk', KodeStrukDigital::POLA)
         ->middleware('throttle:60,1')
         ->name('publik.struk-digital');
+    // CRM-07: berhenti menerima pesan promosi dari tautan bertanda tangan di pesan kampanye (UU PDP).
+    Route::get('/berhenti-langganan/{kode}', [BerhentiLanggananKontroler::class, 'Tampilkan'])
+        ->where('kode', TautanBerhentiLangganan::POLA)
+        ->middleware('throttle:30,1')
+        ->name(TautanBerhentiLangganan::NAMA_RUTE);
+    Route::post('/berhenti-langganan/{kode}', [BerhentiLanggananKontroler::class, 'Kirim'])
+        ->where('kode', TautanBerhentiLangganan::POLA)
+        ->middleware('throttle:30,1')
+        ->name('publik.berhenti-langganan.kirim');
     // v1.98 Hardware Compatibility List publik (PRD §17.2.5a).
     Route::get('/kompatibilitas-perangkat', [KompatibilitasPerangkatPublikKontroler::class, 'Tampilkan'])
         ->middleware('throttle:60,1')

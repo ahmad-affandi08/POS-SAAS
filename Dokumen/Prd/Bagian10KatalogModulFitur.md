@@ -163,7 +163,7 @@ Dipakai tim internal {{APP}} (§8 Bagian A, §13.8, §19.3).
 | CRM-04 | Deposit/saldo & paket sesi | P1 |
 | CRM-05 | Promo engine | P1 |
 | CRM-06 | Voucher & gift card | P1 |
-| CRM-07 | Broadcast WA/email bersegmen (RFM) | P2 |
+| CRM-07 | Broadcast WA/email bersegmen (RFM) — v3.44 | P2 |
 | CRM-08 | Feedback/rating pasca transaksi | P2 |
 
 ### 10.7 Modul Karyawan

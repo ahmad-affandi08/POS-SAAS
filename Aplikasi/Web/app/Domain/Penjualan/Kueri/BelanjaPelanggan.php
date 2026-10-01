@@ -83,6 +83,38 @@ final class BelanjaPelanggan
     }
 
     /**
+     * Bahan segmen RFM CRM-07 untuk semua pelanggan yang pernah belanja (tanpa void): tanggal bisnis terakhir, jumlah
+     * transaksi seumur hidup, serta jumlah & total belanja sejak [dari] (tanggal bisnis, inklusif).
+     *
+     * @return array<int, array{TanggalTerakhir: string, JumlahSeluruhnya: int, JumlahPeriode: int, TotalPeriode: string}>
+     */
+    public function AmbilBahanRfm(string $dari): array
+    {
+        $hasil = [];
+
+        foreach (Penjualan::query()
+            ->whereNotNull('IdPelanggan')
+            ->where('Status', '!=', StatusPenjualan::Void->value)
+            ->groupBy('IdPelanggan')
+            ->selectRaw(
+                'IdPelanggan, MAX(TanggalBisnis) AS TanggalTerakhir, COUNT(*) AS JumlahSeluruhnya, '
+                .'SUM(CASE WHEN TanggalBisnis >= ? THEN 1 ELSE 0 END) AS JumlahPeriode, '
+                .'SUM(CASE WHEN TanggalBisnis >= ? THEN TotalAkhir ELSE 0 END) AS TotalPeriode',
+                [$dari, $dari],
+            )
+            ->get() as $b) {
+            $hasil[(int) $b->getAttribute('IdPelanggan')] = [
+                'TanggalTerakhir' => substr((string) $b->getAttribute('TanggalTerakhir'), 0, 10),
+                'JumlahSeluruhnya' => (int) $b->getAttribute('JumlahSeluruhnya'),
+                'JumlahPeriode' => (int) $b->getAttribute('JumlahPeriode'),
+                'TotalPeriode' => (string) ($b->getAttribute('TotalPeriode') ?? '0.00'),
+            ];
+        }
+
+        return $hasil;
+    }
+
+    /**
      * Penjualan terbaru pelanggan (semua status), terbaru dulu.
      *
      * @return list<array{Uuid: string, Nomor: string, TanggalBisnis: string, DibuatPada: string|null, Status: string, TotalAkhir: string}>

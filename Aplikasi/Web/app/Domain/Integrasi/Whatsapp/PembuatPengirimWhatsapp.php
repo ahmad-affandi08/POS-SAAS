@@ -94,4 +94,12 @@ final class PembuatPengirimWhatsapp
 
         return is_string($nama) && $nama !== '' ? $nama : null;
     }
+
+    /** Nama templat pemasaran untuk kampanye pesan CRM-07 (hanya WhatsApp Cloud API); null = kirim teks (penyedia tidak resmi). */
+    public function AmbilTemplatPromosi(): ?string
+    {
+        $nama = config('integrasi.Whatsapp.Pengaturan.NamaTemplatPromosi');
+
+        return is_string($nama) && $nama !== '' ? $nama : null;
+    }
 }

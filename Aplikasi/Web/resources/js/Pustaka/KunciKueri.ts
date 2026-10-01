@@ -16,6 +16,8 @@ export const KunciKueri = {
     },
     // PRD v3.12: kesiapan ekspor Faktur Pajak Keluaran Coretax per periode & outlet.
     FakturPajakCoretax: (saring: Record<string, string>) => ['FakturPajakCoretax', saring] as const,
+    // CRM-07: pratinjau jumlah penerima kampanye pesan untuk kanal & saringan segmen yang sedang diisi.
+    PratinjauKampanye: (kanal: string, segmen: string) => ['PratinjauKampanye', kanal, segmen] as const,
     // F-03: pemilih bahan/komponen (GET /kelola/produk/cari) dan polling status impor.
     Produk: {
         Cari: (kata: string, jenis: readonly string[]) => ['Produk', 'Cari', kata, [...jenis]] as const,

@@ -114,6 +114,9 @@ export default function HalamanDaftarPelanggan({ Pelanggan, Izin, OpsiTag, OpsiT
             {Izin.Kelola ? (
                 <AksiHalaman>
                     <Button asChild variant="outline">
+                        <Link href={`${AlamatPelanggan}/kampanye`}>Kampanye pesan</Link>
+                    </Button>
+                    <Button asChild variant="outline">
                         <Link href={`${AlamatPelanggan}/impor`}>Impor pelanggan</Link>
                     </Button>
                     <Button asChild>

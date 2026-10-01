@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Domain\Organisasi\Enum\IzinTenant;
 use App\Http\Kontroler\Kelola\Pelanggan\DepositPelangganKontroler;
 use App\Http\Kontroler\Kelola\Pelanggan\ImporPelangganKontroler;
+use App\Http\Kontroler\Kelola\Pelanggan\KampanyePesanKontroler;
 use App\Http\Kontroler\Kelola\Pelanggan\LoyaltiKontroler;
 use App\Http\Kontroler\Kelola\Pelanggan\PelangganKontroler;
 use App\Http\Kontroler\Kelola\Pelanggan\SesiPelangganKontroler;
@@ -51,6 +52,16 @@ Route::middleware([SiapkanAuditTenant::class, $izin(IzinTenant::PelangganLihat)]
     Route::middleware($izin(IzinTenant::PelangganKelola))->group(function () use ($ulid): void {
         Route::get('/buat', [PelangganKontroler::class, 'Buat'])->name('kelola.pelanggan.buat');
         // v3.36: impor (periksa → terapkan) & ekspor pelanggan; data pribadi, jadi `pelanggan.kelola`.
+        // CRM-07 (v3.44): kampanye pesan WhatsApp/email bersegmen; data pribadi & pemasaran, jadi `pelanggan.kelola`.
+        Route::get('/kampanye', [KampanyePesanKontroler::class, 'Daftar'])->name('kelola.pelanggan.kampanye.daftar');
+        Route::get('/kampanye/buat', [KampanyePesanKontroler::class, 'Buat'])->name('kelola.pelanggan.kampanye.buat');
+        Route::post('/kampanye', [KampanyePesanKontroler::class, 'Simpan'])->name('kelola.pelanggan.kampanye.simpan');
+        Route::post('/kampanye/pratinjau', [KampanyePesanKontroler::class, 'Pratinjau'])->middleware('throttle:30,1')->name('kelola.pelanggan.kampanye.pratinjau');
+        Route::get('/kampanye/{kampanye}', [KampanyePesanKontroler::class, 'Detail'])->where('kampanye', $ulid)->name('kelola.pelanggan.kampanye.detail');
+        Route::get('/kampanye/{kampanye}/ubah', [KampanyePesanKontroler::class, 'Ubah'])->where('kampanye', $ulid)->name('kelola.pelanggan.kampanye.ubah');
+        Route::put('/kampanye/{kampanye}', [KampanyePesanKontroler::class, 'Perbarui'])->where('kampanye', $ulid)->name('kelola.pelanggan.kampanye.perbarui');
+        Route::post('/kampanye/{kampanye}/jalankan', [KampanyePesanKontroler::class, 'Jalankan'])->where('kampanye', $ulid)->middleware('throttle:10,1')->name('kelola.pelanggan.kampanye.jalankan');
+        Route::post('/kampanye/{kampanye}/batal', [KampanyePesanKontroler::class, 'Batal'])->where('kampanye', $ulid)->name('kelola.pelanggan.kampanye.batal');
         Route::get('/impor', [ImporPelangganKontroler::class, 'Halaman'])->name('kelola.pelanggan.impor');
         Route::post('/impor', [ImporPelangganKontroler::class, 'Kirim'])->middleware('throttle:20,1')->name('kelola.pelanggan.impor.kirim');
         Route::get('/impor/templat', [ImporPelangganKontroler::class, 'Templat'])->name('kelola.pelanggan.impor.templat');
