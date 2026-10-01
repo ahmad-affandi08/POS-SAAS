@@ -4,9 +4,13 @@ declare(strict_types=1);
 
 namespace App\Domain\Akuntansi\Layanan;
 
+use App\Domain\Akuntansi\Enum\ArahGiro;
+use App\Domain\Akuntansi\Enum\StatusGiro;
+use App\Domain\Akuntansi\Model\Giro;
 use App\Domain\Akuntansi\Model\JadwalKasBank;
 use App\Domain\Akuntansi\Model\Jurnal;
 use App\Domain\Akuntansi\Model\KunciPeriode;
+use App\Domain\Bersama\Nilai\Uang;
 use App\Domain\Bersama\Tindakan\Data\DataButirTindakan;
 use App\Domain\Bersama\Tindakan\Data\DataKonteksTindakan;
 use App\Domain\Bersama\Tindakan\Data\DataRincianTindakan;
@@ -16,7 +20,7 @@ use App\Domain\Penjualan\Kueri\PembayaranBelumDicairkan;
 
 /**
  * Kotak Tindakan domain Akuntansi (D-23 C, izin `akuntansi.kelola`): transaksi rutin yang gagal dicatat otomatis
- * (D-23 D), uang non-tunai yang belum cair dari platform (F-08 BR-08.4), dan — mulai tanggal [TANGGAL_PENGINGAT] setiap
+ * (D-23 D), uang non-tunai yang belum cair dari platform (F-08 BR-08.4), giro yang sudah jatuh tempo (v3.42), dan — mulai tanggal [TANGGAL_PENGINGAT] setiap
  * bulan — bulan lalu yang sudah ada jurnalnya tetapi belum ditutup buku (F-15). Semuanya butir pengingat yang selesai
  * sendiri saat keadaannya berubah, jadi tidak ada yang perlu ditandai "sudah dicek".
  *
@@ -78,6 +82,30 @@ final class PenyediaTindakanAkuntansi implements PenyediaTindakan
                     $m['TanggalTerlama'],
                     '/kelola/akuntansi/pencairan/buat?metode='.$m['Uuid'],
                 ), array_slice($menunggu, 0, DataButirTindakan::BATAS_RINCIAN))),
+            );
+        }
+
+        // v3.42 (F-12): giro/cek mundur yang sudah sampai tanggal efektif tetapi belum dicatat cair atau ditolak.
+        $giro = Giro::query()->where('Status', StatusGiro::Menunggu->value)->where('TanggalJatuhTempo', '<=', $konteks->hariIni->toDateString())
+            ->orderBy('TanggalJatuhTempo')->orderBy('Id')->get();
+
+        if ($giro->isNotEmpty()) {
+            $butir[] = new DataButirTindakan(
+                'giro.jatuh-tempo',
+                'Keuangan',
+                TingkatTindakan::Penting,
+                'Giro sudah jatuh tempo',
+                'Setor/kliring gironya ke bank lalu catat cair, atau catat ditolak bila bank menolaknya.',
+                $giro->count(),
+                '/kelola/akuntansi/giro?saring[Status]=Menunggu',
+                'Lihat giro',
+                array_values($giro->take(DataButirTindakan::BATAS_RINCIAN)->map(fn (Giro $g): DataRincianTindakan => new DataRincianTindakan(
+                    $g->Uuid,
+                    "{$g->NomorGiro} {$g->NamaBank}",
+                    ($g->Arah === ArahGiro::Masuk ? 'Dari ' : 'Ke ').$g->NamaPihak.' · '.Uang::Dari($g->Jumlah)->FormatRupiah(),
+                    $g->TanggalJatuhTempo->toDateString(),
+                    '/kelola/akuntansi/giro?cari='.$g->Uuid,
+                ))->all()),
             );
         }
 

@@ -530,3 +530,31 @@ export type PropsRekonsiliasiBank = {
     HasilImpor: { Baru: number; Duplikat: number; Bermasalah: { Baris: number; Pesan: string }[] } | null;
     Izin: { Kelola: boolean };
 };
+
+/* v3.42 (F-12): giro/cek mundur. */
+export type StatusGiro = 'Menunggu' | 'Cair' | 'Ditolak';
+export type BarisGiro = {
+    Uuid: string;
+    Arah: 'Masuk' | 'Keluar';
+    NomorGiro: string;
+    NamaBank: string;
+    NamaPihak: string;
+    NomorSumber: string;
+    TanggalTerima: string;
+    TanggalJatuhTempo: string;
+    Jumlah: string;
+    Status: StatusGiro;
+    LabelStatus: string;
+    TanggalCair: string | null;
+    AlasanTolak: string | null;
+    JurnalCair: { Uuid: string; Nomor: string } | null;
+};
+export type RingkasanGiro = { MasukJumlah: number; MasukNilai: string; KeluarJumlah: number; KeluarNilai: string };
+export type PropsDaftarGiro = {
+    Giro: HasilTabel<BarisGiro, RingkasanGiro>;
+    OpsiStatus: Pilihan[];
+    OpsiArah: Pilihan[];
+    OpsiAkun: { Uuid: string; Kode: string; Nama: string }[];
+    HariIni: string;
+    Izin: { Kelola: boolean };
+};

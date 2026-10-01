@@ -56,6 +56,12 @@ enum PeranAkun: string
 
     case BebanPenyusutan = 'BebanPenyusutan';
 
+    // v3.42 (F-12 giro/cek mundur): giro dari pelanggan yang belum cair (aset) dan giro ke pemasok yang belum cair
+    // (kewajiban).
+    case GiroDiterima = 'GiroDiterima';
+
+    case HutangGiro = 'HutangGiro';
+
     /**
      * Kunci lama sebelum istilah kamus §13.7.1 ditetapkan (DesainF01 H1). Versi template yang sudah terbit tidak boleh
      * diubah (BR-P03.4), jadi kunci lama di dalamnya tetap dibaca lewat alias ini, bukan ditulis ulang.
@@ -102,10 +108,10 @@ enum PeranAkun: string
             self::KasOutlet, self::KasBrankas, self::Bank, self::PiutangPencairan, self::PiutangUsaha,
             self::PiutangKaryawan, self::PiutangKlaimPemasok, self::PiutangBelumDifakturkan,
             self::PersediaanBarangDagang, self::PersediaanBahanBaku,
-            self::PersediaanDalamPerjalanan, self::PpnMasukan, self::AsetTetap, self::AkumulasiPenyusutan => TipeAkun::Aset,
+            self::PersediaanDalamPerjalanan, self::PpnMasukan, self::AsetTetap, self::AkumulasiPenyusutan, self::GiroDiterima => TipeAkun::Aset,
             self::HutangUsaha, self::HutangBelumDifakturkan, self::HutangKonsinyasi, self::PpnKeluaran,
             self::HutangPbjt, self::UangMukaPelanggan, self::DepositPelanggan,
-            self::PendapatanDiterimaDimuka => TipeAkun::Kewajiban,
+            self::PendapatanDiterimaDimuka, self::HutangGiro => TipeAkun::Kewajiban,
             self::EkuitasSaldoAwal, self::LabaDitahan => TipeAkun::Ekuitas,
             self::Penjualan, self::DiskonPenjualan, self::ReturPenjualan, self::PendapatanJasa,
             self::PendapatanBiayaLayanan, self::PendapatanPengiriman, self::PendapatanLain => TipeAkun::Pendapatan,
@@ -190,6 +196,8 @@ enum PeranAkun: string
             self::AsetTetap => 'Aset tetap (harga perolehan)',
             self::AkumulasiPenyusutan => 'Akumulasi penyusutan aset tetap',
             self::BebanPenyusutan => 'Beban penyusutan',
+            self::GiroDiterima => 'Giro/cek mundur diterima (belum cair)',
+            self::HutangGiro => 'Hutang giro (giro keluar belum cair)',
         };
     }
 }

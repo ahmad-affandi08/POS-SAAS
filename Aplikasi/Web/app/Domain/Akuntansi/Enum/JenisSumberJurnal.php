@@ -77,6 +77,9 @@ enum JenisSumberJurnal: string
     // v3.41 (INV-14): biaya tambahan pembelian pihak ketiga (Dr persediaan/HPP, Cr kas/bank) dan pembatalannya.
     case BiayaTambahanPembelian = 'BiayaTambahanPembelian';
 
+    // v3.42 (F-12): pencairan giro/cek mundur ke rekening bank (sumber = baris `Giro`).
+    case Giro = 'Giro';
+
     public function AmbilLabel(): string
     {
         return match ($this) {
@@ -115,6 +118,7 @@ enum JenisSumberJurnal: string
             self::PenyusutanAset => 'Penyusutan aset tetap',
             self::PembayaranKonsinyasi => 'Setoran konsinyasi',
             self::BiayaTambahanPembelian => 'Biaya tambahan pembelian',
+            self::Giro => 'Pencairan giro',
         };
     }
 
@@ -160,6 +164,7 @@ enum JenisSumberJurnal: string
             self::AsetTetap, self::PenyusutanAset => '/kelola/akuntansi/aset-tetap/'.$uuid,
             self::PembayaranKonsinyasi => '/kelola/pembelian/konsinyasi/setoran/'.$uuid,
             self::BiayaTambahanPembelian => '/kelola/pembelian/biaya-tambahan/'.$uuid,
+            self::Giro => '/kelola/akuntansi/giro?cari='.$uuid,
         };
     }
 }

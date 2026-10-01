@@ -77,6 +77,13 @@
                         "Kontra": false
                     },
                     {
+                        "Kode": "1-1480",
+                        "Nama": "Giro Mundur Diterima",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
                         "Kode": "1-1500",
                         "Nama": "Persediaan Barang Dagang",
                         "Tipe": "Aset",
@@ -135,6 +142,13 @@
                     {
                         "Kode": "2-1150",
                         "Nama": "Hutang Belum Difakturkan (GRNI)",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1180",
+                        "Nama": "Hutang Giro",
                         "Tipe": "Kewajiban",
                         "SaldoNormal": "Kredit",
                         "Kontra": false
@@ -374,7 +388,9 @@
                     "PendapatanPengiriman": "4-3100",
                     "AsetTetap": "1-2000",
                     "AkumulasiPenyusutan": "1-2900",
-                    "BebanPenyusutan": "6-5000"
+                    "BebanPenyusutan": "6-5000",
+                    "GiroDiterima": "1-1480",
+                    "HutangGiro": "2-1180"
                 },
                 "Kategori": [
                     "Sembako",
@@ -599,6 +615,13 @@
                         "Kontra": false
                     },
                     {
+                        "Kode": "1-1480",
+                        "Nama": "Giro Mundur Diterima",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
                         "Kode": "1-1500",
                         "Nama": "Persediaan Barang Dagang",
                         "Tipe": "Aset",
@@ -657,6 +680,13 @@
                     {
                         "Kode": "2-1150",
                         "Nama": "Hutang Belum Difakturkan (GRNI)",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1180",
+                        "Nama": "Hutang Giro",
                         "Tipe": "Kewajiban",
                         "SaldoNormal": "Kredit",
                         "Kontra": false
@@ -910,7 +940,9 @@
                     "PendapatanPengiriman": "4-3100",
                     "AsetTetap": "1-2000",
                     "AkumulasiPenyusutan": "1-2900",
-                    "BebanPenyusutan": "6-5000"
+                    "BebanPenyusutan": "6-5000",
+                    "GiroDiterima": "1-1480",
+                    "HutangGiro": "2-1180"
                 },
                 "Kategori": [
                     "Kopi",
@@ -1133,6 +1165,13 @@
                         "Kontra": false
                     },
                     {
+                        "Kode": "1-1480",
+                        "Nama": "Giro Mundur Diterima",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
                         "Kode": "1-1500",
                         "Nama": "Persediaan Barang Dagang",
                         "Tipe": "Aset",
@@ -1191,6 +1230,13 @@
                     {
                         "Kode": "2-1150",
                         "Nama": "Hutang Belum Difakturkan (GRNI)",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1180",
+                        "Nama": "Hutang Giro",
                         "Tipe": "Kewajiban",
                         "SaldoNormal": "Kredit",
                         "Kontra": false
@@ -1444,7 +1490,9 @@
                     "PendapatanPengiriman": "4-3100",
                     "AsetTetap": "1-2000",
                     "AkumulasiPenyusutan": "1-2900",
-                    "BebanPenyusutan": "6-5000"
+                    "BebanPenyusutan": "6-5000",
+                    "GiroDiterima": "1-1480",
+                    "HutangGiro": "2-1180"
                 },
                 "Kategori": [
                     "Makanan",

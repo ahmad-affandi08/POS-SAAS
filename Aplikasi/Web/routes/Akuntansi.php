@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Domain\Organisasi\Enum\IzinTenant;
 use App\Http\Kontroler\Kelola\Akuntansi\AsetTetapKontroler;
 use App\Http\Kontroler\Kelola\Akuntansi\BaganAkunKontroler;
+use App\Http\Kontroler\Kelola\Akuntansi\GiroKontroler;
 use App\Http\Kontroler\Kelola\Akuntansi\JadwalKasBankKontroler;
 use App\Http\Kontroler\Kelola\Akuntansi\JurnalKontroler;
 use App\Http\Kontroler\Kelola\Akuntansi\LaporanKeuanganKontroler;
@@ -58,6 +59,8 @@ Route::middleware([SiapkanAuditTenant::class, $izin(IzinTenant::LaporanKeuanganL
     // FIN-09 (v3.39): rekonsiliasi bank per akun kas/bank.
     Route::get('/akuntansi/rekonsiliasi', [RekonsiliasiBankKontroler::class, 'Awal'])->name('kelola.akuntansi.rekonsiliasi.awal');
     Route::get('/akuntansi/rekonsiliasi/{akun}', [RekonsiliasiBankKontroler::class, 'Tampilkan'])->where('akun', $ulid)->name('kelola.akuntansi.rekonsiliasi');
+    // v3.42 (F-12): giro/cek mundur masuk & keluar.
+    Route::get('/akuntansi/giro', [GiroKontroler::class, 'Daftar'])->name('kelola.akuntansi.giro.daftar');
 
     Route::get('/akuntansi/laporan/buku-besar', [LaporanKeuanganKontroler::class, 'BukuBesar'])->name('kelola.akuntansi.laporan.buku-besar');
     Route::get('/akuntansi/laporan/buku-besar/ekspor', [LaporanKeuanganKontroler::class, 'EksporBukuBesar'])->name('kelola.akuntansi.laporan.buku-besar.ekspor');
@@ -109,4 +112,7 @@ Route::middleware([SiapkanAuditTenant::class, $izin(IzinTenant::AkuntansiKelola)
     Route::post('/akuntansi/rekonsiliasi/{akun}/impor', [RekonsiliasiBankKontroler::class, 'Impor'])->where('akun', $ulid)->middleware('throttle:20,1')->name('kelola.akuntansi.rekonsiliasi.impor');
     Route::post('/akuntansi/rekonsiliasi/{akun}/cocokkan-otomatis', [RekonsiliasiBankKontroler::class, 'CocokkanOtomatis'])->where('akun', $ulid)->name('kelola.akuntansi.rekonsiliasi.otomatis');
     Route::post('/akuntansi/rekonsiliasi/mutasi/{mutasiBank}', [RekonsiliasiBankKontroler::class, 'Putuskan'])->where('mutasiBank', $ulid)->name('kelola.akuntansi.rekonsiliasi.putuskan');
+    // v3.42 (F-12): giro cair ke bank atau ditolak (pelunasan/pembayaran asalnya dibatalkan).
+    Route::post('/akuntansi/giro/{giro}/cair', [GiroKontroler::class, 'Cairkan'])->where('giro', $ulid)->name('kelola.akuntansi.giro.cair');
+    Route::post('/akuntansi/giro/{giro}/tolak', [GiroKontroler::class, 'Tolak'])->where('giro', $ulid)->name('kelola.akuntansi.giro.tolak');
 });

@@ -1,6 +1,14 @@
 import { Link, router, usePage } from '@inertiajs/react';
 import { useState, type FormEvent } from 'react';
 
+import {
+    BidangCaraBayar,
+    BidangIsianGiro,
+    GiroKosong,
+    PeriksaGiro,
+    type CaraBayar,
+    type IsianGiro,
+} from '@/Komponen/Akuntansi/BidangGiro';
 import BilahAksiForm from '@/Komponen/Formulir/BilahAksiForm';
 import BidangBerkas from '@/Komponen/Formulir/BidangBerkas';
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
@@ -48,6 +56,8 @@ export default function HalamanFormPembayaran({
     const { props } = usePage<PropsBersamaAplikasi>();
     const galat = props.errors;
     const [akun, AturAkun] = useState(OpsiAkun[0]?.Uuid ?? '');
+    const [cara, AturCara] = useState<CaraBayar>('KasBank');
+    const [giro, AturGiro] = useState<IsianGiro>(GiroKosong);
     const [tanggal, AturTanggal] = useState(HariIni);
     const [catatan, AturCatatan] = useState('');
     const [berkas, AturBerkas] = useState<File[]>([]);
@@ -73,7 +83,15 @@ export default function HalamanFormPembayaran({
         peristiwa.preventDefault();
         AturPeriksa(true);
 
-        if (UuidPemasok === null || akun === '' || dibayar.length === 0 || adaGalatAlokasi) {
+        const galatGiro = cara === 'Giro' ? PeriksaGiro(giro, tanggal) : {};
+
+        if (
+            UuidPemasok === null ||
+            (cara === 'KasBank' && akun === '') ||
+            Object.keys(galatGiro).length > 0 ||
+            dibayar.length === 0 ||
+            adaGalatAlokasi
+        ) {
             return;
         }
 
@@ -81,7 +99,8 @@ export default function HalamanFormPembayaran({
             alamat,
             {
                 UuidPemasok,
-                UuidAkun: akun,
+                CaraBayar: cara,
+                ...(cara === 'KasBank' ? { UuidAkun: akun } : { Giro: giro }),
                 Tanggal: tanggal,
                 Catatan: catatan === '' ? null : catatan,
                 Lampiran: berkas[0] ?? null,
@@ -98,7 +117,19 @@ export default function HalamanFormPembayaran({
 
     return (
         <TataLetakAplikasi judul="Bayar hutang">
-            <DaftarGalatServer galat={galat} kecuali={['UuidPemasok', 'UuidAkun', 'Tanggal', 'Catatan', 'Lampiran']} />
+            <DaftarGalatServer
+                galat={galat}
+                kecuali={[
+                    'UuidPemasok',
+                    'UuidAkun',
+                    'Giro.NomorGiro',
+                    'Giro.NamaBank',
+                    'Giro.TanggalJatuhTempo',
+                    'Tanggal',
+                    'Catatan',
+                    'Lampiran',
+                ]}
+            />
             <form onSubmit={Simpan} noValidate aria-label="Bayar hutang" className="flex flex-col gap-4">
                 <Panel judul="Pembayaran" idJudul="judul-pembayaran">
                     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -117,15 +148,35 @@ export default function HalamanFormPembayaran({
                                 galat.UuidPemasok ?? (periksa && UuidPemasok === null ? 'Pilih pemasok.' : undefined)
                             }
                         />
-                        <BidangPilihan
-                            label="Dibayar dari akun"
-                            nilai={akun}
-                            kosong="Pilih akun kas/bank"
-                            opsi={OpsiAkun.map((a) => ({ Nilai: a.Uuid, Label: a.Nama, Keterangan: a.Kode }))}
-                            saatBerubah={AturAkun}
-                            required
-                            galat={galat.UuidAkun ?? (periksa && akun === '' ? 'Pilih akun kas/bank.' : undefined)}
-                        />
+                        <BidangCaraBayar label="Dibayar dengan" cara={cara} saatCara={AturCara} />
+                        {cara === 'KasBank' ? (
+                            <BidangPilihan
+                                label="Dibayar dari akun"
+                                nilai={akun}
+                                kosong="Pilih akun kas/bank"
+                                opsi={OpsiAkun.map((a) => ({ Nilai: a.Uuid, Label: a.Nama, Keterangan: a.Kode }))}
+                                saatBerubah={AturAkun}
+                                required
+                                galat={galat.UuidAkun ?? (periksa && akun === '' ? 'Pilih akun kas/bank.' : undefined)}
+                            />
+                        ) : (
+                            <BidangIsianGiro
+                                giro={giro}
+                                saatBerubah={AturGiro}
+                                tanggalMin={tanggal}
+                                galat={{
+                                    NomorGiro:
+                                        galat['Giro.NomorGiro'] ??
+                                        (periksa ? PeriksaGiro(giro, tanggal).NomorGiro : undefined),
+                                    NamaBank:
+                                        galat['Giro.NamaBank'] ??
+                                        (periksa ? PeriksaGiro(giro, tanggal).NamaBank : undefined),
+                                    TanggalJatuhTempo:
+                                        galat['Giro.TanggalJatuhTempo'] ??
+                                        (periksa ? PeriksaGiro(giro, tanggal).TanggalJatuhTempo : undefined),
+                                }}
+                            />
+                        )}
                         <PemilihTanggal
                             id="tanggal-pembayaran"
                             label="Tanggal bayar"

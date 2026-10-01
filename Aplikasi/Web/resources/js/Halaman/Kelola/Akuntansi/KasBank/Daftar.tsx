@@ -162,6 +162,9 @@ export default function HalamanTransaksiKasBank({
                     <Button asChild variant="outline">
                         <Link href="/kelola/akuntansi/rekonsiliasi">Rekonsiliasi bank</Link>
                     </Button>
+                    <Button asChild variant="outline">
+                        <Link href="/kelola/akuntansi/giro">Giro & cek mundur</Link>
+                    </Button>
                 </div>
             ) : (
                 <>
@@ -169,6 +172,9 @@ export default function HalamanTransaksiKasBank({
                     <div>
                         <Button asChild variant="outline">
                             <Link href="/kelola/akuntansi/rekonsiliasi">Rekonsiliasi bank</Link>
+                        </Button>
+                        <Button asChild variant="outline">
+                            <Link href="/kelola/akuntansi/giro">Giro & cek mundur</Link>
                         </Button>
                     </div>
                 </>

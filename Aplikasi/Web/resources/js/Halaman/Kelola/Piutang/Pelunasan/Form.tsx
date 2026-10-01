@@ -1,6 +1,14 @@
 import { Link, router, usePage } from '@inertiajs/react';
 import { useState, type FormEvent } from 'react';
 
+import {
+    BidangCaraBayar,
+    BidangIsianGiro,
+    GiroKosong,
+    PeriksaGiro,
+    type CaraBayar,
+    type IsianGiro,
+} from '@/Komponen/Akuntansi/BidangGiro';
 import BilahAksiForm from '@/Komponen/Formulir/BilahAksiForm';
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeksPanjang from '@/Komponen/Formulir/BidangTeksPanjang';
@@ -49,6 +57,8 @@ export default function HalamanFormPelunasan({
     const { props } = usePage<PropsBersamaAplikasi>();
     const galat = props.errors;
     const [akun, AturAkun] = useState(OpsiAkun[0]?.Uuid ?? '');
+    const [cara, AturCara] = useState<CaraBayar>('KasBank');
+    const [giro, AturGiro] = useState<IsianGiro>(GiroKosong);
     const [tanggal, AturTanggal] = useState(HariIni);
     const [catatan, AturCatatan] = useState('');
     const [alokasi, AturAlokasi] = useState<Record<string, string>>(() =>
@@ -77,7 +87,15 @@ export default function HalamanFormPelunasan({
         peristiwa.preventDefault();
         AturPeriksa(true);
 
-        if (UuidPelanggan === null || akun === '' || dilunasi.length === 0 || adaGalatAlokasi) {
+        const galatGiro = cara === 'Giro' ? PeriksaGiro(giro, tanggal) : {};
+
+        if (
+            UuidPelanggan === null ||
+            (cara === 'KasBank' && akun === '') ||
+            Object.keys(galatGiro).length > 0 ||
+            dilunasi.length === 0 ||
+            adaGalatAlokasi
+        ) {
             return;
         }
 
@@ -85,7 +103,8 @@ export default function HalamanFormPelunasan({
             alamat,
             {
                 UuidPelanggan,
-                UuidAkun: akun,
+                CaraBayar: cara,
+                ...(cara === 'KasBank' ? { UuidAkun: akun } : { Giro: giro }),
                 Tanggal: tanggal,
                 Catatan: catatan === '' ? null : catatan,
                 Alokasi: dilunasi.map((p) => ({ UuidPiutang: p.Uuid, Jumlah: alokasi[p.Uuid] ?? '0' })),
@@ -105,6 +124,9 @@ export default function HalamanFormPelunasan({
                 kecuali={[
                     'UuidPelanggan',
                     'UuidAkun',
+                    'Giro.NomorGiro',
+                    'Giro.NamaBank',
+                    'Giro.TanggalJatuhTempo',
                     'Tanggal',
                     'Catatan',
                     ...Piutang.map((p) => `Alokasi.${p.Uuid}`),
@@ -129,15 +151,35 @@ export default function HalamanFormPelunasan({
                             }
                             required
                         />
-                        <BidangPilihan
-                            label="Diterima di akun"
-                            nilai={akun}
-                            kosong="Pilih akun kas/bank"
-                            opsi={OpsiAkun.map((a) => ({ Nilai: a.Uuid, Label: a.Nama, Keterangan: a.Kode }))}
-                            saatBerubah={AturAkun}
-                            galat={galat.UuidAkun ?? (periksa && akun === '' ? 'Pilih akun kas/bank.' : undefined)}
-                            required
-                        />
+                        <BidangCaraBayar label="Diterima dalam bentuk" cara={cara} saatCara={AturCara} />
+                        {cara === 'KasBank' ? (
+                            <BidangPilihan
+                                label="Diterima di akun"
+                                nilai={akun}
+                                kosong="Pilih akun kas/bank"
+                                opsi={OpsiAkun.map((a) => ({ Nilai: a.Uuid, Label: a.Nama, Keterangan: a.Kode }))}
+                                saatBerubah={AturAkun}
+                                galat={galat.UuidAkun ?? (periksa && akun === '' ? 'Pilih akun kas/bank.' : undefined)}
+                                required
+                            />
+                        ) : (
+                            <BidangIsianGiro
+                                giro={giro}
+                                saatBerubah={AturGiro}
+                                tanggalMin={tanggal}
+                                galat={{
+                                    NomorGiro:
+                                        galat['Giro.NomorGiro'] ??
+                                        (periksa ? PeriksaGiro(giro, tanggal).NomorGiro : undefined),
+                                    NamaBank:
+                                        galat['Giro.NamaBank'] ??
+                                        (periksa ? PeriksaGiro(giro, tanggal).NamaBank : undefined),
+                                    TanggalJatuhTempo:
+                                        galat['Giro.TanggalJatuhTempo'] ??
+                                        (periksa ? PeriksaGiro(giro, tanggal).TanggalJatuhTempo : undefined),
+                                }}
+                            />
+                        )}
                         <PemilihTanggal
                             id="tanggal-pelunasan"
                             label="Tanggal terima"

@@ -7,10 +7,11 @@ namespace App\Http\Permintaan\Kelola\Piutang;
 use App\Domain\Bersama\Nilai\Uang;
 use App\Domain\Pelanggan\Aksi\SimpanPembayaranPiutang;
 use App\Domain\Pelanggan\Data\DataPembayaranPiutang;
+use App\Http\Permintaan\Kelola\AturanGiro;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Http\FormRequest;
 
-/** Isian pelunasan piutang (F-12): pelanggan, akun kas/bank, tanggal, dan alokasi per piutang (Uuid → jumlah). */
+/** Isian pelunasan piutang (F-12): pelanggan, akun kas/bank (v3.42: atau giro mundur), tanggal, dan alokasi per piutang. */
 final class SimpanPembayaranPiutangPermintaan extends FormRequest
 {
     private const UANG = 'regex:/^\d{1,16}(\.\d{1,2})?$/';
@@ -22,7 +23,7 @@ final class SimpanPembayaranPiutangPermintaan extends FormRequest
     {
         return [
             'UuidPelanggan' => ['required', 'string', 'ulid'],
-            'UuidAkun' => ['required', 'string', 'ulid'],
+            ...AturanGiro::Aturan(),
             'Tanggal' => ['required', 'date_format:Y-m-d'],
             'Catatan' => ['nullable', 'string', 'max:500'],
             'Alokasi' => ['required', 'array', 'min:1', 'max:'.SimpanPembayaranPiutang::MAKS_PIUTANG],
@@ -44,7 +45,7 @@ final class SimpanPembayaranPiutangPermintaan extends FormRequest
      */
     public function attributes(): array
     {
-        return ['UuidPelanggan' => 'pelanggan', 'UuidAkun' => 'akun kas/bank', 'Tanggal' => 'tanggal', 'Alokasi' => 'piutang yang dilunasi', 'Alokasi.*.Jumlah' => 'jumlah pelunasan'];
+        return ['UuidPelanggan' => 'pelanggan', 'UuidAkun' => 'akun kas/bank', 'Tanggal' => 'tanggal', 'Alokasi' => 'piutang yang dilunasi', 'Alokasi.*.Jumlah' => 'jumlah pelunasan', ...AturanGiro::Atribut()];
     }
 
     public function AmbilData(int $idPengguna): DataPembayaranPiutang
@@ -61,11 +62,12 @@ final class SimpanPembayaranPiutangPermintaan extends FormRequest
 
         return new DataPembayaranPiutang(
             (string) $this->validated('UuidPelanggan'),
-            (string) $this->validated('UuidAkun'),
+            (string) ($this->validated('UuidAkun') ?? ''),
             CarbonImmutable::createFromFormat('!Y-m-d', (string) $this->validated('Tanggal')) ?: CarbonImmutable::today(),
             $alokasi,
             is_string($catatan) && trim($catatan) !== '' ? trim($catatan) : null,
             $idPengguna,
+            AturanGiro::AmbilGiro($this->validated()),
         );
     }
 }

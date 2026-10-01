@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace App\Domain\Pelanggan\Aksi;
 
+use App\Domain\Akuntansi\Aksi\CatatGiro;
 use App\Domain\Akuntansi\Aksi\PostingJurnal;
 use App\Domain\Akuntansi\Data\DataBarisJurnal;
 use App\Domain\Akuntansi\Data\DataJurnal;
+use App\Domain\Akuntansi\Enum\ArahGiro;
+use App\Domain\Akuntansi\Enum\JenisSumberGiro;
 use App\Domain\Akuntansi\Enum\JenisSumberJurnal;
 use App\Domain\Akuntansi\Enum\PeranAkun;
 use App\Domain\Akuntansi\Kueri\DaftarAkunPilihan;
@@ -30,6 +33,7 @@ use Illuminate\Support\Facades\DB;
  * Pelunasan piutang (F-12, izin `akuntansi.kelola`) ke akun kas/bank untuk satu atau banyak piutang terbuka satu
  * pelanggan, boleh sebagian: tiap alokasi > 0 dan ≤ sisa. Tanggal tidak boleh setelah hari ini atau di periode terkunci.
  * Jurnal: Dr akun kas/bank, Cr `PiutangUsaha` per outlet piutang. Status piutang ikut sisa. Nomor `BP/{YYMM}/{SEQ4}`.
+ * v3.42: dengan giro/cek mundur debitnya Giro Mundur Diterima dan baris `Giro` dicatat (cair/tolak dari halaman giro).
  * Audit `pelunasan-piutang.posting`. Urutan kunci: piutang (urut Id) → pelunasan baru → penomor.
  */
 final class SimpanPembayaranPiutang
@@ -44,14 +48,19 @@ final class SimpanPembayaranPiutang
         private readonly TanggalBisnisOutlet $tanggalBisnis,
         private readonly PencatatRiwayatStatus $riwayat,
         private readonly PencatatAudit $audit,
+        private readonly CatatGiro $catatGiro,
     ) {}
 
     public function Jalankan(DataPembayaranPiutang $data): PembayaranPiutang
     {
-        $akun = $this->akun->CariKasBankDariUuid($data->uuidAkun);
+        $akun = $data->giro === null ? $this->akun->CariKasBankDariUuid($data->uuidAkun) : null;
 
-        if ($akun === null) {
+        if ($data->giro === null && $akun === null) {
             throw new PelanggaranAturanBisnis('AkunKasBankWajib', 'Pilih akun kas/bank aktif penerima pelunasan.', 'UuidAkun');
+        }
+
+        if ($data->giro !== null) {
+            $this->catatGiro->PeriksaIsian($data->giro, $data->tanggal);
         }
 
         $hariIni = $this->tanggalBisnis->Hitung(null);
@@ -62,7 +71,7 @@ final class SimpanPembayaranPiutang
 
         $this->penjagaPeriode->PastikanTerbuka($data->tanggal);
 
-        return DB::transaction(fn (): PembayaranPiutang => $this->Proses($data, $akun['Id']), 3);
+        return DB::transaction(fn (): PembayaranPiutang => $this->Proses($data, $akun['Id'] ?? $this->catatGiro->AmbilIdAkunPenampung(ArahGiro::Masuk)), 3);
     }
 
     private function Proses(DataPembayaranPiutang $data, int $idAkun): PembayaranPiutang
@@ -136,6 +145,10 @@ final class SimpanPembayaranPiutang
 
         $pembayaran->IdJurnal = $jurnal->idJurnal;
         $pembayaran->save();
+
+        if ($data->giro !== null) {
+            $this->catatGiro->Jalankan(ArahGiro::Masuk, JenisSumberGiro::PembayaranPiutang, $pembayaran->Id, $pembayaran->Nomor, $pelanggan->Nama, $data->giro, $data->tanggal, $total, $data->idPengguna);
+        }
 
         $this->riwayat->Catat(PembayaranPiutang::JENIS_DOKUMEN, $pembayaran->Id, null, StatusPembayaranPiutang::Diposting->value, $data->idPengguna);
         $this->audit->Catat('pelunasan-piutang.posting', $pembayaran, nilaiBaru: [

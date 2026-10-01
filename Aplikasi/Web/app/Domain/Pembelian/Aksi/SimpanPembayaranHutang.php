@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace App\Domain\Pembelian\Aksi;
 
+use App\Domain\Akuntansi\Aksi\CatatGiro;
 use App\Domain\Akuntansi\Aksi\PostingJurnal;
 use App\Domain\Akuntansi\Data\DataBarisJurnal;
 use App\Domain\Akuntansi\Data\DataJurnal;
+use App\Domain\Akuntansi\Enum\ArahGiro;
+use App\Domain\Akuntansi\Enum\JenisSumberGiro;
 use App\Domain\Akuntansi\Enum\JenisSumberJurnal;
 use App\Domain\Akuntansi\Enum\PeranAkun;
 use App\Domain\Akuntansi\Kueri\DaftarAkunPilihan;
@@ -33,7 +36,8 @@ use Throwable;
 /**
  * Pembayaran hutang (F-04 fase 1, izin `pembelian.kelola`) dari akun kas/bank (`Akun.KasBank`) untuk satu atau banyak
  * faktur satu pemasok, boleh sebagian: tiap alokasi > 0 dan ≤ sisa faktur. Jurnal J-04.4: Dr `HutangUsaha` per outlet
- * faktur, Cr akun kas/bank. Status faktur ikut sisa (DibayarSebagian/Lunas). Audit `pembayaran-hutang.posting`.
+ * faktur, Cr akun kas/bank (v3.42: atau Cr Hutang Giro bila dibayar dengan giro mundur; baris `Giro` dicatat).
+ * Status faktur ikut sisa (DibayarSebagian/Lunas). Audit `pembayaran-hutang.posting`.
  *
  * Urutan kunci: faktur (urut Id) → pembayaran baru → penghitung BH & JU (L7).
  */
@@ -50,6 +54,7 @@ final class SimpanPembayaranHutang
         private readonly PenyimpanLampiranPembelian $lampiran,
         private readonly PencatatRiwayatStatus $riwayat,
         private readonly PencatatAudit $audit,
+        private readonly CatatGiro $catatGiro,
     ) {}
 
     /**
@@ -57,16 +62,20 @@ final class SimpanPembayaranHutang
      */
     public function Jalankan(DataPembayaranHutang $data): PembayaranHutang
     {
-        $akun = $this->akun->CariKasBankDariUuid($data->uuidAkun);
+        $akun = $data->giro === null ? $this->akun->CariKasBankDariUuid($data->uuidAkun) : null;
 
-        if ($akun === null) {
+        if ($data->giro === null && $akun === null) {
             throw new PelanggaranAturanBisnis('AkunKasBankWajib', 'Pilih akun kas/bank aktif sebagai sumber pembayaran.', 'UuidAkun');
+        }
+
+        if ($data->giro !== null) {
+            $this->catatGiro->PeriksaIsian($data->giro, $data->tanggal);
         }
 
         $berkas = $data->lampiran === null ? null : $this->lampiran->Simpan($this->konteks->Wajib(), 'pembayaran', $data->lampiran);
 
         try {
-            return DB::transaction(fn (): PembayaranHutang => $this->Proses($data, $akun['Id'], $berkas), 3);
+            return DB::transaction(fn (): PembayaranHutang => $this->Proses($data, $akun['Id'] ?? $this->catatGiro->AmbilIdAkunPenampung(ArahGiro::Keluar), $berkas), 3);
         } catch (Throwable $galat) {
             if ($berkas !== null) {
                 $this->lampiran->Hapus($berkas['PathLampiran']);
@@ -159,6 +168,10 @@ final class SimpanPembayaranHutang
 
         $pembayaran->IdJurnal = $jurnal->idJurnal;
         $pembayaran->save();
+
+        if ($data->giro !== null) {
+            $this->catatGiro->Jalankan(ArahGiro::Keluar, JenisSumberGiro::PembayaranHutang, $pembayaran->Id, $pembayaran->Nomor, $pemasok->Nama, $data->giro, $data->tanggal, $total, $data->idPengguna);
+        }
 
         $this->riwayat->Catat(PembayaranHutang::JENIS_DOKUMEN, $pembayaran->Id, null, StatusDokumenTerposting::Diposting->value, $data->idPengguna);
         $this->audit->Catat('pembayaran-hutang.posting', $pembayaran, nilaiBaru: [

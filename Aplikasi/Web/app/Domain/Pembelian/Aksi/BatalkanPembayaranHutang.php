@@ -5,7 +5,10 @@ declare(strict_types=1);
 namespace App\Domain\Pembelian\Aksi;
 
 use App\Domain\Akuntansi\Aksi\BalikkanJurnal;
+use App\Domain\Akuntansi\Enum\JenisSumberGiro;
 use App\Domain\Akuntansi\Enum\JenisSumberJurnal;
+use App\Domain\Akuntansi\Enum\StatusGiro;
+use App\Domain\Akuntansi\Kueri\StatusGiroSumber;
 use App\Domain\Bersama\Audit\Layanan\PencatatAudit;
 use App\Domain\Bersama\Dokumen\Enum\StatusDokumenTerposting;
 use App\Domain\Bersama\Dokumen\Layanan\PencatatRiwayatStatus;
@@ -31,12 +34,13 @@ final class BatalkanPembayaranHutang
         private readonly BalikkanJurnal $balikkan,
         private readonly PencatatRiwayatStatus $riwayat,
         private readonly PencatatAudit $audit,
+        private readonly StatusGiroSumber $statusGiro,
     ) {}
 
     /**
      * @throws PelanggaranAturanBisnis AlasanTidakValid, BagianBelanjaStok, BagianKompensasi
      */
-    public function Jalankan(PembayaranHutang $pembayaran, string $alasan, int $idPengguna): PembayaranHutang
+    public function Jalankan(PembayaranHutang $pembayaran, string $alasan, int $idPengguna, bool $olehGiro = false): PembayaranHutang
     {
         $alasan = trim($alasan);
 
@@ -44,13 +48,25 @@ final class BatalkanPembayaranHutang
             throw new PelanggaranAturanBisnis('AlasanTidakValid', 'Alasan pembatalan wajib diisi, 5 sampai 255 karakter.', 'Alasan');
         }
 
-        return DB::transaction(function () use ($pembayaran, $alasan, $idPengguna): PembayaranHutang {
+        return DB::transaction(function () use ($pembayaran, $alasan, $idPengguna, $olehGiro): PembayaranHutang {
             $alokasi = PembayaranHutangAlokasi::query()->where('IdPembayaranHutang', $pembayaran->Id)->get();
             $faktur = FakturPembelian::query()->whereIn('Id', $alokasi->pluck('IdFakturPembelian')->all())->orderBy('Id')->lockForUpdate()->get()->keyBy('Id');
             $terkunci = PembayaranHutang::query()->whereKey($pembayaran->Id)->lockForUpdate()->firstOrFail();
 
             if ($terkunci->Status === StatusDokumenTerposting::Dibatalkan) {
                 return $terkunci;
+            }
+
+            // v3.42: pembayaran dengan giro mundur dibatalkan lewat "Tolak giro" (giro ditandai ditolak); yang sudah cair
+            // tidak bisa dibatalkan karena uangnya sudah masuk/keluar rekening.
+            $statusGiro = $this->statusGiro->Ambil(JenisSumberGiro::PembayaranHutang, $terkunci->Id);
+
+            if ($statusGiro === StatusGiro::Cair) {
+                throw new PelanggaranAturanBisnis('GiroSudahCair', 'Giro pembayaran ini sudah cair. Koreksi lewat transaksi kas & bank.');
+            }
+
+            if ($statusGiro === StatusGiro::Menunggu && ! $olehGiro) {
+                throw new PelanggaranAturanBisnis('PakaiTolakGiro', 'Pembayaran ini memakai giro yang belum cair. Batalkan lewat "Tolak giro" di halaman Giro.');
             }
 
             if ($terkunci->BelanjaStok) {

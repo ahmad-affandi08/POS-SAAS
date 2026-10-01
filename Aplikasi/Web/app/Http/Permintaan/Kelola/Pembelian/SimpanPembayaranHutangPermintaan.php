@@ -6,11 +6,12 @@ namespace App\Http\Permintaan\Kelola\Pembelian;
 
 use App\Domain\Pembelian\Aksi\SimpanPembayaranHutang;
 use App\Domain\Pembelian\Data\DataPembayaranHutang;
+use App\Http\Permintaan\Kelola\AturanGiro;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\UploadedFile;
 
-/** Isian pembayaran hutang (F-04 fase 1): akun kas/bank dan alokasi per faktur (Uuid → jumlah). */
+/** Isian pembayaran hutang (F-04 fase 1): akun kas/bank (v3.42: atau giro mundur) dan alokasi per faktur. */
 final class SimpanPembayaranHutangPermintaan extends FormRequest
 {
     /**
@@ -20,7 +21,7 @@ final class SimpanPembayaranHutangPermintaan extends FormRequest
     {
         return [
             'UuidPemasok' => ['required', 'string', 'ulid'],
-            'UuidAkun' => ['required', 'string', 'ulid'],
+            ...AturanGiro::Aturan(),
             'Tanggal' => ['required', 'date_format:Y-m-d'],
             'Catatan' => ['nullable', 'string', 'max:500'],
             'Lampiran' => AturanPembelian::Lampiran(),
@@ -43,7 +44,7 @@ final class SimpanPembayaranHutangPermintaan extends FormRequest
      */
     public function attributes(): array
     {
-        return ['UuidPemasok' => 'pemasok', 'UuidAkun' => 'akun kas/bank', 'Tanggal' => 'tanggal', 'Alokasi' => 'faktur yang dibayar', 'Alokasi.*.Jumlah' => 'jumlah bayar', 'Lampiran' => 'lampiran'];
+        return ['UuidPemasok' => 'pemasok', 'UuidAkun' => 'akun kas/bank', 'Tanggal' => 'tanggal', 'Alokasi' => 'faktur yang dibayar', 'Alokasi.*.Jumlah' => 'jumlah bayar', 'Lampiran' => 'lampiran', ...AturanGiro::Atribut()];
     }
 
     public function AmbilData(int $idPengguna): DataPembayaranHutang
@@ -60,12 +61,13 @@ final class SimpanPembayaranHutangPermintaan extends FormRequest
 
         return new DataPembayaranHutang(
             (string) $this->validated('UuidPemasok'),
-            (string) $this->validated('UuidAkun'),
+            (string) ($this->validated('UuidAkun') ?? ''),
             AturanPembelian::Tanggal($this->validated('Tanggal')) ?? CarbonImmutable::today(),
             $alokasi,
             AturanPembelian::Teks($this->validated('Catatan')),
             $berkas instanceof UploadedFile ? $berkas : null,
             $idPengguna,
+            AturanGiro::AmbilGiro($this->validated()),
         );
     }
 }

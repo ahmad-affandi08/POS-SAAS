@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Pembelian\Data;
 
+use App\Domain\Akuntansi\Data\DataGiroMasukan;
 use App\Domain\Bersama\Nilai\Uang;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\UploadedFile;
@@ -24,5 +25,6 @@ final readonly class DataPembayaranHutang
         public ?string $catatan,
         public ?UploadedFile $lampiran,
         public int $idPengguna,
+        public ?DataGiroMasukan $giro = null,
     ) {}
 }
