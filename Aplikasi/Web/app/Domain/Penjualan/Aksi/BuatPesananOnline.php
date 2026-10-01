@@ -10,6 +10,7 @@ use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Bersama\Nilai\Uang;
 use App\Domain\Katalog\Model\Produk;
 use App\Domain\Katalog\Model\ProdukSatuan;
+use App\Domain\Pelanggan\Kueri\IdentitasPelanggan;
 use App\Domain\Pelanggan\Layanan\NomorHp;
 use App\Domain\Penjualan\Data\DataKonteksPesanSendiri;
 use App\Domain\Penjualan\Enum\JenisPemenuhanOnline;
@@ -25,17 +26,27 @@ use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
+/**
+ * F-17 toko online: checkout tamu atau pembeli yang sudah masuk. `$idPelanggan` (F-17 bagian 3) = pembeli yang masuk
+ * lewat kode WhatsApp: pesanan tertaut ke `Pelanggan`-nya, nomor HP diambil dari pelanggan (nomor ketikan diabaikan,
+ * karena nomor itulah yang sudah diverifikasi), dan harga tier/promo pelanggan ikut dihitung. Tanpa masuk, pesanan
+ * tidak pernah ditautkan ke pelanggan walau nomornya cocok: nomor ketikan tamu belum terbukti miliknya.
+ */
 final class BuatPesananOnline
 {
     public const BATAS_AKTIF_PER_IP = 10;
 
-    public function __construct(private readonly PenghitungTokoOnline $penghitung, private readonly PenomorDokumen $penomor) {}
+    public function __construct(
+        private readonly PenghitungTokoOnline $penghitung,
+        private readonly PenomorDokumen $penomor,
+        private readonly IdentitasPelanggan $pelanggan,
+    ) {}
 
     /**
      * @param  array<string, mixed>  $data
      * @return array{0: PesananOnline, 1: bool}
      */
-    public function Jalankan(DataKonteksPesanSendiri $konteks, array $data, ?string $hashIp): array
+    public function Jalankan(DataKonteksPesanSendiri $konteks, array $data, ?string $hashIp, ?int $idPelanggan = null): array
     {
         $uuid = strtoupper((string) $data['Uuid']);
         $lama = PesananOnline::query()->where('Uuid', $uuid)->first();
@@ -44,7 +55,9 @@ final class BuatPesananOnline
             return [$lama, false];
         }
 
-        $noHp = NomorHp::Normalisasi((string) $data['NoHp']);
+        $noHp = $idPelanggan === null
+            ? NomorHp::Normalisasi((string) $data['NoHp'])
+            : ($this->pelanggan->AmbilKontak($idPelanggan)['NoHp'] ?? null);
 
         if ($noHp === null) {
             throw new PelanggaranAturanBisnis('NomorHpTidakValid', 'Nomor HP tidak valid.', 'NoHp');
@@ -85,10 +98,10 @@ final class BuatPesananOnline
             'UuidProduk' => strtoupper((string) $b['UuidProduk']), 'Jumlah' => (int) $b['Jumlah'],
             'Pilihan' => array_values((array) ($b['Pilihan'] ?? [])),
             'UuidVarian' => is_string($b['UuidVarian'] ?? null) ? strtoupper($b['UuidVarian']) : null,
-        ], $barisMasukan), $pemenuhan, is_string($data['KodePos'] ?? null) ? $data['KodePos'] : null);
+        ], $barisMasukan), $pemenuhan, is_string($data['KodePos'] ?? null) ? $data['KodePos'] : null, $idPelanggan);
 
         try {
-            return DB::transaction(function () use ($konteks, $data, $uuid, $noHp, $hashNoHp, $pemenuhan, $pembayaran, $hashIp, $hitung, $barisMasukan): array {
+            return DB::transaction(function () use ($konteks, $data, $uuid, $noHp, $hashNoHp, $pemenuhan, $pembayaran, $hashIp, $hitung, $barisMasukan, $idPelanggan): array {
                 $statusFinal = StatusPesananOnline::NilaiFinal();
                 if ($hashIp !== null && PesananOnline::query()->where('HashIp', $hashIp)->whereNotIn('Status', $statusFinal)->count() >= self::BATAS_AKTIF_PER_IP) {
                     throw new PelanggaranAturanBisnis('TerlaluBanyakPesanan', 'Terlalu banyak pesanan aktif. Tunggu pesanan sebelumnya selesai.', 'Umum', 429);
@@ -103,7 +116,7 @@ final class BuatPesananOnline
                 $perkiraan = PenghitungPesanSendiri::KeLarik($hitung['Perkiraan']);
                 $pajak = array_reduce($perkiraan['Pajak'], fn (Uang $jumlah, array $p): Uang => $jumlah->Tambah(Uang::Dari($p['Jumlah'])), Uang::Nol());
                 $pesanan = PesananOnline::query()->create([
-                    'Uuid' => $uuid, 'IdOutlet' => $konteks->idOutlet, 'KodeAkses' => Str::upper(Str::random(16)),
+                    'Uuid' => $uuid, 'IdOutlet' => $konteks->idOutlet, 'IdPelanggan' => $idPelanggan, 'KodeAkses' => Str::upper(Str::random(16)),
                     'Nomor' => $nomor,
                     'JenisPemenuhan' => $pemenuhan, 'MetodePembayaran' => $pembayaran,
                     'NamaPelanggan' => trim((string) $data['NamaPelanggan']), 'NoHp' => $noHp,

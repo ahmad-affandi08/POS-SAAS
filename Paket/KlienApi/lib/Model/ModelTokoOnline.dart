@@ -1,3 +1,4 @@
+import 'ModelPelanggan.dart';
 import 'UraiJson.dart';
 
 /// Baris pesanan toko online dengan harga saat dipesan (F-17 bagian 1), dipakai kasir sebagai harga saat menagih.
@@ -58,6 +59,7 @@ class PesananOnlinePos {
     required this.catatan,
     required this.dibuatPada,
     required this.baris,
+    this.pelanggan,
   });
 
   final String uuid;
@@ -86,9 +88,13 @@ class PesananOnlinePos {
   final DateTime? dibuatPada;
   final List<BarisPesananOnlinePos> baris;
 
+  /// F-17 bagian 3: pembeli yang masuk dengan kode WhatsApp (bentuk sama dengan hasil cari pelanggan); null = tamu
+  /// atau server lama.
+  final PelangganPos? pelanggan;
+
   bool get CekKirim => jenisPemenuhan == 'Kirim';
 
-  static PesananOnlinePos DariJson(Map<String, Object?> json) => PesananOnlinePos(
+  static PesananOnlinePos DariJson(Map<String, Object?> json, {String? tanggalBisnis}) => PesananOnlinePos(
     uuid: UraiJson.AmbilTeks(json['Uuid']),
     nomor: UraiJson.AmbilTeks(json['Nomor']),
     namaPelanggan: UraiJson.AmbilTeks(json['NamaPelanggan']),
@@ -104,6 +110,10 @@ class PesananOnlinePos {
     catatan: UraiJson.AmbilTeksAtauNull(json['Catatan']),
     dibuatPada: DateTime.tryParse(UraiJson.AmbilTeks(json['DibuatPada'])),
     baris: UraiJson.AmbilDaftarPeta(json['Baris']).map(BarisPesananOnlinePos.DariJson).toList(),
+    pelanggan: switch (UraiJson.AmbilPetaAtauNull(json['Pelanggan'])) {
+      final Map<String, Object?> p => PelangganPos.DariJson(p, tanggalBisnis: tanggalBisnis),
+      null => null,
+    },
   );
 }
 
@@ -119,7 +129,10 @@ class HasilPesananOnline {
   static HasilPesananOnline DariJson(Map<String, Object?> json) {
     final metode = UraiJson.AmbilPetaAtauNull(json['MetodeUangMuka']);
     return HasilPesananOnline(
-      pesanan: UraiJson.AmbilDaftarPeta(json['Pesanan']).map(PesananOnlinePos.DariJson).toList(),
+      pesanan: [
+        for (final p in UraiJson.AmbilDaftarPeta(json['Pesanan']))
+          PesananOnlinePos.DariJson(p, tanggalBisnis: UraiJson.AmbilTeksAtauNull(json['TanggalBisnis'])),
+      ],
       uuidMetodeUangMuka: metode == null ? null : UraiJson.AmbilTeks(metode['Uuid']),
       namaMetodeUangMuka: metode == null ? null : UraiJson.AmbilTeks(metode['Nama']),
     );

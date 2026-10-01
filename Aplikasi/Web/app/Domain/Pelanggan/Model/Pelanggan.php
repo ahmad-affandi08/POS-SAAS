@@ -17,6 +17,7 @@ use Illuminate\Support\Carbon;
  * @property int $IdTenant
  * @property string $Nama
  * @property string $NoHp
+ * @property Carbon|null $NoHpTerverifikasiPada
  * @property string|null $Email
  * @property Carbon|null $TanggalLahir
  * @property string|null $Alamat
@@ -55,6 +56,7 @@ final class Pelanggan extends ModelDasar
     {
         return [
             'TanggalLahir' => 'date',
+            'NoHpTerverifikasiPada' => 'datetime',
             'Npwp' => 'encrypted',
             'Nik' => 'encrypted',
             'Tag' => 'array',

@@ -24,6 +24,8 @@ use App\Domain\Penjualan\Model\ZonaPengiriman;
  *
  * `Ongkir` yang dikembalikan **kotor** (tarif zona, atau Rp 0 bila `GratisMulai` terpenuhi), `DiskonOngkir` potongan
  * promonya; yang dibayar pembeli = `Ongkir − DiskonOngkir` dan sudah termasuk di `Total`.
+ *
+ * `$idPelanggan` = pembeli yang sudah masuk (F-17 bagian 3): harga tier & promo bersyarat pelanggan ikut dihitung.
  */
 final class PenghitungTokoOnline
 {
@@ -33,9 +35,9 @@ final class PenghitungTokoOnline
      * @param  list<array{UuidProduk: string, Jumlah: int, Pilihan: list<string>, UuidVarian?: string|null}>  $baris
      * @return array<string, mixed>
      */
-    public function Hitung(DataKonteksPesanSendiri $konteks, array $baris, JenisPemenuhanOnline $pemenuhan, ?string $kodePos): array
+    public function Hitung(DataKonteksPesanSendiri $konteks, array $baris, JenisPemenuhanOnline $pemenuhan, ?string $kodePos, ?int $idPelanggan = null): array
     {
-        $hasil = $this->dasar->Hitung($konteks, $baris, KanalPenjualan::Online, true);
+        $hasil = $this->dasar->Hitung($konteks, $baris, KanalPenjualan::Online, true, null, $idPelanggan);
         $pengaturan = PengaturanTokoOnline::query()->firstOrFail();
         $outlet = Outlet::query()->findOrFail($konteks->idOutlet);
         $total = $hasil['Perkiraan']['Total'];
@@ -73,7 +75,7 @@ final class PenghitungTokoOnline
             $ongkir = $gratis ? Uang::Nol() : Uang::Dari($zona->Ongkir);
 
             if (! $ongkir->BernilaiNol()) {
-                $hasil = $this->dasar->Hitung($konteks, $baris, KanalPenjualan::Online, true, $ongkir);
+                $hasil = $this->dasar->Hitung($konteks, $baris, KanalPenjualan::Online, true, $ongkir, $idPelanggan);
                 $diskonOngkir = $hasil['Perkiraan']['DiskonKirim'] ?? Uang::Nol();
                 $total = $hasil['Perkiraan']['Total'];
             }

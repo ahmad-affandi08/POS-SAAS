@@ -1,4 +1,4 @@
-import { Head, router, useForm } from '@inertiajs/react';
+import { Head, Link, router, useForm } from '@inertiajs/react';
 import { ExternalLinkIcon } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
@@ -55,6 +55,8 @@ type Pesanan = {
     Nomor: string;
     NamaPelanggan: string;
     NoHp: string;
+    /** F-17 bagian 3: pembeli yang masuk dengan WhatsApp → pelanggan toko yang sama dengan pelanggan kasir. */
+    Pelanggan: { Uuid: string; Nama: string } | null;
     Alamat: string | null;
     Kelurahan: string | null;
     Kecamatan: string | null;
@@ -81,11 +83,13 @@ type Pesanan = {
 type Opsi = { Nilai: string; Label: string };
 type Props = {
     TautanPublik: string;
+    AkunPembeliTersedia: boolean;
     Pengaturan: {
         Aktif: boolean;
         BayarSaatAmbilAktif: boolean;
         CodAktif: boolean;
         QrisAktif: boolean;
+        AkunPelangganAktif: boolean;
         MinimalPesanan: string;
         MenitKedaluwarsa: number;
         PesanTutup: string | null;
@@ -185,6 +189,18 @@ function FormPengaturan({ props }: { props: Props }) {
                     nilai={form.data.QrisAktif}
                     saatBerubah={(v) => form.setData('QrisAktif', v)}
                 />
+            </div>
+            <div className="flex flex-col gap-1 sm:col-span-2">
+                <KotakCentang
+                    label="Pembeli bisa masuk dengan kode WhatsApp (riwayat belanja, poin, harga member)"
+                    nilai={form.data.AkunPelangganAktif}
+                    saatBerubah={(v) => form.setData('AkunPelangganAktif', v)}
+                />
+                <p className="text-keterangan text-teks-sekunder">
+                    {props.AkunPembeliTersedia
+                        ? 'Pembeli yang masuk tercatat sebagai pelanggan toko, sama dengan pelanggan di kasir. Tanpa masuk tetap bisa memesan.'
+                        : 'Belum aktif: WhatsApp platform belum tersambung, jadi tombol Masuk belum tampil di toko. Pesanan tamu tetap berjalan.'}
+                </p>
             </div>
             <div className="sm:col-span-2">
                 <BidangTeks
@@ -574,6 +590,17 @@ export default function DaftarTokoOnline(props: Props) {
                                         <p>
                                             {p.NamaPelanggan} · {p.NoHp}
                                         </p>
+                                        {p.Pelanggan ? (
+                                            <p className="text-keterangan">
+                                                Pelanggan terdaftar:{' '}
+                                                <Link
+                                                    href={`/kelola/pelanggan/${p.Pelanggan.Uuid}`}
+                                                    className="text-brand underline"
+                                                >
+                                                    {p.Pelanggan.Nama}
+                                                </Link>
+                                            </p>
+                                        ) : null}
                                         <p className="text-keterangan text-teks-sekunder">
                                             {p.DibuatPada ? FormatTanggalWaktu(p.DibuatPada) : '-'} ·{' '}
                                             {p.JenisPemenuhan === 'Kirim' ? 'Dikirim' : 'Ambil sendiri'}

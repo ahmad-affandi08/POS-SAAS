@@ -55,10 +55,19 @@ final class AdaptorMetaCloud extends AdaptorWhatsappDasar
             $isi += ['type' => 'template', 'template' => [
                 'name' => $pesan->namaTemplat,
                 'language' => ['code' => $this->Pengaturan('BahasaTemplat') !== '' ? $this->Pengaturan('BahasaTemplat') : 'id'],
-                'components' => $pesan->parameterTemplat === [] ? [] : [[
-                    'type' => 'body',
-                    'parameters' => array_map(fn (string $nilai): array => ['type' => 'text', 'text' => $nilai], $pesan->parameterTemplat),
-                ]],
+                'components' => [
+                    ...($pesan->parameterTemplat === [] ? [] : [[
+                        'type' => 'body',
+                        'parameters' => array_map(fn (string $nilai): array => ['type' => 'text', 'text' => $nilai], $pesan->parameterTemplat),
+                    ]]),
+                    // Templat autentikasi: tombol "salin kode" (sub_type url, indeks 0) wajib membawa kodenya juga.
+                    ...($pesan->kodeSalin === null ? [] : [[
+                        'type' => 'button',
+                        'sub_type' => 'url',
+                        'index' => '0',
+                        'parameters' => [['type' => 'text', 'text' => $pesan->kodeSalin]],
+                    ]]),
+                ],
             ]];
         } else {
             $isi += ['type' => 'text', 'text' => ['preview_url' => true, 'body' => $pesan->teks]];

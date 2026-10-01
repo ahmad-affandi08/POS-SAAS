@@ -1,5 +1,5 @@
 import { Head } from '@inertiajs/react';
-import { MinusIcon, PlusIcon, ShoppingBagIcon, Trash2Icon } from 'lucide-react';
+import { MinusIcon, PlusIcon, ShoppingBagIcon, Trash2Icon, UserRoundIcon } from 'lucide-react';
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
@@ -7,6 +7,11 @@ import BidangTeksPanjang from '@/Komponen/Formulir/BidangTeksPanjang';
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import KotakCentang from '@/Komponen/Formulir/KotakCentang';
 import Tombol from '@/Komponen/Formulir/Tombol';
+import DialogMasukPembeli, {
+    type AlamatPembeli,
+    type HasilMasukPembeli,
+    type ProfilPembeli,
+} from '@/Komponen/TokoOnline/DialogMasukPembeli';
 import JudulHalaman from '@/Komponen/Umpan/JudulHalaman';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import { FormatRupiah } from '@/Pustaka/Format';
@@ -53,6 +58,8 @@ type Props = {
     MinimalPesanan: string;
     PesanTutup: string | null;
     Menu: { Kategori: { Uuid: string; Nama: string }[]; Produk: Produk[] };
+    /** F-17 bagian 3: akun pembeli opsional (masuk dengan kode WhatsApp). */
+    Akun: { Aktif: boolean; Pelanggan: ProfilPembeli | null; AlamatTerakhir: AlamatPembeli | null };
 };
 
 async function Kirim<T>(url: string, badan: unknown): Promise<T> {
@@ -77,11 +84,14 @@ export default function TokoOnline({
     MinimalPesanan,
     PesanTutup,
     Menu,
+    Akun,
 }: Props) {
+    const [pembeli, AturPembeli] = useState<ProfilPembeli | null>(Akun.Pelanggan);
+    const [dialogMasuk, AturDialogMasuk] = useState(false);
     const [baris, AturBaris] = useState<Baris[]>([]);
     const [pilihanProduk, AturPilihanProduk] = useState<Record<string, { varian: string; pilihan: string[] }>>({});
     const [jenis, AturJenis] = useState<'AmbilSendiri' | 'Kirim'>(Pemenuhan.AmbilSendiri ? 'AmbilSendiri' : 'Kirim');
-    const [kodePos, AturKodePos] = useState('');
+    const [kodePos, AturKodePos] = useState(Akun.AlamatTerakhir?.KodePos ?? '');
     const [bayar, AturBayar] = useState<'BayarSaatAmbil' | 'Cod' | 'QrisOnline'>(
         Pembayaran.QrisOnline ? 'QrisOnline' : Pemenuhan.AmbilSendiri ? 'BayarSaatAmbil' : 'Cod',
     );
@@ -89,17 +99,13 @@ export default function TokoOnline({
     const [galat, AturGalat] = useState<string | null>(null);
     const [memproses, AturMemproses] = useState(false);
     const [setuju, AturSetuju] = useState(false);
-    const [pelanggan, AturPelanggan] = useState({
-        NamaPelanggan: '',
-        NoHp: '',
-        Email: '',
-        Alamat: '',
-        Kelurahan: '',
-        Kecamatan: '',
-        Kota: '',
-        Provinsi: '',
+    const [pelanggan, AturPelanggan] = useState(() => ({
+        NamaPelanggan: Akun.Pelanggan?.Nama ?? '',
+        NoHp: Akun.Pelanggan?.NoHp ?? '',
+        Email: Akun.Pelanggan?.Email ?? '',
+        ...IsiAlamat(Akun.AlamatTerakhir),
         Catatan: '',
-    });
+    }));
     const produk = useMemo(() => new Map(Menu.Produk.map((p) => [p.Uuid, p])), [Menu.Produk]);
     const hasilBerlaku = baris.length > 0 && (jenis !== 'Kirim' || kodePos.length === 5) ? hasil : null;
     // Bayar saat ambil hanya untuk ambil sendiri, COD hanya untuk kirim; QRIS berlaku untuk keduanya.
@@ -139,7 +145,8 @@ export default function TokoOnline({
                 });
         }, 250);
         return () => window.clearTimeout(tunda);
-    }, [Slug, OutletDipilih, baris, jenis, kodePos]);
+        // Masuk/keluar mengubah harga (harga tier & promo pelanggan dihitung server), jadi keranjang dihitung ulang.
+    }, [Slug, OutletDipilih, baris, jenis, kodePos, pembeli?.Uuid]);
 
     function Tambah(p: Produk) {
         const dipilih = pilihanProduk[p.Uuid] ?? { varian: '', pilihan: [] };
@@ -167,6 +174,23 @@ export default function TokoOnline({
         ]);
         AturPilihanProduk((lama) => ({ ...lama, [p.Uuid]: { varian: '', pilihan: [] } }));
         AturGalat(null);
+    }
+
+    function SaatMasuk(hasil: HasilMasukPembeli) {
+        AturPembeli(hasil.Pelanggan);
+        AturDialogMasuk(false);
+        // Data akun mengisi yang masih kosong; ketikan pembeli tidak ditimpa.
+        AturPelanggan((x) => {
+            const alamat = IsiAlamat(hasil.AlamatTerakhir);
+            return {
+                ...x,
+                NamaPelanggan: x.NamaPelanggan || hasil.Pelanggan.Nama,
+                NoHp: hasil.Pelanggan.NoHp,
+                Email: x.Email || (hasil.Pelanggan.Email ?? ''),
+                ...(x.Alamat === '' ? alamat : {}),
+            };
+        });
+        if (kodePos === '' && hasil.AlamatTerakhir?.KodePos) AturKodePos(hasil.AlamatTerakhir.KodePos);
     }
 
     function UbahJumlah(uuid: string, selisih: number) {
@@ -222,9 +246,29 @@ export default function TokoOnline({
                             </div>
                         ) : null}
                     </div>
-                    <div className="flex items-center gap-2 rounded-full bg-brand/10 px-3 py-2 text-label font-semibold text-brand">
-                        <ShoppingBagIcon className="size-4" />
-                        {baris.reduce((n, b) => n + b.Jumlah, 0)}
+                    <div className="flex shrink-0 flex-col items-end gap-2 sm:flex-row sm:items-center">
+                        {pembeli ? (
+                            <a
+                                href={`/${Slug}/akun`}
+                                className="flex min-h-10 items-center gap-2 rounded-full border border-garis px-3 text-label font-medium"
+                            >
+                                <UserRoundIcon className="size-4" />
+                                <span className="max-w-32 truncate">{pembeli.Nama}</span>
+                            </a>
+                        ) : Akun.Aktif ? (
+                            <button
+                                type="button"
+                                onClick={() => AturDialogMasuk(true)}
+                                className="flex min-h-10 items-center gap-2 rounded-full border border-garis px-3 text-label font-medium"
+                            >
+                                <UserRoundIcon className="size-4" />
+                                Masuk
+                            </button>
+                        ) : null}
+                        <div className="flex items-center gap-2 rounded-full bg-brand/10 px-3 py-2 text-label font-semibold text-brand">
+                            <ShoppingBagIcon className="size-4" />
+                            {baris.reduce((n, b) => n + b.Jumlah, 0)}
+                        </div>
                     </div>
                 </div>
             </header>
@@ -424,19 +468,35 @@ export default function TokoOnline({
                                     </div>
                                 </>
                             ) : null}
+                            {pembeli ? (
+                                <Pemberitahuan jenis="info">
+                                    Pesanan tercatat di akun {pembeli.Nama} ({pembeli.NoHp})
+                                    {pembeli.Tier ? ` · harga member ${pembeli.Tier} sudah dihitung` : ''}.
+                                </Pemberitahuan>
+                            ) : Akun.Aktif ? (
+                                <p className="text-keterangan text-teks-sekunder">
+                                    Sudah pernah belanja di sini?{' '}
+                                    <button type="button" className="underline" onClick={() => AturDialogMasuk(true)}>
+                                        Masuk dengan WhatsApp
+                                    </button>{' '}
+                                    untuk mengisi data otomatis dan mengumpulkan poin. Tanpa masuk juga bisa.
+                                </p>
+                            ) : null}
                             <BidangTeks
-                                label="Nama"
+                                label={pembeli ? 'Nama penerima' : 'Nama'}
                                 nilai={pelanggan.NamaPelanggan}
                                 saatBerubah={(v) => AturPelanggan((x) => ({ ...x, NamaPelanggan: v }))}
                                 required
                             />
-                            <BidangTeks
-                                label="Nomor WhatsApp"
-                                nilai={pelanggan.NoHp}
-                                saatBerubah={(v) => AturPelanggan((x) => ({ ...x, NoHp: v }))}
-                                inputMode="tel"
-                                required
-                            />
+                            {pembeli ? null : (
+                                <BidangTeks
+                                    label="Nomor WhatsApp"
+                                    nilai={pelanggan.NoHp}
+                                    saatBerubah={(v) => AturPelanggan((x) => ({ ...x, NoHp: v }))}
+                                    inputMode="tel"
+                                    required
+                                />
+                            )}
                             <BidangTeks
                                 label="Email (opsional)"
                                 nilai={pelanggan.Email}
@@ -517,6 +577,24 @@ export default function TokoOnline({
                     )}
                 </aside>
             </div>
+            {dialogMasuk && Toko ? (
+                <DialogMasukPembeli
+                    slug={Slug}
+                    namaToko={Toko.Nama}
+                    saatMasuk={SaatMasuk}
+                    saatTutup={() => AturDialogMasuk(false)}
+                />
+            ) : null}
         </main>
     );
+}
+
+function IsiAlamat(a: AlamatPembeli | null) {
+    return {
+        Alamat: a?.Alamat ?? '',
+        Kelurahan: a?.Kelurahan ?? '',
+        Kecamatan: a?.Kecamatan ?? '',
+        Kota: a?.Kota ?? '',
+        Provinsi: a?.Provinsi ?? '',
+    };
 }

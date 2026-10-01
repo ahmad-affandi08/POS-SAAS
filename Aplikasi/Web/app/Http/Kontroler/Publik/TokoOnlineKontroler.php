@@ -9,6 +9,9 @@ use App\Domain\Bersama\Tenant\KonteksTenant;
 use App\Domain\Katalog\Kueri\MenuPesanSendiri;
 use App\Domain\Katalog\Layanan\PenyimpanGambarProduk;
 use App\Domain\Organisasi\Model\Outlet;
+use App\Domain\Pelanggan\Kueri\ProfilPembeliOnline;
+use App\Domain\Pelanggan\Layanan\SesiPembeliOnline;
+use App\Domain\Pelanggan\Model\Pelanggan;
 use App\Domain\Pemenuhan\Model\Kurir;
 use App\Domain\Pemenuhan\Model\PengirimanPesanan;
 use App\Domain\Penjualan\Aksi\BuatPesananOnline;
@@ -17,7 +20,9 @@ use App\Domain\Penjualan\Enum\JenisPemenuhanOnline;
 use App\Domain\Penjualan\Enum\KanalPenjualan;
 use App\Domain\Penjualan\Enum\StatusPesananOnline;
 use App\Domain\Penjualan\Enum\StatusTagihanQris;
+use App\Domain\Penjualan\Kueri\RiwayatBelanjaPembeliOnline;
 use App\Domain\Penjualan\Layanan\PembuatQrTagihanQris;
+use App\Domain\Penjualan\Layanan\PenentuAkunTokoOnline;
 use App\Domain\Penjualan\Layanan\PenentuKonteksTokoOnline;
 use App\Domain\Penjualan\Layanan\PenghitungPesanSendiri;
 use App\Domain\Penjualan\Layanan\PenghitungTokoOnline;
@@ -40,12 +45,14 @@ final class TokoOnlineKontroler extends Kontroler
         private readonly KonteksTenant $konteks,
         private readonly ProfilTenant $profil,
         private readonly PenentuKonteksTokoOnline $penentu,
+        private readonly PenentuAkunTokoOnline $akun,
+        private readonly SesiPembeliOnline $sesi,
     ) {}
 
-    public function Tampilkan(string $slugTenant, Request $request, MenuPesanSendiri $menu): SymfonyResponse
+    public function Tampilkan(string $slugTenant, Request $request, MenuPesanSendiri $menu, ProfilPembeliOnline $profilPembeli, RiwayatBelanjaPembeliOnline $riwayat): SymfonyResponse
     {
         $uuidDipilih = is_string($request->query('outlet')) ? strtoupper($request->query('outlet')) : null;
-        $props = $this->DalamTenant($slugTenant, function (int $idTenant) use ($slugTenant, $uuidDipilih, $menu): ?array {
+        $props = $this->DalamTenant($slugTenant, function (int $idTenant) use ($slugTenant, $uuidDipilih, $menu, $request, $profilPembeli, $riwayat): ?array {
             $k = $this->penentu->Cari($uuidDipilih) ?? $this->penentu->Cari();
             if ($k === null) {
                 return null;
@@ -56,6 +63,8 @@ final class TokoOnlineKontroler extends Kontroler
             // QRIS bisa dipakai untuk ambil sendiri maupun kirim, jadi sakelarnya menghidupkan keduanya.
             $bisaAmbil = $outlet->AmbilSendiriAktif && ($atur->BayarSaatAmbilAktif || $atur->QrisAktif);
             $bisaKirim = $outlet->KirimAktif && ($atur->CodAktif || $atur->QrisAktif);
+            $akunAktif = $this->akun->CekAktif();
+            $pembeli = $akunAktif ? $this->CariPembeli($request) : null;
 
             return [
                 'Aktif' => $k->aktif && ($bisaAmbil || $bisaKirim),
@@ -68,6 +77,13 @@ final class TokoOnlineKontroler extends Kontroler
                 'MinimalPesanan' => $atur->MinimalPesanan,
                 'PesanTutup' => $atur->PesanTutup,
                 'Menu' => $k->aktif && ($bisaAmbil || $bisaKirim) ? $menu->Ambil($k->idOutlet, url("/{$slugTenant}/gambar/{uuid}"), KanalPenjualan::Online, true) : ['Kategori' => [], 'Produk' => []],
+                // F-17 bagian 3: akun pembeli opsional. Harga di `Menu` tetap harga umum; harga tier pembeli yang
+                // masuk dihitung server di keranjang/checkout.
+                'Akun' => [
+                    'Aktif' => $akunAktif,
+                    'Pelanggan' => $pembeli === null ? null : $profilPembeli->Ambil($pembeli),
+                    'AlamatTerakhir' => $pembeli === null ? null : $riwayat->AmbilAlamatTerakhir($pembeli->Id),
+                ],
             ];
         }, fn (): null => null);
 
@@ -77,6 +93,7 @@ final class TokoOnlineKontroler extends Kontroler
             'Pemenuhan' => ['AmbilSendiri' => false, 'Kirim' => false],
             'Pembayaran' => ['BayarSaatAmbil' => false, 'Cod' => false, 'QrisOnline' => false],
             'MinimalPesanan' => '0.00', 'PesanTutup' => null, 'Menu' => ['Kategori' => [], 'Produk' => []],
+            'Akun' => ['Aktif' => false, 'Pelanggan' => null, 'AlamatTerakhir' => null],
         ])->toResponse(request())->setStatusCode($props === null ? 404 : 200);
     }
 
@@ -84,7 +101,7 @@ final class TokoOnlineKontroler extends Kontroler
     {
         return $this->DalamTenant($slugTenant, function () use ($permintaan, $penghitung): JsonResponse {
             $jenis = JenisPemenuhanOnline::from((string) $permintaan->validated('JenisPemenuhan'));
-            $hasil = $penghitung->Hitung($this->penentu->WajibAktif((string) $permintaan->validated('Outlet')), $permintaan->AmbilBaris(), $jenis, $permintaan->validated('KodePos'));
+            $hasil = $penghitung->Hitung($this->penentu->WajibAktif((string) $permintaan->validated('Outlet')), $permintaan->AmbilBaris(), $jenis, $permintaan->validated('KodePos'), $this->CariIdPembeli($permintaan));
 
             return response()->json([
                 'Baris' => array_map(fn (array $b): array => ['UuidProduk' => $b['UuidProduk'], 'NamaProduk' => $b['NamaProduk'], 'Jumlah' => $b['Jumlah']->KeString(), 'Total' => $b['Total']->KeString()], $hasil['Baris']),
@@ -100,7 +117,7 @@ final class TokoOnlineKontroler extends Kontroler
         $hashIp = hash_hmac('sha256', (string) $permintaan->ip(), (string) config('app.key'));
 
         return $this->DalamTenant($slugTenant, function () use ($permintaan, $buat, $hashIp): JsonResponse {
-            [$pesanan, $baru] = $buat->Jalankan($this->penentu->WajibAktif((string) $permintaan->validated('Outlet')), $permintaan->validated(), $hashIp);
+            [$pesanan, $baru] = $buat->Jalankan($this->penentu->WajibAktif((string) $permintaan->validated('Outlet')), $permintaan->validated(), $hashIp, $this->CariIdPembeli($permintaan));
 
             return response()->json([
                 'KodeAkses' => $pesanan->KodeAkses, 'Nomor' => $pesanan->Nomor,
@@ -186,6 +203,17 @@ final class TokoOnlineKontroler extends Kontroler
 
             return $penyimpan->Unduh($baris, $permintaan->query('ukuran') === 'besar' ? 'besar' : 'kecil');
         });
+    }
+
+    /** Pembeli yang sudah masuk (F-17 bagian 3); null = tamu, atau akun pembeli sedang dimatikan toko. */
+    private function CariPembeli(Request $request): ?Pelanggan
+    {
+        return $this->sesi->CariPelanggan($request->cookie(SesiPembeliOnline::NAMA_COOKIE));
+    }
+
+    private function CariIdPembeli(Request $request): ?int
+    {
+        return $this->akun->CekAktif() ? $this->CariPembeli($request)?->Id : null;
     }
 
     private function WajibPesanan(string $kodeAkses): PesananOnline

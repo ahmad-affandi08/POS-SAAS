@@ -3,6 +3,7 @@ import 'package:mesin_kasir/MesinKasir.dart';
 
 import '../GalatKasir.dart';
 import '../Katalog/KatalogLokal.dart';
+import '../Pelanggan/LayananPelanggan.dart';
 import 'Keranjang.dart';
 import 'KonteksPenjualan.dart';
 import 'LayananPenjualan.dart';
@@ -19,6 +20,10 @@ import 'LayananPenjualan.dart';
 /// ongkir yang sudah dipotong saat checkout), sehingga `TotalAkhir` penjualan sama dengan total pesanan yang dilihat
 /// pembeli dan pendapatan pengirimannya masuk buku (J-07.1). Keduanya dibawa apa adanya: server membandingkan kedua
 /// pasangan dengan `PesananOnline.Ongkir`/`DiskonOngkir` dan menandai selisihnya `OngkirBerbeda`.
+///
+/// Pembeli yang masuk dengan kode WhatsApp (F-17 bagian 3) ikut terpasang sebagai pelanggan keranjang, sehingga poin,
+/// tier, dan riwayat belanjanya tercatat seperti belanja di toko. Harga baris **tidak** dihitung ulang: harga saat
+/// dipesan (yang sudah memakai harga tier pelanggan itu di server) yang ditagih, sama seperti pre-order.
 class LayananPesananOnline {
   LayananPesananOnline({required this.klien, required this.penjualan});
 
@@ -96,6 +101,7 @@ class LayananPesananOnline {
     return Keranjang(
       baris: baris,
       catatan: pesanan.catatan,
+      pelanggan: pesanan.pelanggan == null ? null : LayananPelanggan.DariPos(pesanan.pelanggan!),
       kanal: KanalPenjualan.Online,
       biayaKirim: Uang.Dari(pesanan.ongkir),
       diskonKirim: Uang.Dari(pesanan.diskonOngkir),

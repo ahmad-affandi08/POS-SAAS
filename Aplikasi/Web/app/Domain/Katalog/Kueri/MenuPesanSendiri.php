@@ -136,12 +136,13 @@ final class MenuPesanSendiri
      * Induk varian wajib `UuidVarian` (`VarianWajibDipilih`); varian bukan anak induk itu, nonaktif, tidak tampil di
      * POS, atau tanpa harga (juga `UuidVarian` pada produk tanpa varian) → `VarianTidakValid`. Baris varian memakai
      * anak sebagai `UuidProduk` (harga, satuan, pajak anak) dengan kelompok pilihan induk. Kunci pajak & kategori
-     * (`IdKelompokPajak`, `HargaTermasukPajak`, `UuidKategori`) untuk estimasi total (PRD v2.06).
+     * (`IdKelompokPajak`, `HargaTermasukPajak`, `UuidKategori`) untuk estimasi total (PRD v2.06). `$tier` (F-17 bagian 3)
+     * = kode tier pembeli toko online yang sudah masuk, supaya harga tiernya berlaku seperti di kasir; null = tamu.
      *
      * @param  list<array{UuidProduk: string, Jumlah: int, Pilihan: list<string>, UuidVarian?: string|null}>  $baris
      * @return list<array{UuidProduk: string, UuidProdukSatuan: string, NamaProduk: string, UuidProdukInduk: string|null, NamaVarian: string|null, HargaSatuan: Uang, HargaPilihan: Uang, Pilihan: list<array{UuidPilihan: string, Nama: string, Harga: string}>, IdKelompokPajak: int|null, HargaTermasukPajak: bool|null, UuidKategori: string|null}>
      */
-    public function HitungBaris(int $idOutlet, array $baris, KanalPenjualan $kanal = KanalPenjualan::MakanDiTempat, bool $tampilOnline = false): array
+    public function HitungBaris(int $idOutlet, array $baris, KanalPenjualan $kanal = KanalPenjualan::MakanDiTempat, bool $tampilOnline = false, ?string $tier = null): array
     {
         $uuid = array_values(array_unique(array_column($baris, 'UuidProduk')));
         $uuidVarian = array_values(array_unique(array_filter(array_map(fn (array $b): ?string => $b['UuidVarian'] ?? null, $baris), 'is_string')));
@@ -166,7 +167,7 @@ final class MenuPesanSendiri
             $varian = $dijual !== $p;
             $s = $satuan[$dijual->Id] ?? null;
             $harga = $s instanceof ProdukSatuan
-                ? $this->harga->Tentukan($dijual, $s, Kuantitas::Dari($b['Jumlah']), $idOutlet, $kanal, null, $waktu)
+                ? $this->harga->Tentukan($dijual, $s, Kuantitas::Dari($b['Jumlah']), $idOutlet, $kanal, $tier, $waktu)
                 : null;
 
             if (! $s instanceof ProdukSatuan || $harga === null) {

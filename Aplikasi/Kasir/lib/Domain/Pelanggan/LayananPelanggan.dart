@@ -77,36 +77,33 @@ class LayananPelanggan {
     pemakaianPada: b.PemakaianPada,
   );
 
+  /// Pelanggan dari server (hasil cari, atau pembeli toko online yang masuk, F-17 bagian 3) untuk keranjang.
+  static PelangganTerpilih DariPos(PelangganPos p) => PelangganTerpilih(
+    uuid: p.uuid,
+    nama: p.nama,
+    noHpSamar: p.noHpSamar,
+    kodeTier: p.kodeTier,
+    namaTier: p.namaTier,
+    saldoPoin: p.saldoPoin,
+    limitKredit: p.limitKredit,
+    sisaPiutang: p.sisaPiutang,
+    hariLewatJatuhTempo: p.hariLewatJatuhTempo,
+    hariLahir: p.hariLahir,
+    jumlahTransaksi: p.jumlahTransaksi,
+    pemakaianPromo: {
+      for (final e in p.pemakaianPromo.entries)
+        e.key: PemakaianPromoPelanggan(hari: e.value.hari, promo: e.value.promo),
+    },
+    pemakaianPada: p.pemakaianPada,
+  );
+
   Future<HasilCariPelanggan> Cari(String kata) async {
     if (kata.trim().length < panjangKataMinimal) {
       return const HasilCariPelanggan(pelanggan: [], online: true);
     }
     try {
       final hasil = await klien.CariPelanggan(kata);
-      return HasilCariPelanggan(
-        pelanggan: [
-          for (final p in hasil)
-            PelangganTerpilih(
-              uuid: p.uuid,
-              nama: p.nama,
-              noHpSamar: p.noHpSamar,
-              kodeTier: p.kodeTier,
-              namaTier: p.namaTier,
-              saldoPoin: p.saldoPoin,
-              limitKredit: p.limitKredit,
-              sisaPiutang: p.sisaPiutang,
-              hariLewatJatuhTempo: p.hariLewatJatuhTempo,
-              hariLahir: p.hariLahir,
-              jumlahTransaksi: p.jumlahTransaksi,
-              pemakaianPromo: {
-                for (final e in p.pemakaianPromo.entries)
-                  e.key: PemakaianPromoPelanggan(hari: e.value.hari, promo: e.value.promo),
-              },
-              pemakaianPada: p.pemakaianPada,
-            ),
-        ],
-        online: true,
-      );
+      return HasilCariPelanggan(pelanggan: [for (final p in hasil) DariPos(p)], online: true);
     } on GalatJaringan {
       return HasilCariPelanggan(pelanggan: [for (final b in await repositori.Cari(kata)) DariCache(b)], online: false);
     } on GalatApi catch (galat) {

@@ -78,4 +78,12 @@ final class PembuatPengirimWhatsapp
 
         return is_string($nama) && $nama !== '' ? $nama : null;
     }
+
+    /** Nama templat autentikasi untuk kode masuk pembeli toko online (F-17 bagian 3); null = kirim teks. */
+    public function AmbilTemplatKodeMasuk(): ?string
+    {
+        $nama = config('integrasi.Whatsapp.Pengaturan.NamaTemplatKodeMasuk');
+
+        return is_string($nama) && $nama !== '' ? $nama : null;
+    }
 }

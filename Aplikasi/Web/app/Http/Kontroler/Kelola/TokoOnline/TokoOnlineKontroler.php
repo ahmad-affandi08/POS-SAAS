@@ -8,6 +8,7 @@ use App\Domain\Akuntansi\Kueri\DaftarAkunPilihan;
 use App\Domain\Organisasi\Enum\IzinTenant;
 use App\Domain\Organisasi\Kueri\AksesPengguna;
 use App\Domain\Organisasi\Kueri\PetaUuidOutlet;
+use App\Domain\Pelanggan\Kueri\IdentitasPelanggan;
 use App\Domain\Pemenuhan\Aksi\SimpanKurir;
 use App\Domain\Pemenuhan\Aksi\UbahStatusPengirimanPesanan;
 use App\Domain\Pemenuhan\Enum\JenisKurir;
@@ -20,6 +21,7 @@ use App\Domain\Penjualan\Aksi\SimpanPengaturanTokoOnline;
 use App\Domain\Penjualan\Aksi\SimpanZonaPengiriman;
 use App\Domain\Penjualan\Aksi\UbahStatusPesananOnline;
 use App\Domain\Penjualan\Enum\StatusPesananOnline;
+use App\Domain\Penjualan\Layanan\PenentuAkunTokoOnline;
 use App\Domain\Penjualan\Model\PengaturanTokoOnline;
 use App\Domain\Penjualan\Model\PesananOnline;
 use App\Domain\Penjualan\Model\ZonaPengiriman;
@@ -33,7 +35,7 @@ use Inertia\Response;
 
 final class TokoOnlineKontroler extends DasarKelolaKontroler
 {
-    public function Tampilkan(PetaUuidOutlet $peta, ProfilTenant $profil, DaftarAkunPilihan $akun, AksesPengguna $akses): Response
+    public function Tampilkan(PetaUuidOutlet $peta, ProfilTenant $profil, DaftarAkunPilihan $akun, AksesPengguna $akses, IdentitasPelanggan $identitas, PenentuAkunTokoOnline $akunPembeli): Response
     {
         $boleh = $this->IdOutletBoleh();
         $outlet = $peta->AmbilRingkas($boleh, hanyaAktif: true);
@@ -45,10 +47,14 @@ final class TokoOnlineKontroler extends DasarKelolaKontroler
         $uuidKurir = $daftarKurir->pluck('Uuid', 'Id');
         $atur = PengaturanTokoOnline::query()->first() ?? new PengaturanTokoOnline;
         $bolehRefund = $akses->CekIzin($this->IdTenant(), $this->Pelaku()->Id, IzinTenant::AkuntansiKelola);
+        // F-17 bagian 3: pesanan pembeli yang masuk tertaut ke data pelanggan toko.
+        $pelanggan = $identitas->AmbilNamaBanyak(array_values(array_filter($pesanan->pluck('IdPelanggan')->all(), 'is_int')));
 
         return Inertia::render('Kelola/TokoOnline/Daftar', [
             'TautanPublik' => url('/'.$profil->AmbilSlug($this->IdTenant())),
-            'Pengaturan' => $atur->only(['Aktif', 'BayarSaatAmbilAktif', 'CodAktif', 'QrisAktif', 'MinimalPesanan', 'MenitKedaluwarsa', 'PesanTutup']),
+            'Pengaturan' => $atur->only(['Aktif', 'BayarSaatAmbilAktif', 'CodAktif', 'QrisAktif', 'AkunPelangganAktif', 'MinimalPesanan', 'MenitKedaluwarsa', 'PesanTutup']),
+            // Sakelar akun pembeli hanya berarti bila platform punya WhatsApp aktif (kode masuk dikirim lewat sana).
+            'AkunPembeliTersedia' => $akunPembeli->CekWhatsappTersedia(),
             // F-17 bagian 2: pengembalian uang muka memilih akun kas/bank, jadi daftarnya ikut dikirim.
             'OpsiAkun' => $bolehRefund ? $akun->AmbilKasBank() : [],
             'IzinRefund' => $bolehRefund,
@@ -59,7 +65,7 @@ final class TokoOnlineKontroler extends DasarKelolaKontroler
             }, $outlet),
             'Zona' => ZonaPengiriman::query()->whereIn('IdOutlet', $idOutlet)->orderBy('Urutan')->orderBy('Nama')->get()->map(fn (ZonaPengiriman $z): array => [...$z->only(['Uuid', 'Nama', 'KodePos', 'Ongkir', 'GratisMulai', 'EstimasiHariMin', 'EstimasiHariMaks', 'Urutan', 'Aktif']), 'UuidOutlet' => $uuidOutlet[$z->IdOutlet] ?? null])->all(),
             'Kurir' => $daftarKurir->map(fn (Kurir $k): array => [...$k->only(['Uuid', 'Nama', 'Jenis', 'NamaPenyedia', 'Status']), 'NoHp' => $k->NoHp])->all(),
-            'Pesanan' => $pesanan->map(function (PesananOnline $p) use ($pengiriman, $uuidOutlet, $uuidKurir): array {
+            'Pesanan' => $pesanan->map(function (PesananOnline $p) use ($pengiriman, $uuidOutlet, $uuidKurir, $pelanggan): array {
                 $kirim = $pengiriman->get($p->Id);
 
                 return [
@@ -67,6 +73,7 @@ final class TokoOnlineKontroler extends DasarKelolaKontroler
                     'NoHp' => $p->NoHp, 'Alamat' => $p->Alamat, 'Kelurahan' => $p->Kelurahan,
                     'Kecamatan' => $p->Kecamatan, 'Kota' => $p->Kota, 'Provinsi' => $p->Provinsi,
                     'KodePos' => $p->KodePos, 'UuidOutlet' => $uuidOutlet[$p->IdOutlet] ?? null,
+                    'Pelanggan' => $p->IdPelanggan === null ? null : ($pelanggan[$p->IdPelanggan] ?? null),
                     'DibuatPada' => $p->DibuatPada?->toIso8601String(),
                     'DibayarPada' => $p->DibayarPada?->toIso8601String(),
                     'JumlahDibayar' => $p->JumlahDibayar, 'UangMukaTerpakai' => $p->UangMukaTerpakai,
@@ -87,7 +94,7 @@ final class TokoOnlineKontroler extends DasarKelolaKontroler
             'Outlet' => ['required', 'ulid'], 'Aktif' => ['required', 'boolean'], 'TokoOnlineAktif' => ['required', 'boolean'],
             'AmbilSendiriAktif' => ['required', 'boolean'], 'KirimAktif' => ['required', 'boolean'],
             'BayarSaatAmbilAktif' => ['required', 'boolean'], 'CodAktif' => ['required', 'boolean'],
-            'QrisAktif' => ['required', 'boolean'],
+            'QrisAktif' => ['required', 'boolean'], 'AkunPelangganAktif' => ['sometimes', 'boolean'],
             'MinimalPesanan' => ['required', 'decimal:0,2', 'min:0'], 'MenitKedaluwarsa' => ['required', 'integer', 'min:15', 'max:1440'],
             'PesanTutup' => ['nullable', 'string', 'max:255'],
         ]);

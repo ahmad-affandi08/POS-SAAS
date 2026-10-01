@@ -7,7 +7,8 @@ namespace App\Domain\Integrasi\Whatsapp;
 /**
  * Pesan WhatsApp keluar. [teks] dipakai penyedia tidak resmi dan WhatsApp Cloud API di dalam jendela 24 jam; di luar
  * jendela itu API resmi mewajibkan templat yang disetujui Meta ([namaTemplat] + [parameterTemplat] untuk isi {{1}},
- * {{2}}, ...).
+ * {{2}}, ...). [kodeSalin] (F-17 bagian 3) mengisi tombol "salin kode" templat autentikasi Meta; penyedia lain
+ * mengabaikannya karena kodenya sudah ada di [teks].
  */
 final readonly class PesanWhatsapp
 {
@@ -19,6 +20,7 @@ final readonly class PesanWhatsapp
         public string $teks,
         public ?string $namaTemplat = null,
         public array $parameterTemplat = [],
+        public ?string $kodeSalin = null,
     ) {}
 
     /** Nomor Indonesia ke format internasional tanpa tanda plus: 0812… / +62812… / 62812… → 62812…. */

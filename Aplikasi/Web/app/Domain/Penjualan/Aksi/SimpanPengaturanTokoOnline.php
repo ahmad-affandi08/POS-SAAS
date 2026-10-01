@@ -41,8 +41,8 @@ final class SimpanPengaturanTokoOnline
 
         DB::transaction(function () use ($outlet, $data, $idPengguna): void {
             $p = PengaturanTokoOnline::query()->lockForUpdate()->first() ?? new PengaturanTokoOnline;
-            $lama = [...$p->only(['Aktif', 'BayarSaatAmbilAktif', 'CodAktif', 'QrisAktif', 'MinimalPesanan', 'MenitKedaluwarsa', 'PesanTutup']), ...$outlet->only(['TokoOnlineAktif', 'AmbilSendiriAktif', 'KirimAktif'])];
-            $p->fill(array_intersect_key($data, array_flip(['Aktif', 'BayarSaatAmbilAktif', 'CodAktif', 'QrisAktif', 'MinimalPesanan', 'MenitKedaluwarsa', 'PesanTutup'])))->save();
+            $lama = [...$p->only(['Aktif', 'BayarSaatAmbilAktif', 'CodAktif', 'QrisAktif', 'AkunPelangganAktif', 'MinimalPesanan', 'MenitKedaluwarsa', 'PesanTutup']), ...$outlet->only(['TokoOnlineAktif', 'AmbilSendiriAktif', 'KirimAktif'])];
+            $p->fill(array_intersect_key($data, array_flip(['Aktif', 'BayarSaatAmbilAktif', 'CodAktif', 'QrisAktif', 'AkunPelangganAktif', 'MinimalPesanan', 'MenitKedaluwarsa', 'PesanTutup'])))->save();
             $outlet->fill(array_intersect_key($data, array_flip(['TokoOnlineAktif', 'AmbilSendiriAktif', 'KirimAktif'])))->save();
             $this->audit->Catat('toko-online.pengaturan', $p, $lama, $data, idPengguna: $idPengguna);
         });

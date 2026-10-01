@@ -305,4 +305,59 @@ void main() {
       throwsA(isA<GalatKasir>().having((g) => g.kode, 'kode', 'DataAwalBelumLengkap')),
     );
   });
+
+  test('F-17 bagian 3: pesanan pembeli yang masuk memasang pelanggannya tanpa menghitung ulang harga; outbox membawa '
+      'UuidPelanggan', () async {
+    final katalog = await u.MuatKatalog();
+    final k = await u.MuatKonteks();
+    final pesanan = Pesanan(sudahDibayar: false, sisaUangMuka: '0.00')
+      ..['Pelanggan'] = {
+        'Uuid': '01K5PELANGGANONLINE0000001',
+        'Nama': 'Sinta Maharani Kusumawardani',
+        'NoHp': '0812****1234',
+        'KodeTier': 'GOLD',
+        'NamaTier': 'Gold',
+        'SaldoPoin': 1250,
+        'LimitKredit': null,
+        'SisaPiutang': '0.00',
+        'HariLewatJatuhTempo': 0,
+        'HariLahir': '04-17',
+        'JumlahTransaksi': 3,
+        'PemakaianPromo': <String, Object?>{},
+      };
+    u.server.penangan = (_) async => JsonUji({...Balasan(pesanan, adaMetode: false), 'TanggalBisnis': '2026-09-30'});
+    final hasil = await u.pesananOnline.AmbilAktif();
+    expect(hasil.pesanan.single.pelanggan?.namaTier, 'Gold');
+    expect(hasil.pesanan.single.pelanggan?.pemakaianPada, '2026-09-30');
+
+    final keranjang = u.pesananOnline.MuatKeKeranjang(hasil.pesanan.single, hasil, katalog, k);
+    expect(keranjang.pelanggan?.uuid, '01K5PELANGGANONLINE0000001');
+    expect(keranjang.pelanggan?.kodeTier, 'GOLD');
+    expect(keranjang.pelanggan?.jumlahTransaksi, 3);
+    expect(
+      keranjang.baris.single.hargaSatuan,
+      Uang.DariBulat(14000),
+      reason: 'Harga saat dipesan, tidak dihitung ulang.',
+    );
+
+    final tunai = k.metodePembayaran.firstWhere((m) => m.Jenis == 'Tunai');
+    await u.penjualan.Bayar(
+      keranjang: keranjang,
+      pembayaran: [PembayaranMasukan(metode: tunai, jumlah: u.penjualan.Hitung(keranjang, k).hasil.totalAkhir)],
+      kasir: rina,
+      k: k,
+    );
+    final data = await BacaOutboxTerakhir();
+    expect(data['UuidPelanggan'], '01K5PELANGGANONLINE0000001');
+    expect(data['UuidPesananOnline'], '01K5PESANANONLINE000000001');
+  });
+
+  test('tamu atau server lama tanpa Pelanggan: keranjang tanpa pelanggan', () async {
+    final katalog = await u.MuatKatalog();
+    final k = await u.MuatKonteks();
+    u.server.penangan = (_) async =>
+        JsonUji(Balasan(Pesanan(sudahDibayar: false, sisaUangMuka: '0.00'), adaMetode: false));
+    final hasil = await u.pesananOnline.AmbilAktif();
+    expect(u.pesananOnline.MuatKeKeranjang(hasil.pesanan.single, hasil, katalog, k).pelanggan, isNull);
+  });
 }

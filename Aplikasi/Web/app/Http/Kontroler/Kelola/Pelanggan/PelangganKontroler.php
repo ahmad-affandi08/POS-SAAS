@@ -27,6 +27,8 @@ use App\Domain\Pelanggan\Layanan\BukuPoin;
 use App\Domain\Pelanggan\Model\Pelanggan;
 use App\Domain\Pelanggan\Model\TierPelanggan;
 use App\Domain\Penjualan\Kueri\BelanjaPelanggan;
+use App\Domain\Penjualan\Kueri\RiwayatBelanjaPembeliOnline;
+use App\Domain\Tenant\Kueri\ProfilTenant;
 use App\Http\Kontroler\Kelola\DasarKelolaKontroler;
 use App\Http\Permintaan\Kelola\Pelanggan\SimpanPelangganPermintaan;
 use App\Http\Respons\ResponsTabel;
@@ -68,6 +70,8 @@ final class PelangganKontroler extends DasarKelolaKontroler
         DaftarAkunPilihan $akun,
         DaftarSaldoSesi $saldoSesi,
         PengaturanSesiTenant $sesi,
+        RiwayatBelanjaPembeliOnline $riwayatOnline,
+        ProfilTenant $profil,
     ): Response {
         $data = $this->CariPelanggan($pelanggan);
         $izin = $this->AmbilIzin();
@@ -101,6 +105,9 @@ final class PelangganKontroler extends DasarKelolaKontroler
                 'Berlaku' => $sesi->CekBerlaku(),
                 'Daftar' => $saldoSesi->AmbilPerPelanggan($data->Id),
             ],
+            // F-17 bagian 3: pesanan toko online pelanggan ini & nomor yang sudah dibuktikan lewat kode WhatsApp.
+            'PesananOnline' => $riwayatOnline->Ambil($this->IdTenant(), $data->Id, $profil->AmbilSlug($this->IdTenant()))['Pesanan'],
+            'NoHpTerverifikasi' => $data->NoHpTerverifikasiPada !== null,
             'Izin' => $izin,
         ]);
     }

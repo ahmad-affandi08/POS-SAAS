@@ -25,6 +25,7 @@ import type {
     MutasiDeposit,
     MutasiPoin,
     PropsDetailPelanggan,
+    PesananOnlinePelanggan,
     RingkasSaldoSesi,
     RiwayatBelanja,
 } from '@/Tipe/Pelanggan';
@@ -109,6 +110,59 @@ const kolomDeposit: KolomTabel<MutasiDeposit>[] = [
 
 const kolomSesi = BuatKolomSaldoSesi<RingkasSaldoSesi>();
 
+/** F-17 bagian 3: pesanan toko online pelanggan (dibuat setelah masuk dengan kode WhatsApp). */
+const kolomPesananOnline: KolomTabel<PesananOnlinePelanggan>[] = [
+    {
+        id: 'Nomor',
+        accessorKey: 'Nomor',
+        header: 'Nomor',
+        meta: { label: 'Nomor', prioritas: 'utama', wajib: true, kelasSel: 'font-mono break-all' },
+        cell: ({ row: { original: r } }) => (
+            <a href={r.UrlStatus} target="_blank" rel="noreferrer" className="text-brand underline">
+                {r.Nomor}
+            </a>
+        ),
+    },
+    {
+        id: 'DibuatPada',
+        accessorKey: 'DibuatPada',
+        header: 'Waktu',
+        meta: { label: 'Waktu' },
+        cell: ({ row: { original: r } }) => FormatTanggalWaktu(r.DibuatPada),
+    },
+    {
+        id: 'JenisPemenuhan',
+        accessorKey: 'JenisPemenuhan',
+        header: 'Cara terima',
+        meta: { label: 'Cara terima', prioritas: 'rendah' },
+    },
+    {
+        id: 'Status',
+        accessorKey: 'Status',
+        header: 'Status',
+        meta: { label: 'Status' },
+        cell: ({ row: { original: r } }) => (
+            <LabelStatus
+                jenis={
+                    ['Ditolak', 'Dibatalkan', 'Kedaluwarsa'].includes(r.Status)
+                        ? 'bahaya'
+                        : r.Status === 'Selesai'
+                          ? 'sukses'
+                          : 'netral'
+                }
+                teks={r.LabelStatus}
+            />
+        ),
+    },
+    {
+        id: 'Total',
+        accessorKey: 'Total',
+        header: 'Total',
+        meta: { label: 'Total', angka: true },
+        cell: ({ row: { original: r } }) => FormatRupiah(r.Total),
+    },
+];
+
 const labelStatus: Record<RiwayatBelanja['Status'], string> = {
     Lunas: 'Lunas',
     Void: 'Void',
@@ -135,6 +189,8 @@ export default function HalamanDetailPelanggan({
     Kredit,
     Deposit,
     PaketSesi,
+    PesananOnline,
+    NoHpTerverifikasi,
     Izin,
 }: PropsDetailPelanggan) {
     const { props } = usePage<PropsBersamaAplikasi>();
@@ -274,7 +330,10 @@ export default function HalamanDetailPelanggan({
                 <Card className="gap-4 rounded-panel p-4 shadow-none">
                     <dl className="grid gap-4 sm:grid-cols-2">
                         <Nilai label="No. HP/WA">
-                            <span className="font-mono">{p.NoHp}</span>
+                            <span className="flex flex-wrap items-center gap-2">
+                                <span className="font-mono">{p.NoHp}</span>
+                                {NoHpTerverifikasi ? <LabelStatus jenis="sukses" teks="WA terverifikasi" /> : null}
+                            </span>
                         </Nilai>
                         <Nilai label="Email">{p.Email ?? '—'}</Nilai>
                         <Nilai label="Tanggal lahir">{p.TanggalLahir ? FormatTanggal(p.TanggalLahir) : '—'}</Nilai>
@@ -424,6 +483,21 @@ export default function HalamanDetailPelanggan({
                         kosong={{ judul: 'Pelanggan ini belum membeli paket sesi.' }}
                     />
                 </Card>
+            ) : null}
+
+            {PesananOnline.length > 0 ? (
+                <>
+                    <h2 className="text-subjudul font-semibold text-teks-utama">Pesanan toko online</h2>
+                    <TabelData
+                        id="pelanggan-pesanan-online"
+                        label={`Pesanan toko online ${p.Nama}`}
+                        kolom={kolomPesananOnline}
+                        sumber={{ mode: 'lokal', data: PesananOnline }}
+                        ambilIdBaris={(r) => r.Nomor}
+                        urutBawaan="-DibuatPada"
+                        kosong={{ judul: 'Belum ada pesanan online.' }}
+                    />
+                </>
             ) : null}
 
             <h2 className="text-subjudul font-semibold text-teks-utama">Riwayat poin</h2>

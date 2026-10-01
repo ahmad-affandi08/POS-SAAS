@@ -116,6 +116,8 @@ describe('Halaman pelanggan (F-16a)', () => {
     it('detail: profil, ringkasan, riwayat bertaut ke penjualan; arsipkan mengirim POST', () => {
         RenderUji(
             <HalamanDetailPelanggan
+                PesananOnline={[]}
+                NoHpTerverifikasi={false}
                 Pelanggan={Ani}
                 Kredit={{ LimitKredit: '5000000.00', SisaPiutang: '1250000.00', HariLewatJatuhTempo: 12 }}
                 Deposit={DepositKosong}
@@ -282,6 +284,8 @@ describe('Halaman pelanggan (F-16a)', () => {
     it('F-16d detail: saldo & riwayat deposit, tarik ke akun kas dan sesuaikan (kurangi) terkirim', () => {
         RenderUji(
             <HalamanDetailPelanggan
+                PesananOnline={[]}
+                NoHpTerverifikasi={false}
                 Pelanggan={Ani}
                 Riwayat={[]}
                 RiwayatPoin={[]}
@@ -327,6 +331,8 @@ describe('Halaman pelanggan (F-16a)', () => {
 
         RenderUji(
             <HalamanDetailPelanggan
+                PesananOnline={[]}
+                NoHpTerverifikasi={false}
                 Pelanggan={Ani}
                 Riwayat={[]}
                 RiwayatPoin={[]}

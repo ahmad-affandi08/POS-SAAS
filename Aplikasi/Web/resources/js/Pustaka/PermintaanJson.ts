@@ -30,9 +30,9 @@ export function AmbilPesanGalat(isi: unknown): string | null {
     return typeof pesan === 'string' && pesan !== '' ? pesan : null;
 }
 
-export async function KirimJson<T>(alamat: string, data: unknown = {}): Promise<T> {
+export async function KirimJson<T>(alamat: string, data: unknown = {}, metode: 'POST' | 'PUT' = 'POST'): Promise<T> {
     const respons = await fetch(alamat, {
-        method: 'POST',
+        method: metode,
         headers: {
             'Content-Type': 'application/json',
             Accept: 'application/json',

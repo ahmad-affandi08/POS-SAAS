@@ -77,7 +77,22 @@ export type PropsDetailPelanggan = {
     /** F-16d bagian 1: saldo & riwayat deposit. */
     Deposit: DepositPelanggan;
     PaketSesi: { Berlaku: boolean; Daftar: RingkasSaldoSesi[] };
+    /** F-17 bagian 3: pesanan toko online yang dibuat pelanggan ini setelah masuk dengan WhatsApp. */
+    PesananOnline: PesananOnlinePelanggan[];
+    /** F-17 bagian 3: nomor HP terbukti milik pelanggan (kode WhatsApp berhasil). */
+    NoHpTerverifikasi: boolean;
     Izin: IzinPelanggan & { KelolaDeposit: boolean };
+};
+
+export type PesananOnlinePelanggan = {
+    Nomor: string;
+    Outlet: string | null;
+    JenisPemenuhan: string;
+    Status: string;
+    LabelStatus: string;
+    Total: string;
+    DibuatPada: string | null;
+    UrlStatus: string;
 };
 
 export type MutasiDeposit = {

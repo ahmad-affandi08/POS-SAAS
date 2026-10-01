@@ -19,6 +19,7 @@ use App\Http\Kontroler\Kelola\BerandaKelolaKontroler;
 use App\Http\Kontroler\Kelola\LanggananKontroler;
 use App\Http\Kontroler\Kelola\TerimaUndanganKontroler;
 use App\Http\Kontroler\Kelola\TindakanKontroler;
+use App\Http\Kontroler\Publik\AkunTokoOnlineKontroler;
 use App\Http\Kontroler\Publik\DokumenLegalPublikKontroler;
 use App\Http\Kontroler\Publik\KompatibilitasPerangkatKontroler as KompatibilitasPerangkatPublikKontroler;
 use App\Http\Kontroler\Publik\PesanSendiriKontroler;
@@ -275,6 +276,14 @@ Route::middleware([TolakDomainPengelola::class, ArahkanDomainAplikasi::class, Ba
                 ->withoutMiddleware(ValidateCsrfToken::class)->middleware('throttle:20,1')->name('publik.toko-online.bayar');
             Route::get('/pesanan/{kodeAkses}/status-bayar', [TokoOnlineKontroler::class, 'StatusBayar'])->where('kodeAkses', '[A-Za-z0-9]{16}')
                 ->middleware('throttle:120,1')->name('publik.toko-online.status-bayar');
+            // F-17 bagian 3: akun pembeli opsional (masuk dengan kode WhatsApp). Berbeda dengan checkout tamu, rute ini
+            // memakai cookie sesi, jadi CSRF tetap dijaga (halaman mengirim X-XSRF-TOKEN).
+            Route::get('/akun', [AkunTokoOnlineKontroler::class, 'Tampilkan'])->middleware('throttle:60,1')->name('publik.toko-online.akun');
+            Route::post('/akun/kode', [AkunTokoOnlineKontroler::class, 'MintaKode'])->middleware('throttle:10,1')->name('publik.toko-online.akun.kode');
+            Route::post('/akun/masuk', [AkunTokoOnlineKontroler::class, 'Masuk'])->middleware('throttle:20,1')->name('publik.toko-online.akun.masuk');
+            Route::post('/akun/daftar', [AkunTokoOnlineKontroler::class, 'Daftar'])->middleware('throttle:10,1')->name('publik.toko-online.akun.daftar');
+            Route::put('/akun/profil', [AkunTokoOnlineKontroler::class, 'PerbaruiProfil'])->middleware('throttle:20,1')->name('publik.toko-online.akun.profil');
+            Route::post('/akun/keluar', [AkunTokoOnlineKontroler::class, 'Keluar'])->middleware('throttle:20,1')->name('publik.toko-online.akun.keluar');
             Route::get('/', [TokoOnlineKontroler::class, 'Tampilkan'])->middleware('throttle:60,1')->name('publik.toko-online');
         });
 });

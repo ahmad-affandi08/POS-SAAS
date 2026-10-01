@@ -12,6 +12,7 @@ use App\Domain\Pelanggan\Model\Pelanggan;
 use App\Domain\Penjualan\Kueri\BelanjaPelanggan;
 use App\Domain\Promo\Kueri\PemakaianPromo;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Collection;
 
 /**
  * Cari pelanggan aktif dari POS (F-16a, `GET /api/pos/v1/pelanggan?kata=`): minimal 3 karakter; cocok nama atau nomor
@@ -58,6 +59,41 @@ final class CariPelangganPos
             ->orderBy('Id')
             ->limit(self::BATAS)
             ->get(['Id', 'Uuid', 'Nama', 'NoHp', 'IdTier', 'TanggalLahir']);
+
+        return $this->Susun($daftar, $tanggalBisnis);
+    }
+
+    /**
+     * F-17 bagian 3: bentuk yang sama dengan hasil cari, untuk pelanggan aktif tertentu (pesanan toko online yang
+     * pembelinya masuk) — supaya kasir memasang pelanggan itu ke keranjang persis seperti hasil pencarian F2.
+     *
+     * @param  list<int>  $id
+     * @return array<int, array<string, mixed>> per Id pelanggan
+     */
+    public function AmbilPerId(array $id, ?string $tanggalBisnis = null): array
+    {
+        if ($id === []) {
+            return [];
+        }
+
+        $daftar = Pelanggan::query()->whereKey(array_values(array_unique($id)))->where('Status', StatusPelanggan::Aktif->value)
+            ->get(['Id', 'Uuid', 'Nama', 'NoHp', 'IdTier', 'TanggalLahir']);
+        $hasil = [];
+
+        foreach ($daftar as $p) {
+            $hasil[$p->Id] = $this->Susun(new Collection([$p]), $tanggalBisnis)[0] ?? null;
+        }
+
+        return array_filter($hasil);
+    }
+
+    /**
+     * @param  Collection<int, Pelanggan>  $daftar
+     * @return list<array{Uuid: string, Nama: string, NoHp: string, KodeTier: string|null, NamaTier: string|null, SaldoPoin: int, LimitKredit: string|null, SisaPiutang: string, HariLewatJatuhTempo: int, HariLahir: string|null, JumlahTransaksi: int, PemakaianPromo: array<string, array{Hari: int, Promo: int}>|object}>
+     */
+    private function Susun(Collection $daftar, ?string $tanggalBisnis): array
+    {
+        $daftar = $daftar->values();
         $tier = $this->tier->AmbilPeta(array_values(array_filter($daftar->pluck('IdTier')->all(), 'is_int')));
         $saldo = $this->buku->AmbilSaldoBanyak(array_values($daftar->pluck('Id')->all()));
         $kredit = $this->kredit->AmbilRingkas(array_values($daftar->pluck('Id')->all()), CarbonImmutable::today());
