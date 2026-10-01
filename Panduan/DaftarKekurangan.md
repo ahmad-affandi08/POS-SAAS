@@ -54,14 +54,7 @@ Status butir (audit F-26): **TERBUKA** = belum dikerjakan; **SELESAI @ versi** =
 
 ## C. Keputusan yang menunggu pemilik produk
 
-1. `robots.txt` & `sitemap.xml` masuk pengecualian konvensi URL? Saat ini peta situs di `/peta-situs` dan `robots.txt` statis.
-2. Bonus saat isi deposit pelanggan: ada atau tidak?
-3. Kedaluwarsa saldo deposit: ada atau tidak?
-4. Sub-merchant gateway pembayaran di bawah platform (nanti)?
-5. Tautan struk digital/QR: tetap di `dashboard.payou.id/s/…` atau pindah ke `payou.id`?
-6. Pengalihan `www.payou.id` → `payou.id` (diatur di hPanel).
-7. Nama subdomain konsol: panduan memakai `console.payou.id` sesuai folder hosting (PRD menulis `consol.`). Cukup samakan nilai `PENGELOLA_DOMAIN`.
-8. Isi pemasaran (teks, foto produk, testimoni pelanggan nyata) diisi dari konsol.
+Semua keputusan yang menunggu kini dikumpulkan di satu berkas: [`KeputusanMenunggu.md`](KeputusanMenunggu.md).
 
 ## D. Temuan audit 27-09-2026 yang butuh tindakan di luar kode
 
