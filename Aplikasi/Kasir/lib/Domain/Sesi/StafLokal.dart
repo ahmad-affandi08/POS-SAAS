@@ -38,6 +38,9 @@ abstract final class IzinKasir {
 
   /// F-17 BR-17.2: menandai produk habis / tersedia lagi (juga boleh dengan `penjualan.buat` atau `pesanan.meja.catat`).
   static const String produkKelola = 'produk.kelola';
+
+  /// F-17 BR-17.3: kelola pesanan toko online (konfirmasi/tolak/siap) — juga boleh dengan `penjualan.buat`.
+  static const String tokoOnlineKelola = 'toko-online.kelola';
 }
 
 /// Staf dari data awal (tabel `Staf` lokal).

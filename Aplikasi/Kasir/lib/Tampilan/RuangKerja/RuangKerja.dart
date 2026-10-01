@@ -63,6 +63,10 @@ class RuangKerja extends ConsumerStatefulWidget {
   /// Mode meja: snapshot pesanan terbuka outlet ditarik tiap 7 detik (rentang 5–10 detik, Rincian F-07 mode meja).
   static const Duration selangPesananMeja = Duration(seconds: 7);
 
+  /// F-17 BR-17.3 (v3.33): ringkasan pesanan toko online ditarik tiap 10 detik (rentang 5–10 detik); pesanan baru
+  /// diumumkan di layar dan jumlah yang menunggu tampil di bilah status.
+  static const Duration selangPesananOnline = Duration(seconds: 10);
+
   /// Null = mode Pelayan (tanpa shift).
   final BarisShift? shift;
   final StafLokal kasir;
@@ -102,7 +106,10 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
   Timer? _pewaktuSinkron;
   Timer? _pewaktuPesanan;
   Timer? _pewaktuDiam;
+  Timer? _pewaktuPesananOnline;
   bool _menarikPesanan = false;
+  bool _menarikPesananOnline = false;
+  RingkasPesananOnlinePos? _ringkasOnline;
   late final PenjagaLayarMenyala _penjagaLayar;
 
   bool get _terkunci => widget.kunci != KeadaanKunci.Bebas;
@@ -117,6 +124,7 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
     _pewaktuSinkron = Timer.periodic(RuangKerja.selangSinkron, (_) => unawaited(_Sinkronkan()));
     unawaited(Future<void>.microtask(_Sinkronkan));
     _pewaktuPesanan = Timer.periodic(RuangKerja.selangPesananMeja, (_) => unawaited(_TarikPesanan()));
+    _pewaktuPesananOnline = Timer.periodic(RuangKerja.selangPesananOnline, (_) => unawaited(_TarikPesananOnline()));
     HardwareKeyboard.instance.addHandler(_SaatTombol);
     _MulaiHitungDiam();
   }
@@ -145,6 +153,7 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
     _pewaktuSinkron?.cancel();
     _pewaktuPesanan?.cancel();
     _pewaktuDiam?.cancel();
+    _pewaktuPesananOnline?.cancel();
     HardwareKeyboard.instance.removeHandler(_SaatTombol);
     unawaited(_penjagaLayar.Nonaktifkan());
     super.dispose();
@@ -175,6 +184,39 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
       // Offline/galat server: daftar terakhir tetap tampil.
     } finally {
       _menarikPesanan = false;
+    }
+  }
+
+  /// BR-17.3: ringkasan pesanan toko online (hanya bila toko online aktif & tidak terkunci). Pesanan baru sejak
+  /// tarikan sebelumnya diumumkan dengan tombol "Lihat"; galat/offline diam dan dicoba lagi 10 detik kemudian.
+  Future<void> _TarikPesananOnline() async {
+    if (!mounted ||
+        _menarikPesananOnline ||
+        _terkunci ||
+        ref.read(penyediaKonteksPenjualan).value?.tokoOnlineAktif != true) {
+      return;
+    }
+    _menarikPesananOnline = true;
+    try {
+      final ringkas = await ref.read(penyediaLayananPesananOnline).AmbilRingkas(sejak: _ringkasOnline?.waktuServer);
+      if (!mounted || ringkas == null) {
+        return;
+      }
+      final pertama = _ringkasOnline == null;
+      setState(() => _ringkasOnline = ringkas);
+      if (!pertama && ringkas.baru > 0) {
+        ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+          SnackBar(
+            content: Text(ringkas.baru == 1 ? 'Ada pesanan online baru.' : 'Ada ${ringkas.baru} pesanan online baru.'),
+            action: SnackBarAction(
+              label: 'Lihat',
+              onPressed: () => _BukaPanelPenjualan(const _PanelPenjualan(pesananOnline: true)),
+            ),
+          ),
+        );
+      }
+    } finally {
+      _menarikPesananOnline = false;
     }
   }
 
@@ -314,6 +356,15 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
         )
       else
         const ItemBilahStatus(ikon: Icons.cloud_done_outlined, teks: 'Tersinkron', nada: NadaStatus.Sukses),
+      // BR-17.3: pesanan toko online yang menunggu staf (terima) atau siap ditagih.
+      if (_ringkasOnline case final r? when r.menunggu > 0)
+        ItemBilahStatus(
+          ikon: Icons.shopping_bag_outlined,
+          teks: '${r.menunggu} pesanan online menunggu',
+          nada: NadaStatus.Peringatan,
+        )
+      else if (_ringkasOnline case final r? when r.perluDitagih > 0)
+        ItemBilahStatus(ikon: Icons.shopping_bag_outlined, teks: '${r.perluDitagih} pesanan online siap ditagih'),
       if (_konfigurasi case final k? when k.wajibPembaruan)
         const ItemBilahStatus(ikon: Icons.system_update, teks: 'Wajib perbarui aplikasi', nada: NadaStatus.Bahaya)
       else if (_konfigurasi case final k? when k.adaPembaruan)
@@ -419,6 +470,7 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
         LembarPesananOnline.judul,
         LembarPesananOnline(
           key: const ValueKey('PesananOnline'),
+          kasir: widget.kasir,
           saatDimuat: () {
             _TutupPanel();
             _Buka(TujuanRuangKerja.Jual);

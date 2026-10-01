@@ -159,6 +159,10 @@ Route::middleware([AutentikasiPerangkat::class, IdempotensiPos::class])->group(f
             ->middleware('throttle:pos-60')->where('pesananSendiri', $ulid)->name('pos.pesan-sendiri.tolak');
         // F-17 toko online: muat pesanan aktif ke POS; setelah penjualan lunas tersinkron, tautkan secara idempoten.
         Route::get('/pesanan-online', [PesananOnlineKontroler::class, 'Ambil'])->middleware('throttle:pos-30')->name('pos.pesanan-online');
+        // BR-17.3 (v3.33): ringkasan untuk polling 10 detik & ubah status dari kasir.
+        Route::get('/pesanan-online/ringkas', [PesananOnlineKontroler::class, 'Ringkas'])->middleware('throttle:pos-60')->name('pos.pesanan-online.ringkas');
+        Route::post('/pesanan-online/{pesananOnline}/status', [PesananOnlineKontroler::class, 'UbahStatus'])
+            ->middleware('throttle:pos-60')->where('pesananOnline', $ulid)->name('pos.pesanan-online.status');
         Route::post('/pesanan-online/{pesananOnline}/tautkan', [PesananOnlineKontroler::class, 'Tautkan'])
             ->middleware('throttle:pos-60')->where('pesananOnline', $ulid)->name('pos.pesanan-online.tautkan');
         // K3: kirim struk digital ke WhatsApp/email pelanggan (wajib online, penjualan sudah tersinkron), diantrekan;

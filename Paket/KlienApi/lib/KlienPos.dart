@@ -392,6 +392,30 @@ class KlienPos {
   /// Tautkan pesanan online [uuid] ke penjualan yang sudah lunas di server. Idempoten; pesanan yang sudah ditautkan ke
   /// penjualan lain → `GalatApi` ber-kode `SudahDitautkan` (409), pesanan ambil sendiri yang belum `Siap` →
   /// `PesananBelumSiap` (409).
+  /// BR-17.3: ringkasan pesanan online outlet untuk polling 10 detik; [sejak] = `WaktuServer` polling sebelumnya.
+  Future<RingkasPesananOnlinePos> AmbilRingkasPesananOnline({String? sejak}) async => RingkasPesananOnlinePos.DariJson(
+    await _Kirim(
+      'GET',
+      sejak == null ? 'pesanan-online/ringkas' : 'pesanan-online/ringkas?sejak=${Uri.encodeQueryComponent(sejak)}',
+      null,
+    ),
+  );
+
+  /// BR-17.3: konfirmasi/tolak/proses/siap dari kasir; idempoten menurut status akhir. Mengembalikan status terkini.
+  Future<String> UbahStatusPesananOnline(
+    String uuid, {
+    required String status,
+    required String uuidPengguna,
+    String? alasan,
+  }) async {
+    final json = await _Kirim('POST', 'pesanan-online/${Uri.encodeComponent(uuid)}/status', {
+      'UuidPengguna': uuidPengguna,
+      'Status': status,
+      'Alasan': ?alasan,
+    });
+    return UraiJson.AmbilTeks(json['Status']);
+  }
+
   Future<void> TautkanPesananOnline(String uuid, {required String uuidPenjualan}) =>
       _Kirim('POST', 'pesanan-online/${Uri.encodeComponent(uuid)}/tautkan', {'UuidPenjualan': uuidPenjualan});
 

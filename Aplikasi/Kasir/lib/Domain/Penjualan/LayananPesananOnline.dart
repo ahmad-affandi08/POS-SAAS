@@ -4,6 +4,7 @@ import 'package:mesin_kasir/MesinKasir.dart';
 import '../GalatKasir.dart';
 import '../Katalog/KatalogLokal.dart';
 import '../Pelanggan/LayananPelanggan.dart';
+import '../Sesi/StafLokal.dart';
 import 'Keranjang.dart';
 import 'KonteksPenjualan.dart';
 import 'LayananPenjualan.dart';
@@ -43,13 +44,58 @@ class LayananPesananOnline {
     }
   }
 
+  /// BR-17.3 (v3.33): ringkasan untuk polling 10 detik. Offline atau galat server = null (polling diam, dicoba lagi).
+  Future<RingkasPesananOnlinePos?> AmbilRingkas({String? sejak}) async {
+    try {
+      return await klien.AmbilRingkasPesananOnline(sejak: sejak);
+    } on GalatJaringan {
+      return null;
+    } on GalatApi {
+      return null;
+    }
+  }
+
+  /// Boleh mengubah status pesanan online dari kasir: `toko-online.kelola` atau kasir yang berjualan (`penjualan.buat`).
+  static bool CekBolehUbahStatus(StafLokal kasir) =>
+      kasir.PunyaIzin(IzinKasir.tokoOnlineKelola) || kasir.PunyaIzin(IzinKasir.penjualanBuat);
+
+  /// Langkah staf berikutnya untuk [pesanan] (`Status` tujuan → label tombol), urut tampil. Tolak butuh alasan.
+  static List<({String status, String label})> AmbilLangkah(PesananOnlinePos pesanan) => switch (pesanan.status) {
+    'MenungguKonfirmasi' => const [(status: 'Dikonfirmasi', label: 'Terima'), (status: 'Ditolak', label: 'Tolak')],
+    'Dikonfirmasi' => const [(status: 'Diproses', label: 'Mulai proses')],
+    'Diproses' => const [(status: 'Siap', label: 'Tandai siap')],
+    _ => const [],
+  };
+
+  /// Ubah status pesanan (wajib online). Mengembalikan status terkini dari server.
+  Future<String> UbahStatus(PesananOnlinePos pesanan, String status, StafLokal kasir, {String? alasan}) async {
+    if (!CekBolehUbahStatus(kasir)) {
+      throw const GalatKasir('TanpaIzin', 'Pengguna ini tidak boleh mengubah status pesanan online.');
+    }
+    try {
+      return await klien.UbahStatusPesananOnline(
+        pesanan.uuid,
+        status: status,
+        uuidPengguna: kasir.uuid,
+        alasan: alasan,
+      );
+    } on GalatJaringan {
+      throw const GalatKasir('PerluOnline', 'Mengubah status pesanan online perlu koneksi internet.');
+    } on GalatApi catch (galat) {
+      throw GalatKasir(galat.kode, galat.pesan);
+    }
+  }
+
   /// Alasan pesanan belum bisa ditagih di kasir, atau null bila boleh.
   static String? AlasanBelumBisaDitagih(PesananOnlinePos pesanan) {
+    if (pesanan.status == 'MenungguKonfirmasi') {
+      return 'Terima pesanan dulu, lalu siapkan sampai berstatus Siap.';
+    }
     if (pesanan.CekKirim && pesanan.status != 'Siap') {
       return 'Pesanan kirim ditagih setelah dikemas (status Siap).';
     }
     if (!pesanan.CekKirim && pesanan.status != 'Siap') {
-      return 'Tandai pesanan Siap dulu di back-office sebelum ditagihkan.';
+      return 'Tandai pesanan Siap dulu sebelum ditagihkan.';
     }
     return null;
   }

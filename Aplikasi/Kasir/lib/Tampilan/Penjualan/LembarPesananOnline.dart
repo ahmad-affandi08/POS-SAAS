@@ -9,12 +9,19 @@ import 'package:sistem_desain/SistemDesain.dart';
 import '../../Aplikasi/Penyedia.dart';
 import '../../Domain/GalatKasir.dart';
 import '../../Domain/Penjualan/LayananPesananOnline.dart';
+import '../../Domain/Sesi/StafLokal.dart';
 
 /// F-17: pesanan toko online outlet ini yang belum ditagihkan (perlu online), lalu muat ke keranjang kanal `Online`.
 /// Pesanan yang sudah dibayar di muka membawa uang mukanya, sehingga panel Bayar otomatis mengisi baris Uang muka dan
 /// kasir hanya menagih sisanya (biasanya nol).
+///
+/// BR-17.3 (v3.33): pesanan yang menunggu konfirmasi ikut tampil; staf bisa menerima/menolak (dengan alasan), mulai
+/// proses, dan menandai siap langsung dari sini, tanpa membuka back-office. Pembeli dikabari lewat WhatsApp oleh server.
 class LembarPesananOnline extends ConsumerStatefulWidget {
-  const LembarPesananOnline({super.key, required this.saatDimuat});
+  const LembarPesananOnline({super.key, required this.kasir, required this.saatDimuat});
+
+  /// Staf yang sedang masuk (pelaku ubah status).
+  final StafLokal kasir;
 
   static const String judul = 'Pesanan toko online';
 
@@ -57,6 +64,31 @@ class _LembarPesananOnlineState extends ConsumerState<LembarPesananOnline> {
     }
   }
 
+  Future<void> _UbahStatus(PesananOnlinePos pesanan, String status) async {
+    String? alasan;
+    if (status == 'Ditolak') {
+      alasan = await showDialog<String>(context: context, builder: (_) => const _DialogAlasanTolak());
+      if (alasan == null) {
+        return;
+      }
+    }
+    setState(() {
+      _sibuk = true;
+      _galat = null;
+    });
+    try {
+      await ref.read(penyediaLayananPesananOnline).UbahStatus(pesanan, status, widget.kasir, alasan: alasan);
+      await _Muat();
+    } on GalatKasir catch (galat) {
+      if (mounted) {
+        setState(() {
+          _galat = galat.pesan;
+          _sibuk = false;
+        });
+      }
+    }
+  }
+
   Future<void> _Tagih(PesananOnlinePos pesanan) async {
     final hasil = _hasil;
     if (hasil == null) {
@@ -92,7 +124,7 @@ class _LembarPesananOnlineState extends ConsumerState<LembarPesananOnline> {
           children: [
             Expanded(
               child: Text(
-                'Pesanan dari toko online yang belum ditagihkan di outlet ini. Perlu koneksi internet.',
+                'Pesanan toko online outlet ini: terima, siapkan, lalu tagih. Perlu koneksi internet.',
                 style: teks.bodySmall,
               ),
             ),
@@ -116,17 +148,27 @@ class _LembarPesananOnlineState extends ConsumerState<LembarPesananOnline> {
             padding: const EdgeInsets.only(top: TokenJarak.jarak12),
             child: Text('Belum ada pesanan toko online yang menunggu ditagihkan.', style: teks.bodyMedium),
           ),
-        for (final p in pesanan) _KartuPesanan(pesanan: p, saatTagih: () => unawaited(_Tagih(p))),
+        for (final p in pesanan)
+          _KartuPesanan(
+            pesanan: p,
+            saatTagih: () => unawaited(_Tagih(p)),
+            saatUbahStatus: LayananPesananOnline.CekBolehUbahStatus(widget.kasir) && !_sibuk
+                ? (status) => unawaited(_UbahStatus(p, status))
+                : null,
+          ),
       ],
     );
   }
 }
 
 class _KartuPesanan extends StatelessWidget {
-  const _KartuPesanan({required this.pesanan, required this.saatTagih});
+  const _KartuPesanan({required this.pesanan, required this.saatTagih, this.saatUbahStatus});
 
   final PesananOnlinePos pesanan;
   final VoidCallback saatTagih;
+
+  /// Null = staf tanpa izin (tombol status tidak tampil).
+  final void Function(String status)? saatUbahStatus;
 
   @override
   Widget build(BuildContext context) {
@@ -174,15 +216,36 @@ class _KartuPesanan extends StatelessWidget {
                   child: Text(alasan, style: TextStyle(color: warna.teksSekunder)),
                 ),
               const SizedBox(height: TokenJarak.jarak8),
-              Align(
-                alignment: Alignment.centerRight,
-                child: SizedBox(
-                  height: TokenJarak.targetSentuh,
-                  child: OutlinedButton(
-                    onPressed: alasan == null ? saatTagih : null,
-                    child: Text('Tagih ${pesanan.nomor.split('-').last}'),
-                  ),
-                ),
+              Wrap(
+                alignment: WrapAlignment.end,
+                spacing: TokenJarak.jarak8,
+                runSpacing: TokenJarak.jarak8,
+                children: [
+                  if (saatUbahStatus != null)
+                    for (final l in LayananPesananOnline.AmbilLangkah(pesanan))
+                      SizedBox(
+                        height: TokenJarak.targetSentuh,
+                        child: l.status == 'Ditolak'
+                            ? TextButton(
+                                key: ValueKey('Status-${pesanan.uuid}-${l.status}'),
+                                onPressed: () => saatUbahStatus!(l.status),
+                                child: Text(l.label),
+                              )
+                            : FilledButton(
+                                key: ValueKey('Status-${pesanan.uuid}-${l.status}'),
+                                onPressed: () => saatUbahStatus!(l.status),
+                                child: Text(l.label),
+                              ),
+                      ),
+                  if (pesanan.status != 'MenungguKonfirmasi')
+                    SizedBox(
+                      height: TokenJarak.targetSentuh,
+                      child: OutlinedButton(
+                        onPressed: alasan == null ? saatTagih : null,
+                        child: Text('Tagih ${pesanan.nomor.split('-').last}'),
+                      ),
+                    ),
+                ],
               ),
             ],
           ),
@@ -190,4 +253,42 @@ class _KartuPesanan extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Alasan menolak pesanan online (wajib; dikirim ke pembeli lewat status pesanannya).
+class _DialogAlasanTolak extends StatefulWidget {
+  const _DialogAlasanTolak();
+
+  @override
+  State<_DialogAlasanTolak> createState() => _DialogAlasanTolakState();
+}
+
+class _DialogAlasanTolakState extends State<_DialogAlasanTolak> {
+  final _alasan = TextEditingController();
+
+  @override
+  void dispose() {
+    _alasan.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AlertDialog(
+    title: const Text('Tolak pesanan'),
+    content: TextField(
+      key: const ValueKey('AlasanTolak'),
+      controller: _alasan,
+      autofocus: true,
+      maxLength: 255,
+      decoration: const InputDecoration(labelText: 'Alasan (misal: bahan habis)'),
+      onChanged: (_) => setState(() {}),
+    ),
+    actions: [
+      TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Batal')),
+      FilledButton(
+        onPressed: _alasan.text.trim().length < 3 ? null : () => Navigator.of(context).pop(_alasan.text.trim()),
+        child: const Text('Tolak pesanan'),
+      ),
+    ],
+  );
 }

@@ -11,6 +11,7 @@ use App\Domain\Penjualan\Enum\StatusPesananOnline;
 use App\Domain\Penjualan\Model\MetodePembayaran;
 use App\Domain\Penjualan\Model\PesananOnline;
 use App\Domain\Penjualan\Model\PesananOnlineDetail;
+use Carbon\CarbonImmutable;
 
 /**
  * Pesanan online aktif untuk dimuat kasir ke keranjang POS; belum menyentuh stok/jurnal.
@@ -31,12 +32,33 @@ final class PesananOnlineOutlet
     ) {}
 
     /**
+     * BR-17.3 (v3.33): ringkasan untuk polling aplikasi kasir tiap 10 detik — murah (tiga hitungan, tanpa detail).
+     * `Baru` = pesanan yang masuk antrean toko (sudah dibayar bila bayar di muka) sejak `$sejak`.
+     *
+     * @return array{Menunggu: int, PerluDitagih: int, Baru: int, WaktuServer: string}
+     */
+    public function AmbilRingkas(int $idOutlet, ?CarbonImmutable $sejak): array
+    {
+        $dasar = fn () => PesananOnline::query()->where('IdOutlet', $idOutlet);
+
+        return [
+            'Menunggu' => $dasar()->where('Status', StatusPesananOnline::MenungguKonfirmasi->value)->count(),
+            'PerluDitagih' => $dasar()->where('Status', StatusPesananOnline::Siap->value)->whereNull('IdPenjualan')->count(),
+            // Pesanan bayar di muka baru "masuk" saat dibayar; yang lain saat dibuat.
+            'Baru' => $sejak === null ? 0 : $dasar()->where('Status', StatusPesananOnline::MenungguKonfirmasi->value)
+                ->where(fn ($k) => $k->where('DibuatPada', '>', $sejak)->orWhere('DibayarPada', '>', $sejak))->count(),
+            'WaktuServer' => CarbonImmutable::now()->toIso8601ZuluString(),
+        ];
+    }
+
+    /**
      * @return array{Pesanan: list<array<string, mixed>>, TanggalBisnis: string, MetodeUangMuka: array{Uuid: string, Nama: string}|null}
      */
     public function AmbilAktif(int $idOutlet): array
     {
+        // BR-17.3 (v3.33): pesanan yang menunggu konfirmasi ikut dikirim supaya staf di kasir bisa menerima/menolaknya.
         $daftar = PesananOnline::query()->with('Detail')->where('IdOutlet', $idOutlet)
-            ->whereIn('Status', [StatusPesananOnline::Dikonfirmasi->value, StatusPesananOnline::Diproses->value, StatusPesananOnline::Siap->value])
+            ->whereIn('Status', [StatusPesananOnline::MenungguKonfirmasi->value, StatusPesananOnline::Dikonfirmasi->value, StatusPesananOnline::Diproses->value, StatusPesananOnline::Siap->value])
             ->whereNull('IdPenjualan')->orderBy('DibuatPada')->get();
         $tanggalBisnis = $this->tanggal->Hitung($idOutlet)->toDateString();
         $pelanggan = $this->pelanggan->AmbilPerId(array_values(array_filter($daftar->pluck('IdPelanggan')->all(), 'is_int')), $tanggalBisnis);

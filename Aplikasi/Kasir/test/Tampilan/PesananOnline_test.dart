@@ -161,4 +161,82 @@ void main() {
     expect(tester.takeException(), isNull);
     await Lepas(tester, u);
   });
+
+  testWidgets('BR-17.3: pesanan menunggu diterima, diproses & ditandai siap dari kasir; tolak wajib alasan', (
+    tester,
+  ) async {
+    final u = await MasukJual(tester, const Size(1280, 900));
+    var status = 'MenungguKonfirmasi';
+    final kiriman = <Map<String, Object?>>[];
+    u.server.penangan = (p) async {
+      if (p.url.path.endsWith('/pesanan-online')) {
+        final d = Daftar();
+        ((d['Pesanan']! as List<Object?>).first! as Map<String, Object?>)['Status'] = status;
+        return JsonUji(d);
+      }
+      if (p.url.path.endsWith('/status')) {
+        final isi = jsonDecode(p.body) as Map<String, Object?>;
+        kiriman.add(isi);
+        status = isi['Status']! as String;
+        return JsonUji({'Uuid': '01K5PESANANONLINE000000001', 'Status': status});
+      }
+      throw http.ClientException('offline');
+    };
+    await BukaLembar(tester);
+
+    expect(find.text('Terima pesanan dulu, lalu siapkan sampai berstatus Siap.'), findsOneWidget);
+    expect(find.widgetWithText(OutlinedButton, 'Tagih 0001'), findsNothing);
+    await Ketuk(tester, find.byKey(const ValueKey('Status-01K5PESANANONLINE000000001-Dikonfirmasi')));
+    await Ketuk(tester, find.byKey(const ValueKey('Status-01K5PESANANONLINE000000001-Diproses')));
+    await Ketuk(tester, find.byKey(const ValueKey('Status-01K5PESANANONLINE000000001-Siap')));
+    expect(kiriman.map((k) => k['Status']), ['Dikonfirmasi', 'Diproses', 'Siap']);
+    expect(kiriman.first['UuidPengguna'], isNotEmpty);
+    final tagih = tester.widget<OutlinedButton>(find.widgetWithText(OutlinedButton, 'Tagih 0001'));
+    expect(tagih.onPressed, isNotNull);
+
+    status = 'MenungguKonfirmasi';
+    await Ketuk(tester, find.widgetWithText(OutlinedButton, 'Muat ulang'));
+    await Ketuk(tester, find.byKey(const ValueKey('Status-01K5PESANANONLINE000000001-Ditolak')));
+    final konfirmasi = find.widgetWithText(FilledButton, 'Tolak pesanan');
+    expect(tester.widget<FilledButton>(konfirmasi).onPressed, isNull, reason: 'Alasan wajib.');
+    await tester.enterText(find.byKey(const ValueKey('AlasanTolak')), 'Bahan habis hari ini');
+    await tester.pump();
+    await Ketuk(tester, konfirmasi);
+    expect(kiriman.last, containsPair('Alasan', 'Bahan habis hari ini'));
+    expect(kiriman.last['Status'], 'Ditolak');
+    expect(tester.takeException(), isNull);
+    await Lepas(tester, u);
+  });
+
+  testWidgets('BR-17.3: polling 10 detik mengumumkan pesanan online baru dan menampilkan jumlah menunggu', (
+    tester,
+  ) async {
+    final u = await MasukJual(tester, const Size(1280, 900));
+    var putaran = 0;
+    u.server.penangan = (p) async {
+      if (p.url.path.endsWith('/pesanan-online/ringkas')) {
+        putaran++;
+        return JsonUji({
+          'Menunggu': putaran == 1 ? 0 : 1,
+          'PerluDitagih': 0,
+          'Baru': putaran == 1 ? 0 : 1,
+          'WaktuServer': '2026-09-30T02:00:0${putaran}Z',
+        });
+      }
+      if (p.url.path.endsWith('/pesanan-online')) {
+        return JsonUji(Daftar());
+      }
+      throw http.ClientException('offline');
+    };
+    await Tunggu(tester, const Duration(seconds: 11));
+    expect(find.text('Ada pesanan online baru.'), findsNothing, reason: 'Tarikan pertama hanya menetapkan titik awal.');
+    await Tunggu(tester, const Duration(seconds: 10));
+    expect(find.text('Ada pesanan online baru.'), findsOneWidget);
+    expect(find.textContaining('1 pesanan online menunggu'), findsWidgets);
+    expect(u.server.permintaan.where((p) => p.url.query.contains('sejak=')), isNotEmpty);
+    await Ketuk(tester, find.widgetWithText(SnackBarAction, 'Lihat'));
+    expect(find.text('ON/SLB/260930-0001'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    await Lepas(tester, u);
+  });
 }

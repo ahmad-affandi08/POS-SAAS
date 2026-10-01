@@ -117,6 +117,33 @@ class PesananOnlinePos {
   );
 }
 
+/// BR-17.3 (v3.33): `GET /api/pos/v1/pesanan-online/ringkas` — dipolling kasir tiap 10 detik.
+class RingkasPesananOnlinePos {
+  const RingkasPesananOnlinePos({
+    required this.menunggu,
+    required this.perluDitagih,
+    required this.baru,
+    required this.waktuServer,
+  });
+
+  /// Menunggu konfirmasi toko.
+  final int menunggu;
+
+  /// Siap dan belum ditagihkan.
+  final int perluDitagih;
+
+  /// Masuk antrean toko sejak polling sebelumnya.
+  final int baru;
+  final String waktuServer;
+
+  static RingkasPesananOnlinePos DariJson(Map<String, Object?> json) => RingkasPesananOnlinePos(
+    menunggu: UraiJson.AmbilBulat(json['Menunggu']),
+    perluDitagih: UraiJson.AmbilBulat(json['PerluDitagih']),
+    baru: UraiJson.AmbilBulat(json['Baru']),
+    waktuServer: UraiJson.AmbilTeks(json['WaktuServer']),
+  );
+}
+
 /// Hasil `GET /api/pos/v1/pesanan-online`: pesanan aktif outlet perangkat + metode sistem "Uang muka (DP)"
 /// (null = tenant belum pernah menerima uang muka, jadi pesanan berbayar belum bisa ditagih).
 class HasilPesananOnline {

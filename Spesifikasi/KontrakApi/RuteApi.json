@@ -318,5 +318,15 @@
         "Metode": "POST",
         "Jalur": "api/pos/v1/pesanan-online/{pesananOnline}/tautkan",
         "Nama": "pos.pesanan-online.tautkan"
+    },
+    "GET api/pos/v1/pesanan-online/ringkas": {
+        "Metode": "GET",
+        "Jalur": "api/pos/v1/pesanan-online/ringkas",
+        "Nama": "pos.pesanan-online.ringkas"
+    },
+    "POST api/pos/v1/pesanan-online/{pesananOnline}/status": {
+        "Metode": "POST",
+        "Jalur": "api/pos/v1/pesanan-online/{pesananOnline}/status",
+        "Nama": "pos.pesanan-online.status"
     }
 }
