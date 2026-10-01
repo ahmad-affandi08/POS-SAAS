@@ -107,6 +107,10 @@ jobs:
       - name: Antrean & log
         if: ${{ !cancelled() }}
         run: |
+          echo "--- Galat di log aplikasi (maks. 150 baris) ---"
+          grep -hE -A10 "ERROR|CRITICAL" storage/logs/laravel*.log 2>/dev/null | head -150 || true
+          echo "--- Log server (galat PHP) ---"
+          grep -iE "fatal|error" storage/logs/server.log 2>/dev/null | head -20 || true
           {
             echo "### Sisa antrean & log"
             echo '```'

@@ -205,12 +205,15 @@ export function outbox() {
   sleep(5);
 }
 
+// Kursor katalog per VU (perangkat): sinkron lengkap sekali, lalu delta seperti aplikasi sungguhan.
+let kursorKatalog = null;
+
 export function polling() {
   const p = data.Perangkat[__VU % data.Perangkat.length];
   const params = { headers: kepala(p), tags: { jenis: 'polling' }, responseCallback: http.expectedStatuses({ min: 200, max: 299 }, 429) };
-  const sejak = encodeURIComponent(new Date(Date.now() - 3600000).toISOString().replace(/\.\d{3}Z$/, 'Z'));
+  const jalurKatalog = kursorKatalog === null ? '/api/pos/v1/katalog' : `/api/pos/v1/katalog?sejak=${encodeURIComponent(kursorKatalog)}`;
 
-  for (const jalur of ['/api/pos/v1/konfigurasi-aplikasi', `/api/pos/v1/katalog?sejak=${sejak}`, '/api/pos/v1/data-awal']) {
+  for (const jalur of ['/api/pos/v1/konfigurasi-aplikasi', jalurKatalog, '/api/pos/v1/data-awal']) {
     const res = http.get(`${base}${jalur}`, params);
     if (res.status === 429) {
       dibatasi.add(1);
@@ -219,6 +222,8 @@ export function polling() {
 
       if (res.status !== 200) {
         console.error(`polling ${jalur.split('?')[0]} -> ${res.status} ${String(res.body).slice(0, 300)}`);
+      } else if (jalur.startsWith('/api/pos/v1/katalog')) {
+        kursorKatalog = res.json('Kursor') || kursorKatalog;
       }
     }
   }
