@@ -67,6 +67,7 @@ describe('F-17 BR-17.2 dampak ke toko online dan self-order', function (): void 
 
         $this->get($k['AlamatToko'])->assertOk()->assertInertia(fn (AssertableInertia $h) => $h->has('Menu.Produk', 2));
 
+        BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
         app(UbahKetersediaanProduk::class)->Jalankan($k['Outlet']->Id, $k['Kopi']->Uuid, true, idPenggunaBackOffice: $k['Pemilik']->Id);
 
         $this->get($k['AlamatToko'])->assertOk()->assertInertia(fn (AssertableInertia $h) => $h
@@ -137,7 +138,7 @@ describe('F-17 BR-17.2 tandai habis dari aplikasi POS', function (): void {
             ->assertUnprocessable()->assertJsonPath('Galat.Kode', 'KasirTidakDitemukan');
         $this->withToken($k['Token'])->postJson('/api/pos/v1/produk/'.strtoupper((string) Str::ulid()).'/habis', ['UuidPengguna' => $k['Kasir']->Uuid, 'Habis' => true])
             ->assertNotFound();
-        $this->postJson("/api/pos/v1/produk/{$produk->Uuid}/habis", ['UuidPengguna' => $k['Kasir']->Uuid, 'Habis' => true])->assertUnauthorized();
+        $this->flushHeaders()->postJson("/api/pos/v1/produk/{$produk->Uuid}/habis", ['UuidPengguna' => $k['Kasir']->Uuid, 'Habis' => true])->assertUnauthorized();
 
         BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
         expect(ProdukHabis::query()->count())->toBe(0);
