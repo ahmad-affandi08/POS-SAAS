@@ -23,12 +23,23 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $KeluarPada
  * @property string|null $PathSwafotoMasuk
  * @property string|null $PathSwafotoKeluar
+ * @property string $Sumber
+ * @property int|null $DikoreksiOleh
+ * @property Carbon|null $DikoreksiPada
+ * @property string|null $AlasanKoreksi
  */
 final class Absensi extends ModelDasar
 {
     use MilikTenant;
 
     protected $table = 'Absensi';
+
+    public const SUMBER_POS = 'Pos';
+
+    public const SUMBER_MANUAL = 'Manual';
+
+    /** @var array<string, mixed> */
+    protected $attributes = ['Sumber' => self::SUMBER_POS];
 
     /**
      * @return array<string, string>
@@ -39,6 +50,7 @@ final class Absensi extends ModelDasar
             'TanggalBisnis' => 'date',
             'MasukPada' => 'datetime',
             'KeluarPada' => 'datetime',
+            'DikoreksiPada' => 'datetime',
         ];
     }
 }

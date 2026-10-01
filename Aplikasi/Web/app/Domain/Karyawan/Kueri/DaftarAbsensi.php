@@ -115,6 +115,10 @@ final class DaftarAbsensi
                 'LabelStatus' => $status->AmbilLabel(),
                 'AdaSwafotoMasuk' => $a->PathSwafotoMasuk !== null,
                 'AdaSwafotoKeluar' => $a->PathSwafotoKeluar !== null,
+                // v3.34: koreksi pengelola. Tanggal & jam mentah (waktu outlet) mengisi formulir koreksi.
+                'Sumber' => $a->Sumber,
+                'Dikoreksi' => $a->DikoreksiPada !== null,
+                'AlasanKoreksi' => $a->AlasanKoreksi,
             ];
         })->all());
     }

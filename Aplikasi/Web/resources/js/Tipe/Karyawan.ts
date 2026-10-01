@@ -66,12 +66,18 @@ export type BarisAbsensi = {
     LabelStatus: string;
     AdaSwafotoMasuk: boolean;
     AdaSwafotoKeluar: boolean;
+    /** v3.34: `Pos` (absen dari kasir) atau `Manual` (dicatat pengelola). */
+    Sumber: 'Pos' | 'Manual';
+    Dikoreksi: boolean;
+    AlasanKoreksi: string | null;
 };
 
 export type PropsAbsensi = {
     Absensi: HasilTabel<BarisAbsensi>;
     OpsiKaryawan: OpsiUuidNama[];
     OpsiOutlet: OpsiUuidNama[];
+    /** v3.34: `karyawan.kelola` boleh menambah absensi terlewat & mengoreksi jam. */
+    BolehKoreksi: boolean;
 };
 
 /* F-18 bagian 2: komisi. */

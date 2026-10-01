@@ -38,6 +38,9 @@ Route::middleware([SiapkanAuditTenant::class, $izin(IzinTenant::KaryawanLihat)])
 
     Route::middleware($izin(IzinTenant::KaryawanKelola))->group(function () use ($ulid): void {
         Route::get('/buat', [KaryawanKontroler::class, 'Buat'])->name('kelola.karyawan.buat');
+        // v3.34: koreksi & tambah absensi manual.
+        Route::post('/absensi', [AbsensiKontroler::class, 'Tambah'])->name('kelola.karyawan.absensi.tambah');
+        Route::put('/absensi/{absensi}', [AbsensiKontroler::class, 'Koreksi'])->where('absensi', $ulid)->name('kelola.karyawan.absensi.koreksi');
         Route::post('/', [KaryawanKontroler::class, 'Simpan'])->name('kelola.karyawan.simpan');
         Route::put('/{karyawan}', [KaryawanKontroler::class, 'Perbarui'])->where('karyawan', $ulid)->name('kelola.karyawan.perbarui');
         Route::post('/{karyawan}/nonaktifkan', [KaryawanKontroler::class, 'Nonaktifkan'])->where('karyawan', $ulid)->name('kelola.karyawan.nonaktifkan');

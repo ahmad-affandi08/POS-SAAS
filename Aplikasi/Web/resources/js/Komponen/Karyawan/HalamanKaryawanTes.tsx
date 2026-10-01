@@ -166,8 +166,19 @@ describe('Halaman karyawan (F-18)', () => {
             LabelStatus: 'Terlambat',
             AdaSwafotoMasuk: true,
             AdaSwafotoKeluar: false,
+            Sumber: 'Pos',
+            Dikoreksi: false,
+            AlasanKoreksi: null,
         };
-        RenderUji(<HalamanAbsensi Absensi={BuatHasilTabel([absensi])} OpsiKaryawan={[]} OpsiOutlet={[Outlet]} />);
+        RenderUji(
+            <HalamanAbsensi
+                Absensi={BuatHasilTabel([absensi])}
+                OpsiKaryawan={[]}
+                OpsiOutlet={[Outlet]}
+                BolehKoreksi={false}
+            />,
+        );
+        expect(screen.queryByRole('button', { name: 'Catat absensi terlewat' })).toBeNull();
         expect(screen.getAllByText('Terlambat 40 menit').length).toBeGreaterThan(0);
         expect(screen.getAllByRole('link', { name: 'Swafoto masuk' })[0]?.getAttribute('href')).toBe(
             '/kelola/karyawan/absensi/01J9ABS0000000000000000001/swafoto/masuk',
