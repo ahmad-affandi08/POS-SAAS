@@ -17,7 +17,7 @@ final class TokoOnlinePermintaan extends FormRequest
             'Uuid' => [$checkout ? 'required' : 'sometimes', 'ulid'],
             'Outlet' => ['required', 'ulid'],
             'JenisPemenuhan' => ['required', 'in:AmbilSendiri,Kirim'],
-            'MetodePembayaran' => [$checkout ? 'required' : 'sometimes', 'in:BayarSaatAmbil,Cod'],
+            'MetodePembayaran' => [$checkout ? 'required' : 'sometimes', 'in:BayarSaatAmbil,Cod,QrisOnline'],
             'NamaPelanggan' => [$checkout ? 'required' : 'sometimes', 'string', 'max:100'],
             'NoHp' => [$checkout ? 'required' : 'sometimes', 'string', 'max:30'],
             'Email' => ['nullable', 'email', 'max:150'],

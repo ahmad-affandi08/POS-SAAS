@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Domain\Bersama\Dokumen\Model\RiwayatStatusDokumen;
+use App\Domain\Penjualan\Aksi\BuatPesananOnline;
 use App\Domain\Penjualan\Enum\StatusPesananOnline;
 use App\Domain\Penjualan\Model\PengaturanTokoOnline;
 use App\Domain\Penjualan\Model\PesananOnline;
@@ -46,9 +47,9 @@ it('menghanguskan pesanan yang lewat batas waktu toko, tetapi tidak menyentuh ya
     $this->artisan('pesanan-online:kedaluwarsa')->assertSuccessful();
     BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
 
-    expect(PesananOnline::query()->whereKey($lewat->Id)->value('Status'))->toBe(StatusPesananOnline::Kedaluwarsa->value)
-        ->and(PesananOnline::query()->whereKey($segar->Id)->value('Status'))->toBe(StatusPesananOnline::MenungguKonfirmasi->value)
-        ->and(PesananOnline::query()->whereKey($dikonfirmasi->Id)->value('Status'))->toBe(StatusPesananOnline::Dikonfirmasi->value)
+    expect(PesananOnline::query()->whereKey($lewat->Id)->value('Status'))->toBe(StatusPesananOnline::Kedaluwarsa)
+        ->and(PesananOnline::query()->whereKey($segar->Id)->value('Status'))->toBe(StatusPesananOnline::MenungguKonfirmasi)
+        ->and(PesananOnline::query()->whereKey($dikonfirmasi->Id)->value('Status'))->toBe(StatusPesananOnline::Dikonfirmasi)
         ->and(RiwayatStatusDokumen::query()->where('JenisDokumen', PesananOnline::JENIS_DOKUMEN)->where('IdDokumen', $lewat->Id)
             ->where('StatusKe', StatusPesananOnline::Kedaluwarsa->value)->count())->toBe(1)
         ->and(DB::table('LogAudit')->where('IdTenant', $k['Tenant']->Id)->where('Peristiwa', 'pesanan-online.kedaluwarsa')->count())->toBe(1);
@@ -63,7 +64,7 @@ it('pesanan hangus melepas jatah pesanan aktif nomor pelanggan', function (): vo
     $k = BantuanTokoOnline::Siapkan($this);
     PengaturanTokoOnline::query()->sole()->forceFill(['MenitKedaluwarsa' => 15])->save();
 
-    for ($i = 0; $i < 5; $i++) {
+    for ($i = 0; $i < BuatPesananOnline::BATAS_AKTIF_PER_IP; $i++) {
         BuatPesananMenunggu($k);
     }
     $this->postJson('/'.$k['Slug'].'/pesan', BantuanTokoOnline::Kiriman($k))
@@ -84,7 +85,7 @@ it('staf tidak bisa memasang status Kedaluwarsa sendiri dari back-office', funct
     $this->post('/kelola/toko-online/pesanan/'.$pesanan->Uuid.'/status', ['Status' => 'Kedaluwarsa'])
         ->assertSessionHasErrors('Status');
     $this->get('/kelola/toko-online')->assertOk()->assertInertia(fn (AssertableInertia $h) => $h
-        ->where('OpsiStatusPesanan', fn (array $opsi): bool => ! in_array('Kedaluwarsa', array_column($opsi, 'Nilai'), true)));
+        ->where('OpsiStatusPesanan', fn ($opsi): bool => ! collect($opsi)->pluck('Nilai')->contains('Kedaluwarsa')));
 });
 
 it('pesanan menunggu konfirmasi muncul di Kotak Tindakan sebagai pengingat', function (): void {

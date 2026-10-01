@@ -177,7 +177,7 @@ final class LaporanStok
         foreach ($hasil['Baris'] as $b) {
             $p = $info[$b['IdProduk']] ?? null;
             $g = $gudang[$b['IdGudang']] ?? null;
-            $sisaHari = (int) $hariIni->startOfDay()->diffInDays(CarbonImmutable::parse($b['TanggalKedaluwarsa'])->startOfDay(), false);
+            $sisaHari = (int) $hariIni->startOfDay()->diffInDays(CarbonImmutable::parse($b['TanggalKedaluwarsa'], $hariIni->getTimezone())->startOfDay(), false);
             $baris[] = [
                 'Kunci' => ($p->uuid ?? (string) $b['IdProduk']).'-'.($g->uuid ?? (string) $b['IdGudang']).'-'.$b['NomorBatch'],
                 'UuidProduk' => $p->uuid ?? '',

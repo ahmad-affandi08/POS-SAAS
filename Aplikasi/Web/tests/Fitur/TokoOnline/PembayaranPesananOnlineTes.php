@@ -407,8 +407,8 @@ it('pesanan yang tidak dibayar hangus sesuai batas QRIS, yang sudah dibayar tida
     $this->artisan('pesanan-online:kedaluwarsa')->assertSuccessful();
 
     BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
-    expect(PesananOnline::query()->whereKey($belum->Id)->value('Status'))->toBe(StatusPesananOnline::Kedaluwarsa->value)
-        ->and(PesananOnline::query()->whereKey($dibayar->Id)->value('Status'))->toBe(StatusPesananOnline::MenungguKonfirmasi->value);
+    expect(PesananOnline::query()->whereKey($belum->Id)->value('Status'))->toBe(StatusPesananOnline::Kedaluwarsa)
+        ->and(PesananOnline::query()->whereKey($dibayar->Id)->value('Status'))->toBe(StatusPesananOnline::MenungguKonfirmasi);
 });
 
 it('sakelar QRIS tidak bisa dinyalakan tanpa gerbang pembayaran aktif', function (): void {

@@ -82,6 +82,12 @@ final class BantuanTagihan
      */
     public static function UnggahBuktiLangsung(Tenant $tenant, Pengguna $pemilik, TagihanLangganan $tagihan, ?string $tanggalTransfer = null): PembayaranLangganan
     {
+        config()->set('tagihan.RekeningTujuan', [[
+            'Kode' => 'UTAMA',
+            'NamaBank' => 'Bank Central Asia',
+            'NomorRekening' => '1234567890',
+            'AtasNama' => 'PT Kasir Nusantara Digital',
+        ]]);
         self::AturTenant($tenant);
 
         try {
