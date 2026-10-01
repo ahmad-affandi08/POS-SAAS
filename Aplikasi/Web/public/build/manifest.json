@@ -1794,7 +1794,7 @@
     "src": "node_modules/@fontsource-variable/atkinson-hyperlegible-next/files/atkinson-hyperlegible-next-latin-wght-normal.woff2"
   },
   "resources/js/Aplikasi.tsx": {
-    "file": "assets/Aplikasi-U9_77dPe.js",
+    "file": "assets/Aplikasi-SxmDrI60.js",
     "name": "Aplikasi",
     "src": "resources/js/Aplikasi.tsx",
     "isEntry": true,
@@ -1962,6 +1962,7 @@
       "resources/js/Halaman/Kelola/Persediaan/Transfer/Form.tsx",
       "resources/js/Halaman/Kelola/Pin.tsx",
       "resources/js/Halaman/Kelola/Piutang/Daftar.tsx",
+      "resources/js/Halaman/Kelola/Piutang/NotaTagihan.tsx",
       "resources/js/Halaman/Kelola/Piutang/Pelunasan/Daftar.tsx",
       "resources/js/Halaman/Kelola/Piutang/Pelunasan/Detail.tsx",
       "resources/js/Halaman/Kelola/Piutang/Pelunasan/Form.tsx",
@@ -3849,7 +3850,7 @@
     ]
   },
   "resources/js/Halaman/Kelola/Pelanggan/Detail.tsx": {
-    "file": "assets/Detail-Dp34MwBS.js",
+    "file": "assets/Detail-BT-BTHkn.js",
     "name": "Detail",
     "src": "resources/js/Halaman/Kelola/Pelanggan/Detail.tsx",
     "isDynamicEntry": true,
@@ -5088,7 +5089,7 @@
     ]
   },
   "resources/js/Halaman/Kelola/Piutang/Daftar.tsx": {
-    "file": "assets/Daftar-BRG08LLS.js",
+    "file": "assets/Daftar-DHuiFYdj.js",
     "name": "Daftar",
     "src": "resources/js/Halaman/Kelola/Piutang/Daftar.tsx",
     "isDynamicEntry": true,
@@ -5110,6 +5111,21 @@
       "_AturanPembelian-KDQof5_v.js",
       "resources/js/Halaman/Kelola/Pembelian/Hutang/Daftar.tsx",
       "_BagianPiutang-Bmv30AJD.js"
+    ]
+  },
+  "resources/js/Halaman/Kelola/Piutang/NotaTagihan.tsx": {
+    "file": "assets/NotaTagihan-CPMPH2Pa.js",
+    "name": "NotaTagihan",
+    "src": "resources/js/Halaman/Kelola/Piutang/NotaTagihan.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_jsx-runtime-CM6s92_4.js",
+      "_Tombol-CekKDvnx.js",
+      "_JudulHalaman-_E8UXsgD.js",
+      "_Format-D1Z2MPC0.js",
+      "_FormatWaktu-bKvj24HB.js",
+      "_table-Bki0To2W.js",
+      "_TabelForm-DPs2Cly1.js"
     ]
   },
   "resources/js/Halaman/Kelola/Piutang/Pelunasan/Daftar.tsx": {

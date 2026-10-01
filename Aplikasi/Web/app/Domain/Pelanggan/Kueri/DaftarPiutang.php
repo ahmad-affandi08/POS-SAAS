@@ -150,6 +150,46 @@ final class DaftarPiutang
     }
 
     /**
+     * v3.37 nota tagihan: piutang terbuka satu pelanggan (dibatasi outlet pengguna bila ada), urut jatuh tempo, dengan
+     * hari lewat jatuh tempo per `hariIni` (0 = belum/tepat jatuh tempo) dan total sisa & yang sudah lewat.
+     *
+     * @param  list<int>|null  $idOutlet
+     * @return array{Baris: list<array{Nomor: string, TanggalBisnis: string, JatuhTempo: string, Jumlah: string, Dibayar: string, Sisa: string, HariLewat: int}>, TotalSisa: string, TotalLewat: string}
+     */
+    public function AmbilNotaTagihan(int $idPelanggan, CarbonImmutable $hariIni, ?array $idOutlet = null): array
+    {
+        $totalSisa = Uang::Nol();
+        $totalLewat = Uang::Nol();
+        $baris = [];
+
+        $daftar = Piutang::query()
+            ->where('IdPelanggan', $idPelanggan)
+            ->whereIn('Status', [StatusPiutang::BelumLunas->value, StatusPiutang::DibayarSebagian->value])
+            ->when($idOutlet !== null, fn ($kueri) => $kueri->whereIn('IdOutlet', $idOutlet))
+            ->orderBy('JatuhTempo')
+            ->orderBy('Id')
+            ->get();
+
+        foreach ($daftar as $p) {
+            $sisa = $p->AmbilSisa();
+            $hariLewat = max(0, self::HitungHariLewat($p, $hariIni));
+            $totalSisa = $totalSisa->Tambah($sisa);
+            $totalLewat = $hariLewat > 0 ? $totalLewat->Tambah($sisa) : $totalLewat;
+            $baris[] = [
+                'Nomor' => $p->Nomor,
+                'TanggalBisnis' => $p->TanggalBisnis->format('Y-m-d'),
+                'JatuhTempo' => $p->JatuhTempo->format('Y-m-d'),
+                'Jumlah' => Uang::Dari((string) $p->Jumlah)->KeString(),
+                'Dibayar' => Uang::Dari((string) $p->Jumlah)->Kurangi($sisa)->KeString(),
+                'Sisa' => $sisa->KeString(),
+                'HariLewat' => $hariLewat,
+            ];
+        }
+
+        return ['Baris' => $baris, 'TotalSisa' => $totalSisa->KeString(), 'TotalLewat' => $totalLewat->KeString()];
+    }
+
+    /**
      * Pelanggan yang punya piutang terbuka (pilihan formulir & saring).
      *
      * @return list<array{Uuid: string, Nama: string}>

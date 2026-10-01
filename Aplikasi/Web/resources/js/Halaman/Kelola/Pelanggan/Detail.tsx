@@ -362,9 +362,19 @@ export default function HalamanDetailPelanggan({
                 <div className="flex flex-wrap items-center justify-between gap-2">
                     <h2 className="text-subjudul font-semibold text-teks-utama">Kredit & piutang</h2>
                     {Kredit && BandingkanDesimal(Kredit.SisaPiutang, '0') > 0 ? (
-                        <Link href={`/kelola/piutang?saring[Pelanggan]=${p.Uuid}`} className="text-brand underline">
-                            Lihat piutang
-                        </Link>
+                        <span className="flex flex-wrap gap-3">
+                            <Link href={`/kelola/piutang?saring[Pelanggan]=${p.Uuid}`} className="text-brand underline">
+                                Lihat piutang
+                            </Link>
+                            <a
+                                href={`/kelola/piutang/tagihan/${p.Uuid}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-brand underline"
+                            >
+                                Cetak nota tagihan
+                            </a>
+                        </span>
                     ) : null}
                 </div>
                 <dl className="grid gap-4 sm:grid-cols-4">

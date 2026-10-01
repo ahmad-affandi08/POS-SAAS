@@ -257,6 +257,15 @@ export default function HalamanDaftarPiutangPelanggan({
                   },
               ]
             : []),
+        // v3.37: nota tagihan berisi semua piutang terbuka pelanggan ini (tab baru, siap cetak/PDF).
+        ...(p.UuidPelanggan
+            ? [
+                  {
+                      label: 'Cetak nota tagihan pelanggan',
+                      saatPilih: () => window.open(`${AlamatPiutang}/tagihan/${p.UuidPelanggan ?? ''}`, '_blank'),
+                  },
+              ]
+            : []),
     ];
 
     return (
@@ -285,9 +294,7 @@ export default function HalamanDaftarPiutangPelanggan({
                     />
                 )}
                 labelBaris={(p) => `piutang ${p.Nomor}`}
-                {...(Izin.Kelola || bolehIngatkan
-                    ? { aksiBaris: (p: BarisPiutang) => <ItemAksiBaris aksi={AksiBaris(p)} /> }
-                    : {})}
+                aksiBaris={(p: BarisPiutang) => <ItemAksiBaris aksi={AksiBaris(p)} />}
                 kosong={{
                     ilustrasi: true,
                     judul: 'Tidak ada piutang terbuka. Semua penjualan tempo sudah lunas.',

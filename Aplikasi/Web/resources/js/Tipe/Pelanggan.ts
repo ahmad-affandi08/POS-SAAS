@@ -233,3 +233,25 @@ export type HasilImporPelanggan = {
 };
 
 export type PropsImporPelanggan = { Hasil: HasilImporPelanggan | null; MaksimalBaris: number };
+
+/** v3.37: nota tagihan piutang satu pelanggan (halaman cetak). */
+export type BarisNotaTagihan = {
+    Nomor: string;
+    TanggalBisnis: string;
+    JatuhTempo: string;
+    Jumlah: string;
+    /** Jumlah − sisa: pelunasan dan potongan retur. */
+    Dibayar: string;
+    Sisa: string;
+    /** Hari lewat jatuh tempo per tanggal nota; 0 = belum jatuh tempo. */
+    HariLewat: number;
+};
+
+export type PropsNotaTagihan = {
+    Baris: BarisNotaTagihan[];
+    TotalSisa: string;
+    TotalLewat: string;
+    Tanggal: string;
+    Pelanggan: { Nama: string; NoHp: string; Alamat: string | null };
+    Usaha: { Nama: string | null; Npwp: string | null };
+};

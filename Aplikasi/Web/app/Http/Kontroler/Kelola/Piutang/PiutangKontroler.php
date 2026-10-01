@@ -20,9 +20,11 @@ use App\Domain\Pelanggan\Enum\StatusPembayaranPiutang;
 use App\Domain\Pelanggan\Kueri\DaftarPiutang;
 use App\Domain\Pelanggan\Kueri\DetailPembayaranPiutang;
 use App\Domain\Pelanggan\Kueri\PengaturanPengingatPiutangTenant;
+use App\Domain\Pelanggan\Layanan\NomorHp;
 use App\Domain\Pelanggan\Model\Pelanggan;
 use App\Domain\Pelanggan\Model\PembayaranPiutang;
 use App\Domain\Pelanggan\Model\Piutang;
+use App\Domain\Tenant\Kueri\ProfilTenant;
 use App\Http\Kontroler\Kelola\DasarKelolaKontroler;
 use App\Http\Permintaan\Kelola\Pembelian\AlasanPembelianPermintaan;
 use App\Http\Permintaan\Kelola\Piutang\SimpanPembayaranPiutangPermintaan;
@@ -51,6 +53,24 @@ final class PiutangKontroler extends DasarKelolaKontroler
             'HariIni' => $hariIni->format('Y-m-d'),
             'Izin' => $this->AmbilIzin(),
             'Pengingat' => app(PengaturanPengingatPiutangTenant::class)->Ambil(),
+        ]);
+    }
+
+    /**
+     * v3.37 nota tagihan pelanggan (F-12): semua piutang terbuka satu pelanggan per tanggal bisnis hari ini, untuk
+     * dicetak/PDF lalu diberikan ke pelanggan. Pengguna terbatas outlet hanya melihat piutang outletnya.
+     */
+    public function NotaTagihan(string $pelanggan, DaftarPiutang $daftar, ProfilTenant $profil): Response
+    {
+        $model = Pelanggan::query()->where('Uuid', strtoupper($pelanggan))->firstOrFail();
+        $hariIni = app(TanggalBisnisOutlet::class)->Hitung(null);
+        $nota = $daftar->AmbilNotaTagihan($model->Id, $hariIni, $this->IdOutletBoleh());
+        $usaha = $profil->Ambil($this->IdTenant());
+
+        return Inertia::render('Kelola/Piutang/NotaTagihan', $nota + [
+            'Pelanggan' => ['Nama' => $model->Nama, 'NoHp' => NomorHp::Format($model->NoHp), 'Alamat' => $model->Alamat],
+            'Usaha' => ['Nama' => $usaha['Nama'], 'Npwp' => $usaha['Npwp']],
+            'Tanggal' => $hariIni->format('Y-m-d'),
         ]);
     }
 
