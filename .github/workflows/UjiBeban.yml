@@ -78,6 +78,8 @@ jobs:
           QUEUE_CONNECTION: sync
           SESSION_DRIVER: array
         run: vendor/bin/pest tests/Beban/SiapkanDataBebanTes.php
+      - name: Aktifkan penghitung deadlock InnoDB
+        run: mysql -h 127.0.0.1 -uroot -proot -e "SET GLOBAL innodb_monitor_enable = 'lock_deadlocks'; SET GLOBAL innodb_monitor_enable = 'lock_timeouts';"
       - name: Nyalakan server PHP (4 pekerja) dan worker antrean
         run: |
           mkdir -p storage/logs
@@ -110,6 +112,8 @@ jobs:
           echo "--- Galat di log aplikasi (maks. 150 baris) ---"
           # Server berjalan di APP_ENV=production, jadi galat requestnya berkanal `production.`; baris `testing.` berasal dari penyiap data.
           grep -hE -A12 "production\.(ERROR|CRITICAL)" storage/logs/laravel*.log 2>/dev/null | head -150 || true
+          echo "--- Jumlah deadlock & lock timeout sejak penghitung dinyalakan ---"
+          mysql -h 127.0.0.1 -uroot -proot -e "SELECT NAME, COUNT FROM information_schema.INNODB_METRICS WHERE NAME IN ('lock_deadlocks','lock_timeouts')" 2>&1 | tee -a "$GITHUB_STEP_SUMMARY" || true
           echo "--- Deadlock terakhir menurut InnoDB ---"
           mysql -h 127.0.0.1 -uroot -proot -e "SHOW ENGINE INNODB STATUS\\G" 2>&1 | sed -n '/LATEST DETECTED DEADLOCK/,/WE ROLL BACK/p' | head -80 || true
           echo "--- Log server (galat PHP) ---"
