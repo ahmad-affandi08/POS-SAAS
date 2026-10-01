@@ -10,7 +10,7 @@ Status butir (audit F-26): **TERBUKA** = belum dikerjakan; **SELESAI @ versi** =
 |---|---|---|---|
 | A1 | Baru dipasang di hosting produksi (26/09/2026): situs & halaman masuk sudah terbuka, cron aktif | Alur lengkap (daftar tenant, kasir sinkron, email) belum diuji di produksi | Uji alur ujung ke ujung setelah email, CAPTCHA, legal, dan harga paket diatur |
 | A2 | Hosting memakai **MariaDB 11.8** (migrasi & seed berhasil), sedangkan PRD mensyaratkan MySQL 8 (§13.7.5) dan semua test berjalan di MySQL 8 | Migrasi atau kueri tertentu bisa gagal atau berperilaku beda | Cek `mysql --version`; bila MariaDB dan ada galat, laporkan untuk disesuaikan, atau pindah ke VPS/MySQL 8 |
-| A3 | Belum ada **uji beban** (§23) | Kapasitas hosting bersama belum terukur | Batasi jumlah tenant awal (beta), pantau dasbor Operasional di konsol |
+| A3 | **Perangkat uji beban ada (v3.20, `Panduan/UjiBeban.md`), angka kapasitas hosting belum terukur** (§23) | Run pertama di runner hanya pembanding; hosting bersama harus diukur di staging dengan skrip yang sama | Batasi jumlah tenant awal (beta), pantau dasbor Operasional di konsol |
 | A4 | Harga paket bawaan masih **Draf** | Halaman `payou.id/harga` hanya menampilkan paket harga negosiasi (Enterprise) | Ajukan & tinjau harga paket di konsol (butuh dua orang: pengaju ≠ peninjau) |
 | A5 | Dokumen legal (S&K, Kebijakan Privasi) belum terbit di database produksi | Pendaftaran tenant tertutup | Terbitkan dari konsol → Legal. Isi hukumnya perlu ditinjau ahli hukum (UU PDP, UU ITE) |
 | A6 | Penyedia email & CAPTCHA belum diatur | Verifikasi email, reset kata sandi, dan pendaftaran belum berfungsi penuh | Konsol → Integrasi |

@@ -1,0 +1,123 @@
+name: Uji Beban
+
+# Audit PAY-P1-09: uji beban API POS di runner GitHub (MySQL 8 + server PHP bawaan 4 pekerja + worker antrean).
+# Dijalankan manual (Actions -> Uji Beban -> Run workflow) karena memakan waktu & sumber daya. Hasilnya adalah
+# PEMBANDING relatif antar versi, bukan jaminan kapasitas hosting: runner dan hosting bersama berbeda CPU, I/O, dan
+# jumlah pekerja PHP. Ukur ulang di server staging dengan skrip yang sama (BASE_URL & BEBAN_DATA bisa diganti).
+on:
+  workflow_dispatch:
+    inputs:
+      jumlah_tenant:
+        description: "Jumlah tenant (masing-masing satu perangkat kasir)"
+        default: "10"
+      durasi:
+        description: "Durasi tiap skenario (format k6, mis. 60s atau 5m)"
+        default: "60s"
+      tarif_checkout:
+        description: "Penjualan per detik di seluruh perangkat"
+        default: "10"
+
+permissions:
+  contents: read
+
+jobs:
+  beban:
+    name: k6 - checkout, outbox, polling, webhook
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: PosSaasTes
+          MYSQL_USER: pos_saas
+          MYSQL_PASSWORD: rahasia-lokal-tes
+        ports: ["3306:3306"]
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+    env:
+      # Mirip produksi: cache & antrean di database, tanpa debug. Server dan penyiap data memakai basis data yang sama.
+      APP_ENV: production
+      APP_DEBUG: "false"
+      APP_KEY: base64:dGVzLWt1bmNpLXBvcy1zYWFzLWhhbnlhLXVudHVrLXQ=
+      APP_URL: http://127.0.0.1:8000
+      LOG_LEVEL: warning
+      DB_CONNECTION: mysql
+      DB_HOST: 127.0.0.1
+      DB_PORT: "3306"
+      DB_DATABASE: PosSaasTes
+      DB_USERNAME: pos_saas
+      DB_PASSWORD: rahasia-lokal-tes
+      CACHE_STORE: database
+      QUEUE_CONNECTION: database
+      SESSION_DRIVER: database
+      MAIL_MAILER: array
+      BEBAN_BERKAS: ${{ github.workspace }}/Aplikasi/Web/storage/beban/data.json
+      BEBAN_JUMLAH_TENANT: ${{ inputs.jumlah_tenant }}
+    defaults:
+      run:
+        working-directory: Aplikasi/Web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: bcmath, intl, mbstring, pdo_mysql, zip, gd
+          coverage: none
+          ini-values: opcache.enable_cli=1, opcache.jit=tracing, opcache.jit_buffer_size=64M, memory_limit=512M
+      - name: Pasang dependensi (sesuai composer.lock)
+        run: composer install --no-interaction --no-progress --prefer-dist
+      - name: Migrasi basis data
+        run: php artisan migrate --force
+      - name: Siapkan tenant, perangkat, shift, dan produk (dicommit ke basis data)
+        env:
+          APP_ENV: testing
+          CACHE_STORE: array
+          QUEUE_CONNECTION: sync
+          SESSION_DRIVER: array
+        run: vendor/bin/pest tests/Beban/SiapkanDataBebanTes.php
+      - name: Nyalakan server PHP (4 pekerja) dan worker antrean
+        run: |
+          mkdir -p storage/logs
+          PHP_CLI_SERVER_WORKERS=4 php -S 127.0.0.1:8000 -t public vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php > storage/logs/server.log 2>&1 &
+          php artisan queue:work --sleep=1 --tries=1 > storage/logs/antrean.log 2>&1 &
+          for i in $(seq 1 30); do
+            if curl -fs http://127.0.0.1:8000/sehat > /dev/null; then echo "server siap"; exit 0; fi
+            sleep 1
+          done
+          echo "server tidak siap"; cat storage/logs/server.log; exit 1
+      - uses: grafana/setup-k6-action@v1
+      - name: k6
+        env:
+          BEBAN_DATA: ${{ github.workspace }}/Aplikasi/Web/storage/beban/data.json
+          DURASI: ${{ inputs.durasi }}
+          TARIF_CHECKOUT: ${{ inputs.tarif_checkout }}
+        run: k6 run ../../Spesifikasi/UjiBeban/Beban.k6.js
+      - name: Invarian stok & jurnal sesudah beban
+        if: ${{ !cancelled() }}
+        env:
+          APP_ENV: testing
+          CACHE_STORE: array
+          QUEUE_CONNECTION: sync
+          SESSION_DRIVER: array
+        run: vendor/bin/pest tests/Beban/PeriksaInvarianBebanTes.php
+      - name: Antrean & log
+        if: ${{ !cancelled() }}
+        run: |
+          {
+            echo "### Sisa antrean & log"
+            echo '```'
+            mysql -h 127.0.0.1 -upos_saas -prahasia-lokal-tes PosSaasTes -e "SELECT COUNT(*) AS pekerjaan_tertunda FROM jobs; SELECT COUNT(*) AS pekerjaan_gagal FROM failed_jobs; SELECT COUNT(*) AS penjualan FROM Penjualan;" 2>&1 || true
+            echo '```'
+            echo "Galat di log aplikasi: $(grep -c 'ERROR\|CRITICAL' storage/logs/laravel*.log 2>/dev/null || echo 0)"
+          } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: hasil-uji-beban
+          path: |
+            Aplikasi/Web/ringkasan-beban.json
+            Aplikasi/Web/storage/logs/*.log
+          retention-days: 30
