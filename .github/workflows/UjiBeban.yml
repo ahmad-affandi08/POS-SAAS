@@ -81,7 +81,8 @@ jobs:
       - name: Nyalakan server PHP (4 pekerja) dan worker antrean
         run: |
           mkdir -p storage/logs
-          PHP_CLI_SERVER_WORKERS=4 php -S 127.0.0.1:8000 -t public vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php > storage/logs/server.log 2>&1 &
+          # Skrip router Laravel membaca index.php dari direktori kerja, jadi server dijalankan dari `public`.
+          (cd public && PHP_CLI_SERVER_WORKERS=4 php -S 127.0.0.1:8000 ../vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php > ../storage/logs/server.log 2>&1 &)
           php artisan queue:work --sleep=1 --tries=1 > storage/logs/antrean.log 2>&1 &
           for i in $(seq 1 30); do
             if curl -fs http://127.0.0.1:8000/sehat > /dev/null; then echo "server siap"; exit 0; fi
