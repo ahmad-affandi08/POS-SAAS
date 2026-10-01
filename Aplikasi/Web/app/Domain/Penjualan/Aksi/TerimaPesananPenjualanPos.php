@@ -90,7 +90,7 @@ final class TerimaPesananPenjualanPos
     private function Proses(DataPesananPenjualanPos $data): StatusItemSinkron
     {
         $idTenant = $this->konteks->Wajib();
-        $lama = PesananPenjualan::query()->where('Uuid', $data->uuid)->lockForUpdate()->first();
+        $lama = PesananPenjualan::query()->where('Uuid', $data->uuid)->first();
 
         if ($lama !== null) {
             if ($lama->Nomor === $data->nomor && Uang::Dari($lama->UangMuka)->SamaDengan(self::HitungUangMuka($data))) {

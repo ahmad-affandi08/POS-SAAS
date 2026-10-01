@@ -71,6 +71,13 @@ jobs:
         run: composer install --no-interaction --no-progress --prefer-dist
       - name: Migrasi basis data
         run: php artisan migrate --force
+      - name: Konkurensi dua proses (idempotensi item yang sama)
+        env:
+          APP_ENV: testing
+          CACHE_STORE: array
+          QUEUE_CONNECTION: sync
+          SESSION_DRIVER: array
+        run: vendor/bin/pest tests/Konkurensi
       - name: Siapkan tenant, perangkat, shift, dan produk (dicommit ke basis data)
         env:
           APP_ENV: testing

@@ -216,8 +216,11 @@ final class TerimaPenjualanPos
     {
         $idTenant = $this->konteks->Wajib();
 
-        // (1) Idempotensi per Uuid.
-        $lama = Penjualan::query()->where('Uuid', $data->uuid)->lockForUpdate()->first();
+        // (1) Idempotensi per Uuid. Sengaja baca biasa, BUKAN `lockForUpdate()`: pada Uuid yang belum ada kunci itu menjadi
+        // gap lock di indeks unik, sehingga dua transaksi baru yang bersamaan sama-sama memegangnya lalu saling menunggu
+        // saat INSERT (deadlock 1213 di uji beban). Pengaman kiriman ganda tetap indeks unik: dua kiriman yang lolos
+        // pemeriksaan ini bertabrakan di INSERT (1062) dan `SelesaikanBentrokUnik` mengubahnya jadi `Duplikat`.
+        $lama = Penjualan::query()->where('Uuid', $data->uuid)->first();
 
         if ($lama !== null) {
             if ($lama->Nomor === $data->nomor && Uang::Dari($lama->TotalAkhir)->SamaDengan($data->ringkasan->totalAkhir)) {

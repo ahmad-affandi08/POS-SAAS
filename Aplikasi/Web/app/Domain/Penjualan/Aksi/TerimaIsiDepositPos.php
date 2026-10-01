@@ -104,7 +104,7 @@ final class TerimaIsiDepositPos
         $idTenant = $this->konteks->Wajib();
 
         // (1) Idempotensi per Uuid.
-        $lama = IsiDeposit::query()->where('Uuid', $data->uuid)->lockForUpdate()->first();
+        $lama = IsiDeposit::query()->where('Uuid', $data->uuid)->first();
 
         if ($lama !== null) {
             if ($lama->Nomor === $data->nomor && Uang::Dari($lama->Jumlah)->SamaDengan($data->jumlah)) {

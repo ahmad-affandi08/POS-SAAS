@@ -137,7 +137,7 @@ final class TerimaReturPenjualanPos
         $idTenant = $this->konteks->Wajib();
 
         // (1) Idempotensi per Uuid.
-        $lama = ReturPenjualan::query()->where('Uuid', $data->uuid)->lockForUpdate()->first();
+        $lama = ReturPenjualan::query()->where('Uuid', $data->uuid)->first();
 
         if ($lama !== null) {
             if ($lama->Nomor === $data->nomor && Uang::Dari($lama->TotalRefund)->SamaDengan($data->totalRefund)) {
