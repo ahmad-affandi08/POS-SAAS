@@ -12,6 +12,8 @@ use App\Domain\Katalog\Kueri\ProdukUntukLaporan;
 use App\Domain\Organisasi\Data\DataInfoGudang;
 use App\Domain\Organisasi\Kueri\InfoGudang;
 use App\Domain\Persediaan\Kueri\StokUntukLaporan;
+use Brick\Math\BigDecimal;
+use Brick\Math\RoundingMode;
 use Carbon\CarbonImmutable;
 
 /**
@@ -26,6 +28,9 @@ final class LaporanStok
     public const HARI_MUKA_KEDALUWARSA = 30;
 
     public const HARI_SEGERA_KEDALUWARSA = 7;
+
+    /** X6: panjang periode dasar rata-rata pemakaian untuk saran restock. */
+    public const HARI_DASAR_RESTOCK = 28;
 
     public function __construct(
         private readonly InfoGudang $infoGudang,
@@ -162,6 +167,59 @@ final class LaporanStok
         }
 
         return ['Jumlah' => $jumlahKritis, 'Baris' => $baris];
+    }
+
+    /**
+     * X6 (v3.43) saran restock: rata-rata pemakaian harian `HARI_DASAR_RESTOCK` hari terakhir (sampai kemarin) per produk
+     * × lokasi stok (`StokUntukLaporan::AmbilPemakaian`), saldo terkini, perkiraan hari stok habis, dan saran beli =
+     * rata-rata × `$hariCakupan` − saldo (dibulatkan ke atas ke satuan bulat bila satuannya tidak desimal; minimal 0).
+     * Urut dari yang paling cepat habis. Hanya produk yang dipakai pada periode dasar.
+     *
+     * @param  list<int>|null  $idOutletBoleh
+     * @return array{HariDasar: int, HariCakupan: int, Baris: list<array<string, mixed>>}
+     */
+    public function SaranRestock(?array $idOutletBoleh, CarbonImmutable $hariIni, string $uuidGudang = '', int $hariCakupan = 14): array
+    {
+        $gudang = $this->AmbilGudang($idOutletBoleh, $uuidGudang);
+        $sampai = $hariIni->subDay();
+        $pakai = $this->stok->AmbilPemakaian(array_keys($gudang), $sampai->subDays(self::HARI_DASAR_RESTOCK - 1), $sampai);
+        $saldo = $this->stok->AmbilSaldo(array_keys($gudang), array_values(array_unique(array_column($pakai, 'IdProduk'))));
+        $info = $this->infoProduk->AmbilBanyak(array_values(array_unique(array_column($pakai, 'IdProduk'))));
+        $baris = [];
+
+        foreach ($pakai as $b) {
+            $p = $info[$b['IdProduk']] ?? null;
+            $g = $gudang[$b['IdGudang']] ?? null;
+
+            if ($p === null || $p->jenis === JenisProduk::Konsinyasi) {
+                continue;
+            }
+
+            $stok = BigDecimal::of($saldo["{$b['IdProduk']}|{$b['IdGudang']}"]['Jumlah'] ?? '0');
+            $rata = BigDecimal::of($b['Pakai'])->dividedBy(self::HARI_DASAR_RESTOCK, 4, RoundingMode::HalfUp);
+            $butuh = $rata->multipliedBy($hariCakupan)->minus($stok);
+            $saran = $butuh->isPositive() ? $butuh->toScale($p->bolehDesimal ? 4 : 0, RoundingMode::Up) : BigDecimal::zero()->toScale(4);
+            $hariHabis = $rata->isZero() ? null : ($stok->isPositive() ? $stok->dividedBy($rata, 0, RoundingMode::Down)->toInt() : 0);
+            $baris[] = [
+                'Kunci' => $p->uuid.'-'.($g->uuid ?? (string) $b['IdGudang']),
+                'UuidProduk' => $p->uuid,
+                'NamaProduk' => $p->nama,
+                'Sku' => $p->sku,
+                'SimbolSatuan' => $p->simbolSatuan,
+                'UuidGudang' => $g->uuid ?? '',
+                'NamaGudang' => $g->nama ?? '',
+                'NamaOutlet' => $g->namaOutlet ?? '',
+                'Pakai' => $b['Pakai'],
+                'RataPerHari' => (string) $rata,
+                'Saldo' => (string) $stok->toScale(4),
+                'HariHabis' => $hariHabis,
+                'SaranBeli' => (string) $saran->toScale(4),
+            ];
+        }
+
+        usort($baris, fn (array $a, array $b): int => ($a['HariHabis'] ?? PHP_INT_MAX) <=> ($b['HariHabis'] ?? PHP_INT_MAX) ?: strcmp((string) $a['NamaProduk'], (string) $b['NamaProduk']));
+
+        return ['HariDasar' => self::HARI_DASAR_RESTOCK, 'HariCakupan' => $hariCakupan, 'Baris' => $baris];
     }
 
     /**

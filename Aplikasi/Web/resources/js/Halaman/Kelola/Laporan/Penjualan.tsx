@@ -10,15 +10,20 @@ import { FormatRupiah } from '@/Pustaka/Format';
 import { FormatTanggal } from '@/Pustaka/FormatWaktu';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
 import type {
+    BarisAbcLaporan,
     BarisAntiFraudLaporan,
     BarisDiskonLaporan,
     BarisHarian,
     BarisKanalLaporan,
     BarisKasirLaporan,
     BarisKategoriLaporan,
+    BarisMenuLaporan,
     BarisMetodeLaporan,
     BarisProdukLaporan,
+    IsiAbc,
     IsiJam,
+    IsiMenu,
+    KelasMenu,
     PropsLaporanPenjualan,
     TabLaporanPenjualan,
 } from '@/Tipe/Laporan';
@@ -35,6 +40,8 @@ const daftarTab: { nilai: TabLaporanPenjualan; label: string }[] = [
     { nilai: 'metode', label: 'Metode bayar' },
     { nilai: 'diskon', label: 'Diskon' },
     { nilai: 'anti-fraud', label: 'Anti-fraud' },
+    { nilai: 'abc', label: 'Analisis ABC' },
+    { nilai: 'menu', label: 'Menu engineering' },
 ];
 
 const kolomHarian: KolomTabel<BarisHarian>[] = [
@@ -190,6 +197,116 @@ const kolomAntiFraud: KolomTabel<BarisAntiFraudLaporan>[] = [
     KolomUang<BarisAntiFraudLaporan>('SelisihKurang', 'Total kas kurang'),
 ];
 
+const FormatPersen = (nilai: string) => `${nilai.replace('.', ',')}%`;
+
+const keteranganAbc: Record<BarisAbcLaporan['Kelas'], string> = {
+    A: 'Penyumbang ±80% penjualan. Jaga stok jangan sampai kosong dan pantau harganya.',
+    B: 'Penyumbang 15% berikutnya. Stok cukup, tinjau berkala.',
+    C: 'Sisa 5% penjualan. Kandidat dikurangi stoknya atau dihapus dari katalog.',
+};
+
+const JenisKelasAbc: Record<BarisAbcLaporan['Kelas'], 'sukses' | 'netral'> = {
+    A: 'sukses',
+    B: 'netral',
+    C: 'netral',
+};
+
+const kolomAbc: KolomTabel<BarisAbcLaporan>[] = [
+    {
+        id: 'NamaProduk',
+        accessorKey: 'NamaProduk',
+        header: 'Produk',
+        meta: { label: 'Produk', prioritas: 'utama', wajib: true },
+    },
+    {
+        id: 'Kelas',
+        accessorKey: 'Kelas',
+        header: 'Kelas',
+        meta: { label: 'Kelas', prioritas: 'utama', wajib: true },
+        cell: ({ row }) => (
+            <LabelStatus jenis={JenisKelasAbc[row.original.Kelas]} teks={`Kelas ${row.original.Kelas}`} />
+        ),
+    },
+    KolomUang<BarisAbcLaporan>('Bersih', 'Bersih'),
+    {
+        id: 'Porsi',
+        accessorKey: 'Porsi',
+        header: 'Porsi',
+        enableSorting: false,
+        meta: { label: 'Porsi', angka: true, prioritas: 'penting' },
+        cell: ({ row }) => FormatPersen(row.original.Porsi),
+    },
+    {
+        id: 'PorsiKumulatif',
+        accessorKey: 'PorsiKumulatif',
+        header: 'Kumulatif',
+        enableSorting: false,
+        meta: { label: 'Kumulatif', angka: true, prioritas: 'rendah' },
+        cell: ({ row }) => FormatPersen(row.original.PorsiKumulatif),
+    },
+    KolomQty<BarisAbcLaporan>('Qty', 'Qty'),
+];
+
+/** Label Indonesia untuk kelas menu engineering; istilah aslinya tetap disebut di keterangan. */
+const infoKelasMenu: Record<
+    KelasMenu,
+    { label: string; jenis: 'sukses' | 'netral' | 'peringatan' | 'bahaya'; saran: string }
+> = {
+    Star: {
+        label: 'Bintang',
+        jenis: 'sukses',
+        saran: 'Laris dan untung besar. Pertahankan resep, porsi, dan posisinya di menu.',
+    },
+    Plowhorse: {
+        label: 'Laris, untung tipis',
+        jenis: 'netral',
+        saran: 'Laris tetapi marginnya kecil. Coba naikkan harga sedikit atau tekan HPP (porsi, bahan).',
+    },
+    Puzzle: {
+        label: 'Untung besar, kurang laku',
+        jenis: 'peringatan',
+        saran: 'Marginnya besar tetapi jarang dipesan. Tonjolkan di menu, rekomendasikan, atau ganti namanya.',
+    },
+    Dog: {
+        label: 'Kurang laku, untung tipis',
+        jenis: 'bahaya',
+        saran: 'Jarang dipesan dan marginnya kecil. Kandidat dihapus atau dirombak.',
+    },
+};
+
+const kolomMenu: KolomTabel<BarisMenuLaporan>[] = [
+    {
+        id: 'NamaProduk',
+        accessorKey: 'NamaProduk',
+        header: 'Produk',
+        meta: { label: 'Produk', prioritas: 'utama', wajib: true },
+    },
+    {
+        id: 'Kelas',
+        accessorKey: 'Kelas',
+        header: 'Kelas',
+        meta: { label: 'Kelas', prioritas: 'utama', wajib: true },
+        cell: ({ row }) => (
+            <LabelStatus
+                jenis={infoKelasMenu[row.original.Kelas].jenis}
+                teks={infoKelasMenu[row.original.Kelas].label}
+            />
+        ),
+    },
+    KolomQty<BarisMenuLaporan>('Qty', 'Qty'),
+    {
+        id: 'PorsiQty',
+        accessorKey: 'PorsiQty',
+        header: 'Porsi qty',
+        enableSorting: false,
+        meta: { label: 'Porsi qty', angka: true, prioritas: 'penting' },
+        cell: ({ row }) => FormatPersen(row.original.PorsiQty),
+    },
+    KolomUang<BarisMenuLaporan>('MarginPerUnit', 'Margin per unit', 'penting'),
+    KolomUang<BarisMenuLaporan>('Bersih', 'Bersih', 'rendah'),
+    KolomUang<BarisMenuLaporan>('Hpp', 'HPP', 'rendah'),
+];
+
 const kosong = { judul: 'Belum ada penjualan pada periode dan saring ini.' };
 
 function IsiTab({ tab, isi }: { tab: TabLaporanPenjualan; isi: PropsLaporanPenjualan['Isi'] }) {
@@ -326,6 +443,73 @@ function IsiTab({ tab, isi }: { tab: TabLaporanPenjualan; isi: PropsLaporanPenju
                     />
                 </>
             );
+        case 'abc': {
+            const abc = isi as IsiAbc;
+
+            return (
+                <div className="flex flex-col gap-3">
+                    <p className="max-w-3xl text-keterangan text-teks-sekunder">
+                        Produk diurutkan dari penjualan bersih terbesar. Kelas A menyumbang ±80% penjualan, B sampai
+                        95%, dan C sisanya. Produk tanpa penjualan bersih tidak ditampilkan.
+                    </p>
+                    <dl className="grid gap-3 rounded-panel border border-garis bg-permukaan p-4 md:grid-cols-3">
+                        {(['A', 'B', 'C'] as const).map((k) => (
+                            <div key={k} className="min-w-0">
+                                <dt className="text-label font-semibold text-teks-utama">
+                                    Kelas {k} · {String(abc.Ringkasan[k].Jumlah)} produk
+                                </dt>
+                                <dd className="text-subjudul font-semibold text-teks-utama tabular-nums">
+                                    {FormatRupiah(abc.Ringkasan[k].Bersih)}
+                                </dd>
+                                <dd className="text-keterangan text-teks-sekunder">{keteranganAbc[k]}</dd>
+                            </div>
+                        ))}
+                    </dl>
+                    <TabelData
+                        id="laporan-penjualan-abc"
+                        label="Analisis ABC produk"
+                        kolom={kolomAbc}
+                        sumber={{ mode: 'lokal', data: abc.Baris }}
+                        ambilIdBaris={(b) => String(b.IdProduk)}
+                        cari="Cari nama produk"
+                        kosong={{ ilustrasi: true, judul: 'Belum ada penjualan bersih pada periode dan saring ini.' }}
+                    />
+                </div>
+            );
+        }
+        case 'menu': {
+            const menu = isi as IsiMenu;
+
+            return (
+                <div className="flex flex-col gap-3">
+                    <p className="max-w-3xl text-keterangan text-teks-sekunder">
+                        Menu engineering (Kasavana & Smith) memetakan produk dari dua sisi: laris bila porsi qty-nya
+                        minimal {FormatPersen(menu.BatasPorsiQty)} (70% dari rata-rata), dan untung besar bila margin
+                        per unit (bersih − HPP) minimal rata-rata tertimbang {FormatRupiah(menu.RataRataMargin)}.
+                    </p>
+                    <dl className="grid gap-3 rounded-panel border border-garis bg-permukaan p-4 md:grid-cols-2">
+                        {(['Star', 'Plowhorse', 'Puzzle', 'Dog'] as const).map((k) => (
+                            <div key={k} className="min-w-0">
+                                <dt className="flex flex-wrap items-center gap-2 text-label font-semibold text-teks-utama">
+                                    <LabelStatus jenis={infoKelasMenu[k].jenis} teks={infoKelasMenu[k].label} />
+                                    {String(menu.Baris.filter((b) => b.Kelas === k).length)} produk ({k})
+                                </dt>
+                                <dd className="text-keterangan text-teks-sekunder">{infoKelasMenu[k].saran}</dd>
+                            </div>
+                        ))}
+                    </dl>
+                    <TabelData
+                        id="laporan-penjualan-menu"
+                        label="Menu engineering produk"
+                        kolom={kolomMenu}
+                        sumber={{ mode: 'lokal', data: menu.Baris }}
+                        ambilIdBaris={(b) => String(b.IdProduk)}
+                        cari="Cari nama produk"
+                        kosong={{ ilustrasi: true, judul: 'Belum ada penjualan bersih pada periode dan saring ini.' }}
+                    />
+                </div>
+            );
+        }
         default:
             return (
                 <TabelData
@@ -344,7 +528,7 @@ function IsiTab({ tab, isi }: { tab: TabLaporanPenjualan; isi: PropsLaporanPenju
 
 /**
  * F-14a laporan penjualan: saring periode (maks. 92 hari), outlet, kasir, kanal; tab ringkasan harian, per produk,
- * kategori, jam (heatmap), kasir, kanal, metode bayar, dan diskon. Void dikeluarkan; retur mengurangi pada tanggal
+ * kategori, jam (heatmap), kasir, kanal, metode bayar, diskon, anti-fraud, serta X6 analisis ABC & menu engineering. Void dikeluarkan; retur mengurangi pada tanggal
  * returnya. Ekspor CSV mengikuti saring.
  */
 export default function HalamanLaporanPenjualan(props: PropsLaporanPenjualan) {

@@ -11,7 +11,13 @@ import { FormatRupiah } from '@/Pustaka/Format';
 import { BuatUrlKartuStok, FormatJumlahStok } from '@/Pustaka/FormatPersediaan';
 import { FormatTanggal } from '@/Pustaka/FormatWaktu';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
-import type { BarisBatchKedaluwarsa, BarisStokKritis, NilaiPersediaan, PropsLaporanStok } from '@/Tipe/Laporan';
+import type {
+    BarisBatchKedaluwarsa,
+    BarisSaranRestock,
+    BarisStokKritis,
+    NilaiPersediaan,
+    PropsLaporanStok,
+} from '@/Tipe/Laporan';
 
 const alamat = '/kelola/laporan/stok';
 
@@ -144,14 +150,84 @@ const kolomKedaluwarsa: KolomTabel<BarisBatchKedaluwarsa>[] = [
     },
 ];
 
+const opsiHariCakupan = [
+    { Nilai: '7', Label: '7 hari' },
+    { Nilai: '14', Label: '14 hari' },
+    { Nilai: '30', Label: '30 hari' },
+];
+
+const kolomRestock: KolomTabel<BarisSaranRestock>[] = [
+    {
+        id: 'NamaProduk',
+        accessorKey: 'NamaProduk',
+        header: 'Produk',
+        meta: { label: 'Produk', prioritas: 'utama', wajib: true },
+        cell: ({ row: { original: b } }) => (
+            <>
+                <span className="block text-teks-utama">{b.NamaProduk}</span>
+                {b.Sku ? <span className="block font-mono text-label text-teks-sekunder">{b.Sku}</span> : null}
+            </>
+        ),
+    },
+    {
+        id: 'HariHabis',
+        accessorKey: 'HariHabis',
+        header: 'Perkiraan habis',
+        meta: { label: 'Perkiraan habis', prioritas: 'utama' },
+        cell: ({ row: { original: b } }) =>
+            b.HariHabis === null ? '–' : b.HariHabis === 0 ? 'Sudah habis' : `${String(b.HariHabis)} hari lagi`,
+    },
+    {
+        id: 'SaranBeli',
+        accessorKey: 'SaranBeli',
+        header: 'Saran beli',
+        meta: { label: 'Saran beli', angka: true, prioritas: 'utama' },
+        cell: ({ row }) => FormatJumlahStok(row.original.SaranBeli, row.original.SimbolSatuan),
+    },
+    {
+        id: 'Saldo',
+        accessorKey: 'Saldo',
+        header: 'Saldo',
+        meta: { label: 'Saldo', angka: true, prioritas: 'penting' },
+        cell: ({ row }) => FormatJumlahStok(row.original.Saldo, row.original.SimbolSatuan),
+    },
+    {
+        id: 'RataPerHari',
+        accessorKey: 'RataPerHari',
+        header: 'Terpakai per hari',
+        enableSorting: false,
+        meta: { label: 'Terpakai per hari', angka: true, prioritas: 'rendah' },
+        cell: ({ row }) => FormatJumlahStok(row.original.RataPerHari, row.original.SimbolSatuan),
+    },
+    {
+        id: 'NamaGudang',
+        accessorKey: 'NamaGudang',
+        header: 'Lokasi stok',
+        meta: { label: 'Lokasi stok', prioritas: 'rendah' },
+        cell: ({ row }) =>
+            `${row.original.NamaGudang}${row.original.NamaOutlet ? ` · ${row.original.NamaOutlet}` : ''}`,
+    },
+];
+
 /**
  * F-14a laporan stok (izin lihat persediaan): nilai persediaan per lokasi stok & kategori pada akhir tanggal
  * tertentu (dari buku stok), stok kritis (saldo ≤ batas minimum per lokasi), dan F-05g batch yang sudah lewat atau akan
- * kedaluwarsa dalam 30 hari. Posisi & kartu stok per produk ada di
- * menu Persediaan.
+ * kedaluwarsa dalam 30 hari, serta X6 saran restock dari laju pemakaian 28 hari terakhir. Posisi & kartu stok per
+ * produk ada di menu Persediaan.
  */
-export default function HalamanLaporanStok({ Saring, OpsiGudang, Nilai, Kritis, Kedaluwarsa }: PropsLaporanStok) {
-    const query = { tanggal: Saring.Tanggal, gudang: Saring.Gudang };
+export default function HalamanLaporanStok({
+    Saring,
+    OpsiGudang,
+    Nilai,
+    Kritis,
+    Kedaluwarsa,
+    Restock,
+}: PropsLaporanStok) {
+    const query = {
+        tanggal: Saring.Tanggal,
+        gudang: Saring.Gudang,
+        ...(Saring.Tab === 'restock' ? { hari: String(Saring.Hari) } : {}),
+    };
     const Terapkan = (ubah: Record<string, string>) => {
         const baru = Object.fromEntries(
             Object.entries({ ...query, tab: Saring.Tab, ...ubah }).filter(([, nilai]) => nilai !== ''),
@@ -169,6 +245,20 @@ export default function HalamanLaporanStok({ Saring, OpsiGudang, Nilai, Kritis, 
                         tanpaKosongkan
                         saatBerubah={(tanggal) => Terapkan({ tanggal })}
                     />
+                ) : null}
+                {Saring.Tab === 'restock' ? (
+                    <div className="flex flex-col gap-1">
+                        <Label htmlFor="saring-laporan-hari" className="text-label font-semibold text-teks-utama">
+                            Stok cukup untuk
+                        </Label>
+                        <PilihanCari
+                            id="saring-laporan-hari"
+                            label="Stok cukup untuk"
+                            nilai={String(Saring.Hari)}
+                            opsi={opsiHariCakupan}
+                            saatBerubah={(hari) => Terapkan({ hari })}
+                        />
+                    </div>
                 ) : null}
                 {OpsiGudang.length > 1 ? (
                     <div className="flex flex-col gap-1">
@@ -197,6 +287,7 @@ export default function HalamanLaporanStok({ Saring, OpsiGudang, Nilai, Kritis, 
                         { nilai: 'nilai', label: 'Nilai persediaan' },
                         { nilai: 'kritis', label: 'Stok kritis' },
                         { nilai: 'kedaluwarsa', label: 'Kedaluwarsa' },
+                        { nilai: 'restock', label: 'Saran restock' },
                     ]}
                 />
                 <TautanEkspor alamat={`${alamat}/ekspor`} query={{ ...query, tab: Saring.Tab }} />
@@ -300,6 +391,33 @@ export default function HalamanLaporanStok({ Saring, OpsiGudang, Nilai, Kritis, 
                         kosong={{
                             ilustrasi: true,
                             judul: 'Tidak ada batch yang lewat atau mendekati kedaluwarsa dalam 30 hari.',
+                        }}
+                    />
+                </section>
+            ) : null}
+
+            {Restock ? (
+                <section aria-labelledby="judul-restock" className="flex flex-col gap-2">
+                    <h2 id="judul-restock" className="text-subjudul font-semibold text-teks-utama">
+                        Saran restock ({String(Restock.Baris.length)})
+                    </h2>
+                    <p className="max-w-3xl text-label text-teks-sekunder">
+                        Laju pemakaian dihitung dari penjualan, bahan resep, produksi, dan barang susut selama{' '}
+                        {String(Restock.HariDasar)} hari terakhir (sampai kemarin), dikurangi retur. Saran beli =
+                        rata-rata per hari × {String(Restock.HariCakupan)} hari − saldo sekarang. Ini perkiraan;
+                        sesuaikan dengan promo, musim, dan jadwal kirim pemasok sebelum membuat pesanan pembelian.
+                    </p>
+                    <TabelData
+                        id="laporan-stok-restock"
+                        label="Saran restock"
+                        kolom={kolomRestock}
+                        sumber={{ mode: 'lokal', data: Restock.Baris }}
+                        ambilIdBaris={(b) => b.Kunci}
+                        cari="Cari produk"
+                        alamatDetail={(b) => BuatUrlKartuStok(b.UuidProduk, b.UuidGudang)}
+                        kosong={{
+                            ilustrasi: true,
+                            judul: `Belum ada pemakaian stok dalam ${String(Restock.HariDasar)} hari terakhir.`,
                         }}
                     />
                 </section>

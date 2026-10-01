@@ -361,7 +361,7 @@ describe('F-14a laporan pajak & stok', () => {
     it('stok: nilai persediaan per lokasi & kategori; tab stok kritis bertautan kartu stok', () => {
         AturHalamanUji({}, '/kelola/laporan/stok');
         const nilai: PropsLaporanStok = {
-            Saring: { Tab: 'nilai', Tanggal: '2026-10-07', Gudang: '' },
+            Saring: { Tab: 'nilai', Tanggal: '2026-10-07', Gudang: '', Hari: 14 },
             OpsiGudang: [{ Nilai: 'g1', Label: 'Toko (Toko Kelontong Berkah Solo)' }],
             Nilai: {
                 Total: { Nilai: '380000.00', JumlahProduk: 2 },
@@ -380,6 +380,7 @@ describe('F-14a laporan pajak & stok', () => {
             },
             Kritis: null,
             Kedaluwarsa: null,
+            Restock: null,
         };
         RenderUji(<HalamanLaporanStok {...nilai} />);
         expect(screen.getAllByText('Rp 380.000').length).toBeGreaterThan(0);
@@ -389,7 +390,7 @@ describe('F-14a laporan pajak & stok', () => {
         RenderUji(
             <HalamanLaporanStok
                 {...nilai}
-                Saring={{ Tab: 'kritis', Tanggal: '2026-10-07', Gudang: '' }}
+                Saring={{ Tab: 'kritis', Tanggal: '2026-10-07', Gudang: '', Hari: 14 }}
                 Nilai={null}
                 Kritis={dasbor.StokKritis}
             />,
@@ -403,7 +404,7 @@ describe('F-14a laporan pajak & stok', () => {
         RenderUji(
             <HalamanLaporanStok
                 {...nilai}
-                Saring={{ Tab: 'kedaluwarsa', Tanggal: '2026-10-07', Gudang: '' }}
+                Saring={{ Tab: 'kedaluwarsa', Tanggal: '2026-10-07', Gudang: '', Hari: 14 }}
                 Nilai={null}
                 Kedaluwarsa={{
                     Jumlah: 2,

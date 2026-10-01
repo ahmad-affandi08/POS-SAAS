@@ -31,7 +31,8 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  *   dengan `Accept: application/json`), kategori, jam, kasir, kanal, metode bayar, diskon; ekspor CSV sesuai saring;
  * - pajak (`laporan.keuangan.lihat`): PB1/PBJT per outlet per bulan & PPN keluaran per bulan; ekspor CSV; ringkasan & ekspor
  *   XML Faktur Pajak Keluaran Coretax dari faktur grosir (PRD v3.12);
- * - stok (`persediaan.lihat`): nilai persediaan pada tanggal, stok kritis & batch kedaluwarsa (F-05g); ekspor CSV.
+ * - stok (`persediaan.lihat`): nilai persediaan pada tanggal, stok kritis & batch kedaluwarsa (F-05g), saran restock
+ *   dari laju pemakaian 28 hari (X6); ekspor CSV.
  */
 final class LaporanKontroler extends DasarKelolaKontroler
 {
@@ -120,21 +121,31 @@ final class LaporanKontroler extends DasarKelolaKontroler
 
     public function Stok(Request $permintaan, LaporanStok $laporan, TanggalBisnisOutlet $tanggal): Response
     {
-        [$tab, $pada, $uuidGudang] = $this->BacaSaringStok($permintaan, $tanggal->Hitung(null));
+        [$tab, $pada, $uuidGudang, $hari] = $this->BacaSaringStok($permintaan, $tanggal->Hitung(null));
         $gudang = $laporan->AmbilGudang($this->IdOutletBoleh());
 
         return Inertia::render('Kelola/Laporan/Stok', [
-            'Saring' => ['Tab' => $tab, 'Tanggal' => $pada->toDateString(), 'Gudang' => $uuidGudang],
+            'Saring' => ['Tab' => $tab, 'Tanggal' => $pada->toDateString(), 'Gudang' => $uuidGudang, 'Hari' => $hari],
             'OpsiGudang' => array_values(array_map(fn ($g): array => ['Nilai' => $g->uuid, 'Label' => $g->namaOutlet === null ? $g->nama : "{$g->nama} ({$g->namaOutlet})"], $gudang)),
             'Nilai' => $tab === 'nilai' ? $laporan->NilaiPersediaan($pada, $this->IdOutletBoleh(), $uuidGudang) : null,
             'Kritis' => $tab === 'kritis' ? $laporan->StokKritis($this->IdOutletBoleh(), $uuidGudang) : null,
             'Kedaluwarsa' => $tab === 'kedaluwarsa' ? $laporan->BatchKedaluwarsa($this->IdOutletBoleh(), $tanggal->Hitung(null), $uuidGudang) : null,
+            'Restock' => $tab === 'restock' ? $laporan->SaranRestock($this->IdOutletBoleh(), $tanggal->Hitung(null), $uuidGudang, $hari) : null,
         ]);
     }
 
     public function EksporStok(Request $permintaan, LaporanStok $laporan, TanggalBisnisOutlet $tanggal): StreamedResponse
     {
-        [$tab, $pada, $uuidGudang] = $this->BacaSaringStok($permintaan, $tanggal->Hitung(null));
+        [$tab, $pada, $uuidGudang, $hari] = $this->BacaSaringStok($permintaan, $tanggal->Hitung(null));
+
+        if ($tab === 'restock') {
+            $isi = $laporan->SaranRestock($this->IdOutletBoleh(), $tanggal->Hitung(null), $uuidGudang, $hari)['Baris'];
+
+            return PenulisCsvLaporan::Alirkan("laporan-saran-restock-{$hari}-hari", ['Produk', 'SKU', 'Satuan', 'Lokasi stok', 'Outlet', 'Terpakai 28 hari', 'Rata-rata per hari', 'Saldo', 'Habis dalam (hari)', 'Saran beli'], array_map(
+                fn (array $b): array => [$b['NamaProduk'], $b['Sku'], $b['SimbolSatuan'], $b['NamaGudang'], $b['NamaOutlet'], $b['Pakai'], $b['RataPerHari'], $b['Saldo'], $b['HariHabis'], $b['SaranBeli']],
+                $isi,
+            ));
+        }
 
         if ($tab === 'kritis') {
             $isi = $laporan->StokKritis($this->IdOutletBoleh(), $uuidGudang)['Baris'];
@@ -184,15 +195,17 @@ final class LaporanKontroler extends DasarKelolaKontroler
     }
 
     /**
-     * @return array{0: 'nilai'|'kritis'|'kedaluwarsa', 1: CarbonImmutable, 2: string}
+     * @return array{0: 'nilai'|'kritis'|'kedaluwarsa'|'restock', 1: CarbonImmutable, 2: string, 3: int}
      */
     private function BacaSaringStok(Request $permintaan, CarbonImmutable $hariIni): array
     {
-        $tab = in_array($permintaan->query('tab'), ['kritis', 'kedaluwarsa'], true) ? $permintaan->query('tab') : 'nilai';
+        $tab = in_array($permintaan->query('tab'), ['kritis', 'kedaluwarsa', 'restock'], true) ? $permintaan->query('tab') : 'nilai';
         $pada = DataPeriodeLaporan::Urai($permintaan->query('tanggal')) ?? $hariIni;
         $uuidGudang = is_string($permintaan->query('gudang')) ? $permintaan->query('gudang') : '';
+        // X6: cakupan saran restock 7/14/30 hari; nilai lain jatuh ke bawaan 14.
+        $hari = in_array((string) $permintaan->query('hari'), ['7', '14', '30'], true) ? (int) $permintaan->query('hari') : 14;
 
-        return [$tab, $pada->greaterThan($hariIni) ? $hariIni : $pada, $uuidGudang];
+        return [$tab, $pada->greaterThan($hariIni) ? $hariIni : $pada, $uuidGudang, $hari];
     }
 
     private static function Sel(mixed $nilai): string|int|null

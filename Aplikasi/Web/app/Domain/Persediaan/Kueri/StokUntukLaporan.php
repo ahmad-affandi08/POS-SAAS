@@ -6,6 +6,7 @@ namespace App\Domain\Persediaan\Kueri;
 
 use App\Domain\Bersama\Nilai\Kuantitas;
 use App\Domain\Bersama\Nilai\Uang;
+use App\Domain\Persediaan\Enum\JenisMutasi;
 use App\Domain\Persediaan\Model\BatchStok;
 use App\Domain\Persediaan\Model\MutasiStok;
 use App\Domain\Persediaan\Model\SaldoStok;
@@ -103,5 +104,38 @@ final class StokUntukLaporan
             'TanggalKedaluwarsa' => (string) $b->TanggalKedaluwarsa?->toDateString(),
             'JumlahSisa' => Kuantitas::Dari($b->JumlahSisa)->KeString(),
         ])->all())];
+    }
+
+    /**
+     * X6 (v3.43): pemakaian bersih per (produk, lokasi stok) dalam rentang tanggal bisnis (inklusif) = barang keluar
+     * karena dijual (termasuk bahan resep), dipakai produksi, atau susut, dikurangi retur penjualan & pembalik void.
+     * Transfer, opname, penyesuaian, dan penerimaan tidak dihitung (bukan permintaan). Pasangan pemakaian ≤ 0 tidak ikut.
+     *
+     * @param  list<int>  $idGudang
+     * @return list<array{IdProduk: int, IdGudang: int, Pakai: string}>
+     */
+    public function AmbilPemakaian(array $idGudang, CarbonImmutable $dari, CarbonImmutable $sampai): array
+    {
+        if ($idGudang === []) {
+            return [];
+        }
+
+        $baris = MutasiStok::query()
+            ->whereIn('IdGudang', $idGudang)
+            ->whereBetween('TanggalBisnis', [$dari->toDateString(), $sampai->toDateString()])
+            ->whereIn('JenisMutasi', [JenisMutasi::Penjualan->value, JenisMutasi::ReturPenjualan->value, JenisMutasi::ProduksiPakai->value, JenisMutasi::Susut->value])
+            ->groupBy('IdProduk', 'IdGudang')
+            ->selectRaw('`IdProduk`, `IdGudang`, -COALESCE(SUM(`Jumlah`), 0) AS `Pakai`')
+            ->havingRaw('SUM(`Jumlah`) < 0')
+            ->orderBy('IdGudang')
+            ->orderBy('IdProduk')
+            ->toBase()
+            ->get();
+
+        return array_values(array_map(fn (object $b): array => [
+            'IdProduk' => (int) $b->IdProduk,
+            'IdGudang' => (int) $b->IdGudang,
+            'Pakai' => Kuantitas::Dari((string) $b->Pakai)->KeString(),
+        ], $baris->all()));
     }
 }

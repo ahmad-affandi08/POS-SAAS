@@ -321,7 +321,7 @@ describe('F-14a laporan stok /kelola/laporan/stok', function (): void {
         // Minyak: 10 − 3 + 1 = 8 × 30.000 = 240.000; gula 10 × 14.000 = 140.000.
         $this->get('/kelola/laporan/stok')->assertOk()->assertInertia(fn (AssertableInertia $h) => $h
             ->component('Kelola/Laporan/Stok')
-            ->where('Saring', ['Tab' => 'nilai', 'Tanggal' => '2026-10-07', 'Gudang' => ''])
+            ->where('Saring', ['Tab' => 'nilai', 'Tanggal' => '2026-10-07', 'Gudang' => '', 'Hari' => 14])
             ->where('Nilai.Total', ['Nilai' => '380000.00', 'JumlahProduk' => 2])
             ->where('Nilai.PerGudang.0.Kunci', $d['Gudang']->Uuid)
             ->where('Nilai.PerGudang.0.Nilai', '380000.00')

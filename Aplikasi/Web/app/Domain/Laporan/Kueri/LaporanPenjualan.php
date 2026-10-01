@@ -10,6 +10,7 @@ use App\Domain\Bersama\Tabel\Data\DataPermintaanTabel;
 use App\Domain\Kasir\Kueri\PolaKasKasir;
 use App\Domain\Katalog\Kueri\ProdukUntukLaporan;
 use App\Domain\Laporan\Data\DataPeriodeLaporan;
+use App\Domain\Laporan\Layanan\PenilaiInsightProduk;
 use App\Domain\Laporan\Layanan\PenilaiRisikoKasir;
 use App\Domain\Laporan\Model\RingkasanPenjualanHarian;
 use App\Domain\Organisasi\Kueri\AnggotaOutlet;
@@ -30,12 +31,13 @@ use Illuminate\Database\Eloquent\Builder;
  * ringkasan harian (dari `RingkasanPenjualanHarian`; bila menyaring kasir/kanal dihitung langsung dari dokumen),
  * per produk (`TabelData` mode server), per kategori, per jam (heatmap hari × jam lokal outlet), per kasir, per kanal,
  * per metode bayar, diskon per kasir, dan anti-fraud per kasir (F-14/OWN-09: void, void tunai cepat, retur, diskon, buka
- * laci manual, selisih kas, skor risiko `PenilaiRisikoKasir`). Angka dari kueri publik domain Penjualan
+ * laci manual, selisih kas, skor risiko `PenilaiRisikoKasir`), serta insight X6 (v3.43): analisis ABC (Pareto omzet
+ * 80/95%) dan menu engineering (Star/Plowhorse/Puzzle/Dog, `PenilaiInsightProduk`). Angka dari kueri publik domain Penjualan
  * (`AgregatPenjualan`) dan Kasir (`PolaKasKasir`).
  */
 final class LaporanPenjualan
 {
-    public const TAB = ['harian', 'produk', 'kategori', 'jam', 'kasir', 'kanal', 'metode', 'diskon', 'anti-fraud'];
+    public const TAB = ['harian', 'produk', 'kategori', 'jam', 'kasir', 'kanal', 'metode', 'diskon', 'anti-fraud', 'abc', 'menu'];
 
     public function __construct(
         private readonly AgregatPenjualan $agregat,
@@ -46,6 +48,7 @@ final class LaporanPenjualan
         private readonly PolaKasKasir $polaKas,
         private readonly PengaturanKasirTenant $pengaturanKasir,
         private readonly PenilaiRisikoKasir $penilai,
+        private readonly PenilaiInsightProduk $insight,
     ) {}
 
     /**
@@ -138,6 +141,9 @@ final class LaporanPenjualan
             'metode' => $this->PerMetode($saring),
             'diskon' => $this->Diskon($saring),
             'anti-fraud' => $this->AntiFraud($saring),
+            // X6 (v3.43): analisis ABC & menu engineering dari agregat per produk periode yang sama.
+            'abc' => $this->insight->Abc($this->agregat->PerProduk($saring)),
+            'menu' => $this->insight->Menu($this->agregat->PerProduk($saring)),
             default => $this->Harian($saring),
         };
     }
@@ -416,6 +422,8 @@ final class LaporanPenjualan
                 ['Kasir', 'Skor risiko', 'Tingkat', 'Transaksi', 'Void', 'Nilai void', 'Void tunai cepat', 'Retur', 'Nilai retur', 'Transaksi berdiskon', 'Total diskon', 'Buka laci manual', 'Shift kas kurang', 'Total kas kurang', 'Alasan'],
                 $ambil(array_map(fn (array $b): array => [...$b, 'Alasan' => implode('; ', $b['Alasan'])], $this->AntiFraud($saring)), ['NamaKasir', 'Skor', 'Tingkat', 'JumlahTransaksi', 'JumlahVoid', 'NilaiVoid', 'VoidCepatTunai', 'JumlahRetur', 'NilaiRetur', 'JumlahBerdiskon', 'TotalDiskon', 'BukaLaciManual', 'ShiftSelisihKurang', 'SelisihKurang', 'Alasan']),
             ],
+            'abc' => [['Produk', 'Qty (satuan dasar)', 'Bersih', 'Porsi %', 'Kumulatif %', 'Kelas'], $ambil($this->insight->Abc($this->agregat->PerProduk($saring))['Baris'], ['NamaProduk', 'Qty', 'Bersih', 'Porsi', 'PorsiKumulatif', 'Kelas'])],
+            'menu' => [['Produk', 'Qty (satuan dasar)', 'Bersih', 'HPP', 'Margin per unit', 'Porsi qty %', 'Kelas'], $ambil($this->insight->Menu($this->agregat->PerProduk($saring))['Baris'], ['NamaProduk', 'Qty', 'Bersih', 'Hpp', 'MarginPerUnit', 'PorsiQty', 'Kelas'])],
             default => [['Tanggal', ...$judulAngka, 'Rata-rata keranjang'], $ambil($this->Harian($saring), ['Tanggal', ...$angka, 'RataRataKeranjang'])],
         };
     }
