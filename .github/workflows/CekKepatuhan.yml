@@ -138,6 +138,15 @@ jobs:
         run: npm run periksa
       - name: Build produksi
         run: npm run build
+      # Audit PAY-P2-10: public/build ikut di-commit (permintaan pemilik produk, deploy tanpa Node). Langkah ini
+      # hanya memberi informasi apakah build yang di-commit sama dengan build dari source di runner ini; hasilnya
+      # tidak memblokir karena byte-identik antar mesin belum terbukti. Merah di sini = jalankan `npm run build`
+      # lalu commit ulang public/build.
+      - name: Informasi - public/build ter-commit sama dengan build dari source
+        continue-on-error: true
+        run: |
+          git add -N public/build
+          git diff --stat --exit-code -- public/build
 
   flutter:
     name: Flutter (format, analyze, test, vektor uji)
@@ -199,8 +208,19 @@ jobs:
       - name: Paket rilis + checksum
         run: |
           NAMA="payou-web-${GITHUB_SHA}"
-          tar --exclude=node_modules --exclude=tests --exclude=.env --exclude='.env.*' --exclude=storage/logs \
-            -czf "../../${NAMA}.tar.gz" .
+          # Audit PAY-P2-04: isi artefak adalah daftar putih (bukan "semua kecuali"), supaya berkas pengembangan
+          # (tests, .github, sumber JS, README, basis data uji) tidak pernah ikut terkirim ke server.
+          STAGE="$(mktemp -d)/payou"
+          mkdir -p "$STAGE/resources" "$STAGE/storage/app/public" "$STAGE/storage/framework/cache/data" \
+            "$STAGE/storage/framework/sessions" "$STAGE/storage/framework/views" "$STAGE/storage/logs"
+          rsync -a --exclude='PosSaasTes*' --exclude='*.log' --exclude='public/hot' --exclude='public/storage' \
+            app bootstrap config database lang public routes vendor artisan composer.json composer.lock .env.example "$STAGE/"
+          rsync -a resources/views resources/data "$STAGE/resources/"
+          test -f "$STAGE/vendor/autoload.php" && test -f "$STAGE/public/build/manifest.json"
+          for terlarang in tests .github node_modules resources/js .env; do
+            if [ -e "$STAGE/$terlarang" ]; then echo "Artefak memuat $terlarang"; exit 1; fi
+          done
+          tar -czf "../../${NAMA}.tar.gz" -C "$STAGE" .
           cd ../..
           sha256sum "${NAMA}.tar.gz" > "${NAMA}.tar.gz.sha256"
       - uses: actions/upload-artifact@v4
