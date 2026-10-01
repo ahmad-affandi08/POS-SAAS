@@ -217,3 +217,19 @@ export type PropsDetailSaldoSesi = {
     AkunKasBank: { Uuid: string; Kode: string; Nama: string }[];
     Izin: { KelolaSesi: boolean };
 };
+
+/** v3.36: hasil impor pelanggan (periksa atau terapkan). */
+export type MasalahImporPelanggan = { Baris: number; Nama: string; Pesan: string };
+
+export type HasilImporPelanggan = {
+    Terapkan: boolean;
+    NamaBerkas: string;
+    JumlahBaris: number;
+    Baru: number;
+    SudahAda: number;
+    Bermasalah: number;
+    /** Maksimal 200 baris pertama yang bermasalah. */
+    Masalah: MasalahImporPelanggan[];
+};
+
+export type PropsImporPelanggan = { Hasil: HasilImporPelanggan | null; MaksimalBaris: number };

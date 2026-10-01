@@ -1794,7 +1794,7 @@
     "src": "node_modules/@fontsource-variable/atkinson-hyperlegible-next/files/atkinson-hyperlegible-next-latin-wght-normal.woff2"
   },
   "resources/js/Aplikasi.tsx": {
-    "file": "assets/Aplikasi-BT5vwXpO.js",
+    "file": "assets/Aplikasi-U9_77dPe.js",
     "name": "Aplikasi",
     "src": "resources/js/Aplikasi.tsx",
     "isEntry": true,
@@ -1900,6 +1900,7 @@
       "resources/js/Halaman/Kelola/Pelanggan/BuatTier.tsx",
       "resources/js/Halaman/Kelola/Pelanggan/Daftar.tsx",
       "resources/js/Halaman/Kelola/Pelanggan/Detail.tsx",
+      "resources/js/Halaman/Kelola/Pelanggan/Impor.tsx",
       "resources/js/Halaman/Kelola/Pelanggan/IsiDeposit.tsx",
       "resources/js/Halaman/Kelola/Pelanggan/PengaturanLoyalti.tsx",
       "resources/js/Halaman/Kelola/Pelanggan/SaldoSesi/Daftar.tsx",
@@ -3829,7 +3830,7 @@
     ]
   },
   "resources/js/Halaman/Kelola/Pelanggan/Daftar.tsx": {
-    "file": "assets/Daftar-CQjrwJH9.js",
+    "file": "assets/Daftar-ChVZuBcM.js",
     "name": "Daftar",
     "src": "resources/js/Halaman/Kelola/Pelanggan/Daftar.tsx",
     "isDynamicEntry": true,
@@ -3871,6 +3872,20 @@
       "_LencanaPenjualan-Cf1RC1jn.js",
       "_FormulirPelanggan-OSjQIry2.js",
       "_KolomSaldoSesi-DKbaBSAf.js"
+    ]
+  },
+  "resources/js/Halaman/Kelola/Pelanggan/Impor.tsx": {
+    "file": "assets/Impor-DlXKfHtM.js",
+    "name": "Impor",
+    "src": "resources/js/Halaman/Kelola/Pelanggan/Impor.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_jsx-runtime-CM6s92_4.js",
+      "_TataLetakAplikasi-C_6F0Z5i.js",
+      "_Pemberitahuan-iMvrIy2z.js",
+      "_Tombol-CekKDvnx.js",
+      "_BidangBerkas-CDM9hjA6.js",
+      "_Panel-CUb7ssmQ.js"
     ]
   },
   "resources/js/Halaman/Kelola/Pelanggan/IsiDeposit.tsx": {

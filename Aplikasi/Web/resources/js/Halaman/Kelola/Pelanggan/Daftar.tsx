@@ -113,6 +113,9 @@ export default function HalamanDaftarPelanggan({ Pelanggan, Izin, OpsiTag, OpsiT
             </p>
             {Izin.Kelola ? (
                 <AksiHalaman>
+                    <Button asChild variant="outline">
+                        <Link href={`${AlamatPelanggan}/impor`}>Impor pelanggan</Link>
+                    </Button>
                     <Button asChild>
                         <Link href={`${AlamatPelanggan}/buat`}>Tambah pelanggan</Link>
                     </Button>
@@ -129,6 +132,7 @@ export default function HalamanDaftarPelanggan({ Pelanggan, Izin, OpsiTag, OpsiT
                 ambilIdBaris={(p) => p.Uuid}
                 urutBawaan="Nama"
                 cari="Cari nama, nomor HP, atau email"
+                {...(Izin.Kelola ? { ekspor: { alamat: `${AlamatPelanggan}/ekspor`, label: 'Ekspor ke Excel' } } : {})}
                 saring={[
                     {
                         id: 'Status',

@@ -12,6 +12,8 @@ use App\Domain\Pelanggan\Layanan\NomorHp;
 use App\Domain\Pelanggan\Model\Pelanggan;
 use App\Domain\Pelanggan\Model\TierPelanggan;
 use App\Domain\Penjualan\Kueri\BelanjaPelanggan;
+use Generator;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
 /**
@@ -38,25 +40,7 @@ final class DaftarPelanggan
      */
     public function AmbilTabel(DataPermintaanTabel $permintaan): array
     {
-        $status = $permintaan->AmbilDaftar('Status', array_map(fn (StatusPelanggan $s): string => $s->value, StatusPelanggan::cases()));
-        $tag = $permintaan->AmbilDaftar('Tag');
-        $kodeTier = $permintaan->AmbilDaftar('Tier');
-        $pola = PenerapKueriTabel::PolaCari($permintaan->cari);
-        $hp = NomorHp::Normalisasi($permintaan->cari);
-        $angka = (string) preg_replace('/\D+/', '', $permintaan->cari);
-
-        $kueri = Pelanggan::query()
-            ->when($status !== [], fn ($kueri) => $kueri->whereIn('Status', $status))
-            ->when($tag !== [], fn ($kueri) => $kueri->where(function ($dalam) use ($tag): void {
-                foreach ($tag as $t) {
-                    $dalam->orWhereJsonContains('Tag', $t);
-                }
-            }))
-            ->when($kodeTier !== [], fn ($kueri) => $kueri->whereIn('IdTier', TierPelanggan::query()->whereIn('Kode', $kodeTier)->select('Id')))
-            ->when($permintaan->cari !== '', fn ($kueri) => $kueri->where(fn ($dalam) => $dalam
-                ->where('Nama', 'like', $pola)
-                ->orWhere('Email', 'like', $pola)
-                ->when(strlen($angka) >= 4, fn ($k) => $k->orWhere('NoHp', 'like', PenerapKueriTabel::PolaCari($hp ?? ltrim($angka, '0'))))));
+        $kueri = $this->BangunKueri($permintaan);
 
         return PenerapKueriTabel::Terapkan($kueri, $permintaan, ['Nama' => 'Nama', 'DibuatPada' => 'DibuatPada', 'SaldoDeposit' => 'SaldoDeposit'], function (Collection $baris): array {
             /** @var Collection<int, Pelanggan> $baris */
@@ -70,6 +54,79 @@ final class DaftarPelanggan
                 ...($ringkasan[$p->Id] ?? ['JumlahTransaksi' => 0, 'TotalBelanja' => '0.00', 'TerakhirPada' => null]),
             ])->all());
         });
+    }
+
+    /**
+     * v3.36: baris ekspor pelanggan dengan saringan & cari yang sama dengan tabel, urut nama, dibaca per 500 baris.
+     * NPWP/NIK tidak ikut (identitas pajak hanya di formulir). Tag dipisah `;`, tanggal `Y-m-d`.
+     *
+     * @return Generator<int, list<string>>
+     */
+    public function AlirkanEkspor(DataPermintaanTabel $permintaan): Generator
+    {
+        $kueri = $this->BangunKueri($permintaan)->orderBy('Nama')->orderBy('Id');
+
+        for ($halaman = 1; ; $halaman++) {
+            $baris = (clone $kueri)->forPage($halaman, 500)->get();
+
+            if ($baris->isEmpty()) {
+                return;
+            }
+
+            $id = array_values($baris->map(fn (Pelanggan $p): int => $p->Id)->all());
+            $tier = $this->tier->AmbilPeta(array_values(array_filter($baris->map(fn (Pelanggan $p): ?int => $p->IdTier)->all(), 'is_int')));
+            $saldo = $this->buku->AmbilSaldoBanyak($id);
+
+            foreach ($baris as $p) {
+                yield [
+                    $p->Nama,
+                    NomorHp::Format($p->NoHp),
+                    $p->Email ?? '',
+                    $p->TanggalLahir?->toDateString() ?? '',
+                    $p->Alamat ?? '',
+                    implode('; ', array_values($p->Tag ?? [])),
+                    $p->Catatan ?? '',
+                    $p->SetujuPemasaran ? 'Ya' : 'Tidak',
+                    $p->IdTier === null ? '' : ($tier[$p->IdTier]['Nama'] ?? ''),
+                    (string) ($saldo[$p->Id] ?? 0),
+                    (string) $p->SaldoDeposit,
+                    $p->Status->value,
+                    $p->DibuatPada?->toDateString() ?? '',
+                ];
+            }
+
+            if ($baris->count() < 500) {
+                return;
+            }
+        }
+    }
+
+    /**
+     * Kueri saringan & cari bersama untuk tabel dan ekspor.
+     *
+     * @return Builder<Pelanggan>
+     */
+    private function BangunKueri(DataPermintaanTabel $permintaan): Builder
+    {
+        $status = $permintaan->AmbilDaftar('Status', array_map(fn (StatusPelanggan $s): string => $s->value, StatusPelanggan::cases()));
+        $tag = $permintaan->AmbilDaftar('Tag');
+        $kodeTier = $permintaan->AmbilDaftar('Tier');
+        $pola = PenerapKueriTabel::PolaCari($permintaan->cari);
+        $hp = NomorHp::Normalisasi($permintaan->cari);
+        $angka = (string) preg_replace('/\D+/', '', $permintaan->cari);
+
+        return Pelanggan::query()
+            ->when($status !== [], fn ($kueri) => $kueri->whereIn('Status', $status))
+            ->when($tag !== [], fn ($kueri) => $kueri->where(function ($dalam) use ($tag): void {
+                foreach ($tag as $t) {
+                    $dalam->orWhereJsonContains('Tag', $t);
+                }
+            }))
+            ->when($kodeTier !== [], fn ($kueri) => $kueri->whereIn('IdTier', TierPelanggan::query()->whereIn('Kode', $kodeTier)->select('Id')))
+            ->when($permintaan->cari !== '', fn ($kueri) => $kueri->where(fn ($dalam) => $dalam
+                ->where('Nama', 'like', $pola)
+                ->orWhere('Email', 'like', $pola)
+                ->when(strlen($angka) >= 4, fn ($k) => $k->orWhere('NoHp', 'like', PenerapKueriTabel::PolaCari($hp ?? ltrim($angka, '0'))))));
     }
 
     /**
