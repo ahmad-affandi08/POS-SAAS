@@ -90,6 +90,7 @@ type Props = {
         CodAktif: boolean;
         QrisAktif: boolean;
         AkunPelangganAktif: boolean;
+        NotifikasiWhatsappAktif: boolean;
         MinimalPesanan: string;
         MenitKedaluwarsa: number;
         PesanTutup: string | null;
@@ -191,6 +192,11 @@ function FormPengaturan({ props }: { props: Props }) {
                 />
             </div>
             <div className="flex flex-col gap-1 sm:col-span-2">
+                <KotakCentang
+                    label="Kabari pembeli lewat WhatsApp saat status pesanan berubah (dikonfirmasi, siap diambil, dikirim, ditolak)"
+                    nilai={form.data.NotifikasiWhatsappAktif}
+                    saatBerubah={(v) => form.setData('NotifikasiWhatsappAktif', v)}
+                />
                 <KotakCentang
                     label="Pembeli bisa masuk dengan kode WhatsApp (riwayat belanja, poin, harga member)"
                     nilai={form.data.AkunPelangganAktif}

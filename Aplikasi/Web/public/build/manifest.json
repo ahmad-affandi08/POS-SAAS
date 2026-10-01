@@ -1794,7 +1794,7 @@
     "src": "node_modules/@fontsource-variable/atkinson-hyperlegible-next/files/atkinson-hyperlegible-next-latin-wght-normal.woff2"
   },
   "resources/js/Aplikasi.tsx": {
-    "file": "assets/Aplikasi-CL7ZJ4T0.js",
+    "file": "assets/Aplikasi-C7jaBFXr.js",
     "name": "Aplikasi",
     "src": "resources/js/Aplikasi.tsx",
     "isEntry": true,
@@ -5598,7 +5598,7 @@
     ]
   },
   "resources/js/Halaman/Kelola/TokoOnline/Daftar.tsx": {
-    "file": "assets/Daftar-Cfn4z2zl.js",
+    "file": "assets/Daftar-DE9esQdv.js",
     "name": "Daftar",
     "src": "resources/js/Halaman/Kelola/TokoOnline/Daftar.tsx",
     "isDynamicEntry": true,

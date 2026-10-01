@@ -9,14 +9,21 @@ use App\Domain\Bersama\Dokumen\Layanan\PencatatRiwayatStatus;
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Pemenuhan\Enum\StatusPengirimanPesanan;
 use App\Domain\Pemenuhan\Model\PengirimanPesanan;
+use App\Domain\Penjualan\Enum\PeristiwaPesananOnline;
 use App\Domain\Penjualan\Enum\StatusPesananOnline;
+use App\Domain\Penjualan\Layanan\PemberitahuPesananOnline;
 use App\Domain\Penjualan\Layanan\PemeriksaPenyelesaianPesananOnline;
 use App\Domain\Penjualan\Model\PesananOnline;
 use Illuminate\Support\Facades\DB;
 
 final class UbahStatusPengirimanPesanan
 {
-    public function __construct(private readonly PencatatRiwayatStatus $riwayat, private readonly PencatatAudit $audit, private readonly PemeriksaPenyelesaianPesananOnline $selesai) {}
+    public function __construct(
+        private readonly PencatatRiwayatStatus $riwayat,
+        private readonly PencatatAudit $audit,
+        private readonly PemeriksaPenyelesaianPesananOnline $selesai,
+        private readonly PemberitahuPesananOnline $pemberitahu,
+    ) {}
 
     /** @param array<string, mixed> $data */
     public function Jalankan(PengirimanPesanan $pengiriman, PesananOnline $pesanan, StatusPengirimanPesanan $status, array $data, int $idPengguna): void
@@ -47,6 +54,8 @@ final class UbahStatusPengirimanPesanan
             }
             if ($status === StatusPengirimanPesanan::Dikirim) {
                 $pengiriman->DikirimPada = now();
+                // F-17 bagian 3 (v3.32): pembeli diberi tahu barangnya sudah berangkat.
+                $this->pemberitahu->Antrekan($pesanan, PeristiwaPesananOnline::Dikirim);
             }
             if ($status === StatusPengirimanPesanan::Diterima) {
                 $pengiriman->DiterimaPada = now();

@@ -10,7 +10,9 @@ use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Pemenuhan\Enum\StatusPengirimanPesanan;
 use App\Domain\Pemenuhan\Model\PengirimanPesanan;
 use App\Domain\Penjualan\Enum\JenisPemenuhanOnline;
+use App\Domain\Penjualan\Enum\PeristiwaPesananOnline;
 use App\Domain\Penjualan\Enum\StatusPesananOnline;
+use App\Domain\Penjualan\Layanan\PemberitahuPesananOnline;
 use App\Domain\Penjualan\Layanan\PemeriksaPenyelesaianPesananOnline;
 use App\Domain\Penjualan\Model\PesananOnline;
 use App\Domain\Penjualan\Model\ZonaPengiriman;
@@ -18,7 +20,12 @@ use Illuminate\Support\Facades\DB;
 
 final class UbahStatusPesananOnline
 {
-    public function __construct(private readonly PencatatRiwayatStatus $riwayat, private readonly PencatatAudit $audit, private readonly PemeriksaPenyelesaianPesananOnline $selesai) {}
+    public function __construct(
+        private readonly PencatatRiwayatStatus $riwayat,
+        private readonly PencatatAudit $audit,
+        private readonly PemeriksaPenyelesaianPesananOnline $selesai,
+        private readonly PemberitahuPesananOnline $pemberitahu,
+    ) {}
 
     public function Jalankan(PesananOnline $pesanan, StatusPesananOnline $status, int $idPengguna, ?string $alasan = null): void
     {
@@ -67,6 +74,19 @@ final class UbahStatusPesananOnline
             $pesanan->save();
             $this->riwayat->Catat(PesananOnline::JENIS_DOKUMEN, $pesanan->Id, $dari->value, $status->value, $idPengguna, $alasan);
             $this->audit->Catat('pesanan-online.status', $pesanan, ['Status' => $dari->value], ['Status' => $status->value, 'Alasan' => $alasan], idPengguna: $idPengguna);
+
+            // F-17 bagian 3 (v3.32): pembeli diberi tahu lewat WhatsApp. Pesanan kirim yang Siap belum berarti apa-apa
+            // bagi pembeli (masih menunggu kurir), jadi yang diberitahukan hanya siap **diambil**.
+            $peristiwa = match (true) {
+                $status === StatusPesananOnline::Dikonfirmasi => PeristiwaPesananOnline::Dikonfirmasi,
+                $status === StatusPesananOnline::Siap && $pesanan->JenisPemenuhan === JenisPemenuhanOnline::AmbilSendiri => PeristiwaPesananOnline::SiapDiambil,
+                $status === StatusPesananOnline::Ditolak => PeristiwaPesananOnline::Ditolak,
+                $status === StatusPesananOnline::Dibatalkan => PeristiwaPesananOnline::Dibatalkan,
+                default => null,
+            };
+            if ($peristiwa !== null) {
+                $this->pemberitahu->Antrekan($pesanan, $peristiwa);
+            }
         });
     }
 }

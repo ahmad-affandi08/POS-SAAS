@@ -6,7 +6,9 @@ namespace App\Domain\Penjualan\Aksi;
 
 use App\Domain\Bersama\Audit\Layanan\PencatatAudit;
 use App\Domain\Bersama\Dokumen\Layanan\PencatatRiwayatStatus;
+use App\Domain\Penjualan\Enum\PeristiwaPesananOnline;
 use App\Domain\Penjualan\Enum\StatusPesananOnline;
+use App\Domain\Penjualan\Layanan\PemberitahuPesananOnline;
 use App\Domain\Penjualan\Model\PengaturanTokoOnline;
 use App\Domain\Penjualan\Model\PesananOnline;
 use Illuminate\Support\Carbon;
@@ -37,6 +39,7 @@ final class KedaluwarsakanPesananOnline
     public function __construct(
         private readonly PencatatRiwayatStatus $riwayat,
         private readonly PencatatAudit $audit,
+        private readonly PemberitahuPesananOnline $pemberitahu,
     ) {}
 
     /** @return int jumlah pesanan yang dihanguskan */
@@ -92,6 +95,7 @@ final class KedaluwarsakanPesananOnline
             $pesanan->Alasan = $alasan;
             $pesanan->save();
             $this->riwayat->Catat(PesananOnline::JENIS_DOKUMEN, $pesanan->Id, $dari->value, StatusPesananOnline::Kedaluwarsa->value, null, $alasan);
+            $this->pemberitahu->Antrekan($pesanan, PeristiwaPesananOnline::Kedaluwarsa);
             $this->audit->Catat(
                 'pesanan-online.kedaluwarsa',
                 $pesanan,

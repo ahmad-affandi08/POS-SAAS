@@ -14,6 +14,7 @@ use App\Domain\Bersama\Dokumen\Layanan\PencatatRiwayatStatus;
 use App\Domain\Bersama\Nilai\Uang;
 use App\Domain\Organisasi\Kueri\TanggalBisnisOutlet;
 use App\Domain\Penjualan\Aksi\SiapkanMetodeUangMuka;
+use App\Domain\Penjualan\Enum\PeristiwaPesananOnline;
 use App\Domain\Penjualan\Enum\StatusPesananOnline;
 use App\Domain\Penjualan\Enum\SumberTagihanQris;
 use App\Domain\Penjualan\Model\MetodePembayaran;
@@ -43,6 +44,7 @@ final class PenerapPembayaranPesananOnline
         private readonly PostingJurnal $postingJurnal,
         private readonly PencatatRiwayatStatus $riwayat,
         private readonly PencatatAudit $audit,
+        private readonly PemberitahuPesananOnline $pemberitahu,
     ) {}
 
     /** Hasil: pesanan yang dibayar, atau null bila tagihan ini bukan milik pesanan online / sudah pernah diterapkan. */
@@ -96,6 +98,7 @@ final class PenerapPembayaranPesananOnline
 
         if ($asal !== $pesanan->Status) {
             $this->riwayat->Catat(PesananOnline::JENIS_DOKUMEN, $pesanan->Id, $asal->value, $pesanan->Status->value, null, 'Pembayaran QRIS diterima');
+            $this->pemberitahu->Antrekan($pesanan, PeristiwaPesananOnline::PembayaranDiterima);
         }
 
         $this->audit->Catat('pesanan-online.dibayar', $pesanan, ['Status' => $asal->value], [

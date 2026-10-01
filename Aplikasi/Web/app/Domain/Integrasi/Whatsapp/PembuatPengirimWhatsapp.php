@@ -86,4 +86,12 @@ final class PembuatPengirimWhatsapp
 
         return is_string($nama) && $nama !== '' ? $nama : null;
     }
+
+    /** Nama templat utilitas status pesanan toko online (F-17 bagian 3, v3.32); null = kirim teks. */
+    public function AmbilTemplatStatusPesanan(): ?string
+    {
+        $nama = config('integrasi.Whatsapp.Pengaturan.NamaTemplatStatusPesanan');
+
+        return is_string($nama) && $nama !== '' ? $nama : null;
+    }
 }

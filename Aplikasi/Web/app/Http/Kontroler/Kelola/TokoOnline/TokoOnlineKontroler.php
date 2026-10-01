@@ -52,7 +52,7 @@ final class TokoOnlineKontroler extends DasarKelolaKontroler
 
         return Inertia::render('Kelola/TokoOnline/Daftar', [
             'TautanPublik' => url('/'.$profil->AmbilSlug($this->IdTenant())),
-            'Pengaturan' => $atur->only(['Aktif', 'BayarSaatAmbilAktif', 'CodAktif', 'QrisAktif', 'AkunPelangganAktif', 'MinimalPesanan', 'MenitKedaluwarsa', 'PesanTutup']),
+            'Pengaturan' => $atur->only(['Aktif', 'BayarSaatAmbilAktif', 'CodAktif', 'QrisAktif', 'AkunPelangganAktif', 'NotifikasiWhatsappAktif', 'MinimalPesanan', 'MenitKedaluwarsa', 'PesanTutup']),
             // Sakelar akun pembeli hanya berarti bila platform punya WhatsApp aktif (kode masuk dikirim lewat sana).
             'AkunPembeliTersedia' => $akunPembeli->CekWhatsappTersedia(),
             // F-17 bagian 2: pengembalian uang muka memilih akun kas/bank, jadi daftarnya ikut dikirim.
@@ -94,7 +94,7 @@ final class TokoOnlineKontroler extends DasarKelolaKontroler
             'Outlet' => ['required', 'ulid'], 'Aktif' => ['required', 'boolean'], 'TokoOnlineAktif' => ['required', 'boolean'],
             'AmbilSendiriAktif' => ['required', 'boolean'], 'KirimAktif' => ['required', 'boolean'],
             'BayarSaatAmbilAktif' => ['required', 'boolean'], 'CodAktif' => ['required', 'boolean'],
-            'QrisAktif' => ['required', 'boolean'], 'AkunPelangganAktif' => ['sometimes', 'boolean'],
+            'QrisAktif' => ['required', 'boolean'], 'AkunPelangganAktif' => ['sometimes', 'boolean'], 'NotifikasiWhatsappAktif' => ['sometimes', 'boolean'],
             'MinimalPesanan' => ['required', 'decimal:0,2', 'min:0'], 'MenitKedaluwarsa' => ['required', 'integer', 'min:15', 'max:1440'],
             'PesanTutup' => ['nullable', 'string', 'max:255'],
         ]);

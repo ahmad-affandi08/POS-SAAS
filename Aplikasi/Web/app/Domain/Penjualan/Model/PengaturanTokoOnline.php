@@ -14,6 +14,7 @@ use App\Domain\Bersama\Tenant\MilikTenant;
  * @property bool $BayarSaatAmbilAktif
  * @property bool $CodAktif
  * @property bool $AkunPelangganAktif
+ * @property bool $NotifikasiWhatsappAktif
  * @property bool $QrisAktif
  * @property string $MinimalPesanan
  * @property int $MenitKedaluwarsa
@@ -33,6 +34,7 @@ final class PengaturanTokoOnline extends ModelDasar
         'BayarSaatAmbilAktif' => true,
         'CodAktif' => true,
         'AkunPelangganAktif' => true,
+        'NotifikasiWhatsappAktif' => true,
         'QrisAktif' => false,
         'MinimalPesanan' => '0.00',
         'MenitKedaluwarsa' => 120,
@@ -46,6 +48,7 @@ final class PengaturanTokoOnline extends ModelDasar
             'BayarSaatAmbilAktif' => 'boolean',
             'CodAktif' => 'boolean',
             'AkunPelangganAktif' => 'boolean',
+            'NotifikasiWhatsappAktif' => 'boolean',
             'QrisAktif' => 'boolean',
             'MinimalPesanan' => 'decimal:2',
             'MenitKedaluwarsa' => 'integer',
