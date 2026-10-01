@@ -18,6 +18,13 @@ test yang sama dengan suite Fitur lalu menekan API POS dengan [k6](https://k6.io
   p95 webhook < 0,5 dtk, galat checkout < 1%, **tidak ada penjualan ditolak**.
 - `permintaan_dibatasi_429` = permintaan yang ditahan pembatas laju per perangkat (`pos-120` per menit untuk sinkron).
   Itu perilaku yang diharapkan, bukan galat; angkanya menunjukkan apakah laju uji melewati batas perangkat.
+- Deadlock: ringkasan mencetak `lock_deadlocks` & `lock_timeouts` InnoDB sejak penghitung dinyalakan, plus dump deadlock
+  terakhir. Deadlock yang diserap percobaan ulang tidak menjadi HTTP 500, tetapi tetap membuang waktu; angkanya dipakai
+  untuk membandingkan perubahan kode (acuan 1 Okt 2026: 2 tenant, 25 penjualan/detik, 90 detik = 42 sisa setelah v3.27,
+  220 sebelumnya). Untuk membandingkan dua versi sekaligus, dorong keduanya ke branch sementara dan jalankan
+  workflow di masing-masing (**Run workflow → Use workflow from**), lalu hapus branchnya.
+- Langkah terakhir menjalankan `tests/Konkurensi/KonkurensiTes.php` (dua proses PHP mengirim item yang sama). Suite ini
+  **tidak** ada di `phpunit.xml`, jadi panggil per berkas dan jalankan terakhir: ia menyisakan data uji di basis data.
 - Ringkasan Actions menampilkan sisa antrean (`jobs`), pekerjaan gagal, jumlah penjualan tersimpan, dan jumlah galat log.
 - Hasil di runner adalah **pembanding antar versi**, bukan kapasitas hosting bersama: CPU, I/O, dan jumlah pekerja PHP
   berbeda. Untuk angka hosting, jalankan skrip yang sama terhadap staging: siapkan data di basis data staging
