@@ -1,6 +1,7 @@
 import { Link, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
+import BidangOutlet from '@/Komponen/Formulir/BidangOutlet';
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import BidangTeksPanjang from '@/Komponen/Formulir/BidangTeksPanjang';
@@ -121,6 +122,12 @@ export default function HalamanBuatPencairan({
 
             <Panel judul="Pilih sumbernya">
                 <div className="grid gap-4 sm:grid-cols-3">
+                    <BidangOutlet
+                        nilai={Terpilih.Outlet}
+                        opsi={OpsiOutlet.map((o) => ({ Nilai: o.Uuid, Label: o.Nama }))}
+                        saatBerubah={(nilai) => MuatUlang({ outlet: nilai })}
+                        galat={props.errors.UuidOutlet}
+                    />
                     <BidangPilihan
                         label="Metode pembayaran"
                         nilai={Terpilih.Metode}
@@ -128,15 +135,6 @@ export default function HalamanBuatPencairan({
                         saatBerubah={(nilai) => MuatUlang({ metode: nilai })}
                         galat={props.errors.UuidMetodePembayaran}
                         kosong="Pilih metode"
-                        required
-                    />
-                    <BidangPilihan
-                        label="Outlet"
-                        nilai={Terpilih.Outlet}
-                        opsi={OpsiOutlet.map((o) => ({ Nilai: o.Uuid, Label: o.Nama }))}
-                        saatBerubah={(nilai) => MuatUlang({ outlet: nilai })}
-                        galat={props.errors.UuidOutlet}
-                        kosong="Pilih outlet"
                         required
                     />
                     <PemilihTanggal

@@ -250,7 +250,12 @@ describe('F-13a pemetaan akun', () => {
         BukaMenu(screen.getByRole('button', { name: 'Aksi untuk Diskon penjualan semua outlet' }));
         expect(screen.queryByRole('menuitem', { name: 'Ganti akun' })).toBeNull();
         fireEvent.click(screen.getByRole('menuitem', { name: 'Atur akun khusus outlet' }));
-        UbahNilai(within(screen.getByRole('dialog')).getByRole('combobox', { name: 'Outlet' }), 'O1');
+        // Hanya ada satu outlet: terisi otomatis & terkunci, tanpa pilihan manual.
+        const outletOtomatis = within(screen.getByRole('dialog')).getByRole<HTMLButtonElement>('combobox', {
+            name: 'Outlet',
+        });
+        expect(outletOtomatis.disabled).toBe(true);
+        expect(outletOtomatis.textContent).toContain('Cabang Solo Baru');
         UbahNilai(within(screen.getByRole('dialog')).getByRole('combobox', { name: 'Akun' }), 'A1');
         fireEvent.click(screen.getByRole('button', { name: 'Simpan pemetaan' }));
         expect(tiruanRouter.put).toHaveBeenLastCalledWith(
@@ -358,7 +363,10 @@ describe('F-13a kas & bank', () => {
 
         UbahNilai(within(formulir).getByRole('combobox', { name: 'Diterima dari akun' }), 'E1');
         UbahNilai(within(formulir).getByRole('combobox', { name: 'Masuk ke (kas/bank)' }), 'K2');
-        UbahNilai(within(formulir).getByRole('combobox', { name: 'Outlet' }), 'O1');
+        // Outlet wajib & hanya satu: terisi otomatis, terkunci, dan menjadi bidang pertama form.
+        const kotakOutlet = within(formulir).getByRole<HTMLButtonElement>('combobox', { name: 'Outlet' });
+        expect(kotakOutlet.disabled).toBe(true);
+        expect(within(formulir).getAllByRole('combobox')[0]).toBe(kotakOutlet);
         UbahNilai(within(formulir).getByLabelText('Jumlah'), '25000000');
         UbahNilai(within(formulir).getByLabelText('Keterangan'), 'Setoran modal awal');
         fireEvent.click(within(formulir).getByRole('button', { name: 'Simpan & jurnal' }));

@@ -2,6 +2,7 @@ import { Link, router, useForm, usePage } from '@inertiajs/react';
 import { useState, type FormEvent } from 'react';
 
 import AksiHalaman from '@/Komponen/Kelola/AksiHalaman';
+import BidangOutlet from '@/Komponen/Formulir/BidangOutlet';
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import Tombol from '@/Komponen/Formulir/Tombol';
@@ -215,7 +216,7 @@ export default function HalamanDaftarPerangkat({ Perangkat, Outlet, JenisPerangk
 type PropsFormTambah = { outlet: Outlet[]; jenis: Pilihan[]; saatSelesai: () => void };
 
 function FormTambah({ outlet, jenis, saatSelesai }: PropsFormTambah) {
-    const formulir = useForm({ Nama: '', Outlet: outlet[0]?.Uuid ?? '', Jenis: jenis[0]?.Nilai ?? 'Kasir' });
+    const formulir = useForm({ Nama: '', Outlet: '', Jenis: jenis[0]?.Nilai ?? 'Kasir' });
 
     const Kirim = (peristiwa: FormEvent) => {
         peristiwa.preventDefault();
@@ -225,6 +226,12 @@ function FormTambah({ outlet, jenis, saatSelesai }: PropsFormTambah) {
     return (
         <DialogFormulir judul="Tambah perangkat" saatTutup={saatSelesai}>
             <form onSubmit={Kirim} className="flex flex-col gap-4" noValidate>
+                <BidangOutlet
+                    nilai={formulir.data.Outlet}
+                    opsi={outlet.map((baris) => ({ Nilai: baris.Uuid, Label: `${baris.Nama} (${baris.Kode})` }))}
+                    saatBerubah={(nilai) => formulir.setData('Outlet', nilai)}
+                    galat={formulir.errors.Outlet}
+                />
                 <BidangTeks
                     label="Nama perangkat"
                     nilai={formulir.data.Nama}
@@ -233,14 +240,6 @@ function FormTambah({ outlet, jenis, saatSelesai }: PropsFormTambah) {
                     keterangan='Misal "Kasir Depan" atau "Tablet Dapur"'
                     maxLength={100}
                     autoFocus
-                    required
-                />
-                <BidangPilihan
-                    label="Outlet"
-                    nilai={formulir.data.Outlet}
-                    opsi={outlet.map((baris) => ({ Nilai: baris.Uuid, Label: `${baris.Nama} (${baris.Kode})` }))}
-                    saatBerubah={(nilai) => formulir.setData('Outlet', nilai)}
-                    galat={formulir.errors.Outlet}
                     required
                 />
                 <BidangPilihan

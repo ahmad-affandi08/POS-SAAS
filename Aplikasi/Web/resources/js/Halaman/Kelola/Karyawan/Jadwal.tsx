@@ -1,7 +1,7 @@
 import { router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
-import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
+import BidangOutlet from '@/Komponen/Formulir/BidangOutlet';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import DaftarGalatServer from '@/Komponen/Katalog/DaftarGalatServer';
 import PesanHanyaLihat from '@/Komponen/Katalog/PesanHanyaLihat';
@@ -121,8 +121,7 @@ export default function HalamanJadwalKerja({ OpsiOutlet, UuidOutlet, Senin, Jadw
 
             <div className="flex flex-wrap items-end gap-3">
                 <div className="w-full sm:w-64">
-                    <BidangPilihan
-                        label="Outlet"
+                    <BidangOutlet
                         nilai={UuidOutlet ?? ''}
                         opsi={OpsiOutlet.map((o) => ({ Nilai: o.Uuid, Label: o.Nama }))}
                         saatBerubah={(uuid) => Buka(uuid, Senin)}

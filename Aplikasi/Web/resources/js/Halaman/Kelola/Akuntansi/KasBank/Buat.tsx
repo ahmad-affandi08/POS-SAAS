@@ -3,6 +3,7 @@ import { useState, type FormEvent } from 'react';
 
 import BilahAksiForm from '@/Komponen/Formulir/BilahAksiForm';
 import BidangBerkas from '@/Komponen/Formulir/BidangBerkas';
+import BidangOutlet from '@/Komponen/Formulir/BidangOutlet';
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeksPanjang from '@/Komponen/Formulir/BidangTeksPanjang';
 import BidangUang from '@/Komponen/Formulir/BidangUang';
@@ -135,6 +136,14 @@ export default function HalamanBuatTransaksiKasBank({
                     aria-label="Formulir transaksi kas & bank"
                     noValidate
                 >
+                    <BidangOutlet
+                        nilai={isian.UuidOutlet}
+                        opsi={OpsiOutlet.map((o) => ({ Nilai: o.Uuid, Label: o.Nama }))}
+                        {...(WajibOutlet ? {} : { kosong: 'Tingkat usaha (tanpa outlet)' })}
+                        saatBerubah={(nilai) => Ubah({ UuidOutlet: nilai })}
+                        galat={galat.UuidOutlet}
+                        required={WajibOutlet}
+                    />
                     <BidangPilihan
                         label="Jenis transaksi"
                         nilai={isian.Jenis}
@@ -152,15 +161,6 @@ export default function HalamanBuatTransaksiKasBank({
                         saatBerubah={(nilai) => Ubah({ Tanggal: nilai })}
                         galat={galat.Tanggal}
                         required
-                    />
-                    <BidangPilihan
-                        label="Outlet"
-                        nilai={isian.UuidOutlet}
-                        opsi={OpsiOutlet.map((o) => ({ Nilai: o.Uuid, Label: o.Nama }))}
-                        {...(WajibOutlet ? { kosong: 'Pilih outlet' } : { kosong: 'Tingkat usaha (tanpa outlet)' })}
-                        saatBerubah={(nilai) => Ubah({ UuidOutlet: nilai })}
-                        galat={galat.UuidOutlet}
-                        required={WajibOutlet}
                     />
                     <BidangPilihan
                         label={aturan.labelSumber}

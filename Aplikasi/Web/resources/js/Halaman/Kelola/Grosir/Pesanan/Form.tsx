@@ -1,7 +1,7 @@
 import { Link, router, usePage } from '@inertiajs/react';
 import { useState, type FormEvent } from 'react';
 
-import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
+import BidangOutlet from '@/Komponen/Formulir/BidangOutlet';
 import BidangTeksPanjang from '@/Komponen/Formulir/BidangTeksPanjang';
 import BilahAksiForm from '@/Komponen/Formulir/BilahAksiForm';
 import Tombol from '@/Komponen/Formulir/Tombol';
@@ -31,7 +31,7 @@ export default function HalamanFormPesananGrosir({ Isian, OpsiOutlet, OpsiGudang
     const galat = props.errors;
     const [uuidPelanggan, AturPelanggan] = useState(Isian?.UuidPelanggan ?? '');
     const [namaPelanggan, AturNamaPelanggan] = useState(Isian?.NamaPelanggan ?? '');
-    const [uuidOutlet, AturOutlet] = useState(Isian?.UuidOutlet ?? OpsiOutlet[0]?.Uuid ?? '');
+    const [uuidOutlet, AturOutlet] = useState(Isian?.UuidOutlet ?? '');
     const [tanggal, AturTanggal] = useState(Isian?.Tanggal ?? HariIni);
     const [tanggalKirim, AturTanggalKirim] = useState(Isian?.TanggalKirimDiminta ?? '');
     const [catatan, AturCatatan] = useState(Isian?.Catatan ?? '');
@@ -100,6 +100,15 @@ export default function HalamanFormPesananGrosir({ Isian, OpsiOutlet, OpsiGudang
             <form onSubmit={Kirim} noValidate className="flex flex-col gap-4" aria-label={judul}>
                 <Panel judul="Pesanan">
                     <div className="flex flex-col gap-4">
+                        <div className="max-w-sm">
+                            <BidangOutlet
+                                label="Outlet penjual"
+                                nilai={uuidOutlet}
+                                opsi={OpsiOutlet.map((o) => ({ Nilai: o.Uuid, Label: `${o.Nama} (${o.Kode})` }))}
+                                saatBerubah={AturOutlet}
+                                galat={galat.UuidOutlet}
+                            />
+                        </div>
                         <PemilihPelangganGrosir
                             uuidTerpilih={uuidPelanggan}
                             namaTerpilih={namaPelanggan}
@@ -110,14 +119,6 @@ export default function HalamanFormPesananGrosir({ Isian, OpsiOutlet, OpsiGudang
                             galat={galat.UuidPelanggan}
                         />
                         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                            <BidangPilihan
-                                label="Outlet penjual"
-                                nilai={uuidOutlet}
-                                opsi={OpsiOutlet.map((o) => ({ Nilai: o.Uuid, Label: `${o.Nama} (${o.Kode})` }))}
-                                saatBerubah={AturOutlet}
-                                galat={galat.UuidOutlet}
-                                required
-                            />
                             <PemilihTanggal
                                 label="Tanggal pesanan"
                                 nilai={tanggal}

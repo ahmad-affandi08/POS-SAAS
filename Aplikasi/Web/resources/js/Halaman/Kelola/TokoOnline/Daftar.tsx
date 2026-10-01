@@ -3,6 +3,7 @@ import { ExternalLinkIcon } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
+import BidangOutlet from '@/Komponen/Formulir/BidangOutlet';
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import KotakCentang from '@/Komponen/Formulir/KotakCentang';
 import Tombol from '@/Komponen/Formulir/Tombol';
@@ -135,8 +136,7 @@ function FormPengaturan({ props }: { props: Props }) {
                     Aktifkan kanal per outlet dan tentukan cara bayar bagian pertama.
                 </p>
             </div>
-            <BidangPilihan
-                label="Outlet"
+            <BidangOutlet
                 nilai={form.data.Outlet}
                 opsi={props.Outlet.map((o) => ({ Nilai: o.Uuid, Label: o.Nama }))}
                 saatBerubah={PilihOutlet}
@@ -204,7 +204,7 @@ function FormPengaturan({ props }: { props: Props }) {
 
 function FormZona({ outlet }: { outlet: Outlet[] }) {
     const form = useForm({
-        Outlet: outlet[0]?.Uuid ?? '',
+        Outlet: '',
         Nama: '',
         KodePos: [] as string[],
         Ongkir: '0',
@@ -236,8 +236,7 @@ function FormZona({ outlet }: { outlet: Outlet[] }) {
         >
             <h2 className="mb-3 text-subjudul font-semibold">Tambah zona ongkir</h2>
             <div className="grid gap-3 sm:grid-cols-2">
-                <BidangPilihan
-                    label="Outlet"
+                <BidangOutlet
                     nilai={form.data.Outlet}
                     opsi={outlet.map((o) => ({ Nilai: o.Uuid, Label: o.Nama }))}
                     saatBerubah={(nilai) => form.setData('Outlet', nilai)}

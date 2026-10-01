@@ -2,6 +2,7 @@ import { Head, useForm } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 
 import JudulHalaman from '@/Komponen/Umpan/JudulHalaman';
+import BidangOutlet from '@/Komponen/Formulir/BidangOutlet';
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import KotakCentang from '@/Komponen/Formulir/KotakCentang';
@@ -33,7 +34,7 @@ export default function HalamanReservasiPublik(props: PropsReservasiPublik) {
     const layanan = props.Layanan ?? [];
     const staf = props.Staf ?? [];
     const formulir = useForm({
-        Outlet: outlet[0]?.Uuid ?? '',
+        Outlet: '',
         UuidLayanan: '',
         Tanggal: props.HariIni ?? '',
         UuidStaf: '',
@@ -72,16 +73,13 @@ export default function HalamanReservasiPublik(props: PropsReservasiPublik) {
                 <p className="text-teks-sekunder">Belum ada layanan yang bisa dipesan online.</p>
             ) : (
                 <form onSubmit={Kirim} className="flex flex-col gap-4" noValidate>
-                    {outlet.length > 1 ? (
-                        <BidangPilihan
-                            label="Outlet"
-                            nilai={d.Outlet}
-                            opsi={outlet.map((o) => ({ Nilai: o.Uuid, Label: o.Nama }))}
-                            saatBerubah={(nilai) => formulir.setData({ ...d, Outlet: nilai, Jam: '' })}
-                            galat={galat.Outlet}
-                            required
-                        />
-                    ) : null}
+                    <BidangOutlet
+                        nilai={d.Outlet}
+                        opsi={outlet.map((o) => ({ Nilai: o.Uuid, Label: o.Nama }))}
+                        saatBerubah={(nilai) => formulir.setData({ ...d, Outlet: nilai, Jam: '' })}
+                        galat={galat.Outlet}
+                        sembunyiBilaTunggal
+                    />
                     <BidangPilihan
                         label="Layanan"
                         nilai={d.UuidLayanan}

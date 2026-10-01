@@ -2,6 +2,7 @@ import { router, useForm } from '@inertiajs/react';
 import { useState, type FormEvent } from 'react';
 
 import AksiHalaman from '@/Komponen/Kelola/AksiHalaman';
+import BidangOutlet from '@/Komponen/Formulir/BidangOutlet';
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import KotakCentang from '@/Komponen/Formulir/KotakCentang';
@@ -139,7 +140,7 @@ type PropsDialogCatat = Pick<PropsDaftarReservasi, 'OpsiOutlet' | 'OpsiStaf' | '
 /** Catat reservasi dari telepon/WhatsApp/datang langsung. */
 function DialogCatat({ OpsiOutlet, OpsiStaf, OpsiLayanan: layanan, HariIni, saatTutup }: PropsDialogCatat) {
     const formulir = useForm({
-        Outlet: OpsiOutlet[0]?.Uuid ?? '',
+        Outlet: '',
         UuidLayanan: '',
         Tanggal: HariIni,
         UuidStaf: '',
@@ -162,16 +163,13 @@ function DialogCatat({ OpsiOutlet, OpsiStaf, OpsiLayanan: layanan, HariIni, saat
             galatUmum={(formulir.errors as Record<string, string | undefined>).Umum}
         >
             <form onSubmit={Kirim} className="grid gap-4 sm:grid-cols-2" noValidate>
-                {OpsiOutlet.length > 1 ? (
-                    <BidangPilihan
-                        label="Outlet"
-                        nilai={d.Outlet}
-                        opsi={OpsiOutlet.map((o) => ({ Nilai: o.Uuid, Label: o.Nama }))}
-                        saatBerubah={(nilai) => formulir.setData({ ...d, Outlet: nilai, Jam: '' })}
-                        galat={formulir.errors.Outlet}
-                        required
-                    />
-                ) : null}
+                <BidangOutlet
+                    nilai={d.Outlet}
+                    opsi={OpsiOutlet.map((o) => ({ Nilai: o.Uuid, Label: o.Nama }))}
+                    saatBerubah={(nilai) => formulir.setData({ ...d, Outlet: nilai, Jam: '' })}
+                    galat={formulir.errors.Outlet}
+                    sembunyiBilaTunggal
+                />
                 <BidangPilihan
                     label="Layanan"
                     nilai={d.UuidLayanan}

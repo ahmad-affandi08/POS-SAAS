@@ -1,6 +1,7 @@
 import { router, usePage } from '@inertiajs/react';
 import { useState, type FormEvent } from 'react';
 
+import BidangOutlet from '@/Komponen/Formulir/BidangOutlet';
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import PesanHanyaLihat from '@/Komponen/Katalog/PesanHanyaLihat';
 import TabelData from '@/Komponen/TabelData/TabelData';
@@ -195,10 +196,8 @@ export default function HalamanPemetaanAkun({ Pemetaan, OpsiAkun, OpsiOutlet, Iz
                         noValidate
                     >
                         {form.tambahOutlet ? (
-                            <BidangPilihan
-                                label="Outlet"
+                            <BidangOutlet
                                 nilai={form.UuidOutlet}
-                                kosong="Pilih outlet"
                                 opsi={OpsiOutlet.map((o) => ({ Nilai: o.Uuid, Label: o.Nama }))}
                                 saatBerubah={(nilai) => AturForm({ ...form, UuidOutlet: nilai })}
                                 galat={galat.UuidOutlet}
