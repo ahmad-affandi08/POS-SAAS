@@ -1,10 +1,17 @@
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 
-import BidangTeks from '@/Komponen/Formulir/BidangTeks';
-import Tombol from '@/Komponen/Formulir/Tombol';
+import {
+    AmbilHasilCari,
+    KerangkaPemilihProduk,
+    useNilaiTertunda,
+    useSorotPertama,
+} from '@/Komponen/Katalog/PemilihProduk';
+import { CommandItem } from '@/Komponen/Ui/command';
 import { FormatRupiah } from '@/Pustaka/Format';
+import { KunciKueri } from '@/Pustaka/KunciKueri';
 
-type HasilPelanggan = {
+export type HasilPelangganGrosir = {
     Uuid: string;
     Nama: string;
     NoHp: string | null;
@@ -12,10 +19,31 @@ type HasilPelanggan = {
     SisaPiutang?: string | null;
 };
 
+const alamatCari = '/kelola/grosir/pelanggan/cari';
+
+export function BuatUrlCariPelanggan(kata: string): string {
+    return `${alamatCari}?${new URLSearchParams({ kata }).toString()}`;
+}
+
+/** "Limit Rp 50.000.000 · sisa piutang Rp 2.000.000" atau "tanpa limit kredit". */
+export function KeteranganKredit(p: HasilPelangganGrosir): string {
+    const nomor = p.NoHp ?? 'Tanpa nomor';
+
+    if (p.LimitKredit === null) {
+        return `${nomor} · tanpa limit kredit`;
+    }
+
+    const piutang = p.SisaPiutang && p.SisaPiutang !== '0.00' ? ` · piutang ${FormatRupiah(p.SisaPiutang)}` : '';
+
+    return `${nomor} · limit ${FormatRupiah(p.LimitKredit)}${piutang}`;
+}
+
 /**
- * Pemilih pelanggan untuk pesanan grosir. Limit kredit & sisa piutangnya ditampilkan di hasil pencarian, karena itulah
- * yang menentukan apakah pesanan besar nanti lolos BR-12.6 — lebih baik operator tahu sebelum menyusun barisnya
- * daripada ditolak di akhir.
+ * Pemilih pelanggan pesanan grosir: dropdown dengan kotak cari di dalamnya (kerangka yang sama dengan pemilih produk dan
+ * `PilihanCari`), bukan kotak teks dengan tombol Cari. Daftar datang dari server (pelanggan bisa ribuan): membuka
+ * dropdown tanpa mengetik menampilkan pelanggan pertama urut nama, mengetik menyaring nama atau nomor HP. Limit kredit &
+ * sisa piutang tampil di tiap pilihan, karena itulah yang menentukan apakah pesanan besar lolos BR-12.6 — lebih baik
+ * operator tahu sebelum menyusun barisnya daripada ditolak di akhir.
  */
 export default function PemilihPelangganGrosir({
     uuidTerpilih,
@@ -29,87 +57,80 @@ export default function PemilihPelangganGrosir({
     galat?: string | undefined;
 }) {
     const [kata, AturKata] = useState('');
-    const [hasil, AturHasil] = useState<HasilPelanggan[]>([]);
-    const [memuat, AturMemuat] = useState(false);
-    const [pesan, AturPesan] = useState<string | null>(null);
+    const [terbuka, AturTerbuka] = useState(false);
+    const [sorot, AturSorot] = useState('');
+    const kataCari = useNilaiTertunda(kata.trim(), 300);
+    const kueri = useQuery({
+        queryKey: KunciKueri.Grosir.CariPelanggan(kataCari),
+        queryFn: ({ signal }) =>
+            AmbilHasilCari<{ Data: HasilPelangganGrosir[] }>(BuatUrlCariPelanggan(kataCari), signal),
+        enabled: terbuka,
+        staleTime: 0,
+        // Hasil lama tetap tampil selama hasil baru dimuat, jadi daftar tidak berkedip saat mengetik.
+        placeholderData: keepPreviousData,
+    });
+    const hasil = kueri.data?.Data ?? [];
 
-    const Cari = async () => {
-        AturMemuat(true);
-        AturPesan(null);
+    useSorotPertama(
+        hasil.map((p) => p.Uuid),
+        AturSorot,
+    );
 
-        try {
-            const jawaban = await fetch(`/kelola/grosir/pelanggan/cari?kata=${encodeURIComponent(kata.trim())}`, {
-                headers: { Accept: 'application/json' },
-            });
+    const Buka = (buka: boolean) => {
+        AturTerbuka(buka);
 
-            if (!jawaban.ok) {
-                throw new Error('gagal');
-            }
-
-            const isi = (await jawaban.json()) as { Data?: HasilPelanggan[] };
-            const data = isi.Data ?? [];
-            AturHasil(data);
-            AturPesan(data.length === 0 ? `Tidak ada pelanggan yang cocok dengan "${kata.trim()}".` : null);
-        } catch {
-            AturPesan('Pencarian gagal. Periksa koneksi lalu coba lagi.');
-        } finally {
-            AturMemuat(false);
+        if (!buka) {
+            AturKata('');
         }
     };
 
+    let status: string | null = null;
+
+    if (terbuka && kueri.isPending) {
+        status = 'Memuat pelanggan…';
+    } else if (terbuka && kueri.isError) {
+        status = 'Pencarian gagal. Periksa koneksi lalu ketik ulang.';
+    } else if (terbuka && hasil.length === 0) {
+        status =
+            kataCari === ''
+                ? 'Belum ada pelanggan aktif. Tambahkan dulu di Pelanggan.'
+                : `Tidak ada pelanggan yang cocok dengan "${kataCari}".`;
+    } else if (terbuka && kataCari === '' && hasil.length >= 20) {
+        // Daftar dipotong server; tanpa keterangan ini pengguna mengira pelanggannya memang cuma segitu.
+        status = 'Menampilkan 20 pelanggan pertama. Ketik nama atau nomor untuk mencari yang lain.';
+    }
+
     return (
-        <div className="flex flex-col gap-2">
-            {uuidTerpilih === '' ? null : (
-                <p className="text-isi text-teks-utama">
-                    Pelanggan: <span className="font-semibold">{namaTerpilih}</span>
-                </p>
-            )}
-            <div className="flex flex-wrap items-end gap-2">
-                <div className="min-w-56 flex-1">
-                    <BidangTeks
-                        label="Cari pelanggan"
-                        nilai={kata}
-                        saatBerubah={AturKata}
-                        keterangan="Nama atau nomor WhatsApp, minimal 3 huruf."
-                        galat={galat}
-                    />
-                </div>
-                <Tombol
-                    type="button"
-                    varian="sekunder"
-                    onClick={() => void Cari()}
-                    memproses={memuat}
-                    disabled={kata.trim().length < 3}
+        <KerangkaPemilihProduk
+            label="Pelanggan"
+            galat={galat}
+            placeholder="Pilih pelanggan"
+            wajib
+            nilaiTerpilih={uuidTerpilih === '' ? undefined : namaTerpilih}
+            kata={kata}
+            saatKata={AturKata}
+            terbuka={terbuka}
+            saatTerbuka={Buka}
+            sorot={sorot}
+            saatSorot={AturSorot}
+            status={status}
+        >
+            {hasil.map((p) => (
+                <CommandItem
+                    key={p.Uuid}
+                    value={p.Uuid}
+                    onSelect={() => {
+                        saatPilih(p.Uuid, p.Nama);
+                        Buka(false);
+                    }}
+                    className="min-h-9 cursor-pointer flex-col items-start gap-0 rounded-kontrol px-2 py-1.5 text-isi text-teks-utama data-[selected=true]:bg-brand-lembut data-[selected=true]:text-teks-utama pointer-coarse:min-h-11"
                 >
-                    Cari
-                </Tombol>
-            </div>
-            {pesan === null ? null : <p className="text-keterangan text-teks-sekunder">{pesan}</p>}
-            {hasil.length === 0 ? null : (
-                <ul className="flex flex-col gap-1">
-                    {hasil.map((p) => (
-                        <li key={p.Uuid}>
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    saatPilih(p.Uuid, p.Nama);
-                                    AturHasil([]);
-                                    AturKata('');
-                                }}
-                                className="w-full rounded-panel border border-garis px-3 py-2 text-left text-isi hover:bg-permukaan-2"
-                            >
-                                <span className="font-semibold break-words text-teks-utama">{p.Nama}</span>
-                                <span className="block text-keterangan text-teks-sekunder">
-                                    {p.NoHp ?? 'Tanpa nomor'}
-                                    {p.LimitKredit === null
-                                        ? ' · tanpa limit kredit'
-                                        : ` · limit ${FormatRupiah(p.LimitKredit)}`}
-                                </span>
-                            </button>
-                        </li>
-                    ))}
-                </ul>
-            )}
-        </div>
+                    <span className={p.Uuid === uuidTerpilih ? 'font-semibold break-words' : 'break-words'}>
+                        {p.Nama}
+                    </span>
+                    <span className="text-keterangan text-teks-sekunder">{KeteranganKredit(p)}</span>
+                </CommandItem>
+            ))}
+        </KerangkaPemilihProduk>
     );
 }

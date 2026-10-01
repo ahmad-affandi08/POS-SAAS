@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Domain\Bersama\Dokumen\Enum\StatusDokumenTerposting;
 use App\Domain\Organisasi\Enum\PeranTenantBawaan;
+use App\Domain\Pelanggan\Enum\StatusPelanggan;
 use App\Domain\Pelanggan\Model\Pelanggan;
 use App\Domain\Pelanggan\Model\Piutang;
 use App\Domain\Penjualan\Enum\StatusPesananGrosir;
@@ -59,7 +60,9 @@ describe('HTTP back-office grosir', function (): void {
         $this->get('/kelola/grosir/pesanan')->assertOk()->assertInertia(fn (AssertableInertia $h) => $h
             ->component('Kelola/Grosir/Pesanan/Daftar')->has('OpsiStatus', 5));
         $this->get('/kelola/grosir/pesanan/buat')->assertOk()->assertInertia(fn (AssertableInertia $h) => $h
-            ->component('Kelola/Grosir/Pesanan/Form')->where('Isian', null)->has('OpsiOutlet', 1));
+            ->component('Kelola/Grosir/Pesanan/Form')->where('Isian', null)->has('OpsiOutlet', 1)
+            // Dropdown outlet memakai label "Nama (KODE)": tanpa Kode tampil "Nama (undefined)".
+            ->where('OpsiOutlet.0.Kode', (string) $this->k['Outlet']->Kode));
 
         // Perhatikan: tidak ada 'Harga' di permintaan ini sama sekali.
         $this->post('/kelola/grosir/pesanan', [
@@ -265,7 +268,18 @@ describe('HTTP back-office grosir', function (): void {
             ->assertJsonPath('Data.0.Nama', 'Gula Pasir Kemasan 1 kg')
             // Satuan jual ikut, dan tidak ada harga di hasil pencarian (harga milik server saat draf disimpan).
             ->assertJsonCount(1, 'Data.0.Satuan');
-        $this->getJson('/kelola/grosir/pelanggan/cari?kata=Makmur')->assertOk();
+        $this->getJson('/kelola/grosir/pelanggan/cari?kata=Makmur')->assertOk()
+            ->assertJsonCount(1, 'Data')
+            ->assertJsonPath('Data.0.Uuid', $this->toko->Uuid)
+            ->assertJsonPath('Data.0.LimitKredit', '50000000.00')
+            ->assertJsonPath('Data.0.SisaPiutang', '0.00');
+        // Dropdown: kata kosong atau pendek menampilkan daftar awal (tanpa minimal huruf), tersaring status aktif.
+        $this->getJson('/kelola/grosir/pelanggan/cari?kata=')->assertOk()->assertJsonPath('Data.0.Nama', 'Toko Makmur Jaya');
+        $this->getJson('/kelola/grosir/pelanggan/cari?kata=Mk')->assertOk()->assertJsonCount(0, 'Data');
+        // Pelanggan diarsipkan tidak ditawarkan; pencarian lewat nomor HP (sebagian) menemukan yang aktif.
+        $this->getJson('/kelola/grosir/pelanggan/cari?kata=5550005')->assertOk()->assertJsonCount(1, 'Data');
+        $this->toko->forceFill(['Status' => StatusPelanggan::Diarsipkan->value])->save();
+        $this->getJson('/kelola/grosir/pelanggan/cari?kata=')->assertOk()->assertJsonCount(0, 'Data');
     });
 
     it('tanpa izin grosir.kelola ditolak, dan dokumen tenant lain 404', function (): void {

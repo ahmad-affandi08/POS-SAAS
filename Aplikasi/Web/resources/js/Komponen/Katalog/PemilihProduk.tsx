@@ -59,6 +59,10 @@ type PropsKerangka = {
     disabled?: boolean | undefined;
     /** Teks tombol pemicu dan placeholder kotak cari. */
     placeholder: string;
+    /** Pilihan yang sedang aktif (pemilih satu nilai, misal pelanggan): tampil di tombol pemicu menggantikan `placeholder`. */
+    nilaiTerpilih?: string | undefined;
+    /** Wajib diisi: label diberi tanda * merah otomatis (Gaya/Aplikasi.css), sama dengan `BidangPilihan`. */
+    wajib?: boolean | undefined;
     kata: string;
     saatKata: (kata: string) => void;
     terbuka: boolean;
@@ -87,6 +91,8 @@ export function KerangkaPemilihProduk({
     galat,
     disabled,
     placeholder,
+    nilaiTerpilih,
+    wajib,
     kata,
     saatKata,
     terbuka,
@@ -123,7 +129,7 @@ export function KerangkaPemilihProduk({
      * sendiri dan isinya kembali bisa digulir sentuh.
      */
     return (
-        <div className="flex flex-col gap-1">
+        <div data-slot="field" className="flex flex-col gap-1">
             <Label htmlFor={id} className="text-label font-semibold text-teks-utama">
                 {label}
             </Label>
@@ -138,6 +144,8 @@ export function KerangkaPemilihProduk({
                         aria-controls={idDaftar}
                         aria-haspopup="listbox"
                         aria-invalid={galat ? true : undefined}
+                        aria-required={wajib || undefined}
+                        data-wajib={wajib || undefined}
                         aria-describedby={
                             [keterangan ? `${id}-keterangan` : null, galat ? `${id}-galat` : null]
                                 .filter(Boolean)
@@ -153,7 +161,9 @@ export function KerangkaPemilihProduk({
                             terbuka && 'border-brand ring-2 ring-brand/40',
                         )}
                     >
-                        <span className="truncate text-teks-sekunder">{placeholder}</span>
+                        <span className={cn('truncate', nilaiTerpilih ? 'text-teks-utama' : 'text-teks-sekunder')}>
+                            {nilaiTerpilih ?? placeholder}
+                        </span>
                         <ChevronsUpDownIcon aria-hidden="true" className="size-4 shrink-0 text-teks-sekunder" />
                     </button>
                 </PopoverTrigger>

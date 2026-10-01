@@ -154,10 +154,24 @@ final class PesananGrosirKontroler extends DasarGrosirKontroler
     {
         return Inertia::render('Kelola/Grosir/Pesanan/Form', [
             'Isian' => $isian,
-            'OpsiOutlet' => app(PetaUuidOutlet::class)->AmbilRingkas($this->IdOutletBoleh(), true),
+            'OpsiOutlet' => $this->AmbilOpsiOutlet(),
             'OpsiGudang' => $this->AmbilOpsiGudang(),
             'HariIni' => $this->HariIni(),
             'Izin' => $this->AmbilIzinGrosir(),
         ]);
+    }
+
+    /**
+     * Outlet aktif yang boleh diakses pelaku, dengan `Kode` (label dropdown "Nama (KODE)"; tanpa kode label jadi "Nama (undefined)").
+     *
+     * @return list<array{Id: int, Uuid: string, Nama: string, Kode: string}>
+     */
+    private function AmbilOpsiOutlet(): array
+    {
+        $peta = app(PetaUuidOutlet::class);
+        $ringkas = $peta->AmbilRingkas($this->IdOutletBoleh(), true);
+        $identitas = $peta->AmbilIdentitas(array_column($ringkas, 'Id'));
+
+        return array_map(fn (array $o): array => [...$o, 'Kode' => $identitas[$o['Id']]['Kode'] ?? ''], $ringkas);
     }
 }
