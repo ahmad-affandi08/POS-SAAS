@@ -55,7 +55,7 @@ describe('F-03 SimpanKelompokPajak (§12.2)', function (): void {
             ->and(KelompokPajakDetail::query()->where('IdKelompokPajak', $kelompok->Id)->whereNotNull('IdTarifPajak')->exists())->toBeFalse()
             ->and(KelompokPajakDetail::query()->where('IdKelompokPajak', $kelompok->Id)->orderBy('Urutan')->pluck('Urutan')->all())->toBe($kode === [] ? [] : range(1, count($kode)))
             ->and(LogAudit::query()->where('Peristiwa', 'kelompok-pajak.buat')->sole()->NilaiBaru)
-            ->toEqual(['Nama' => 'Kelompok '.$kategori->value, 'Kategori' => $kategori->value, 'Pajak' => array_map(fn (string $k): array => ['KodeJenisPajak' => $k, 'DasarPengenaan' => 'Subtotal'], $kode)]);
+            ->toEqual(['Nama' => 'Kelompok '.$kategori->value, 'Kategori' => $kategori->value, 'Pajak' => array_map(fn (string $k): array => ['KodeJenisPajak' => $k, 'DasarPengenaan' => 'Subtotal', 'KenaBiayaKirim' => false], $kode)]);
     })->with([
         'Kena PPN' => [KategoriPajakProduk::KenaPpn, ['Ppn']],
         'Kena PB1' => [KategoriPajakProduk::KenaPbjt, ['PbjtMakananMinuman']],

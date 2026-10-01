@@ -204,7 +204,7 @@ describe('BR-08.4 pencairan dana non-tunai', function (): void {
         app(BuatPencairan::class)->Jalankan(DataPencairanUji($k, $qris, $bank, [$uuid[0]], '99300.00'), $k['Pemilik']->Id);
 
         expect(fn () => app(BuatPencairan::class)->Jalankan(DataPencairanUji($k, $qris, $bank, [$uuid[0]], '99300.00'), $k['Pemilik']->Id))
-            ->toThrow(fn (Throwable $g) => expect($g->getMessage())->toContain('sudah masuk pencairan lain'));
+            ->toThrow(fn (PelanggaranAturanBisnis $g) => expect($g->getMessage())->toContain('sudah masuk pencairan lain'));
 
         // Yang belum dicairkan tetap bisa dicairkan sendiri.
         $kedua = app(BuatPencairan::class)->Jalankan(DataPencairanUji($k, $qris, $bank, [$uuid[1]], '49650.00'), $k['Pemilik']->Id);
@@ -226,21 +226,21 @@ describe('BR-08.4 pencairan dana non-tunai', function (): void {
 
         // Tunai tidak pernah lewat akun kliring, jadi tidak ada yang bisa dicairkan.
         expect(fn () => app(BuatPencairan::class)->Jalankan(DataPencairanUji($k, $tunai, $bank, $uuid, '1000.00'), $k['Pemilik']->Id))
-            ->toThrow(fn (Throwable $g) => expect($g->getMessage())->toContain('tidak memakai akun kliring'));
+            ->toThrow(fn (PelanggaranAturanBisnis $g) => expect($g->getMessage())->toContain('tidak memakai akun kliring'));
 
         // Pembayaran QRIS tidak boleh masuk pencairan metode EDC: akun kliringnya bukan sumbernya.
         expect(fn () => app(BuatPencairan::class)->Jalankan(DataPencairanUji($k, $edc, $bank, $uuid, '1000.00'), $k['Pemilik']->Id))
-            ->toThrow(fn (Throwable $g) => expect($g->getMessage())->toContain('Satu pencairan hanya untuk satu metode'));
+            ->toThrow(fn (PelanggaranAturanBisnis $g) => expect($g->getMessage())->toContain('Satu pencairan hanya untuk satu metode'));
 
         expect(fn () => app(BuatPencairan::class)->Jalankan(DataPencairanUji($k, $qris, $bank, $uuid, '-1.00'), $k['Pemilik']->Id))
-            ->toThrow(fn (Throwable $g) => expect($g->getMessage())->toContain('tidak boleh negatif'));
+            ->toThrow(fn (PelanggaranAturanBisnis $g) => expect($g->getMessage())->toContain('tidak boleh negatif'));
 
         expect(fn () => app(BuatPencairan::class)->Jalankan(DataPencairanUji($k, $qris, $bank, [], '1000.00'), $k['Pemilik']->Id))
-            ->toThrow(fn (Throwable $g) => expect($g->getMessage())->toContain('minimal satu pembayaran'));
+            ->toThrow(fn (PelanggaranAturanBisnis $g) => expect($g->getMessage())->toContain('minimal satu pembayaran'));
 
         // Setoran bertanggal besok belum terjadi.
         expect(fn () => app(BuatPencairan::class)->Jalankan(DataPencairanUji($k, $qris, $bank, $uuid, '1000.00', '2026-09-30'), $k['Pemilik']->Id))
-            ->toThrow(fn (Throwable $g) => expect($g->getMessage())->toContain('masa depan'));
+            ->toThrow(fn (PelanggaranAturanBisnis $g) => expect($g->getMessage())->toContain('masa depan'));
     });
 
     it('pembayaran dari penjualan yang di-void ditolak karena jurnalnya sudah dibalik', function (): void {
@@ -254,7 +254,7 @@ describe('BR-08.4 pencairan dana non-tunai', function (): void {
         expect(SaldoPeranPencairanUji(PeranAkun::PiutangPencairan, $k['Outlet']->Id))->toBe('50000.00');
 
         expect(fn () => app(BuatPencairan::class)->Jalankan(DataPencairanUji($k, $qris, $bank, UuidPembayaranUji($qris), '148950.00'), $k['Pemilik']->Id))
-            ->toThrow(fn (Throwable $g) => expect($g->getMessage())->toContain('sudah di-void'));
+            ->toThrow(fn (PelanggaranAturanBisnis $g) => expect($g->getMessage())->toContain('sudah di-void'));
     });
 
     it('pembatalan membalik jurnalnya dan melepas pembayarannya untuk dicairkan ulang', function (): void {
@@ -531,6 +531,8 @@ describe('HTTP pencairan', function (): void {
         $this->get('/kelola/akuntansi/pencairan')->assertForbidden();
         $this->post('/kelola/akuntansi/pencairan', [])->assertForbidden();
 
+        // Sesi kasir dibersihkan dulu: `AuthenticateSession` menolak sesi yang masih membawa jejak pengguna lain.
+        $this->flushSession();
         $this->actingAs($k['Pemilik'])->withSession(['IdTenantAktif' => $k['Tenant']->Id])
             ->get('/kelola/akuntansi/pencairan/'.strtoupper((string) Str::ulid()))->assertNotFound();
     });

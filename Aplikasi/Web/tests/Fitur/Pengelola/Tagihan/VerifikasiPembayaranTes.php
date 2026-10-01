@@ -22,7 +22,6 @@ use App\Domain\Tenant\Model\Paket;
 use App\Domain\Tenant\Model\PembayaranLangganan;
 use App\Domain\Tenant\Model\TagihanLangganan;
 use App\Domain\Tenant\Model\Tenant;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
@@ -49,18 +48,11 @@ function BayarTagihanUji(TestCase $tes, Pengguna $pemilik, Tenant $tenant, strin
 
 function UnggahBuktiUji(TestCase $tes, Pengguna $pemilik, Tenant $tenant, TagihanLangganan $tagihan): PembayaranLangganan
 {
-    BantuanTagihan::Masuk($tes, $pemilik, $tenant)->post(BantuanTagihan::Url("/kelola/langganan/tagihan/{$tagihan->Uuid}/pembayaran"), [
-        'Bukti' => UploadedFile::fake()->image('mutasi.png'),
-        'Jumlah' => $tagihan->Total,
-        'TanggalTransfer' => now('Asia/Jakarta')->toDateString(),
-        'BankPengirim' => 'Bank Mandiri',
-        'NamaPengirim' => 'Rina Wulandari',
-        'KodeRekeningTujuan' => 'UTAMA',
-    ])->assertSessionHasNoErrors();
+    $pembayaran = BantuanTagihan::UnggahBuktiLangsung($tenant, $pemilik, $tagihan);
     // Bersihkan sesi tenant agar request berikutnya ke subdomain pengelola bersih.
     $tes->flushSession();
 
-    return PembayaranLangganan::query()->withoutGlobalScopes()->where('IdTagihanLangganan', $tagihan->Id)->latest('Id')->firstOrFail();
+    return $pembayaran;
 }
 
 function LanggananTagihanUji(Tenant $tenant): Langganan

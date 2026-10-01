@@ -19,7 +19,9 @@ describe('PeranAkun: istilah kamus & alias kunci lama (P-03, BR-P03.4, DesainF01
             ->and(PeranAkun::PiutangBelumDifakturkan->AmbilTipeAkun())->toBe(TipeAkun::Aset)
             ->and(PeranAkun::PiutangBelumDifakturkan->AmbilLabel())->toBe('Piutang belum difakturkan')
             ->and(PeranAkun::PiutangBelumDifakturkan->CekWajibKontra())->toBeFalse()
-            ->and(PeranAkun::cases())->toHaveCount(34);
+            // F-17 bagian 3: pendapatan pengiriman (ongkir) menambah satu peran.
+            ->and(PeranAkun::PendapatanPengiriman->AmbilTipeAkun())->toBe(TipeAkun::Pendapatan)
+            ->and(PeranAkun::cases())->toHaveCount(35);
     });
 
     it('DariKunci membaca kunci baru, kunci lama dari versi terbit, dan menolak kunci asing', function (): void {

@@ -9,9 +9,15 @@ use App\Domain\Bersama\Tenant\KonteksTenant;
 use App\Domain\Organisasi\Model\Pengguna;
 use App\Domain\Pengelola\Referensi\Aksi\SiapkanPajakBawaan;
 use App\Domain\Tenant\Aksi\DaftarkanTenant;
+use App\Domain\Tenant\Aksi\UnggahBuktiTransfer;
+use App\Domain\Tenant\Data\DataBuktiTransfer;
 use App\Domain\Tenant\Model\HargaPaket;
+use App\Domain\Tenant\Model\PembayaranLangganan;
+use App\Domain\Tenant\Model\TagihanLangganan;
 use App\Domain\Tenant\Model\Tenant;
 use App\Http\Perantara\IdentifikasiTenantSesi;
+use Carbon\CarbonImmutable;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
@@ -67,5 +73,34 @@ final class BantuanTagihan
     public static function AturTenant(Tenant $tenant): void
     {
         app(KonteksTenant::class)->Atur($tenant->Id);
+    }
+
+    /**
+     * Pembayaran `Menunggu` berupa bukti transfer, lewat Aksi langsung. Halaman tagihan tenant tidak lagi menerima
+     * unggahan bukti (tenant membayar lewat gerbang billing), tetapi Aksi & verifikasi platform atas bukti yang sudah
+     * masuk tetap ada dan tetap diuji dari sini.
+     */
+    public static function UnggahBuktiLangsung(Tenant $tenant, Pengguna $pemilik, TagihanLangganan $tagihan, ?string $tanggalTransfer = null): PembayaranLangganan
+    {
+        self::AturTenant($tenant);
+
+        try {
+            return app(UnggahBuktiTransfer::class)->Jalankan(
+                $tagihan->Uuid,
+                new DataBuktiTransfer(
+                    UploadedFile::fake()->image('mutasi.png'),
+                    $tagihan->Total,
+                    CarbonImmutable::parse($tanggalTransfer ?? now('Asia/Jakarta')->toDateString()),
+                    'Bank Mandiri',
+                    'Rina Wulandari',
+                    'UTAMA',
+                ),
+                $pemilik->Id,
+                $pemilik->Nama,
+                (string) $pemilik->Email,
+            );
+        } finally {
+            app(KonteksTenant::class)->Kosongkan();
+        }
     }
 }

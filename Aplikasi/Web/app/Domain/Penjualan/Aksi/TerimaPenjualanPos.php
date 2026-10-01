@@ -671,10 +671,6 @@ final class TerimaPenjualanPos
                 throw new PelanggaranAturanBisnis('ProdukTidakBisaDijual', "Produk {$p->nama} berjenis {$p->jenis->AmbilLabel()} belum bisa dijual di POS.", $bidang);
             }
 
-            if ($p->pelacakan !== PelacakanProduk::Tidak) {
-                throw new PelanggaranAturanBisnis('PelacakanBelumDidukung', "Produk {$p->nama} memakai {$p->pelacakan->AmbilLabel()}; penjualan produk berpelacakan belum didukung.", $bidang);
-            }
-
             if ($baris->uuidProdukSatuan !== null && ! isset($p->satuan[$baris->uuidProdukSatuan])) {
                 throw new PelanggaranAturanBisnis('SatuanTidakDikenal', "Satuan jual {$p->nama} tidak ditemukan.", "Baris.{$indeks}.UuidProdukSatuan");
             }

@@ -100,7 +100,7 @@ final class StokUntukLaporan
             'IdProduk' => $b->IdProduk,
             'IdGudang' => $b->IdGudang,
             'NomorBatch' => $b->NomorBatch,
-            'TanggalKedaluwarsa' => $b->TanggalKedaluwarsa?->toDateString(),
+            'TanggalKedaluwarsa' => (string) $b->TanggalKedaluwarsa?->toDateString(),
             'JumlahSisa' => Kuantitas::Dari($b->JumlahSisa)->KeString(),
         ])->all())];
     }

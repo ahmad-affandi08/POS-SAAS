@@ -8,6 +8,7 @@ use Inertia\Testing\AssertableInertia;
 use Tests\Pendukung\Organisasi\BantuanOrganisasi;
 use Tests\Pendukung\Penjualan\BantuanTokoOnline;
 use Tests\Pendukung\Tenant\BantuanPendaftaran;
+use Tests\TestCase;
 
 /*
  * F-17 toko online bagian 1: katalog publik `/{slugTenant}`, keranjang yang selalu dihitung server, zona ongkir &
@@ -17,9 +18,9 @@ use Tests\Pendukung\Tenant\BantuanPendaftaran;
 beforeEach(fn () => BantuanPendaftaran::SiapkanPrasyarat());
 
 /** @return array<string, mixed> */
-function SiapkanTokoOnline(): array
+function SiapkanTokoOnline(TestCase $tes): array
 {
-    return BantuanTokoOnline::Siapkan(test());
+    return BantuanTokoOnline::Siapkan($tes);
 }
 
 /**
@@ -32,7 +33,7 @@ function KirimanOnline(array $k, string $pemenuhan = 'AmbilSendiri', ?string $uu
 }
 
 it('menampilkan hanya katalog online dengan harga kanal yang dihitung server', function (): void {
-    $k = SiapkanTokoOnline();
+    $k = SiapkanTokoOnline($this);
     $k['Nasi']->forceFill(['TampilOnline' => false])->save();
 
     $this->get($k['AlamatToko'])->assertOk()->assertInertia(fn (AssertableInertia $h) => $h
@@ -44,7 +45,7 @@ it('menampilkan hanya katalog online dengan harga kanal yang dihitung server', f
 });
 
 it('menerapkan zona ongkir dan gratis ongkir menurut subtotal server', function (): void {
-    $k = SiapkanTokoOnline();
+    $k = SiapkanTokoOnline($this);
     $kirim = KirimanOnline($k, 'Kirim');
 
     $this->postJson($k['AlamatToko'].'/keranjang/hitung', $kirim)->assertOk()
@@ -57,7 +58,7 @@ it('menerapkan zona ongkir dan gratis ongkir menurut subtotal server', function 
 });
 
 it('F-16c gratis ongkir: promo memotong ongkir zona di checkout; total dihitung server dan pesanan menyimpan pasangan Ongkir/DiskonOngkir', function (): void {
-    $k = SiapkanTokoOnline();
+    $k = SiapkanTokoOnline($this);
     BantuanTokoOnline::BuatPromoGratisOngkir($k);
     $kirim = KirimanOnline($k, 'Kirim');
 
@@ -79,7 +80,7 @@ it('F-16c gratis ongkir: promo memotong ongkir zona di checkout; total dihitung 
 });
 
 it('F-16c gratis ongkir: subsidi sebagian dan syarat minimal belanja dihormati', function (): void {
-    $k = SiapkanTokoOnline();
+    $k = SiapkanTokoOnline($this);
     BantuanTokoOnline::BuatPromoGratisOngkir($k, batas: '5000');
     $kirim = KirimanOnline($k, 'Kirim');
 
@@ -94,7 +95,7 @@ it('F-16c gratis ongkir: subsidi sebagian dan syarat minimal belanja dihormati',
 });
 
 it('checkout mengabaikan harga browser, idempoten, dan mewajibkan persetujuan data', function (): void {
-    $k = SiapkanTokoOnline();
+    $k = SiapkanTokoOnline($this);
     $uuid = (string) Str::ulid();
     $kiriman = KirimanOnline($k, uuid: $uuid);
 
@@ -111,7 +112,7 @@ it('checkout mengabaikan harga browser, idempoten, dan mewajibkan persetujuan da
 });
 
 it('slug tenant lain tidak dapat membaca pesanan maupun katalog tenant pertama', function (): void {
-    $a = SiapkanTokoOnline();
+    $a = SiapkanTokoOnline($this);
     $respons = $this->postJson($a['AlamatToko'].'/pesan', KirimanOnline($a))->assertCreated();
     ['Tenant' => $b] = BantuanOrganisasi::BuatTenant('Toko Tenant Kedua');
     $slugB = $b->refresh()->Slug;

@@ -77,8 +77,10 @@ describe('F-03 bagian katalog POS Tim 1 (D.3)', function (): void {
     });
 
     it('delta: hanya baris dengan DiubahPada ≥ sejak, termasuk produk terhapus (Dihapus: true); tenant lain tidak ikut', function (): void {
-        $t = BantuanKatalog::SiapkanTenantProduk();
+        // Jam dibekukan sebelum tenant & satuan dibuat: tanpa itu `CreatedAt` satuan memakai jam nyata yang sudah
+        // melewati batas 2026-10-01 03:30 dan tes menjadi bergantung pada tanggal berjalan.
         Carbon::setTestNow('2026-10-01 03:00:00');
+        $t = BantuanKatalog::SiapkanTenantProduk();
         $lama = BantuanKatalog::BuatProduk([], null, $t['Pcs']);
         $akanDihapus = BantuanKatalog::BuatProduk([], null, $t['Pcs']);
         Carbon::setTestNow('2026-10-01 04:00:00');

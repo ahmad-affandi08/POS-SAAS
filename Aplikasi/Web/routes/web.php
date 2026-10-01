@@ -41,6 +41,7 @@ use App\Http\Perantara\WajibGantiKataSandiTenant;
 use App\Http\Perantara\WajibIzinTenant;
 use App\Http\Perantara\WajibPanduanAwal;
 use App\Http\Perantara\WajibPersetujuanLegal;
+use App\Http\Rute\ValidatorHalamanSitus;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Session\Middleware\AuthenticateSession;
 use Illuminate\Support\Facades\Route;
@@ -76,6 +77,14 @@ Route::middleware([TolakDomainPengelola::class, ArahkanDomainAplikasi::class, Ba
     // P-06 dokumen legal publik. D-28: ikut shell & bundle situs, jadi ada kepala, kaki, dan jalan kembali.
     Route::get('/legal/{jenis}', [DokumenLegalPublikKontroler::class, 'Tampilkan'])->name('legal.tampil');
 });
+
+// D-21 halaman situs pemasaran (`/fitur`, `/solusi/kafe-resto`, …). Didaftarkan sebelum rute `/{slugTenant}` (toko
+// online F-17) karena pola regex keduanya sama; `ValidatorHalamanSitus` membuat rute ini hanya cocok untuk slug yang
+// memang halaman situs terbit, sehingga slug tenant tetap jatuh ke toko online dan jalur sistem tidak tertutup.
+Route::middleware([TolakDomainPengelola::class, ArahkanDomainAplikasi::class, BagikanDataSitus::class])
+    ->get('/{slugHalaman}', [SitusKontroler::class, 'Halaman'])
+    ->where('slugHalaman', AturanSlugSitus::POLA)
+    ->name(ValidatorHalamanSitus::NAMA_RUTE);
 
 // Rute back-office (/kelola/...) dan web publik ditambahkan per flow (PRD §13.6, D-06). D-20: domain pemasaran hanya
 // melayani situs pemasaran, legal, dan kompatibilitas perangkat; sisanya dialihkan ke domain tenant.
@@ -269,10 +278,3 @@ Route::middleware([TolakDomainPengelola::class, ArahkanDomainAplikasi::class, Ba
             Route::get('/', [TokoOnlineKontroler::class, 'Tampilkan'])->middleware('throttle:60,1')->name('publik.toko-online');
         });
 });
-
-// D-21 halaman situs pemasaran (`/fitur`, `/solusi/kafe-resto`, …) didaftarkan paling akhir: slug maksimal dua segmen
-// dan tidak pernah memakai jalur sistem (`AturanSlugSitus::TERLARANG`), jadi tidak menaungi rute lain.
-Route::middleware([TolakDomainPengelola::class, ArahkanDomainAplikasi::class, BagikanDataSitus::class])
-    ->get('/{slugHalaman}', [SitusKontroler::class, 'Halaman'])
-    ->where('slugHalaman', AturanSlugSitus::POLA)
-    ->name('situs.halaman');

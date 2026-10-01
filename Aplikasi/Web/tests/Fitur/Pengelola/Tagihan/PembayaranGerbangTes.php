@@ -15,7 +15,6 @@ use App\Domain\Tenant\Model\Langganan;
 use App\Domain\Tenant\Model\PembayaranLangganan;
 use App\Domain\Tenant\Model\TagihanLangganan;
 use App\Domain\Tenant\Model\Tenant;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
@@ -74,14 +73,7 @@ function MulaiBayarOnlineUji(TestCase $tes, Pengguna $pemilik, Tenant $tenant, T
 /** Bukti transfer manual untuk tagihan yang sama, dipakai menguji jalur manual & aturan saling-blokir. */
 function UnggahBuktiGerbangUji(TestCase $tes, Pengguna $pemilik, Tenant $tenant, TagihanLangganan $tagihan): void
 {
-    BantuanTagihan::Masuk($tes, $pemilik, $tenant)->post(BantuanTagihan::Url("/kelola/langganan/tagihan/{$tagihan->Uuid}/pembayaran"), [
-        'Bukti' => UploadedFile::fake()->image('mutasi.png'),
-        'Jumlah' => $tagihan->Total,
-        'TanggalTransfer' => now('Asia/Jakarta')->toDateString(),
-        'BankPengirim' => 'Bank Mandiri',
-        'NamaPengirim' => 'Rina Wulandari',
-        'KodeRekeningTujuan' => 'UTAMA',
-    ])->assertSessionHasNoErrors();
+    BantuanTagihan::UnggahBuktiLangsung($tenant, $pemilik, $tagihan);
     $tes->flushSession();
 }
 

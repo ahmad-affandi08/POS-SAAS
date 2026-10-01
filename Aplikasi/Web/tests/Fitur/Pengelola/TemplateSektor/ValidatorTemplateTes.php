@@ -244,7 +244,8 @@ describe('Produk contoh template (F-01 langkah 4a, DesainF01 C3)', function (): 
             }
         }
 
-        expect(AmbilIsiTemplateAwal('FNB-CAF')['ProdukContoh'])->toContain(
+        // Urutan kunci di kolom JSON berbeda antar mesin (MySQL mengurutkan ulang, MariaDB menyimpan apa adanya).
+        expect(AmbilIsiTemplateAwal('FNB-CAF')['ProdukContoh'])->toContainEqual(
             ['Nama' => 'Es Kopi Susu Gula Aren', 'Harga' => '22000', 'Jenis' => 'NonStok', 'Kategori' => 'Kopi', 'KodeSatuan' => 'PCS'],
         );
     });

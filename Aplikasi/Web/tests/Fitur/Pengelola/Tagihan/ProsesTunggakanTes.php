@@ -8,7 +8,6 @@ use App\Domain\Tenant\Enum\StatusPembayaranLangganan;
 use App\Domain\Tenant\Enum\StatusTagihanLangganan;
 use App\Domain\Tenant\Model\Langganan;
 use App\Domain\Tenant\Model\TagihanLangganan;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
@@ -72,14 +71,7 @@ describe('Penjadwal tunggakan (P-08 langkah 4, F-00 state machine)', function ()
         $tagihan = TagihanLangganan::query()->withoutGlobalScopes()->sole();
         $this->travelTo(Carbon::parse('2026-10-03 10:00:00', 'Asia/Jakarta'));
         $this->artisan('tagihan:proses-tunggakan');
-        $this->post("/kelola/langganan/tagihan/{$tagihan->Uuid}/pembayaran", [
-            'Bukti' => UploadedFile::fake()->image('mutasi.jpg'),
-            'Jumlah' => $tagihan->Total,
-            'TanggalTransfer' => '2026-10-03',
-            'BankPengirim' => 'Bank Negara Indonesia',
-            'NamaPengirim' => 'Rina Wulandari',
-            'KodeRekeningTujuan' => 'UTAMA',
-        ])->assertSessionHasNoErrors();
+        BantuanTagihan::UnggahBuktiLangsung($this->tenant, $this->pemilik, $tagihan, '2026-10-03');
 
         $this->travelTo(Carbon::parse('2026-10-10 10:00:00', 'Asia/Jakarta'));
         $this->artisan('tagihan:proses-tunggakan')->assertSuccessful();

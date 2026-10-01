@@ -31,6 +31,8 @@ beforeEach(function (): void {
  */
 function BuatProdukBatchJual(array $k, array $batch, string $nama = 'Susu UHT Full Cream 1 Liter'): Produk
 {
+    // Beberapa fixture sengaja memuat batch tanpa tanggal kedaluwarsa (selalu diambil paling akhir oleh FEFO).
+    config(['persediaan.StokAwal.WajibKedaluwarsaBatch' => false]);
     $produk = BantuanKatalog::BuatProduk(['Nama' => $nama, 'Pelacakan' => PelacakanProduk::Batch], '19500.00');
     $baris = array_map(fn (array $b) => BantuanStokAwal::Baris(
         $produk,

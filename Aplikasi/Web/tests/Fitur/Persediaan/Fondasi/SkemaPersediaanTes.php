@@ -111,7 +111,9 @@ describe('F-05a skema persediaan (DesainF05a B.1–B.3)', function (): void {
             expect($baris->Kolom)->toBe('IdTenant', "{$baris->Tabel}.{$baris->Nama}");
         }
 
-        $nama = DB::select("SELECT CONSTRAINT_NAME AS Nama FROM information_schema.TABLE_CONSTRAINTS WHERE TABLE_SCHEMA = DATABASE() AND CONSTRAINT_TYPE <> 'PRIMARY KEY' AND TABLE_NAME IN ({$daftar})", TABEL_F05A);
+        // Hanya kunci asing & unik yang kita namai sendiri. MariaDB menambah CHECK `json_valid` otomatis dengan nama kolom
+        // (kolom JSON = LONGTEXT di sana); MySQL tidak punya CHECK semacam itu dan skema ini tidak mendefinisikan CHECK sendiri.
+        $nama = DB::select("SELECT CONSTRAINT_NAME AS Nama FROM information_schema.TABLE_CONSTRAINTS WHERE TABLE_SCHEMA = DATABASE() AND CONSTRAINT_TYPE IN ('FOREIGN KEY', 'UNIQUE') AND TABLE_NAME IN ({$daftar})", TABEL_F05A);
 
         foreach ($nama as $baris) {
             expect(strlen($baris->Nama))->toBeLessThanOrEqual(64)

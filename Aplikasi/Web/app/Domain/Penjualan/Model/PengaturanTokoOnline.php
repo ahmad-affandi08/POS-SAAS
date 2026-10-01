@@ -24,6 +24,9 @@ final class PengaturanTokoOnline extends ModelDasar
 
     protected $table = 'PengaturanTokoOnline';
 
+    /** Satu baris per tenant (kunci `IdTenant`), tidak punya kolom `Uuid`. */
+    protected bool $pakaiUuid = false;
+
     protected $attributes = [
         'Aktif' => false,
         'BayarSaatAmbilAktif' => true,

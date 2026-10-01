@@ -40,6 +40,9 @@ final class PencairanDetail extends ModelDasar
 
     protected $table = 'PencairanDetail';
 
+    /** Baris rincian dibaca lewat induknya, jadi tabel ini tidak punya kolom `Uuid`. */
+    protected bool $pakaiUuid = false;
+
     /** @var array<string, mixed> */
     protected $attributes = ['RefEksternal' => null];
 

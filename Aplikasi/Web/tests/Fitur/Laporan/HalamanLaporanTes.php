@@ -363,6 +363,8 @@ describe('F-05g batch kedaluwarsa: laporan stok & Kotak Tindakan', function (): 
     it('tab kedaluwarsa memuat batch bersisa yang lewat atau jatuh dalam 30 hari (urut terdekat; batch habis & yang masih jauh tidak ikut); ekspor CSV; butir stok.kedaluwarsa Penting bila ada yang lewat', function (): void {
         $k = BantuanPenjualan::Siapkan($this);
         BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+        // Tenant boleh mematikan kewajiban kedaluwarsa batch; fixture ini punya satu batch tanpa tanggal (UHT-TANPA).
+        config(['persediaan.StokAwal.WajibKedaluwarsaBatch' => false]);
         $susu = BantuanKatalog::BuatProduk(['Nama' => 'Susu UHT Full Cream 1 Liter', 'Pelacakan' => PelacakanProduk::Batch], '19500.00');
         BantuanStokAwal::BuatDanPosting($k['Gudang'], [
             BantuanStokAwal::Baris($susu, '4', '10000', 'UHT-LEWAT', '2026-10-04'),

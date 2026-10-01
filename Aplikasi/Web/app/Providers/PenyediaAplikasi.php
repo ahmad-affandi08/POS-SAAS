@@ -24,11 +24,13 @@ use App\Domain\Pengelola\TimInternal\Layanan\PencatatAuditPengelola;
 use App\Domain\Tenant\Peristiwa\TagihanLanggananDilunasiGerbang;
 use App\Http\Perantara\AutentikasiPemilik;
 use App\Http\Perantara\AutentikasiPerangkat;
+use App\Http\Rute\ValidatorHalamanSitus;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Events\DiagnosingHealth;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Route;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
@@ -57,6 +59,13 @@ final class PenyediaAplikasi extends ServiceProvider
     public function boot(): void
     {
         MakroSkema::Daftarkan();
+
+        // D-21: rute `situs.halaman` hanya cocok untuk slug yang memang halaman situs (lihat `ValidatorHalamanSitus`).
+        $validator = Route::getValidators();
+
+        if (collect($validator)->doesntContain(fn (object $v): bool => $v instanceof ValidatorHalamanSitus)) {
+            Route::$validators = [...$validator, new ValidatorHalamanSitus];
+        }
 
         // Pabrik model berada di Database\Pabrik dengan akhiran "Pabrik" (PRD §13.7).
         Factory::guessFactoryNamesUsing(static function (string $model): string {

@@ -76,6 +76,7 @@
     "chunkSize",
     "batchSize",
     "apply",
+    "matches",
     "getAuthPasswordName",
     "getRememberTokenName",
     "getEmailForPasswordReset",

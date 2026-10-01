@@ -327,7 +327,7 @@ describe('F-07b penjualan lewat sinkron (Penjualan.Buat): diterima & tersimpan',
             'BiayaKirim' => '10000.00',
             'Baris' => [['Produk' => $beras, 'Jumlah' => '1', 'Harga' => '38500.00']],
         ], ['DiskonKirim' => '15000.00']);
-        expect(BantuanKasir::KirimRingkas($this, $k['Token'], [$tidakSah]))->toBe([['Gagal', 'DataTidakValid']]);
+        expect(BantuanKasir::KirimRingkas($this, $k['Token'], [$tidakSah]))->toBe([['Ditolak', 'DataTidakValid']]);
     });
 });
 

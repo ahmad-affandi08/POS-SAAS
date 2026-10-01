@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace App\Domain\Tenant\Kueri;
 
+use App\Domain\Bersama\Tenant\KonteksTenant;
 use App\Domain\Tenant\Enum\StatusLangganan;
 use App\Domain\Tenant\Enum\StatusTagihanLangganan;
 use App\Domain\Tenant\Model\Langganan;
 use App\Domain\Tenant\Model\TagihanLangganan;
 use Carbon\CarbonImmutable;
+use Closure;
 
 /**
  * Status langganan tenant aktif untuk banner back-office dan pembatasan saat `Ditangguhkan` (F-00, BR-00.7).
@@ -16,6 +18,8 @@ use Carbon\CarbonImmutable;
  */
 final class RingkasanLanggananTenant
 {
+    public function __construct(private readonly KonteksTenant $konteks) {}
+
     /**
      * @return array{
      *     Status: StatusLangganan,
@@ -39,11 +43,13 @@ final class RingkasanLanggananTenant
 
         $periodeSelesai = $langganan->PeriodeSelesai === null ? null : CarbonImmutable::instance($langganan->PeriodeSelesai);
 
-        $tagihanTerbuka = TagihanLangganan::query()
+        // `TagihanLangganan` milik tenant (scope `MilikTenant`). Banner dibagikan ke semua halaman Inertia, termasuk
+        // halaman publik & 404 yang tidak melewati identifikasi tenant, jadi konteksnya dipasang sementara di sini.
+        $tagihanTerbuka = $this->DalamKonteksTenant($idTenant, fn () => TagihanLangganan::query()
             ->where('IdTenant', $idTenant)
             ->whereIn('Status', [StatusTagihanLangganan::Terbit, StatusTagihanLangganan::JatuhTempo])
             ->latest('Id')
-            ->first(['Uuid', 'Nomor', 'Total', 'JatuhTempoPada']);
+            ->first(['Uuid', 'Nomor', 'Total', 'JatuhTempoPada']));
 
         return [
             'Status' => $langganan->Status,
@@ -68,5 +74,32 @@ final class RingkasanLanggananTenant
             ->where('IdTenant', $idTenant)
             ->where('Status', StatusLangganan::Ditangguhkan->value)
             ->exists();
+    }
+
+    /**
+     * @template T
+     *
+     * @param  Closure(): T  $kerja
+     * @return T
+     */
+    private function DalamKonteksTenant(int $idTenant, Closure $kerja): mixed
+    {
+        $asal = $this->konteks->Ambil();
+
+        if ($asal === $idTenant) {
+            return $kerja();
+        }
+
+        $this->konteks->Atur($idTenant);
+
+        try {
+            return $kerja();
+        } finally {
+            if ($asal === null) {
+                $this->konteks->Kosongkan();
+            } else {
+                $this->konteks->Atur($asal);
+            }
+        }
     }
 }
