@@ -14,11 +14,11 @@ describe('LogoMerek', () => {
             </>,
         );
 
-        expect(screen.getByRole('img', { name: 'PAYOU warna' }).getAttribute('src')).toContain('LogoHorizontal.png');
+        expect(screen.getByRole('img', { name: 'PAYOU warna' }).getAttribute('src')).toContain('LogoHorizontal.webp');
         expect(screen.getByRole('img', { name: 'PAYOU putih' }).getAttribute('src')).toContain(
-            'LogoHorizontalPutih.png',
+            'LogoHorizontalPutih.webp',
         );
-        expect(screen.getByRole('img', { name: 'Ikon PAYOU warna' }).getAttribute('src')).toContain('IkonMerek.png');
+        expect(screen.getByRole('img', { name: 'Ikon PAYOU warna' }).getAttribute('src')).toContain('IkonMerek.webp');
         expect(screen.getByRole('img', { name: 'Ikon PAYOU putih' }).getAttribute('src')).toContain(
             'IkonMerekPutih.png',
         );

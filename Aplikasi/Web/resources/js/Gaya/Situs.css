@@ -1,0 +1,24 @@
+/*
+ * Entri CSS situs pemasaran (Situs.tsx, payou.id; T1, PRD v3.30). Tailwind **tidak** memindai seluruh kode
+ * (`source(none)`): hanya kode yang benar-benar dipakai situs, sehingga kelas back-office (tabel, kalender, grafik)
+ * tidak ikut dikirim ke pengunjung situs. Daftar di bawah dijaga Gaya/SumberCssSitusTes.ts: setiap berkas yang
+ * diimpor (langsung atau tidak) dari Situs.tsx harus tercakup salah satu `@source`.
+ */
+@import 'tailwindcss' source(none);
+@import './Aplikasi.css';
+
+@source '../Situs.tsx';
+@source '../Halaman/Situs';
+@source '../Komponen/Situs';
+@source '../TataLetak/TataLetakSitus.tsx';
+@source '../Komponen/Merek';
+@source '../Komponen/Navigasi/IkonNavigasi.tsx';
+@source '../Komponen/Formulir/{BagianBidang,BidangTeks,BidangTeksPanjang,KotakCentang,Tombol}.tsx';
+@source '../Komponen/Ui/{button,checkbox,field,input,label,separator,sheet,spinner,textarea}.tsx';
+@source '../Komponen/Ui/utils.ts';
+@source '../Tipe/Situs.ts';
+@source '../Komponen/Umpan/JudulHalaman.tsx';
+@source '../Pustaka/{AnalitikSitus,Format,FormatWaktu}.ts';
+@source '../../views/Situs.blade.php';
+/* File test tidak dirender; contoh pola terlarang di dalamnya jangan sampai menjadi CSS. */
+@source not '../**/*Tes.{ts,tsx}';

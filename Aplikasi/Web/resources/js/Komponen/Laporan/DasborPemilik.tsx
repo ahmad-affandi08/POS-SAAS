@@ -1,9 +1,10 @@
 import { Link } from '@inertiajs/react';
-import type { ReactNode } from 'react';
+import { lazy, Suspense, type ReactNode } from 'react';
 
 import { Button } from '@/Komponen/Ui/button';
 import Panel from '@/Komponen/Kelola/Panel';
 import { Card, CardContent, CardHeader, CardTitle } from '@/Komponen/Ui/card';
+import { Skeleton } from '@/Komponen/Ui/skeleton';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import { FormatRupiah } from '@/Pustaka/Format';
 import { FormatJumlahStok } from '@/Pustaka/FormatPersediaan';
@@ -12,7 +13,8 @@ import { AmbilTandaDesimal } from '@/Pustaka/HitungDesimal';
 import { HitungPerubahanPersen, NamaHari } from '@/Pustaka/Laporan';
 import type { AngkaPenjualan, DasborPemilik as DataDasbor } from '@/Tipe/Laporan';
 
-import GrafikPenjualanHarian from './GrafikPenjualanHarian';
+// T1 (PRD v3.30): pustaka grafik (recharts) dimuat belakangan supaya Beranda tampil tanpa menunggunya.
+const GrafikPenjualanHarian = lazy(() => import('./GrafikPenjualanHarian'));
 
 type Ukuran = 'uang' | 'bilangan';
 
@@ -151,7 +153,9 @@ export default function DasborPemilik({ data }: { data: DataDasbor }) {
             </div>
 
             <Panel tingkat="h3" judul="Penjualan bersih 14 hari terakhir">
-                <GrafikPenjualanHarian data={data.Grafik} judul="Penjualan bersih 14 hari terakhir" />
+                <Suspense fallback={<Skeleton className="h-64 w-full" aria-label="Memuat grafik" />}>
+                    <GrafikPenjualanHarian data={data.Grafik} judul="Penjualan bersih 14 hari terakhir" />
+                </Suspense>
             </Panel>
 
             <div className="grid gap-3 lg:grid-cols-2">

@@ -1,7 +1,7 @@
-import gambarIkon from '@/Aset/Merek/IkonMerek.png';
+import gambarIkon from '@/Aset/Merek/IkonMerek.webp';
 import gambarIkonPutih from '@/Aset/Merek/IkonMerekPutih.png';
-import gambarLogo from '@/Aset/Merek/LogoHorizontal.png';
-import gambarLogoPutih from '@/Aset/Merek/LogoHorizontalPutih.png';
+import gambarLogo from '@/Aset/Merek/LogoHorizontal.webp';
+import gambarLogoPutih from '@/Aset/Merek/LogoHorizontalPutih.webp';
 import { cn } from '@/Komponen/Ui/utils';
 
 type PropsLogo = { nama: string; className?: string; varian?: 'warna' | 'putih' };

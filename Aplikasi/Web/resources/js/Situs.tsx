@@ -1,4 +1,4 @@
-import './Gaya/Aplikasi.css';
+import './Gaya/Situs.css';
 
 import { createInertiaApp } from '@inertiajs/react';
 import { StrictMode, type ComponentType } from 'react';

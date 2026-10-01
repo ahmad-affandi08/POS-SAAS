@@ -12,15 +12,15 @@
  * Mengganti warna: ubah nilai di bagian 1 ("UBAH WARNA DI SINI") saja. Bagian 2 dan seterusnya adalah
  * pemetaan yang tidak perlu disentuh. Palet di bawah adalah warna final D-15 (§17.6.3).
  */
+/*
+ * T1 (PRD v3.30): `@import 'tailwindcss'` dan daftar `@source` ada di berkas entri, bukan di sini: Gaya/Dasbor.css
+ * (back-office & konsol, memindai seluruh kode) dan Gaya/Situs.css (situs pemasaran, hanya kode yang dipakai situs).
+ * Berkas ini tetap satu-satunya sumber token dan aturan dasar, diimpor kedua entri itu sesudah Tailwind.
+ */
 @import '@fontsource-variable/atkinson-hyperlegible-next';
 @import '@fontsource-variable/atkinson-hyperlegible-mono';
-@import 'tailwindcss';
 @import 'tw-animate-css';
 @import './UtilitasKomponen.css';
-
-@source '../views';
-/* File test tidak dirender; contoh pola terlarang di dalamnya jangan sampai menjadi CSS. */
-@source not '../**/*Tes.{ts,tsx}';
 
 /* ============================================================================================
  * 1. UBAH WARNA DI SINI

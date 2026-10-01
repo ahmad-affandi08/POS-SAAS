@@ -1,4 +1,4 @@
-import './Gaya/Aplikasi.css';
+import './Gaya/Dasbor.css';
 
 import { createInertiaApp } from '@inertiajs/react';
 import { QueryClientProvider } from '@tanstack/react-query';

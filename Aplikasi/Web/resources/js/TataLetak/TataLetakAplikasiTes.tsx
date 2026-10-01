@@ -400,7 +400,7 @@ describe('TataLetakAplikasi: menu berbasis izin & banner langganan (F-00, §19.1
         expect(kepala?.className).toContain('bg-linear-to-br');
         expect(kepala?.className).toContain('from-brand-gelap');
         expect(kepala?.className).toContain('to-brand');
-        expect(kepala?.querySelector('img[src*="LogoHorizontalPutih.png"]')).toBeTruthy();
+        expect(kepala?.querySelector('img[src*="LogoHorizontalPutih.webp"]')).toBeTruthy();
         expect(kepala?.querySelector('img[src*="IkonMerekPutih.png"]')).toBeTruthy();
         expect(kepala?.textContent).not.toContain('Kopi Nusantara');
     });

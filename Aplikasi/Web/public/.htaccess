@@ -23,3 +23,16 @@
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]
 </IfModule>
+
+# T1 (PRD v3.30): kompresi teks dan cache panjang untuk aset hasil build. Berkas di /build/assets/ memakai nama
+# ber-hash (isi berubah = nama berubah), jadi aman disimpan peramban setahun; halaman (index.php) tidak terkena.
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/css text/plain text/xml application/javascript application/json image/svg+xml
+</IfModule>
+
+<IfModule mod_headers.c>
+    <FilesMatch "\.(js|css|woff2|webp|png|svg)$">
+        SetEnvIf Request_URI "^/build/assets/" aset_build
+        Header set Cache-Control "public, max-age=31536000, immutable" env=aset_build
+    </FilesMatch>
+</IfModule>

@@ -1,0 +1,10 @@
+/*
+ * Entri CSS back-office (Aplikasi.tsx) & konsol pengelola (Pengelola.tsx). Tailwind memindai seluruh kode secara
+ * otomatis; token & aturan dasar dari Gaya/Aplikasi.css (T1, PRD v3.30).
+ */
+@import 'tailwindcss';
+@import './Aplikasi.css';
+
+@source '../../views';
+/* File test tidak dirender; contoh pola terlarang di dalamnya jangan sampai menjadi CSS. */
+@source not '../**/*Tes.{ts,tsx}';

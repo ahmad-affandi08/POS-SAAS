@@ -139,7 +139,7 @@ describe('F-14a pustaka laporan', () => {
 describe('F-14a dasbor pemilik di beranda', () => {
     beforeEach(() => AturHalamanUji({}, '/kelola'));
 
-    it('angka hari ini dengan perbandingan kemarin & minggu lalu, grafik 14 hari, produk terlaris, perlu perhatian', () => {
+    it('angka hari ini dengan perbandingan kemarin & minggu lalu, grafik 14 hari, produk terlaris, perlu perhatian', async () => {
         RenderUji(<HalamanBerandaKelola Dasbor={dasbor} />);
 
         expect(screen.getByRole('heading', { name: /Ringkasan hari ini/ })).toBeTruthy();
@@ -159,7 +159,8 @@ describe('F-14a dasbor pemilik di beranda', () => {
             '/kelola/penjualan?saring[PerluTinjauan]=1',
         );
         // Tabel alternatif grafik untuk pembaca layar.
-        expect(screen.getByText(/7 Okt 2026: Rp 12.500.000, 125 transaksi/)).toBeTruthy();
+        // T1 (v3.30): grafik dimuat belakangan (React.lazy), jadi ditunggu sampai tampil.
+        expect(await screen.findByText(/7 Okt 2026: Rp 12.500.000, 125 transaksi/)).toBeTruthy();
     });
 
     it('tanpa izin laporan: tanpa angka', () => {
