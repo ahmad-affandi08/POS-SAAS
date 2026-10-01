@@ -26,7 +26,7 @@ use Illuminate\Support\Facades\DB;
  */
 final class TambahBarisPesananTerbukaPos
 {
-    private const JENIS_TIDAK_BISA_DIJUAL = [JenisProduk::IndukVarian, JenisProduk::BahanBaku, JenisProduk::Konsinyasi];
+    private const JENIS_TIDAK_BISA_DIJUAL = [JenisProduk::IndukVarian, JenisProduk::BahanBaku];
 
     public function __construct(
         private readonly KonteksTenant $konteks,

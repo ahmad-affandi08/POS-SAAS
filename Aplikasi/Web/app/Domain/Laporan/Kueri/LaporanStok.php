@@ -6,6 +6,7 @@ namespace App\Domain\Laporan\Kueri;
 
 use App\Domain\Bersama\Nilai\Kuantitas;
 use App\Domain\Bersama\Nilai\Uang;
+use App\Domain\Katalog\Enum\JenisProduk;
 use App\Domain\Katalog\Kueri\InfoProdukStok;
 use App\Domain\Katalog\Kueri\ProdukUntukLaporan;
 use App\Domain\Organisasi\Data\DataInfoGudang;
@@ -15,7 +16,8 @@ use Carbon\CarbonImmutable;
 
 /**
  * Laporan stok F-14a (`/kelola/laporan/stok`, izin `persediaan.lihat`, lokasi stok di outlet yang boleh diakses):
- * - nilai persediaan per lokasi stok dan per kategori pada akhir tanggal bisnis tertentu (dari `MutasiStok`);
+ * - nilai persediaan per lokasi stok dan per kategori pada akhir tanggal bisnis tertentu (dari `MutasiStok`; tanpa
+ *   barang konsinyasi, F-05i);
  * - stok kritis: saldo terkini ≤ batas minimum per lokasi stok (`ProdukGudang.StokMinimum`), urut kekurangan terbesar.
  * Posisi & kartu stok per produk sudah ada di F-05a.
  */
@@ -59,6 +61,9 @@ final class LaporanStok
     {
         $gudang = $this->AmbilGudang($idOutletBoleh, $uuidGudang);
         $baris = $this->stok->AmbilNilaiPadaTanggal($tanggal, array_keys($gudang));
+        // F-05i: barang titipan bukan aset toko (nilainya hutang ke penitip), jadi tidak ikut nilai persediaan.
+        $jenis = $this->infoProduk->AmbilBanyak(array_values(array_unique(array_column($baris, 'IdProduk'))), denganTerhapus: true);
+        $baris = array_values(array_filter($baris, fn (array $b): bool => ($jenis[$b['IdProduk']] ?? null)?->jenis !== JenisProduk::Konsinyasi));
         $kategori = $this->produk->AmbilKategori(array_values(array_unique(array_column($baris, 'IdProduk'))));
         $perGudang = [];
         $perKategori = [];

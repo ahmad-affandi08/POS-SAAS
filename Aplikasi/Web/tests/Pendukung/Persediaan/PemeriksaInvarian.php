@@ -33,6 +33,7 @@ final class PemeriksaInvarian
             ...self::PeriksaNomorSeri($idTenant),
             ...self::PeriksaJurnalSeimbang($idTenant),
             ...self::PeriksaAkunPersediaan($idTenant),
+            ...self::PeriksaHutangKonsinyasi($idTenant),
         ];
     }
 
@@ -235,7 +236,9 @@ final class PemeriksaInvarian
     /**
      * Saldo akun persediaan (Debit − Kredit pada akun yang dipetakan ke PersediaanBarangDagang/PersediaanBahanBaku, dan
      * sejak F-05b PersediaanDalamPerjalanan untuk stok di lokasi dalam perjalanan transfer; tingkat tenant maupun
-     * outlet) = Σ `SaldoStok.NilaiPersediaan`.
+     * outlet) = Σ `SaldoStok.NilaiPersediaan`. Sejak F-05i (v3.40) stok produk Konsinyasi dikecualikan dari sisi kanan:
+     * barang titipan bukan aset toko (tidak pernah dijurnal ke persediaan), dan nilainya diperiksa terpisah oleh
+     * `PeriksaHutangKonsinyasi`.
      *
      * @return list<string>
      */
@@ -246,7 +249,8 @@ final class PemeriksaInvarian
                 (SELECT COALESCE(SUM(d.Debit - d.Kredit), 0) FROM JurnalDetail d
                   WHERE d.IdTenant = ? AND d.IdAkun IN (SELECT p.IdAkun FROM PemetaanAkun p
                                                          WHERE p.IdTenant = ? AND p.Kunci IN ('PersediaanBarangDagang', 'PersediaanBahanBaku', 'PersediaanDalamPerjalanan'))) AS SaldoAkun,
-                (SELECT COALESCE(SUM(s.NilaiPersediaan), 0) FROM SaldoStok s WHERE s.IdTenant = ?) AS NilaiStok",
+                (SELECT COALESCE(SUM(s.NilaiPersediaan), 0) FROM SaldoStok s
+                  WHERE s.IdTenant = ? AND s.IdProduk NOT IN (SELECT pr.Id FROM Produk pr WHERE pr.IdTenant = s.IdTenant AND pr.Jenis = 'Konsinyasi')) AS NilaiStok",
             [$idTenant, $idTenant, $idTenant],
         );
 
@@ -258,6 +262,37 @@ final class PemeriksaInvarian
 
         return $sama !== [] && (int) self::Teks($sama[0], 'Sama') === 1 ? [] : [sprintf(
             'Tenant %d: saldo akun persediaan %s ≠ Σ nilai persediaan %s', $idTenant, self::Teks($hasil[0], 'SaldoAkun'), self::Teks($hasil[0], 'NilaiStok'),
+        )];
+    }
+
+    /**
+     * F-05i: saldo kredit akun Hutang Konsinyasi (Σ Kredit − Σ Debit) = nilai titipan terjual bersih (−Σ TotalHpp
+     * mutasi produk Konsinyasi selain `KonsinyasiMasuk`/`KonsinyasiRetur`, yaitu J-05.7 penjualan dikurangi retur &
+     * void) − Σ setoran konsinyasi yang masih diposting.
+     *
+     * @return list<string>
+     */
+    public static function PeriksaHutangKonsinyasi(int $idTenant): array
+    {
+        $hasil = self::Pilih(
+            "SELECT
+                (SELECT COALESCE(SUM(d.Kredit - d.Debit), 0) FROM JurnalDetail d
+                  WHERE d.IdTenant = ? AND d.IdAkun IN (SELECT p.IdAkun FROM PemetaanAkun p WHERE p.IdTenant = ? AND p.Kunci = 'HutangKonsinyasi')) AS SaldoAkun,
+                (SELECT COALESCE(-SUM(m.TotalHpp), 0) FROM MutasiStok m
+                  WHERE m.IdTenant = ? AND m.JenisMutasi NOT IN ('KonsinyasiMasuk', 'KonsinyasiRetur')
+                    AND m.IdProduk IN (SELECT pr.Id FROM Produk pr WHERE pr.IdTenant = m.IdTenant AND pr.Jenis = 'Konsinyasi'))
+                - (SELECT COALESCE(SUM(b.Jumlah), 0) FROM PembayaranKonsinyasi b WHERE b.IdTenant = ? AND b.Status = 'Diposting') AS Harapan",
+            [$idTenant, $idTenant, $idTenant, $idTenant],
+        );
+
+        if ($hasil === []) {
+            return [];
+        }
+
+        $sama = self::Pilih('SELECT CAST(? AS DECIMAL(20,2)) = CAST(? AS DECIMAL(20,2)) AS Sama', [self::Teks($hasil[0], 'SaldoAkun'), self::Teks($hasil[0], 'Harapan')]);
+
+        return $sama !== [] && (int) self::Teks($sama[0], 'Sama') === 1 ? [] : [sprintf(
+            'Tenant %d: saldo Hutang Konsinyasi %s ≠ titipan terjual − setoran %s', $idTenant, self::Teks($hasil[0], 'SaldoAkun'), self::Teks($hasil[0], 'Harapan'),
         )];
     }
 

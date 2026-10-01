@@ -199,6 +199,7 @@ erDiagram
 | `KunciPeriode` | IdTenant, Periode (YYYY-MM), DikunciPada, DikunciOleh |
 | `AsetTetap` / `PenyusutanAset` | IdTenant, Uuid, Nomor, Nama, Kelompok, IdOutlet, TanggalPerolehan, HargaPerolehan, NilaiSisa, UmurBulan, AkumulasiAwal, PeriodeMulai, SumberDana (KasBank/SaldoAwal), IdAkunSumber, Status (Aktif/Dilepas/Dibatalkan), IdJurnal, TanggalPelepasan, NilaiPelepasan, IdAkunPelepasan, IdJurnalPelepasan / IdAsetTetap, Periode (YYYY-MM, unik per aset), Jumlah, IdJurnal (FIN-10, v3.38) |
 | `ImporMutasiBank` / `MutasiBank` | IdTenant, Uuid, IdAkun, NamaBerkas, JumlahBaris, Baru, Duplikat / IdAkun, IdImporMutasiBank, Tanggal, Keterangan, Masuk, Keluar, Saldo, SidikBaris (unik per akun), Status (BelumCocok/Cocok/Diabaikan), IdJurnalDetail (unik), AlasanAbaikan, DiputuskanOleh, DiputuskanPada (FIN-09, v3.39) |
+| `PenitipProduk` / `DokumenKonsinyasi` / `DokumenKonsinyasiDetail` / `PembayaranKonsinyasi` | IdProduk (unik per tenant), IdPemasok / Uuid, Nomor, Jenis (Masuk/Retur), IdPemasok, IdOutlet, IdGudang, Tanggal, TotalNilai, Catatan / IdDokumenKonsinyasi, IdProduk, Jumlah, HargaSatuan, Nilai / Uuid, Nomor, IdPemasok, Tanggal, Jumlah, IdAkunKasBank, Status, IdJurnal, IdJurnalPembatalan, AlasanBatal (F-05i, v3.40) |
 | `TutupHarian` | IdTenant, IdOutlet, TanggalBisnis, DitutupPada, DitutupOleh, JumlahTransaksi, PenjualanBersih, Peringatan (JSON) (v1.81, F-15) |
 | `Pengeluaran` | IdOutlet, IdAkun, Jumlah, IdAkunSumberDana, Lampiran |
 | `MutasiBank` / `MutasiBankDetail` | fase 3 (rekonsiliasi) |

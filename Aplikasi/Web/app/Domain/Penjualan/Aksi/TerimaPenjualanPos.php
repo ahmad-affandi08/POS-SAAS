@@ -130,7 +130,7 @@ final class TerimaPenjualanPos
     /** F-05h: percobaan memilih ulang nomor seri bila keburu diambil penjualan lain. */
     private const PERCOBAAN_SERI = 3;
 
-    private const JENIS_TIDAK_BISA_DIJUAL = [JenisProduk::IndukVarian, JenisProduk::BahanBaku, JenisProduk::Konsinyasi];
+    private const JENIS_TIDAK_BISA_DIJUAL = [JenisProduk::IndukVarian, JenisProduk::BahanBaku];
 
     public function __construct(
         private readonly KonteksTenant $konteks,
@@ -1541,10 +1541,6 @@ final class TerimaPenjualanPos
 
     private function PastikanBahanBisaDikurangi(DataKebutuhanStok $k, int $indeks, bool $langsung): void
     {
-        if ($k->jenis === JenisProduk::Konsinyasi) {
-            throw new PelanggaranAturanBisnis('ProdukTidakBisaDijual', "{$k->nama} ({$k->jalur}) adalah barang konsinyasi yang belum bisa dijual di POS.", "Baris.{$indeks}.UuidProduk");
-        }
-
         if ($k->pelacakan === PelacakanProduk::Seri && ! $langsung) {
             throw new PelanggaranAturanBisnis('PelacakanBelumDidukung', "{$k->nama} ({$k->jalur}) memakai {$k->pelacakan->AmbilLabel()}; nomor seri hanya bisa dijual sebagai barang langsung, bukan bahan resep, komponen paket, atau bahan pilihan.", "Baris.{$indeks}.UuidProduk");
         }

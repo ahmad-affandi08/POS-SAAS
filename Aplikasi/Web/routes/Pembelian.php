@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Domain\Organisasi\Enum\IzinTenant;
 use App\Http\Kontroler\Kelola\Pembelian\FakturPembelianKontroler;
 use App\Http\Kontroler\Kelola\Pembelian\HutangKontroler;
+use App\Http\Kontroler\Kelola\Pembelian\KonsinyasiKontroler;
 use App\Http\Kontroler\Kelola\Pembelian\PemasokKontroler;
 use App\Http\Kontroler\Kelola\Pembelian\PenerimaanBarangKontroler;
 use App\Http\Kontroler\Kelola\Pembelian\PengaturanPembelianKontroler;
@@ -72,6 +73,18 @@ Route::middleware([SiapkanAuditTenant::class, $izin(IzinTenant::PembelianKelola)
     Route::get('/pembayaran/{pembayaran}', [HutangKontroler::class, 'Detail'])->where('pembayaran', $ulid)->name('kelola.pembelian.pembayaran.detail');
     Route::post('/pembayaran/{pembayaran}/batalkan', [HutangKontroler::class, 'Batalkan'])->where('pembayaran', $ulid)->name('kelola.pembelian.pembayaran.batalkan');
     Route::get('/pembayaran/{pembayaran}/lampiran', [HutangKontroler::class, 'Lampiran'])->where('pembayaran', $ulid)->name('kelola.pembelian.pembayaran.lampiran');
+
+    // F-05i konsinyasi: penitip & hutang, dokumen titipan masuk/retur, rincian penitip, setoran.
+    Route::get('/konsinyasi', [KonsinyasiKontroler::class, 'Daftar'])->name('kelola.pembelian.konsinyasi.daftar');
+    Route::get('/konsinyasi/dokumen', [KonsinyasiKontroler::class, 'Dokumen'])->name('kelola.pembelian.konsinyasi.dokumen');
+    Route::get('/konsinyasi/buat', [KonsinyasiKontroler::class, 'Buat'])->name('kelola.pembelian.konsinyasi.buat');
+    Route::get('/konsinyasi/produk/cari', [KonsinyasiKontroler::class, 'CariProduk'])->name('kelola.pembelian.konsinyasi.produk.cari');
+    Route::post('/konsinyasi', [KonsinyasiKontroler::class, 'Simpan'])->name('kelola.pembelian.konsinyasi.simpan');
+    Route::get('/konsinyasi/dokumen/{dokumen}', [KonsinyasiKontroler::class, 'DetailDokumen'])->where('dokumen', $ulid)->name('kelola.pembelian.konsinyasi.dokumen.detail');
+    Route::get('/konsinyasi/penitip/{pemasok}', [KonsinyasiKontroler::class, 'Penitip'])->where('pemasok', $ulid)->name('kelola.pembelian.konsinyasi.penitip');
+    Route::post('/konsinyasi/penitip/{pemasok}/setoran', [KonsinyasiKontroler::class, 'SimpanSetoran'])->where('pemasok', $ulid)->name('kelola.pembelian.konsinyasi.setoran.simpan');
+    Route::get('/konsinyasi/setoran/{setoran}', [KonsinyasiKontroler::class, 'Setoran'])->where('setoran', $ulid)->name('kelola.pembelian.konsinyasi.setoran.detail');
+    Route::post('/konsinyasi/setoran/{setoran}/batalkan', [KonsinyasiKontroler::class, 'BatalkanSetoran'])->where('setoran', $ulid)->name('kelola.pembelian.konsinyasi.setoran.batalkan');
 
     Route::get('/retur', [ReturPembelianKontroler::class, 'Daftar'])->name('kelola.pembelian.retur.daftar');
     Route::get('/retur/buat', [ReturPembelianKontroler::class, 'Buat'])->name('kelola.pembelian.retur.buat');

@@ -122,7 +122,7 @@ enum StatusDiskon { Boleh, ButuhPenyetuju, MelebihiBatas }
 
 /// Keranjang, harga, pajak, diskon, dan simpan penjualan di perangkat (F-07 mode retail, Rincian F-07c). Aturan sama
 /// dengan server (Rincian F-07b) agar kasir langsung tahu bila ditolak:
-/// - produk `IndukVarian`/`BahanBaku`/`Konsinyasi` dan berpelacakan batch/seri tidak bisa dijual;
+/// - produk `IndukVarian`/`BahanBaku` tidak bisa dijual (konsinyasi bisa sejak F-05i);
 /// - harga satuan dari `PenentuHarga` (outlet, kanal `BawaPulang`), total dari `MesinKalkulasi` (paket MesinKasir);
 /// - pajak per produk dari kelompok pajaknya: PPN hanya bila PKP, PBJT makanan & minuman hanya bila memungut PBJT, tarif
 ///   dari `TarifPajak` yang berlaku pada tanggal bisnis (tanpa tarif → tidak dihitung + peringatan, CLAUDE.md #12);

@@ -16,7 +16,7 @@ use Illuminate\Database\Query\Builder;
 /**
  * Ringkasan produk tenant aktif untuk domain Persediaan (DesainF05a C.1): per Id/Uuid, pencarian produk berstok,
  * pencocokan kunci impor, dan jumlah produk berstok. Produk berstok = jenis `CekPunyaStok()` selain Konsinyasi
- * (Konsinyasi ditolak di stok awal sampai F-05i).
+ * (barang titipan hanya masuk lewat dokumen konsinyasi F-05i; pencariannya memakai `hanyaKonsinyasi`).
  */
 final class InfoProdukStok
 {
@@ -65,17 +65,18 @@ final class InfoProdukStok
 
     /**
      * Produk berstok yang belum diarsipkan dengan Nama/SKU mengandung `kata` atau barcode persis `kata`, urut nama.
+     * `hanyaKonsinyasi` = hanya produk berjenis Konsinyasi (dokumen titipan F-05i), selain itu tanpa konsinyasi.
      *
      * @return list<DataInfoProdukStok>
      */
-    public function CariUntukStok(string $kata, int $batas = 20): array
+    public function CariUntukStok(string $kata, int $batas = 20, bool $hanyaKonsinyasi = false): array
     {
         $kata = trim($kata);
         $pola = '%'.addcslashes($kata, '%_\\').'%';
 
         $produk = Produk::query()
             ->whereNull('DiarsipkanPada')
-            ->whereIn('Jenis', self::AmbilJenisBerstok())
+            ->whereIn('Jenis', $hanyaKonsinyasi ? [JenisProduk::Konsinyasi->value] : self::AmbilJenisBerstok())
             ->when($kata !== '', fn ($kueri) => $kueri->where(fn ($dalam) => $dalam
                 ->where('Nama', 'like', $pola)
                 ->orWhere('Sku', 'like', $pola)

@@ -57,6 +57,11 @@ enum JenisDokumenBernomor: string
     /** FIN-10 (v3.38): aset tetap `AT-2610-0001`. */
     case AsetTetap = 'AsetTetap';
 
+    /** F-05i (v3.40): titipan konsinyasi masuk/retur `KS/{OUTLET}/{YYMM}/{SEQ4}`, setoran ke penitip `BK/{YYMM}/{SEQ4}`. */
+    case DokumenKonsinyasi = 'DokumenKonsinyasi';
+
+    case PembayaranKonsinyasi = 'PembayaranKonsinyasi';
+
     public function AmbilAwalan(): string
     {
         return match ($this) {
@@ -82,6 +87,8 @@ enum JenisDokumenBernomor: string
             self::ReturGrosir => 'RG',
             self::Pencairan => 'PC',
             self::AsetTetap => 'AT',
+            self::DokumenKonsinyasi => 'KS',
+            self::PembayaranKonsinyasi => 'BK',
         };
     }
 
@@ -91,7 +98,7 @@ enum JenisDokumenBernomor: string
             self::StokAwal, self::TransaksiKasBank, self::TransferStok, self::PenyesuaianStok, self::OrderProduksi => 4,
             self::StokOpname => 3,
             self::Jurnal => 6,
-            self::PesananPembelian, self::PenerimaanBarang, self::FakturPembelian, self::PembayaranHutang, self::ReturPembelian, self::PembayaranPiutang, self::PesananSendiri, self::PesananOnline, self::Reservasi, self::PesananGrosir, self::SuratJalan, self::FakturPenjualan, self::ReturGrosir, self::Pencairan, self::AsetTetap => 4,
+            self::PesananPembelian, self::PenerimaanBarang, self::FakturPembelian, self::PembayaranHutang, self::ReturPembelian, self::PembayaranPiutang, self::PesananSendiri, self::PesananOnline, self::Reservasi, self::PesananGrosir, self::SuratJalan, self::FakturPenjualan, self::ReturGrosir, self::Pencairan, self::AsetTetap, self::DokumenKonsinyasi, self::PembayaranKonsinyasi => 4,
         };
     }
 

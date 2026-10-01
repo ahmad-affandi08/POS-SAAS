@@ -6,7 +6,8 @@ import 'package:mesin_kasir/MesinKasir.dart';
 import '../../Data/BasisData/BasisDataKasir.dart' hide BarisProdukHarga;
 import '../../Data/RepositoriKatalog.dart';
 
-/// Jenis & pelacakan produk. Induk varian, bahan baku, dan konsinyasi belum bisa dijual di POS (Rincian F-07b langkah 5);
+/// Jenis & pelacakan produk. Induk varian dan bahan baku tidak bisa dijual di POS (Rincian F-07b langkah 5); barang
+/// konsinyasi (titipan) dijual seperti produk berstok sejak F-05i (server menjurnal J-05.7);
 /// produk ber-batch dijual tanpa pilihan batch (server memilih FEFO, F-05g) dan produk bernomor seri wajib membawa nomor
 /// serinya (F-05h).
 abstract final class JenisProdukKasir {
@@ -175,10 +176,6 @@ class ProdukJual {
       JenisProdukKasir.bahanBaku => (
         kode: 'ProdukTidakBisaDijual',
         pesan: '"$nama" adalah bahan baku dan tidak dijual ke pelanggan.',
-      ),
-      JenisProdukKasir.konsinyasi => (
-        kode: 'ProdukTidakBisaDijual',
-        pesan: 'Produk konsinyasi "$nama" belum bisa dijual di aplikasi kasir.',
       ),
       _ => null,
     };

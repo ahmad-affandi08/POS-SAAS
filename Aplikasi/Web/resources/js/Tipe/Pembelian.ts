@@ -539,3 +539,113 @@ export type PropsPengaturanPembelian = {
     /** D-23 D: DrafPoOtomatis = draf PO disiapkan tiap pagi untuk stok di bawah minimum. */
     Pengaturan: { BatasPersetujuanPo: string; ToleransiPenerimaanPersen: string; DrafPoOtomatis: boolean };
 };
+
+/* F-05i (v3.40): konsinyasi (barang titipan). */
+export type JenisDokumenKonsinyasi = 'Masuk' | 'Retur';
+export type BarisPenitipKonsinyasi = {
+    Uuid: string;
+    Kode: string;
+    Nama: string;
+    JumlahProduk: number;
+    Terjual: string;
+    Dibayar: string;
+    Sisa: string;
+};
+export type PropsDaftarKonsinyasi = { Penitip: BarisPenitipKonsinyasi[]; TotalSisa: string; Izin: IzinPembelian };
+export type BarisDokumenKonsinyasi = {
+    Uuid: string;
+    Nomor: string;
+    Tanggal: string;
+    Jenis: JenisDokumenKonsinyasi;
+    LabelJenis: string;
+    NamaPemasok: string;
+    NamaGudang: string;
+    TotalNilai: string;
+};
+export type PropsDokumenKonsinyasi = {
+    Dokumen: HasilTabel<BarisDokumenKonsinyasi>;
+    OpsiJenis: Opsi<JenisDokumenKonsinyasi>[];
+    OpsiPemasok: OpsiPemasok[];
+    Izin: IzinPembelian;
+};
+export type PropsFormKonsinyasi = {
+    Jenis: JenisDokumenKonsinyasi;
+    LabelJenis: string;
+    UuidPemasokAwal: string | null;
+    OpsiPemasok: OpsiPemasok[];
+    OpsiGudang: OpsiGudang[];
+    HariIni: string;
+    MaksBaris: number;
+};
+export type PropsDetailDokumenKonsinyasi = {
+    Dokumen: {
+        Uuid: string;
+        Nomor: string;
+        Jenis: JenisDokumenKonsinyasi;
+        LabelJenis: string;
+        Tanggal: string;
+        TotalNilai: string;
+        Catatan: string | null;
+        UuidPemasok: string | null;
+        NamaPemasok: string;
+        NamaGudang: string;
+        NamaOutlet: string | null;
+    };
+    Baris: {
+        Id: number;
+        NamaProduk: string;
+        Sku: string | null;
+        SimbolSatuan: string;
+        Jumlah: string;
+        HargaSatuan: string;
+        Nilai: string;
+    }[];
+};
+export type JurnalSetoranKonsinyasi = {
+    Uuid: string;
+    Nomor: string;
+    Tanggal: string;
+    Keterangan: string;
+    TotalDebit: string;
+    Pembalik: boolean;
+};
+export type BarisSetoranKonsinyasi = {
+    Uuid: string;
+    Nomor: string;
+    Tanggal: string;
+    Jumlah: string;
+    Status: 'Diposting' | 'Dibatalkan';
+    NamaAkun: string;
+    Catatan: string | null;
+    AlasanBatal: string | null;
+    Jurnal: JurnalSetoranKonsinyasi[];
+};
+export type BarisProdukPenitip = {
+    Uuid: string;
+    NamaProduk: string;
+    Sku: string | null;
+    SimbolSatuan: string;
+    Masuk: string;
+    Retur: string;
+    Terjual: string;
+    NilaiTerjual: string;
+    Saldo: string;
+};
+export type PropsPenitipKonsinyasi = {
+    Penitip: {
+        Uuid: string;
+        Kode: string;
+        Nama: string;
+        NoHp: string | null;
+        NamaBank: string | null;
+        NomorRekening: string | null;
+        AtasNamaRekening: string | null;
+    };
+    Hutang: { Terjual: string; Dibayar: string; Sisa: string };
+    Periode: { Dari: string; Sampai: string; NilaiTerjual: string };
+    Produk: BarisProdukPenitip[];
+    Setoran: BarisSetoranKonsinyasi[];
+    OpsiAkun: OpsiAkunKas[];
+    HariIni: string;
+    Izin: IzinPembelian;
+};

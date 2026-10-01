@@ -71,6 +71,9 @@ enum JenisSumberJurnal: string
 
     case PenyusutanAset = 'PenyusutanAset';
 
+    // F-05i (v3.40): setoran hasil penjualan barang titipan ke penitip (Dr Hutang Konsinyasi, Cr kas/bank).
+    case PembayaranKonsinyasi = 'PembayaranKonsinyasi';
+
     public function AmbilLabel(): string
     {
         return match ($this) {
@@ -107,6 +110,7 @@ enum JenisSumberJurnal: string
             self::PesananOnline => 'Uang muka pesanan online',
             self::AsetTetap => 'Aset tetap',
             self::PenyusutanAset => 'Penyusutan aset tetap',
+            self::PembayaranKonsinyasi => 'Setoran konsinyasi',
         };
     }
 
@@ -150,6 +154,7 @@ enum JenisSumberJurnal: string
             self::PesananOnline => '/kelola/toko-online?cari='.$uuid,
             // Penyusutan memakai Uuid asetnya sebagai `UuidSumber`, jadi keduanya menuju rincian aset.
             self::AsetTetap, self::PenyusutanAset => '/kelola/akuntansi/aset-tetap/'.$uuid,
+            self::PembayaranKonsinyasi => '/kelola/pembelian/konsinyasi/setoran/'.$uuid,
         };
     }
 }
