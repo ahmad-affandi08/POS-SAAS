@@ -49,6 +49,13 @@ enum PeranAkun: string
     case BebanBiayaPembayaran = 'BebanBiayaPembayaran';
     case BebanSelisihKas = 'BebanSelisihKas';
 
+    // FIN-10 (v3.38): aset tetap & penyusutan garis lurus.
+    case AsetTetap = 'AsetTetap';
+
+    case AkumulasiPenyusutan = 'AkumulasiPenyusutan';
+
+    case BebanPenyusutan = 'BebanPenyusutan';
+
     /**
      * Kunci lama sebelum istilah kamus §13.7.1 ditetapkan (DesainF01 H1). Versi template yang sudah terbit tidak boleh
      * diubah (BR-P03.4), jadi kunci lama di dalamnya tetap dibaca lewat alias ini, bukan ditulis ulang.
@@ -95,7 +102,7 @@ enum PeranAkun: string
             self::KasOutlet, self::KasBrankas, self::Bank, self::PiutangPencairan, self::PiutangUsaha,
             self::PiutangKaryawan, self::PiutangKlaimPemasok, self::PiutangBelumDifakturkan,
             self::PersediaanBarangDagang, self::PersediaanBahanBaku,
-            self::PersediaanDalamPerjalanan, self::PpnMasukan => TipeAkun::Aset,
+            self::PersediaanDalamPerjalanan, self::PpnMasukan, self::AsetTetap, self::AkumulasiPenyusutan => TipeAkun::Aset,
             self::HutangUsaha, self::HutangBelumDifakturkan, self::HutangKonsinyasi, self::PpnKeluaran,
             self::HutangPbjt, self::UangMukaPelanggan, self::DepositPelanggan,
             self::PendapatanDiterimaDimuka => TipeAkun::Kewajiban,
@@ -103,14 +110,14 @@ enum PeranAkun: string
             self::Penjualan, self::DiskonPenjualan, self::ReturPenjualan, self::PendapatanJasa,
             self::PendapatanBiayaLayanan, self::PendapatanPengiriman, self::PendapatanLain => TipeAkun::Pendapatan,
             self::Hpp, self::SelisihHpp, self::SusutPersediaan, self::OverheadProduksiDibebankan => TipeAkun::Hpp,
-            self::BebanBiayaPembayaran, self::BebanSelisihKas => TipeAkun::Beban,
+            self::BebanBiayaPembayaran, self::BebanSelisihKas, self::BebanPenyusutan => TipeAkun::Beban,
         };
     }
 
-    /** Diskon & retur penjualan adalah akun kontra pendapatan (§11.2). */
+    /** Diskon & retur penjualan adalah akun kontra pendapatan (§11.2); akumulasi penyusutan kontra aset (FIN-10). */
     public function CekWajibKontra(): bool
     {
-        return $this === self::DiskonPenjualan || $this === self::ReturPenjualan;
+        return $this === self::DiskonPenjualan || $this === self::ReturPenjualan || $this === self::AkumulasiPenyusutan;
     }
 
     /** Peran kas & bank: akunnya ditandai akun kas/bank di bagan akun (F-13a transaksi kas & bank). */
@@ -180,6 +187,9 @@ enum PeranAkun: string
             self::OverheadProduksiDibebankan => 'Overhead produksi dibebankan',
             self::BebanBiayaPembayaran => 'Beban biaya pembayaran (MDR, komisi ojol)',
             self::BebanSelisihKas => 'Beban selisih kas',
+            self::AsetTetap => 'Aset tetap (harga perolehan)',
+            self::AkumulasiPenyusutan => 'Akumulasi penyusutan aset tetap',
+            self::BebanPenyusutan => 'Beban penyusutan',
         };
     }
 }

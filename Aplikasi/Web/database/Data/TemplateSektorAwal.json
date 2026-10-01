@@ -371,7 +371,10 @@
                     "OverheadProduksiDibebankan": "5-1300",
                     "SusutPersediaan": "5-1200",
                     "UangMukaPelanggan": "2-1400",
-                    "PendapatanPengiriman": "4-3100"
+                    "PendapatanPengiriman": "4-3100",
+                    "AsetTetap": "1-2000",
+                    "AkumulasiPenyusutan": "1-2900",
+                    "BebanPenyusutan": "6-5000"
                 },
                 "Kategori": [
                     "Sembako",
@@ -904,7 +907,10 @@
                     "OverheadProduksiDibebankan": "5-1300",
                     "SusutPersediaan": "5-1200",
                     "UangMukaPelanggan": "2-1400",
-                    "PendapatanPengiriman": "4-3100"
+                    "PendapatanPengiriman": "4-3100",
+                    "AsetTetap": "1-2000",
+                    "AkumulasiPenyusutan": "1-2900",
+                    "BebanPenyusutan": "6-5000"
                 },
                 "Kategori": [
                     "Kopi",
@@ -1435,7 +1441,10 @@
                     "OverheadProduksiDibebankan": "5-1300",
                     "SusutPersediaan": "5-1200",
                     "UangMukaPelanggan": "2-1400",
-                    "PendapatanPengiriman": "4-3100"
+                    "PendapatanPengiriman": "4-3100",
+                    "AsetTetap": "1-2000",
+                    "AkumulasiPenyusutan": "1-2900",
+                    "BebanPenyusutan": "6-5000"
                 },
                 "Kategori": [
                     "Makanan",

@@ -231,6 +231,13 @@ const menuAkuntansi: ItemMenu[] = [
         izin: IzinTenant.LaporanKeuanganLihat,
         fitur: 'akuntansi.penuh',
     },
+    // FIN-10 (v3.38): aset tetap & penyusutan otomatis bulanan (kerja berkala, jadi menu, bukan Pengaturan).
+    {
+        label: 'Aset tetap',
+        href: '/kelola/akuntansi/aset-tetap',
+        izin: IzinTenant.LaporanKeuanganLihat,
+        fitur: 'akuntansi.penuh',
+    },
     {
         label: 'Tutup buku',
         href: '/kelola/akuntansi/tutup-buku',

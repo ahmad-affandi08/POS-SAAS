@@ -66,6 +66,11 @@ enum JenisSumberJurnal: string
     // F-17 toko online bagian 2: uang muka pesanan online diterima (J-17.1) dan dikembalikan (J-17.2).
     case PesananOnline = 'PesananOnline';
 
+    // FIN-10 (v3.38): perolehan & pelepasan aset tetap, penyusutan bulanan.
+    case AsetTetap = 'AsetTetap';
+
+    case PenyusutanAset = 'PenyusutanAset';
+
     public function AmbilLabel(): string
     {
         return match ($this) {
@@ -100,6 +105,8 @@ enum JenisSumberJurnal: string
             self::ReturGrosir => 'Retur grosir',
             self::Pencairan => 'Pencairan dana',
             self::PesananOnline => 'Uang muka pesanan online',
+            self::AsetTetap => 'Aset tetap',
+            self::PenyusutanAset => 'Penyusutan aset tetap',
         };
     }
 
@@ -141,6 +148,8 @@ enum JenisSumberJurnal: string
             self::ReturGrosir => '/kelola/grosir/retur/'.$uuid,
             self::Pencairan => '/kelola/akuntansi/pencairan/'.$uuid,
             self::PesananOnline => '/kelola/toko-online?cari='.$uuid,
+            // Penyusutan memakai Uuid asetnya sebagai `UuidSumber`, jadi keduanya menuju rincian aset.
+            self::AsetTetap, self::PenyusutanAset => '/kelola/akuntansi/aset-tetap/'.$uuid,
         };
     }
 }

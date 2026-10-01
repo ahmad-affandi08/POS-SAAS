@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Domain\Organisasi\Enum\IzinTenant;
+use App\Http\Kontroler\Kelola\Akuntansi\AsetTetapKontroler;
 use App\Http\Kontroler\Kelola\Akuntansi\BaganAkunKontroler;
 use App\Http\Kontroler\Kelola\Akuntansi\JadwalKasBankKontroler;
 use App\Http\Kontroler\Kelola\Akuntansi\JurnalKontroler;
@@ -50,6 +51,9 @@ Route::middleware([SiapkanAuditTenant::class, $izin(IzinTenant::LaporanKeuanganL
     Route::get('/akuntansi/pencairan', [PencairanKontroler::class, 'Daftar'])->name('kelola.akuntansi.pencairan.daftar');
     Route::get('/akuntansi/pencairan/rekap-potongan/ekspor', [PencairanKontroler::class, 'EksporRekapPotongan'])->name('kelola.akuntansi.pencairan.rekap-potongan.ekspor');
     Route::get('/akuntansi/pencairan/{pencairan}', [PencairanKontroler::class, 'Detail'])->where('pencairan', $ulid)->name('kelola.akuntansi.pencairan.detail');
+    // FIN-10 (v3.38): aset tetap & penyusutan (daftar & rincian).
+    Route::get('/akuntansi/aset-tetap', [AsetTetapKontroler::class, 'Daftar'])->name('kelola.akuntansi.aset-tetap.daftar');
+    Route::get('/akuntansi/aset-tetap/{asetTetap}', [AsetTetapKontroler::class, 'Detail'])->where('asetTetap', $ulid)->name('kelola.akuntansi.aset-tetap.detail');
 
     Route::get('/akuntansi/laporan/buku-besar', [LaporanKeuanganKontroler::class, 'BukuBesar'])->name('kelola.akuntansi.laporan.buku-besar');
     Route::get('/akuntansi/laporan/buku-besar/ekspor', [LaporanKeuanganKontroler::class, 'EksporBukuBesar'])->name('kelola.akuntansi.laporan.buku-besar.ekspor');
@@ -91,4 +95,10 @@ Route::middleware([SiapkanAuditTenant::class, $izin(IzinTenant::AkuntansiKelola)
     Route::get('/akuntansi/pencairan/buat', [PencairanKontroler::class, 'Buat'])->name('kelola.akuntansi.pencairan.buat');
     Route::post('/akuntansi/pencairan', [PencairanKontroler::class, 'Simpan'])->middleware('throttle:60,1')->name('kelola.akuntansi.pencairan.simpan');
     Route::post('/akuntansi/pencairan/{pencairan}/batalkan', [PencairanKontroler::class, 'Batalkan'])->where('pencairan', $ulid)->name('kelola.akuntansi.pencairan.batalkan');
+    // FIN-10 (v3.38): catat, susutkan, lepas, batalkan aset tetap. `buat` sebelum `{asetTetap}` (pola pencairan).
+    Route::get('/akuntansi/aset-tetap/buat', [AsetTetapKontroler::class, 'Buat'])->name('kelola.akuntansi.aset-tetap.buat');
+    Route::post('/akuntansi/aset-tetap', [AsetTetapKontroler::class, 'Simpan'])->middleware('throttle:60,1')->name('kelola.akuntansi.aset-tetap.simpan');
+    Route::post('/akuntansi/aset-tetap/susutkan', [AsetTetapKontroler::class, 'Susutkan'])->middleware('throttle:20,1')->name('kelola.akuntansi.aset-tetap.susutkan');
+    Route::post('/akuntansi/aset-tetap/{asetTetap}/lepas', [AsetTetapKontroler::class, 'Lepas'])->where('asetTetap', $ulid)->name('kelola.akuntansi.aset-tetap.lepas');
+    Route::post('/akuntansi/aset-tetap/{asetTetap}/batalkan', [AsetTetapKontroler::class, 'Batalkan'])->where('asetTetap', $ulid)->name('kelola.akuntansi.aset-tetap.batalkan');
 });

@@ -142,12 +142,13 @@ describe('F-13a bagan akun (FIN-01, PRD "Rincian F-13a")', function (): void {
         BantuanJurnal::Posting(BantuanJurnal::DataStokAwal());
         BantuanPersediaan::MasukSebagai($this, $k['Tenant']->Id, PeranTenantBawaan::Akuntan);
         BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
-        $induk = AkunKode('1-2000');
-        Akun::query()->create(['Kode' => '1-2010', 'Nama' => 'Mesin Kasir', 'Jenis' => TipeAkun::Aset, 'SaldoNormal' => SaldoNormal::Debit, 'IdInduk' => $induk->Id]);
+        // Induk tanpa pemetaan peran (1-2000 Aset Tetap kini dipetakan FIN-10, jadi tertolak lebih dulu karena pemetaan).
+        $induk = Akun::query()->create(['Kode' => '1-8000', 'Nama' => 'Aset Lain-lain', 'Jenis' => TipeAkun::Aset, 'SaldoNormal' => SaldoNormal::Debit]);
+        Akun::query()->create(['Kode' => '1-8010', 'Nama' => 'Mesin Kasir', 'Jenis' => TipeAkun::Aset, 'SaldoNormal' => SaldoNormal::Debit, 'IdInduk' => $induk->Id]);
 
         BantuanKasir::BuatKategori('Cetak brosur promo', JenisKategoriKas::Keluar, '6-4000');
 
-        foreach (['1-1500' => 'sudah punya jurnal', '1-1400' => 'dipetakan untuk Piutang usaha', '1-2000' => 'punya akun anak', '6-4000' => 'dipakai kategori kas "Cetak brosur promo"', '1-1100' => 'dipetakan untuk Kas outlet'] as $kode => $alasan) {
+        foreach (['1-1500' => 'sudah punya jurnal', '1-1400' => 'dipetakan untuk Piutang usaha', '1-8000' => 'punya akun anak', '1-2000' => 'dipetakan untuk Aset tetap (harga perolehan)', '6-4000' => 'dipakai kategori kas "Cetak brosur promo"', '1-1100' => 'dipetakan untuk Kas outlet'] as $kode => $alasan) {
             expect(PesanGalatSesi($this->delete('/kelola/akuntansi/akun/'.AkunKode($kode)->Uuid)))->toContain($alasan)->toContain('Nonaktifkan');
             BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
         }

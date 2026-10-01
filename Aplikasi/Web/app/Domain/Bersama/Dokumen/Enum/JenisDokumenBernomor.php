@@ -54,6 +54,9 @@ enum JenisDokumenBernomor: string
     /** F-08 BR-08.4: pencairan dana non-tunai ke rekening toko (J-08.1). */
     case Pencairan = 'Pencairan';
 
+    /** FIN-10 (v3.38): aset tetap `AT-2610-0001`. */
+    case AsetTetap = 'AsetTetap';
+
     public function AmbilAwalan(): string
     {
         return match ($this) {
@@ -78,6 +81,7 @@ enum JenisDokumenBernomor: string
             self::FakturPenjualan => 'FJ',
             self::ReturGrosir => 'RG',
             self::Pencairan => 'PC',
+            self::AsetTetap => 'AT',
         };
     }
 
@@ -87,7 +91,7 @@ enum JenisDokumenBernomor: string
             self::StokAwal, self::TransaksiKasBank, self::TransferStok, self::PenyesuaianStok, self::OrderProduksi => 4,
             self::StokOpname => 3,
             self::Jurnal => 6,
-            self::PesananPembelian, self::PenerimaanBarang, self::FakturPembelian, self::PembayaranHutang, self::ReturPembelian, self::PembayaranPiutang, self::PesananSendiri, self::PesananOnline, self::Reservasi, self::PesananGrosir, self::SuratJalan, self::FakturPenjualan, self::ReturGrosir, self::Pencairan => 4,
+            self::PesananPembelian, self::PenerimaanBarang, self::FakturPembelian, self::PembayaranHutang, self::ReturPembelian, self::PembayaranPiutang, self::PesananSendiri, self::PesananOnline, self::Reservasi, self::PesananGrosir, self::SuratJalan, self::FakturPenjualan, self::ReturGrosir, self::Pencairan, self::AsetTetap => 4,
         };
     }
 

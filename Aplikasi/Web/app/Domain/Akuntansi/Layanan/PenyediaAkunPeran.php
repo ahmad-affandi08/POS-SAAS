@@ -44,7 +44,8 @@ final class PenyediaAkunPeran
                 'Kode' => $akun instanceof Akun ? $this->CariKodeKosong($kode) : $kode,
                 'Nama' => $nama,
                 'Jenis' => $tipe,
-                'SaldoNormal' => $tipe->AmbilSaldoNormal(),
+                // Peran kontra (misal akumulasi penyusutan) memakai saldo normal kebalikan tipenya.
+                'SaldoNormal' => $peran->CekWajibKontra() ? $tipe->AmbilSaldoNormal()->AmbilKebalikan() : $tipe->AmbilSaldoNormal(),
                 'Sistem' => true,
             ]);
             $kodeBaru[] = $akun->Kode;

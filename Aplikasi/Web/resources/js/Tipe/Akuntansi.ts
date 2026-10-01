@@ -418,3 +418,70 @@ export type PropsDetailPencairan = {
     Izin: { Kelola: boolean };
     Tindakan: { Batalkan: boolean };
 };
+
+/* FIN-10 (v3.38): aset tetap & penyusutan garis lurus. Uang = string desimal. */
+export type StatusAsetTetap = 'Aktif' | 'Dilepas' | 'Dibatalkan';
+
+export type OpsiKelompokAset = { Nilai: string; Label: string; UmurBulan: number };
+
+export type BarisAsetTetap = {
+    Uuid: string;
+    Nomor: string;
+    Nama: string;
+    Kelompok: string;
+    LabelKelompok: string;
+    NamaOutlet: string | null;
+    TanggalPerolehan: string;
+    HargaPerolehan: string;
+    UmurBulan: number;
+    Akumulasi: string;
+    NilaiBuku: string;
+    Status: StatusAsetTetap;
+    LabelStatus: string;
+};
+
+export type PropsDaftarAsetTetap = {
+    Aset: HasilTabel<BarisAsetTetap>;
+    OpsiKelompok: OpsiKelompokAset[];
+    OpsiStatus: { Nilai: StatusAsetTetap; Label: string }[];
+    Izin: { Kelola: boolean };
+};
+
+export type OpsiAkunAset = { Uuid: string; Kode: string; Nama: string };
+
+export type PropsBuatAsetTetap = {
+    OpsiKelompok: OpsiKelompokAset[];
+    OpsiOutlet: { Uuid: string; Nama: string }[];
+    OpsiAkun: OpsiAkunAset[];
+    UmurMaksimal: number;
+};
+
+type TautanJurnalAset = { Uuid: string; Nomor: string } | null;
+
+export type BarisJadwalPenyusutan = {
+    Periode: string;
+    Jumlah: string;
+    Akumulasi: string;
+    NilaiBuku: string;
+    Dijurnal: boolean;
+    Jurnal: TautanJurnalAset;
+};
+
+export type PropsDetailAsetTetap = {
+    Aset: BarisAsetTetap & {
+        NilaiSisa: string;
+        AkumulasiAwal: string;
+        PeriodeMulai: string;
+        SumberDana: 'KasBank' | 'SaldoAwal';
+        Catatan: string | null;
+        TanggalPelepasan: string | null;
+        NilaiPelepasan: string | null;
+        AlasanBatal: string | null;
+        JurnalPerolehan: TautanJurnalAset;
+        JurnalPelepasan: TautanJurnalAset;
+        BisaDibatalkan: boolean;
+    };
+    Jadwal: BarisJadwalPenyusutan[];
+    OpsiAkun: OpsiAkunAset[];
+    Izin: { Kelola: boolean };
+};

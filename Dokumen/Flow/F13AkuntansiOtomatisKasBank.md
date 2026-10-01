@@ -6,7 +6,7 @@
 - **Kas & Bank:** akun kas per outlet, rekening bank, transfer antar akun, penerimaan/pengeluaran lain, **rekonsiliasi bank** (import mutasi CSV, fase 3).
 - **Biaya operasional:** input pengeluaran (listrik, sewa, gaji) dengan kategori beban & lampiran.
 - **Jurnal manual/umum** hanya untuk role Akuntan/Owner, wajib seimbang.
-- **Aset tetap & penyusutan** (fase 3): garis lurus, jurnal penyusutan bulanan otomatis.
+- **Aset tetap & penyusutan** (fase 3): garis lurus, jurnal penyusutan bulanan otomatis. **Selesai v3.38** (`AsetTetap`, `PenyusutanAset`, `/kelola/akuntansi/aset-tetap`, jadwal `akuntansi:susutkan-aset-tetap`); metode saldo menurun & revaluasi belum.
 
 **Rincian F-13a (v1.48, fase 1; diputuskan agen atas mandat D-12):**
 - Jurnal otomatis penjualan, void, retur, kas shift, dan selisih tutup shift sudah diposting oleh flow masing-masing (F-06–F-11) di transaksi yang sama (aturan #10). F-13a menambah pengelolaan dan laporannya di back-office; izin `akuntansi.kelola` (ubah) dan `laporan.keuangan.lihat` (lihat).
