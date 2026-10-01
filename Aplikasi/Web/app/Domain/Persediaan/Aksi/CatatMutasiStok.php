@@ -65,6 +65,9 @@ final class CatatMutasiStok
 
     private const UKURAN_POTONGAN = 500;
 
+    /** Sampai sebanyak ini pasangan produk-lokasi, saldo ditulis dengan UPDATE per baris (lihat `SimpanSaldo`). */
+    private const BATAS_UPDATE_PER_BARIS = 25;
+
     /** decimal(18,4): 14 digit bulat. */
     private const BATAS_JUMLAH = '100000000000000';
 
@@ -836,6 +839,35 @@ final class CatatMutasiStok
                 'DibuatPada' => $sekarang,
                 'DiubahPada' => $sekarang,
             ];
+        }
+
+        // Dokumen kecil (penjualan POS): baris sudah ada & terkunci L3, jadi cukup UPDATE per kunci unik. `INSERT … ON
+        // DUPLICATE KEY UPDATE` mengambil kunci celah/insert-intention pada indeks `IdMutasiStokTerakhir` yang nilainya
+        // selalu menjadi yang terbesar, dan terbukti deadlock di uji beban. Dokumen besar (stok awal, impor) tetap satu
+        // upsert per potongan agar jumlah kueri tidak membengkak.
+        if (count($baris) <= self::BATAS_UPDATE_PER_BARIS) {
+            foreach ($baris as $b) {
+                $diubah = SaldoStok::query()->toBase()
+                    ->where('IdTenant', $b['IdTenant'])->where('IdProduk', $b['IdProduk'])->where('IdGudang', $b['IdGudang'])
+                    ->update([
+                        'JumlahTersedia' => $b['JumlahTersedia'],
+                        'NilaiPersediaan' => $b['NilaiPersediaan'],
+                        'HppRataRata' => $b['HppRataRata'],
+                        'IdMutasiStokTerakhir' => $b['IdMutasiStokTerakhir'],
+                        'DiubahPada' => $b['DiubahPada'],
+                    ]);
+
+                if ($diubah === 0) {
+                    // Nilai persis sama dengan yang tersimpan, atau baris belum ada: upsert idempoten menutup keduanya.
+                    SaldoStok::query()->toBase()->upsert(
+                        [$b],
+                        ['IdTenant', 'IdProduk', 'IdGudang'],
+                        ['JumlahTersedia', 'NilaiPersediaan', 'HppRataRata', 'IdMutasiStokTerakhir', 'DiubahPada'],
+                    );
+                }
+            }
+
+            return;
         }
 
         foreach (array_chunk($baris, self::UKURAN_POTONGAN) as $potongan) {

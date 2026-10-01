@@ -77,7 +77,7 @@ jobs:
           CACHE_STORE: array
           QUEUE_CONNECTION: sync
           SESSION_DRIVER: array
-        run: vendor/bin/pest tests/Konkurensi
+        run: vendor/bin/pest tests/Konkurensi/KonkurensiTes.php
       - name: Siapkan tenant, perangkat, shift, dan produk (dicommit ke basis data)
         env:
           APP_ENV: testing
