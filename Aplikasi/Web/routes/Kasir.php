@@ -29,6 +29,7 @@ Route::middleware(SiapkanAuditTenant::class)->group(function () use ($izin, $uli
     Route::get('/kasir/shift', [ShiftKontroler::class, 'Daftar'])->middleware($lihat)->name('kelola.kasir.shift.daftar');
     Route::get('/kasir/shift/{shift}', [ShiftKontroler::class, 'Detail'])->middleware($lihat)->where('shift', $ulid)->name('kelola.kasir.shift.detail');
     Route::get('/kasir/mutasi-kas/{mutasiKas}', [ShiftKontroler::class, 'MutasiKas'])->middleware($lihat)->where('mutasiKas', $ulid)->name('kelola.kasir.mutasi-kas');
+    Route::get('/kasir/mutasi-kas/{mutasiKas}/bukti', [ShiftKontroler::class, 'BuktiKas'])->middleware($lihat)->where('mutasiKas', $ulid)->name('kelola.kasir.mutasi-kas.bukti');
 
     // F-15: tutup harian (End of Day) per outlet; menutup hari = tutup buku (`akuntansi.kelola`).
     Route::get('/kasir/tutup-harian', [TutupHarianKontroler::class, 'Tampilkan'])->middleware($lihat)->name('kelola.kasir.tutup-harian');

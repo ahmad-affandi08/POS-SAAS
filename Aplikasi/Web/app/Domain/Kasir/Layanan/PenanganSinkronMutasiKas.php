@@ -15,7 +15,7 @@ use Illuminate\Validation\Rule;
 
 /**
  * Item outbox `MutasiKas.Catat` (F-06): `{UuidShift, Jenis, UuidKategori?, Jumlah, Catatan?, UuidPencatat,
- * DicatatPada, UuidPenyetuju?}`.
+ * DicatatPada, UuidPenyetuju?, Bukti?}`. `Bukti` = foto bukti JPEG base64 (K-18), null/tanpa = tanpa foto.
  */
 final class PenanganSinkronMutasiKas implements PenanganItemSinkron
 {
@@ -37,6 +37,7 @@ final class PenanganSinkronMutasiKas implements PenanganItemSinkron
             'UuidPencatat' => ['required', 'string', 'ulid'],
             'DicatatPada' => ['required', 'string', 'regex:'.ValidasiItemSinkron::POLA_WAKTU, 'date'],
             'UuidPenyetuju' => ['nullable', 'string', 'ulid'],
+            'Bukti' => ['sometimes', 'nullable', 'string', 'max:'.((int) config('kasir.UkuranMaksimalBuktiKasKb') * 1400)],
         ]);
 
         $catatan = isset($valid['Catatan']) ? trim((string) $valid['Catatan']) : '';
@@ -52,6 +53,7 @@ final class PenanganSinkronMutasiKas implements PenanganItemSinkron
             uuidPencatat: (string) $valid['UuidPencatat'],
             dicatatPada: ValidasiItemSinkron::AmbilWaktu((string) $valid['DicatatPada']),
             uuidPenyetuju: isset($valid['UuidPenyetuju']) ? (string) $valid['UuidPenyetuju'] : null,
+            bukti: isset($valid['Bukti']) && $valid['Bukti'] !== '' ? (string) $valid['Bukti'] : null,
         ));
     }
 }

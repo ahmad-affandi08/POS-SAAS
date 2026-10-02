@@ -9,6 +9,7 @@ import 'package:kasir/Tampilan/Jual/UmpanBalikPindai.dart';
 import 'package:kasir/Aplikasi/AplikasiKasir.dart';
 import 'package:kasir/Aplikasi/Lingkungan.dart';
 import 'package:kasir/Aplikasi/Penyedia.dart';
+import 'package:kasir/Domain/Perangkat/KameraBukti.dart';
 import 'package:kasir/Domain/Perangkat/KameraSwafoto.dart';
 import 'package:kasir/Domain/Perangkat/LayananLayarPelanggan.dart';
 import 'package:kasir/Domain/Perangkat/PemindaiQr.dart';
@@ -27,6 +28,7 @@ Future<void> PasangAplikasi(
   Size ukuran = const Size(1280, 900),
   PenjagaLayarTiruan? penjagaLayar,
   KameraSwafoto? kamera,
+  KameraBukti? kameraBukti,
   PemindaiQr? pemindaiQr,
   UmpanBalikPindai? umpanBalikPindai,
 }) async {
@@ -47,6 +49,7 @@ Future<void> PasangAplikasi(
         penyediaPemverifikasiPin.overrideWithValue(const PemverifikasiPinTiruan()),
         penyediaPenjagaLayar.overrideWithValue(penjagaLayar ?? PenjagaLayarTiruan()),
         penyediaKameraSwafoto.overrideWithValue(kamera ?? KameraSwafotoTiruan(tersedia: false)),
+        penyediaKameraBukti.overrideWithValue(kameraBukti ?? KameraBuktiTiruan(tersedia: false)),
         penyediaPemindaiQr.overrideWithValue(pemindaiQr ?? PemindaiQrTiruan(tersedia: false)),
         penyediaPemindaiPrinter.overrideWithValue(u.pemindai),
         penyediaUmpanBalikPindai.overrideWithValue(umpanBalikPindai ?? const UmpanBalikPindai()),
@@ -154,6 +157,23 @@ class PemindaiQrTiruan implements PemindaiQr {
 
 class KameraSwafotoTiruan implements KameraSwafoto {
   KameraSwafotoTiruan({this.tersedia = true, this.foto});
+
+  final bool tersedia;
+  Uint8List? foto;
+  int dipanggil = 0;
+
+  @override
+  bool CekTersedia() => tersedia;
+
+  @override
+  Future<Uint8List?> Ambil() async {
+    dipanggil++;
+    return foto;
+  }
+}
+
+class KameraBuktiTiruan implements KameraBukti {
+  KameraBuktiTiruan({this.tersedia = true, this.foto});
 
   final bool tersedia;
   Uint8List? foto;

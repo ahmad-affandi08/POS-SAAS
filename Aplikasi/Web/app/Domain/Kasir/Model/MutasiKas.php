@@ -13,7 +13,8 @@ use LogicException;
 
 /**
  * Kas masuk/keluar/setoran non-penjualan dalam shift (PRD F-06 langkah 4, §15.3). Append-only: tidak diubah atau
- * dihapus setelah diterima, kecuali mengisi `IdJurnal` sekali dan `PathLampiran` sekali (unggahan bukti menyusul).
+ * dihapus setelah diterima, kecuali mengisi `IdJurnal` sekali dan `PathLampiran` sekali. `PathLampiran` = foto bukti
+ * kas (K-18) di disk privat; tidak pernah dikirim ke browser.
  * F-11: kas yang tiba setelah shift ditutup diterima dengan `PerluTinjauan` (`ShiftSudahDitutup`).
  *
  * @property int $Id
@@ -39,6 +40,8 @@ final class MutasiKas extends ModelDasar
     use MilikTenant;
 
     protected $table = 'MutasiKas';
+
+    protected $hidden = ['PathLampiran'];
 
     /**
      * @return array<string, string>

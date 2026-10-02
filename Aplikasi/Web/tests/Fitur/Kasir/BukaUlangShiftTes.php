@@ -9,10 +9,13 @@ use App\Domain\Bersama\Nilai\Uang;
 use App\Domain\Kasir\Enum\StatusShift;
 use App\Domain\Kasir\Model\BukaUlangShift;
 use App\Domain\Kasir\Model\Shift;
+use App\Domain\Organisasi\Enum\PeranTenantBawaan;
 use App\Domain\Organisasi\Model\Pengguna;
+use Inertia\Testing\AssertableInertia;
 use Tests\Pendukung\Kasir\BantuanKasir;
 use Tests\Pendukung\Organisasi\BantuanOrganisasi;
 use Tests\Pendukung\Penjualan\BantuanPenjualan;
+use Tests\Pendukung\Persediaan\BantuanPersediaan;
 use Tests\Pendukung\Persediaan\PemeriksaInvarian;
 use Tests\Pendukung\Tenant\BantuanPendaftaran;
 
@@ -99,6 +102,16 @@ it('buka ulang: snapshot & kolom tutup dikosongkan, jurnal selisih dibalik, tutu
     expect($shift->Status)->toBe(StatusShift::Tertutup)
         ->and(Uang::Dari((string) $shift->Selisih)->SamaDengan(Uang::Dari('-1000')))->toBeTrue()
         ->and(Jurnal::query()->where('JenisSumber', JenisSumberJurnal::TutupShift->value)->where('IdSumber', $shift->Id)->where('KunciSumber', 'Tutup-2')->sole()->TotalDebit)->toBe('1000.00');
+
+    // Back-office: riwayat buka ulang + jurnal selisih yang masih berlaku (bukan jurnal lama yang sudah dibalik).
+    $jurnalBaru = Jurnal::query()->where('JenisSumber', JenisSumberJurnal::TutupShift->value)->where('IdSumber', $shift->Id)->where('KunciSumber', 'Tutup-2')->sole();
+    BantuanPersediaan::MasukSebagai($this, $k['Tenant']->Id, PeranTenantBawaan::ManajerOutlet);
+    $this->get("/kelola/kasir/shift/{$k['UuidShift']}")->assertOk()->assertInertia(fn (AssertableInertia $h) => $h
+        ->has('BukaUlang', 1)
+        ->where('BukaUlang.0.Alasan', 'Lupa mencatat penjualan terakhir')
+        ->where('BukaUlang.0.DisetujuiOleh', $k['Supervisor']->Nama)
+        ->where('BukaUlang.0.KasAktualSebelumnya', '570000.00')
+        ->where('Tutup.NomorJurnal', $jurnalBaru->Nomor));
 
     // Shift yang belum ditutup tidak bisa dibuka ulang; invarian jurnal & stok terjaga.
     expect($kirim([ItemBukaUlangUji($k, $k['Supervisor'], waktu: now()->subMinute()->utc()->toIso8601ZuluString())]))->toBe([['Diterima', null]])

@@ -145,6 +145,7 @@ describe('F-06 halaman kasir back-office', () => {
                     NamaKategori: 'Beli es batu & galon',
                     Jumlah: '45000.00',
                     Catatan: 'Es batu 3 karung',
+                    AdaBukti: true,
                     DicatatOleh: 'Rina Wulandari',
                     DicatatPada: '2026-09-24T03:00:00Z',
                     DisetujuiOleh: 'Budi Santoso',
@@ -163,6 +164,20 @@ describe('F-06 halaman kasir back-office', () => {
                     DibukaPada: '2026-09-24T04:00:00Z',
                     PerluTinjauan: true,
                     AlasanTinjauan: 'PenyetujuTidakAda: buka laci wajib PIN penyetuju',
+                },
+            ],
+            BukaUlang: [
+                {
+                    Uuid: '01K5BUKAULANG0000000000001',
+                    Urutan: 1,
+                    Alasan: 'Salah tekan tutup, pelanggan masih antre',
+                    DimintaOleh: 'Rina Wulandari',
+                    DisetujuiOleh: 'Budi Santoso',
+                    DibukaUlangPada: '2026-09-24T09:05:00Z',
+                    DitutupOlehSebelumnya: 'Rina Wulandari',
+                    DitutupPadaSebelumnya: '2026-09-24T09:00:00Z',
+                    KasAktualSebelumnya: '448000.00',
+                    SelisihSebelumnya: '-7000.00',
                 },
             ],
             Penjualan: {
@@ -210,6 +225,14 @@ describe('F-06 halaman kasir back-office', () => {
         expect(screen.getByRole('link', { name: 'JU/2026/09/000007' }).getAttribute('href')).toBe(
             '/kelola/akuntansi/jurnal/01K5JURNAL0000000000000007',
         );
+        // K-18: foto bukti kas & riwayat buka ulang shift beserta hasil tutup yang dibatalkan.
+        expect(screen.getByRole('link', { name: 'Lihat foto bukti' }).getAttribute('href')).toBe(
+            '/kelola/kasir/mutasi-kas/01K5MUTASI0000000000000001/bukti',
+        );
+        const tabelBukaUlang = screen.getByRole('table', { name: 'Buka ulang shift' });
+        expect(within(tabelBukaUlang).getByText('Salah tekan tutup, pelanggan masih antre')).toBeTruthy();
+        expect(within(tabelBukaUlang).getByText('Diminta Rina Wulandari · disetujui Budi Santoso')).toBeTruthy();
+        expect(within(tabelBukaUlang).getByText(/Kas aktual Rp 448\.000/)).toBeTruthy();
 
         cleanup();
         RenderUji(
@@ -372,6 +395,7 @@ describe('F-06 halaman kasir back-office', () => {
             Shift: { ...barisShift, DiterimaPada: '2026-09-24T05:00:00Z', AlasanTinjauan: null, PecahanKasAwal: [] },
             MutasiKas: [],
             BukaLaci: [],
+            BukaUlang: [],
             Penjualan: { Daftar: [], DaftarTerpotong: false, JumlahTransaksi: 0, TotalPenjualan: '0.00' },
             Laporan: laporanShift,
             Tutup: null,

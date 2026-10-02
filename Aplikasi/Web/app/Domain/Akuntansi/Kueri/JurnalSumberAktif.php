@@ -16,14 +16,29 @@ final class JurnalSumberAktif
 {
     public function AmbilId(JenisSumberJurnal $jenis, int $idSumber): ?int
     {
-        $jurnal = Jurnal::query()
+        return $this->Cari($jenis, $idSumber)?->Id;
+    }
+
+    /**
+     * Nomor & Uuid jurnal yang masih berlaku untuk tautan di halaman detail dokumen sumber.
+     *
+     * @return array{Uuid: string, Nomor: string}|null
+     */
+    public function AmbilRingkas(JenisSumberJurnal $jenis, int $idSumber): ?array
+    {
+        $jurnal = $this->Cari($jenis, $idSumber);
+
+        return $jurnal === null ? null : ['Uuid' => $jurnal->Uuid, 'Nomor' => $jurnal->Nomor];
+    }
+
+    private function Cari(JenisSumberJurnal $jenis, int $idSumber): ?Jurnal
+    {
+        return Jurnal::query()
             ->where('JenisSumber', $jenis->value)
             ->where('IdSumber', $idSumber)
             ->whereNull('IdJurnalDibalik')
             ->whereNotExists(fn ($kueri) => $kueri->from('Jurnal', 'Pembalik')->whereColumn('Pembalik.IdJurnalDibalik', 'Jurnal.Id'))
             ->orderByDesc('Id')
-            ->first(['Id']);
-
-        return $jurnal?->Id;
+            ->first(['Id', 'Uuid', 'Nomor']);
     }
 }

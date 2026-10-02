@@ -11,7 +11,7 @@ import { FormatRupiah } from '@/Pustaka/Format';
 import { AmbilTandaDesimal, KurangiDesimal } from '@/Pustaka/HitungDesimal';
 import { FormatTanggal, FormatTanggalWaktu } from '@/Pustaka/FormatWaktu';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
-import type { BarisBukaLaci, LaporanShift, PropsDetailShift, TutupShift } from '@/Tipe/Kasir';
+import type { BarisBukaLaci, BarisBukaUlangShift, LaporanShift, PropsDetailShift, TutupShift } from '@/Tipe/Kasir';
 
 type MutasiKas = PropsDetailShift['MutasiKas'][number];
 
@@ -34,6 +34,16 @@ const kolom: KolomTabel<MutasiKas>[] = [
                 {m.NamaKategori ? <span className="block text-label text-teks-sekunder">{m.NamaKategori}</span> : null}
                 {m.Catatan ? (
                     <span className="block text-label break-words text-teks-sekunder">{m.Catatan}</span>
+                ) : null}
+                {m.AdaBukti ? (
+                    <a
+                        href={`/kelola/kasir/mutasi-kas/${m.Uuid}/bukti`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="block text-label font-semibold text-brand underline"
+                    >
+                        Lihat foto bukti
+                    </a>
                 ) : null}
                 {m.PerluTinjauan ? (
                     <span className="block text-label text-bahaya">
@@ -120,6 +130,48 @@ const kolomBukaLaci: KolomTabel<BarisBukaLaci>[] = [
                 {b.DisetujuiOleh ? (
                     <span className="block text-label text-teks-sekunder">Disetujui {b.DisetujuiOleh}</span>
                 ) : null}
+            </>
+        ),
+    },
+];
+
+const kolomBukaUlang: KolomTabel<BarisBukaUlangShift>[] = [
+    {
+        id: 'DibukaUlangPada',
+        accessorKey: 'DibukaUlangPada',
+        header: 'Waktu',
+        meta: { label: 'Waktu', prioritas: 'penting', kelasSel: 'whitespace-nowrap text-teks-sekunder' },
+        cell: ({ row }) => FormatTanggalWaktu(row.original.DibukaUlangPada),
+    },
+    {
+        id: 'Alasan',
+        accessorKey: 'Alasan',
+        header: 'Alasan',
+        meta: { label: 'Alasan', prioritas: 'utama', wajib: true },
+        cell: ({ row: { original: b } }) => (
+            <>
+                <span className="block break-words text-teks-utama">{b.Alasan}</span>
+                <span className="block text-label text-teks-sekunder">
+                    Diminta {b.DimintaOleh} · disetujui {b.DisetujuiOleh}
+                </span>
+            </>
+        ),
+    },
+    {
+        id: 'TutupSebelumnya',
+        header: 'Tutup yang dibatalkan',
+        enableSorting: false,
+        meta: { label: 'Tutup yang dibatalkan', prioritas: 'penting' },
+        cell: ({ row: { original: b } }) => (
+            <>
+                <span className="block tabular-nums">
+                    Kas aktual {b.KasAktualSebelumnya === null ? '—' : FormatRupiah(b.KasAktualSebelumnya)}
+                </span>
+                <span className="block text-label text-teks-sekunder tabular-nums">
+                    Selisih {b.SelisihSebelumnya === null ? '—' : FormatRupiah(b.SelisihSebelumnya)}
+                    {b.DitutupOlehSebelumnya ? ` · ditutup ${b.DitutupOlehSebelumnya}` : ''}
+                    {b.DitutupPadaSebelumnya ? ` ${FormatTanggalWaktu(b.DitutupPadaSebelumnya)}` : ''}
+                </span>
             </>
         ),
     },
@@ -334,12 +386,13 @@ function BagianTutup({ tutup }: { tutup: TutupShift }) {
 /**
  * F-06: detail shift (baca saja): pembukaan, pecahan kas awal, ringkasan kas non-penjualan, dan mutasi kas.
  * F-07b: penjualan yang dibuat di shift ini. F-11: laporan shift X/Z dan hasil tutup shift. Cetak struk bagian 4:
- * log buka laci manual tanpa transaksi.
+ * log buka laci manual tanpa transaksi. K-18: riwayat buka ulang shift dan tautan foto bukti kas.
  */
 export default function HalamanDetailShift({
     Shift,
     MutasiKas,
     BukaLaci,
+    BukaUlang,
     Penjualan,
     Laporan,
     Tutup,
@@ -400,6 +453,20 @@ export default function HalamanDetailShift({
             </Card>
 
             {Tutup ? <BagianTutup tutup={Tutup} /> : null}
+            {BukaUlang.length > 0 ? (
+                <>
+                    <h2 className="text-subjudul font-semibold text-teks-utama">Buka ulang shift</h2>
+                    <TabelData
+                        id="kasir-shift-buka-ulang"
+                        label="Buka ulang shift"
+                        kolom={kolomBukaUlang}
+                        sumber={{ mode: 'lokal', data: BukaUlang }}
+                        ambilIdBaris={(b) => b.Uuid}
+                        urutBawaan="DibukaUlangPada"
+                        kosong={{ judul: 'Shift ini tidak pernah dibuka ulang.' }}
+                    />
+                </>
+            ) : null}
             <BagianLaporan laporan={Laporan} tertutup={Tutup !== null} />
 
             <h2 className="text-subjudul font-semibold text-teks-utama">Kas masuk, keluar & setoran</h2>

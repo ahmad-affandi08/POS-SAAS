@@ -8,6 +8,7 @@ use App\Domain\Bersama\Tabel\Data\DataPermintaanTabel;
 use App\Domain\Kasir\Enum\StatusShift;
 use App\Domain\Kasir\Kueri\DaftarShift;
 use App\Domain\Kasir\Kueri\DetailShift;
+use App\Domain\Kasir\Layanan\PenyimpanBuktiKas;
 use App\Domain\Organisasi\Kueri\PetaUuidOutlet;
 use App\Http\Kontroler\Kelola\DasarKelolaKontroler;
 use App\Http\Respons\ResponsTabel;
@@ -16,6 +17,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * Halaman shift kasir (baca saja, F-06), izin `laporan.penjualan.lihat`. Shift tenant lain atau di outlet di luar
@@ -54,5 +56,11 @@ final class ShiftKontroler extends DasarKelolaKontroler
         abort_if($uuidShift === null, 404);
 
         return to_route('kelola.kasir.shift.detail', ['shift' => $uuidShift]);
+    }
+
+    /** K-18: foto bukti kas masuk/keluar (disk privat), hanya untuk mutasi di outlet yang boleh diakses. */
+    public function BuktiKas(string $mutasiKas, DetailShift $detail, PenyimpanBuktiKas $penyimpan): StreamedResponse
+    {
+        return $penyimpan->Unduh($detail->CariPathBuktiKas($mutasiKas, $this->IdOutletBoleh()));
     }
 }

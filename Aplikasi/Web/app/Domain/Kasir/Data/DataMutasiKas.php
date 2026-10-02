@@ -10,7 +10,7 @@ use Carbon\CarbonImmutable;
 
 /**
  * Masukan `CatatMutasiKas` (F-06 langkah 4) dari item outbox `MutasiKas.Catat`. `uuidPenyetuju` = supervisor yang
- * memasukkan PIN di perangkat untuk kas keluar di atas batas (BR-06.4).
+ * memasukkan PIN di perangkat untuk kas keluar di atas batas (BR-06.4). `bukti` = foto bukti JPEG base64 (K-18, opsional).
  */
 final readonly class DataMutasiKas
 {
@@ -25,5 +25,6 @@ final readonly class DataMutasiKas
         public string $uuidPencatat,
         public CarbonImmutable $dicatatPada,
         public ?string $uuidPenyetuju,
+        public ?string $bukti = null,
     ) {}
 }

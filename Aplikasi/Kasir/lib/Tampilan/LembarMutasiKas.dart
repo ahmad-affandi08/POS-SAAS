@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -48,6 +49,14 @@ class _LembarMutasiKasState extends ConsumerState<LembarMutasiKas> {
   String? _uuidKategori;
   bool _sibuk = false;
   String? _galat;
+  Uint8List? _bukti;
+
+  Future<void> _AmbilBukti() async {
+    final foto = await ref.read(penyediaKameraBukti).Ambil();
+    if (foto != null && mounted) {
+      setState(() => _bukti = foto);
+    }
+  }
 
   @override
   void dispose() {
@@ -94,6 +103,7 @@ class _LembarMutasiKasState extends ConsumerState<LembarMutasiKas> {
         uuidKategori: _uuidKategori,
         catatan: _catatan.text,
         penyetuju: penyetuju,
+        bukti: _bukti,
       );
       final sesi = ref.read(penyediaSesi.notifier);
       if (mounted) {
@@ -114,6 +124,7 @@ class _LembarMutasiKasState extends ConsumerState<LembarMutasiKas> {
   @override
   Widget build(BuildContext context) {
     final kategori = widget.jenis == JenisMutasi.setoran ? null : ref.watch(penyediaKategori(widget.jenis));
+    final bisaFoto = widget.jenis != JenisMutasi.setoran && ref.watch(penyediaKameraBukti).CekTersedia();
     return Padding(
       padding: const EdgeInsets.all(TokenJarak.jarak24),
       child: Column(
@@ -148,6 +159,30 @@ class _LembarMutasiKasState extends ConsumerState<LembarMutasiKas> {
             maxLength: 255,
             decoration: const InputDecoration(labelText: 'Catatan (opsional)', border: OutlineInputBorder()),
           ),
+          if (bisaFoto) ...[
+            if (_bukti case final foto?)
+              Row(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(TokenJarak.radiusKontrol),
+                    child: Image.memory(foto, width: 56, height: 56, fit: BoxFit.cover),
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(child: Text('Foto bukti terlampir')),
+                  TextButton(
+                    onPressed: _sibuk ? null : () => setState(() => _bukti = null),
+                    child: const Text('Hapus'),
+                  ),
+                ],
+              )
+            else
+              OutlinedButton.icon(
+                onPressed: _sibuk ? null : _AmbilBukti,
+                icon: const Icon(Icons.photo_camera_outlined),
+                label: const Text('Foto bukti / nota (opsional)'),
+              ),
+            const SizedBox(height: 8),
+          ],
           const SizedBox(height: 8),
           SizedBox(
             height: 56,

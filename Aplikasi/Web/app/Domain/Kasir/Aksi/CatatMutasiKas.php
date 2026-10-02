@@ -13,6 +13,7 @@ use App\Domain\Bersama\Tenant\KonteksTenant;
 use App\Domain\Kasir\Data\DataMutasiKas;
 use App\Domain\Kasir\Enum\JenisMutasiKas;
 use App\Domain\Kasir\Enum\StatusShift;
+use App\Domain\Kasir\Layanan\PenyimpanBuktiKas;
 use App\Domain\Kasir\Layanan\PenyusunJurnalMutasiKas;
 use App\Domain\Kasir\Model\KategoriKas;
 use App\Domain\Kasir\Model\MutasiKas;
@@ -25,6 +26,7 @@ use App\Domain\Tenant\Kueri\PengaturanKasirTenant;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
+use Throwable;
 
 /**
  * F-06 langkah 4: kas masuk/keluar/setoran non-penjualan dalam shift diterima server lewat sinkron.
@@ -38,6 +40,8 @@ use Illuminate\Support\Facades\DB;
  * - BR-06.4: kas keluar di atas batas (`PengaturanKasirTenant`, bawaan Rp 200.000) wajib `UuidPenyetuju` yang punya
  *   izin `kas.keluar.setujui` di outlet itu. PIN diperiksa di perangkat; server memeriksa kewenangannya.
  * - Jurnal (J-06.1 / kas masuk / J-11.3) diposting sinkron di transaksi yang sama (aturan #10).
+ * - K-18: foto bukti opsional (bukan untuk setoran) disimpan sebelum transaksi; dihapus lagi bila item ditolak atau
+ *   ternyata duplikat.
  */
 final class CatatMutasiKas
 {
@@ -53,6 +57,7 @@ final class CatatMutasiKas
         private readonly PenyusunJurnalMutasiKas $penyusun,
         private readonly PostingJurnal $postingJurnal,
         private readonly PencatatAudit $audit,
+        private readonly PenyimpanBuktiKas $bukti,
     ) {}
 
     public function Jalankan(DataMutasiKas $data): StatusItemSinkron
@@ -65,18 +70,39 @@ final class CatatMutasiKas
             throw new PelanggaranAturanBisnis('WaktuTidakValid', 'Waktu pencatatan ada di masa depan. Periksa jam perangkat.', 'DicatatPada');
         }
 
-        try {
-            return DB::transaction(fn (): StatusItemSinkron => $this->Proses($data));
-        } catch (QueryException $galat) {
-            if (($galat->errorInfo[1] ?? null) === 1062) {
-                throw new PelanggaranAturanBisnis('UuidSudahDipakai', 'Kode unik mutasi kas ini sudah dipakai. Catat ulang di aplikasi.', 'Uuid');
-            }
-
-            throw $galat;
+        if ($data->bukti !== null && $data->jenis === JenisMutasiKas::Setoran) {
+            throw new PelanggaranAturanBisnis('BuktiTidakValid', 'Setoran tidak memakai foto bukti.', 'Bukti');
         }
+
+        $path = $data->bukti === null ? null : $this->bukti->Simpan($this->konteks->Wajib(), $data->bukti);
+
+        try {
+            $status = DB::transaction(fn (): StatusItemSinkron => $this->Proses($data, $path));
+        } catch (Throwable $galat) {
+            $this->bukti->Hapus($path);
+
+            throw $this->TerjemahkanGalat($galat);
+        }
+
+        if ($status !== StatusItemSinkron::Diterima) {
+            $this->bukti->Hapus($path);
+        }
+
+        return $status;
     }
 
-    private function Proses(DataMutasiKas $data): StatusItemSinkron
+    private function TerjemahkanGalat(Throwable $galat): Throwable
+    {
+        if ($galat instanceof QueryException) {
+            if (($galat->errorInfo[1] ?? null) === 1062) {
+                return new PelanggaranAturanBisnis('UuidSudahDipakai', 'Kode unik mutasi kas ini sudah dipakai. Catat ulang di aplikasi.', 'Uuid');
+            }
+        }
+
+        return $galat;
+    }
+
+    private function Proses(DataMutasiKas $data, ?string $pathBukti): StatusItemSinkron
     {
         $idTenant = $this->konteks->Wajib();
         $shift = Shift::query()->where('Uuid', $data->uuidShift)->where('IdPerangkat', $data->idPerangkat)->lockForUpdate()->first();
@@ -127,6 +153,7 @@ final class CatatMutasiKas
             'IdKategoriKas' => $kategori?->Id,
             'Jumlah' => $data->jumlah->KeString(),
             'Catatan' => $data->catatan,
+            'PathLampiran' => $pathBukti,
             'DicatatOleh' => $pencatat->id,
             'DicatatPada' => $data->dicatatPada,
             'TanggalBisnis' => $this->tanggalBisnis->Hitung($shift->IdOutlet, $data->dicatatPada)->toDateString(),
@@ -145,6 +172,7 @@ final class CatatMutasiKas
             'Jumlah' => $data->jumlah->KeString(),
             'Kategori' => $kategori?->Nama,
             'DisetujuiOleh' => $penyetuju?->nama,
+            'AdaBukti' => $pathBukti !== null,
         ], idPengguna: $pencatat->id);
 
         return StatusItemSinkron::Diterima;

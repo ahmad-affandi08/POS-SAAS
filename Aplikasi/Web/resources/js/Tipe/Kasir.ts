@@ -48,6 +48,8 @@ export type BarisMutasiKas = {
     NamaKategori: string | null;
     Jumlah: string;
     Catatan: string | null;
+    /** K-18: ada foto bukti dari kasir (`/kelola/kasir/mutasi-kas/{uuid}/bukti`). */
+    AdaBukti: boolean;
     DicatatOleh: string;
     DicatatPada: string;
     DisetujuiOleh: string | null;
@@ -56,6 +58,20 @@ export type BarisMutasiKas = {
     /** F-11: kas yang tiba setelah shift ditutup. */
     PerluTinjauan: boolean;
     AlasanTinjauan: string | null;
+};
+
+/** K-18: buka ulang shift oleh supervisor beserta hasil tutup yang dibatalkan. */
+export type BarisBukaUlangShift = {
+    Uuid: string;
+    Urutan: number;
+    Alasan: string;
+    DimintaOleh: string;
+    DisetujuiOleh: string;
+    DibukaUlangPada: string;
+    DitutupOlehSebelumnya: string | null;
+    DitutupPadaSebelumnya: string | null;
+    KasAktualSebelumnya: string | null;
+    SelisihSebelumnya: string | null;
 };
 
 /** Cetak struk bagian 4: buka laci manual tanpa transaksi (§19.2 selalu dicatat). */
@@ -134,6 +150,7 @@ export type PropsDetailShift = {
     };
     MutasiKas: BarisMutasiKas[];
     BukaLaci: BarisBukaLaci[];
+    BukaUlang: BarisBukaUlangShift[];
     /** F-07b: penjualan yang dibuat di shift ini. */
     Penjualan: PenjualanShift;
     Laporan: LaporanShift;

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:drift/drift.dart' show Value;
 import 'package:inti/Inti.dart';
@@ -109,6 +110,9 @@ class LayananShift {
     return (await repositori.AmbilShiftAktif())!;
   }
 
+  /// Batas ukuran foto bukti kas (sama dengan server `kasir.UkuranMaksimalBuktiKasKb`, K-18).
+  static const int ukuranMaksimalBuktiKb = 400;
+
   /// Panjang alasan buka ulang minimal (sama dengan server, K-18).
   static const int panjangAlasanBukaUlangMinimal = 5;
 
@@ -192,6 +196,7 @@ class LayananShift {
     String? uuidKategori,
     String? catatan,
     StafLokal? penyetuju,
+    Uint8List? bukti,
   }) async {
     if (jumlah.Bandingkan(Uang.Nol()) <= 0) {
       throw const GalatKasir('JumlahTidakValid', 'Jumlah kas harus lebih dari Rp 0.');
@@ -228,6 +233,13 @@ class LayananShift {
       throw GalatKasir('PenyetujuTidakBerwenang', '${penyetuju.nama} tidak punya izin menyetujui kas keluar.');
     }
 
+    if (bukti != null && jenis == JenisMutasi.setoran) {
+      throw const GalatKasir('BuktiTidakValid', 'Setoran tidak memakai foto bukti.');
+    }
+    if (bukti != null && bukti.length > ukuranMaksimalBuktiKb * 1024) {
+      throw const GalatKasir('BuktiTerlaluBesar', 'Foto bukti terlalu besar. Ambil ulang fotonya.');
+    }
+
     final sekarang = _jam().toUtc();
     final uuid = _ulid.Buat();
     final catatanRapi = catatan?.trim();
@@ -258,6 +270,7 @@ class LayananShift {
           'UuidPencatat': pencatat.uuid,
           'DicatatPada': sekarang.toIso8601String(),
           'UuidPenyetuju': penyetuju?.uuid,
+          'Bukti': ?(bukti == null ? null : base64Encode(bukti)),
         },
       ),
       sekarang,

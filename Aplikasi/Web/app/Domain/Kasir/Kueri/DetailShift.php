@@ -6,7 +6,9 @@ namespace App\Domain\Kasir\Kueri;
 
 use App\Domain\Akuntansi\Enum\JenisSumberJurnal;
 use App\Domain\Akuntansi\Kueri\JurnalSumber;
+use App\Domain\Akuntansi\Kueri\JurnalSumberAktif;
 use App\Domain\Kasir\Model\BukaLaci;
+use App\Domain\Kasir\Model\BukaUlangShift;
 use App\Domain\Kasir\Model\KategoriKas;
 use App\Domain\Kasir\Model\MutasiKas;
 use App\Domain\Kasir\Model\Shift;
@@ -19,7 +21,8 @@ use App\Domain\Penjualan\Kueri\DaftarPenjualan;
  * Detail shift back-office (F-06): data pembukaan, pecahan kas awal, ringkasan kas non-penjualan, dan daftar mutasi
  * kas beserta kategori, pencatat, penyetuju, dan jurnalnya. F-07b: penjualan shift (lewat kueri publik Penjualan).
  * F-11: laporan shift X/Z (`LaporanShift`) dan data tutup shift (kas seharusnya/aktual/selisih, alasan, penyetuju,
- * pecahan, non-tunai per metode vs sistem, jurnal selisih). Shift tenant lain atau di outlet di luar akses = null.
+ * pecahan, non-tunai per metode vs sistem, jurnal selisih yang masih berlaku). K-18: riwayat buka ulang (alasan, peminta,
+ * penyetuju, salinan hasil tutup sebelumnya) dan tanda foto bukti kas. Shift tenant lain atau di luar akses = null.
  */
 final class DetailShift
 {
@@ -30,6 +33,7 @@ final class DetailShift
         private readonly JurnalSumber $jurnal,
         private readonly DaftarPenjualan $penjualan,
         private readonly LaporanShift $laporan,
+        private readonly JurnalSumberAktif $jurnalAktif,
     ) {}
 
     /**
@@ -46,6 +50,7 @@ final class DetailShift
 
         $mutasi = MutasiKas::query()->where('IdShift', $shift->Id)->orderBy('DicatatPada')->orderBy('Id')->get();
         $bukaLaci = BukaLaci::query()->where('IdShift', $shift->Id)->orderBy('DibukaPada')->orderBy('Id')->get();
+        $bukaUlang = BukaUlangShift::query()->where('IdShift', $shift->Id)->orderBy('Urutan')->get();
         $kategori = KategoriKas::query()->whereIn('Id', $mutasi->pluck('IdKategoriKas')->filter()->all())->get()->keyBy('Id');
         $nama = $this->anggota->AmbilNama(array_values(array_filter([
             $shift->DibukaOleh,
@@ -55,6 +60,9 @@ final class DetailShift
             ...$mutasi->pluck('DisetujuiOleh')->filter()->all(),
             ...$bukaLaci->pluck('DibukaOleh')->all(),
             ...$bukaLaci->pluck('DisetujuiOleh')->filter()->all(),
+            ...$bukaUlang->pluck('DimintaOleh')->all(),
+            ...$bukaUlang->pluck('DisetujuiOleh')->all(),
+            ...$bukaUlang->map(fn (BukaUlangShift $b): ?int => $b->SnapshotTutup['DitutupOleh'] ?? null)->filter()->all(),
         ])));
         $total = DaftarShift::AmbilTotalMutasi([$shift->Id])[$shift->Id] ?? [];
 
@@ -85,6 +93,7 @@ final class DetailShift
                     'NamaKategori' => $m->IdKategoriKas === null ? null : $kategori->get($m->IdKategoriKas)?->Nama,
                     'Jumlah' => $m->Jumlah,
                     'Catatan' => $m->Catatan,
+                    'AdaBukti' => $m->PathLampiran !== null,
                     'DicatatOleh' => $nama[$m->DicatatOleh]['Nama'] ?? '',
                     'DicatatPada' => $m->DicatatPada->toIso8601String(),
                     'DisetujuiOleh' => $m->DisetujuiOleh === null ? null : ($nama[$m->DisetujuiOleh]['Nama'] ?? ''),
@@ -103,6 +112,19 @@ final class DetailShift
                 'DibukaPada' => $b->DibukaPada->toIso8601String(),
                 'PerluTinjauan' => $b->PerluTinjauan,
                 'AlasanTinjauan' => $b->AlasanTinjauan,
+            ])->all()),
+            // K-18: buka ulang shift oleh supervisor, beserta hasil tutup yang dibatalkan.
+            'BukaUlang' => array_values($bukaUlang->map(fn (BukaUlangShift $b): array => [
+                'Uuid' => $b->Uuid,
+                'Urutan' => $b->Urutan,
+                'Alasan' => $b->Alasan,
+                'DimintaOleh' => $nama[$b->DimintaOleh]['Nama'] ?? '',
+                'DisetujuiOleh' => $nama[$b->DisetujuiOleh]['Nama'] ?? '',
+                'DibukaUlangPada' => $b->DibukaUlangPada->toIso8601String(),
+                'DitutupOlehSebelumnya' => isset($b->SnapshotTutup['DitutupOleh']) ? ($nama[$b->SnapshotTutup['DitutupOleh']]['Nama'] ?? '') : null,
+                'DitutupPadaSebelumnya' => $b->SnapshotTutup['DitutupPada'] ?? null,
+                'KasAktualSebelumnya' => $b->SnapshotTutup['KasAktual'] ?? null,
+                'SelisihSebelumnya' => $b->SnapshotTutup['Selisih'] ?? null,
             ])->all()),
             'Penjualan' => $this->penjualan->AmbilUntukShift($shift->Id),
             // F-11: laporan X (shift berjalan) / Z (shift tertutup) dari data server saat ini.
@@ -123,7 +145,8 @@ final class DetailShift
             return null;
         }
 
-        $jurnal = $this->jurnal->Ambil(JenisSumberJurnal::TutupShift, $shift->Id)[0] ?? null;
+        // K-18: setelah buka ulang, jurnal selisih lama sudah dibalik; tampilkan yang masih berlaku saja.
+        $jurnal = $this->jurnalAktif->AmbilRingkas(JenisSumberJurnal::TutupShift, $shift->Id);
 
         return [
             'DitutupOleh' => $shift->DitutupOleh === null ? '' : ($nama[$shift->DitutupOleh]['Nama'] ?? ''),
@@ -155,5 +178,17 @@ final class DetailShift
         }
 
         return $shift->Uuid;
+    }
+
+    /**
+     * Path foto bukti kas (K-18); null bila tidak ada, tanpa foto, atau di luar akses.
+     *
+     * @param  list<int>|null  $idOutletBoleh
+     */
+    public function CariPathBuktiKas(string $uuidMutasi, ?array $idOutletBoleh): ?string
+    {
+        $mutasi = MutasiKas::query()->where('Uuid', $uuidMutasi)->first();
+
+        return $mutasi === null || $this->CariUuidShiftDariMutasi($uuidMutasi, $idOutletBoleh) === null ? null : $mutasi->PathLampiran;
     }
 }
