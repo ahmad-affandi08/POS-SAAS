@@ -8,6 +8,7 @@ use App\Domain\Bersama\Audit\Layanan\PencatatAudit;
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Bersama\Tenant\KonteksTenant;
 use App\Domain\Katalog\Data\DataProduk;
+use App\Domain\Katalog\Enum\GolonganObat;
 use App\Domain\Katalog\Enum\JenisProduk;
 use App\Domain\Katalog\Enum\PelacakanProduk;
 use App\Domain\Katalog\Enum\SumberPerubahanKatalog;
@@ -34,6 +35,9 @@ use Illuminate\Support\Facades\DB;
  * - Aturan jenis (C.1); IndukVarian menyimpan definisi atribut dan meneruskan kategori, merek, pajak, dan tampilan ke
  *   anak-anaknya saat diubah.
  * - F-05a: `Pelacakan` tidak bisa diubah setelah produk punya riwayat stok (`PelacakanTerkunci`).
+ * - Apotek (§9.5): produk bergolongan obat wajib berpelacakan Batch & kedaluwarsa (`GolonganObatWajibBatch`, termasuk
+ *   obat bebas: PRD "batch & expired wajib") dan berjenis yang punya stok (`GolonganObatTidakDidukung`). OWA hanya
+ *   untuk obat keras; prekursor hanya untuk produk bergolongan.
  * Urutan kunci: Tenant → Langganan (batas paket) → baris produk → satuan & barcode.
  */
 final class SimpanProduk
@@ -103,6 +107,7 @@ final class SimpanProduk
             : $produk?->AtributVarian;
         $rencanaSatuan = $this->penyelaras->Periksa($produk, $data->idSatuanDasar, $data->satuan, $data->bolehUbahHarga);
         $sku = $this->aturan->TentukanSku($data->sku, $produk?->Id);
+        [$golonganObat, $obatWajibApotek, $prekursor] = self::TentukanObat($data, $produk, $pelacakan);
 
         $lama = $produk === null ? null : RingkasanAuditProduk::Ambil($produk);
         $baru = $produk === null;
@@ -131,6 +136,9 @@ final class SimpanProduk
             'MasaGaransiBulan' => $pelacakan === PelacakanProduk::Seri
                 ? ($data->sumber === SumberPerubahanKatalog::Manual ? $data->masaGaransiBulan : $produk->MasaGaransiBulan)
                 : null,
+            'GolonganObat' => $golonganObat,
+            'ObatWajibApotek' => $obatWajibApotek,
+            'Prekursor' => $prekursor,
         ])->save();
 
         $this->penyelaras->Terapkan($produk, $rencanaSatuan, $data->sumber->value);
@@ -158,6 +166,33 @@ final class SimpanProduk
         if ($alasan !== null) {
             throw new PelanggaranAturanBisnis('SatuanDasarTerkunci', "Satuan dasar tidak bisa diganti karena produk {$alasan}.", 'UuidSatuanDasar');
         }
+    }
+
+    /**
+     * Apotek (§9.5): isian obat efektif (isian baru, atau yang tersimpan bila sumbernya tidak membawa isian obat).
+     *
+     * @return array{0: GolonganObat|null, 1: bool, 2: bool}
+     */
+    private static function TentukanObat(DataProduk $data, ?Produk $produk, PelacakanProduk $pelacakan): array
+    {
+        $golongan = $data->obat !== null ? $data->obat->golongan : $produk?->GolonganObat;
+
+        if ($golongan === null) {
+            return [null, false, false];
+        }
+
+        if (! $data->jenis->CekBolehPelacakan()) {
+            throw new PelanggaranAturanBisnis('GolonganObatTidakDidukung', "Golongan obat hanya untuk produk yang punya stok, bukan {$data->jenis->AmbilLabel()}.", 'GolonganObat');
+        }
+
+        if ($pelacakan !== PelacakanProduk::Batch) {
+            throw new PelanggaranAturanBisnis('GolonganObatWajibBatch', 'Obat wajib memakai pelacakan Batch & kedaluwarsa supaya FEFO dan laporan kedaluwarsa berjalan.', 'Pelacakan');
+        }
+
+        $owa = $data->obat !== null ? $data->obat->obatWajibApotek : (bool) $produk?->ObatWajibApotek;
+        $prekursor = $data->obat !== null ? $data->obat->prekursor : (bool) $produk?->Prekursor;
+
+        return [$golongan, $owa && $golongan->CekBolehObatWajibApotek(), $prekursor];
     }
 
     private static function KosongJadiNull(?string $nilai): ?string

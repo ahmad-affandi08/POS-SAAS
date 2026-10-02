@@ -6,6 +6,7 @@ namespace App\Domain\Katalog\Model;
 
 use App\Domain\Bersama\Model\ModelDasar;
 use App\Domain\Bersama\Tenant\MilikTenant;
+use App\Domain\Katalog\Enum\GolonganObat;
 use App\Domain\Katalog\Enum\JenisProduk;
 use App\Domain\Katalog\Enum\PelacakanProduk;
 use App\Domain\Katalog\Enum\StatusProduk;
@@ -46,6 +47,9 @@ use Illuminate\Support\Carbon;
  * @property bool $TampilOnline
  * @property bool $HargaTerbuka
  * @property int|null $DurasiMenit F-07 mode service: lama layanan jasa untuk slot reservasi
+ * @property GolonganObat|null $GolonganObat Apotek (§9.5): golongan obat; null = bukan obat
+ * @property bool $ObatWajibApotek Apotek: obat keras yang boleh diserahkan apoteker tanpa resep (OWA)
+ * @property bool $Prekursor Apotek: penanda prekursor farmasi (opsional)
  * @property string|null $PathGambar
  * @property Carbon|null $DiarsipkanPada
  * @property Carbon|null $DihapusPada
@@ -88,9 +92,18 @@ final class Produk extends ModelDasar
         'MasaGaransiBulan' => null,
         'KodeBarangJasaCoretax' => null,
         'KodeUnitCoretax' => null,
+        'GolonganObat' => null,
+        'ObatWajibApotek' => false,
+        'Prekursor' => false,
         'PathGambar' => null,
         'DiarsipkanPada' => null,
     ];
+
+    /** Apotek (§9.5): wajib resep dokter = turunan golongan & OWA, tidak disimpan. */
+    public function CekWajibResep(): bool
+    {
+        return GolonganObat::HitungWajibResep($this->GolonganObat, $this->ObatWajibApotek);
+    }
 
     /**
      * @return BelongsTo<Produk, $this>
@@ -170,6 +183,9 @@ final class Produk extends ModelDasar
             'HargaTerbuka' => 'boolean',
             'DurasiMenit' => 'integer',
             'MasaGaransiBulan' => 'integer',
+            'GolonganObat' => GolonganObat::class,
+            'ObatWajibApotek' => 'boolean',
+            'Prekursor' => 'boolean',
             'DiarsipkanPada' => 'datetime',
         ];
     }

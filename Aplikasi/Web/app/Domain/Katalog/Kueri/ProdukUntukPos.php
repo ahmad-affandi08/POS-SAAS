@@ -81,6 +81,11 @@ final class ProdukUntukPos implements BagianKatalogPos
                 'TampilOnline' => $p->TampilOnline,
                 // K-25: kasir mengetik harga per transaksi (harga daftar jadi saran).
                 'HargaTerbuka' => $p->HargaTerbuka,
+                // Apotek (§9.5): golongan obat & wajib resep (kasir meminta resep/apoteker sebelum bayar).
+                'GolonganObat' => $p->GolonganObat?->value,
+                'ObatWajibApotek' => $p->ObatWajibApotek,
+                'Prekursor' => $p->Prekursor,
+                'WajibResep' => $p->CekWajibResep(),
                 'UuidInduk' => $p->IdInduk === null ? null : $uuidProduk->get($p->IdInduk),
                 'AtributVarian' => $p->AtributVarian,
                 'UrlGambar' => PenyimpanGambarProduk::BuatUrl($p, 'besar', $dasarGambar),

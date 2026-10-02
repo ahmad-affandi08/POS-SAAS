@@ -8,7 +8,9 @@ use App\Domain\Akuntansi\Data\DataAkunTemplate;
 use App\Domain\Akuntansi\Enum\PeranAkun;
 use App\Domain\Akuntansi\Enum\SaldoNormal;
 use App\Domain\Akuntansi\Enum\TipeAkun;
+use App\Domain\Katalog\Enum\GolonganObat;
 use App\Domain\Katalog\Enum\JenisProduk;
+use App\Domain\Katalog\Enum\PelacakanProduk;
 use App\Domain\Pajak\Data\DataKelompokPajakTemplate;
 use App\Domain\PanduanAwal\Data\DataIsiTemplate;
 use App\Domain\PanduanAwal\Data\DataPengaturanTemplate;
@@ -183,6 +185,8 @@ final class PembacaIsiTemplate
                 harga: $produk['Harga'],
                 kodeSatuan: $produk['KodeSatuan'],
                 jenis: $jenis,
+                pelacakan: $jenis === JenisProduk::Stok && ($produk['Pelacakan'] ?? null) === PelacakanProduk::Batch->value ? PelacakanProduk::Batch : PelacakanProduk::Tidak,
+                golonganObat: $jenis === JenisProduk::Stok && is_string($produk['GolonganObat'] ?? null) ? GolonganObat::tryFrom($produk['GolonganObat']) : null,
             );
         }
 

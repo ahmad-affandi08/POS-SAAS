@@ -274,6 +274,7 @@ describe('v3.80 template sektor tambahan', function (): void {
         ['FNB-BAK', 'Retail', 'Kue ulang tahun'],
         ['RTL-FSH', 'Retail', 'Hijab & kerudung'],
         ['RTL-ELC', 'Retail', 'Jasa servis'],
+        ['RTL-PHR', 'Retail', 'Obat keras'],
         ['RTL-BLD', 'Retail', 'Besi & baja'],
         ['WHS-DST', 'Grosir', 'Sembako'],
         ['SVC-SLN', 'Layanan', 'Perawatan rambut'],

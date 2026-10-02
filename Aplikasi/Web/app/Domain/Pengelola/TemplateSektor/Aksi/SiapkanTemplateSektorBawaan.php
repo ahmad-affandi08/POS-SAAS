@@ -11,7 +11,7 @@ use RuntimeException;
 
 /**
  * Template sektor bawaan dari file data `database/Data/TemplateSektorAwal.json` (P-03, §5.1): tiga template MVP dan,
- * sejak v3.80, sembilan sektor lain (Apotek & Bengkel menunggu keputusan K25). Idempoten: template yang sudah ada tidak
+ * sejak v3.80, sembilan sektor lain (K-26: Apotek RTL-PHR; Bengkel menyusul). Idempoten: template yang sudah ada tidak
  * diubah, template baru ikut dimuat saat seeder dijalankan ulang di lingkungan yang sudah berjalan. Isi dimuat sebagai DRAF versi 1 yang belum divalidasi; penerbitan tetap lewat
  * validasi otomatis (BR-P03.3) dan izin terbitkan (BR-P03.5).
  */

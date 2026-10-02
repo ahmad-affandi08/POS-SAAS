@@ -97,6 +97,18 @@ export type FormSatuanProduk = {
     /** Hanya untuk satuan baru; [] = tanpa harga. */
     HargaAwal: BarisHarga[];
 };
+/** Apotek (§9.5): golongan obat (`Produk.GolonganObat`). */
+export type GolonganObat = 'Bebas' | 'BebasTerbatas' | 'Keras' | 'Psikotropika' | 'Narkotika';
+
+/** Label golongan obat untuk tampilan (sama dengan `GolonganObat::AmbilLabel`). */
+export const labelGolonganObat: Record<GolonganObat, string> = {
+    Bebas: 'Obat bebas',
+    BebasTerbatas: 'Obat bebas terbatas',
+    Keras: 'Obat keras',
+    Psikotropika: 'Psikotropika',
+    Narkotika: 'Narkotika',
+};
+
 export type FormProduk = {
     Uuid: string;
     Nama: string;
@@ -123,6 +135,10 @@ export type FormProduk = {
     /** Faktur Pajak Coretax: kode barang/jasa 6 digit dan kode satuan `UM.00xx`; null = kode umum. */
     KodeBarangJasaCoretax?: string | null;
     KodeUnitCoretax?: string | null;
+    /** Apotek (§9.5): golongan obat (null = bukan obat), Obat Wajib Apotek (hanya Keras), prekursor farmasi. */
+    GolonganObat?: GolonganObat | null;
+    ObatWajibApotek?: boolean;
+    Prekursor?: boolean;
     /** D-23 B: "Jual sebagai paket sesi" saat membuat produk Jasa; tidak ada/null = bukan paket. */
     PaketSesi?: { JumlahSesi: string; MasaBerlakuHari: string } | null;
 };
@@ -194,6 +210,9 @@ export type DetailProduk = {
     TampilDiPos: boolean;
     TampilOnline: boolean;
     HargaTerbuka?: boolean;
+    GolonganObat?: GolonganObat | null;
+    ObatWajibApotek?: boolean;
+    Prekursor?: boolean;
     UrlGambar: string | null;
     UrlGambarKecil: string | null;
     Satuan: SatuanDetail[];

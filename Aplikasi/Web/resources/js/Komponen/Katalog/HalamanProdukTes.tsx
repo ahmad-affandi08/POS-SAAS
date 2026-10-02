@@ -829,4 +829,37 @@ describe('Kelola/Produk: dialog & sakelar shadcn/ui', () => {
         expect((kirimanForm[0]?.data as FormProduk).HargaTerbuka).toBe(true);
         window.localStorage.clear();
     });
+
+    it('Apotek (§9.5): bagian golongan obat hanya untuk barang ber-batch; OWA untuk obat keras; HNA + margin mengisi harga', () => {
+        window.localStorage.setItem('Katalog.FormProduk.Mode', 'Lengkap');
+        render(<HalamanFormProduk {...PropsForm()} />);
+        expect(screen.queryByText('Golongan obat (apotek)')).toBeNull();
+        cleanup();
+
+        render(
+            <HalamanFormProduk
+                {...PropsForm({
+                    Produk: { ...produkBaru, Pelacakan: 'Batch', GolonganObat: 'Keras', ObatWajibApotek: false },
+                })}
+            />,
+        );
+        expect(screen.getByText('Golongan obat (apotek)')).toBeTruthy();
+        expect(screen.getByText(/Wajib resep dokter dan hanya bisa dijual apoteker/)).toBeTruthy();
+        fireEvent.click(screen.getByRole('checkbox', { name: /Obat Wajib Apotek/ }));
+        expect(screen.getByText(/Dijual tanpa resep oleh apoteker/)).toBeTruthy();
+
+        fireEvent.change(screen.getByLabelText('Nama produk'), { target: { value: 'Asam Mefenamat 500 mg Tablet' } });
+        fireEvent.click(screen.getByRole('tab', { name: 'Harga' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Isi harga dasar' }));
+        fireEvent.change(screen.getByLabelText(/HNA per/), { target: { value: '650' } });
+        fireEvent.change(screen.getByLabelText('Margin (%)'), { target: { value: '25' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Pakai sebagai harga' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Simpan produk' }));
+
+        const body = kirimanForm[0]?.data as FormProduk;
+        expect(body.GolonganObat).toBe('Keras');
+        expect(body.ObatWajibApotek).toBe(true);
+        expect(body.Satuan[0]?.HargaAwal[0]?.Harga).toBe('800.00');
+        window.localStorage.clear();
+    });
 });

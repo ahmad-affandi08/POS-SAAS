@@ -247,6 +247,8 @@ final class BantuanPenjualan
                 ...(isset($b['Staf']) ? ['Staf' => $b['Staf']] : []),
                 // F-05h: nomor seri/IMEI unit yang dijual.
                 ...(isset($b['NomorSeri']) ? ['NomorSeri' => $b['NomorSeri']] : []),
+                // Apotek (§9.5): baris yang ditutup resep.
+                ...(isset($b['DenganResep']) ? ['DenganResep' => $b['DenganResep']] : []),
             ];
         }
 

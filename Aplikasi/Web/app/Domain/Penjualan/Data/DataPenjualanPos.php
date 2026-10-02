@@ -73,5 +73,8 @@ final readonly class DataPenjualanPos
         public ?string $namaPemesan = null,
         // K-11: retur tukar barang yang nilainya membayar penjualan ini lewat metode `Tukar`.
         public ?string $uuidReturTukar = null,
+        // Apotek (§9.5): resep dokter untuk baris obat wajib resep & apoteker yang menyerahkan obat keras/OWA.
+        public ?DataResepPenjualanPos $resep = null,
+        public ?string $uuidApoteker = null,
     ) {}
 }

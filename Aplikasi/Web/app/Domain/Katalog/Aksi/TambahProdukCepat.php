@@ -6,6 +6,7 @@ namespace App\Domain\Katalog\Aksi;
 
 use App\Domain\Bersama\Nilai\Kuantitas;
 use App\Domain\Bersama\Tenant\KonteksTenant;
+use App\Domain\Katalog\Data\DataObatProduk;
 use App\Domain\Katalog\Data\DataProduk;
 use App\Domain\Katalog\Data\DataProdukCepat;
 use App\Domain\Katalog\Data\DataSatuanProduk;
@@ -89,7 +90,7 @@ final class TambahProdukCepat
             idKategori: $data->idKategori,
             merek: null,
             idSatuanDasar: $data->idSatuanDasar,
-            pelacakan: PelacakanProduk::Tidak,
+            pelacakan: $data->golonganObat !== null ? PelacakanProduk::Batch : $data->pelacakan,
             idKelompokPajak: $data->idKelompokPajak,
             hargaTermasukPajak: null,
             bolehMinus: null,
@@ -107,6 +108,7 @@ final class TambahProdukCepat
             atributVarian: [],
             bolehUbahHarga: true,
             sumber: SumberPerubahanKatalog::PanduanAwal,
+            obat: $data->golonganObat === null ? null : new DataObatProduk($data->golonganObat),
         );
     }
 }

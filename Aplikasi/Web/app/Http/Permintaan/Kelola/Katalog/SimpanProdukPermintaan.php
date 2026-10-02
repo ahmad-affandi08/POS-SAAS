@@ -8,8 +8,10 @@ use App\Domain\Bersama\Nilai\Kuantitas;
 use App\Domain\Bersama\Nilai\Uang;
 use App\Domain\Katalog\Aksi\SimpanPaketSesi;
 use App\Domain\Katalog\Data\DataAtributVarian;
+use App\Domain\Katalog\Data\DataObatProduk;
 use App\Domain\Katalog\Data\DataProduk;
 use App\Domain\Katalog\Data\DataSatuanProduk;
+use App\Domain\Katalog\Enum\GolonganObat;
 use App\Domain\Katalog\Enum\JenisProduk;
 use App\Domain\Katalog\Enum\PelacakanProduk;
 use App\Domain\Katalog\Harga\Data\DataBarisHarga;
@@ -55,6 +57,10 @@ final class SimpanProdukPermintaan extends FormRequest
             'TampilDiPos' => ['required', 'boolean'],
             'TampilOnline' => ['required', 'boolean'],
             'HargaTerbuka' => ['sometimes', 'boolean'],
+            // Apotek (§9.5): golongan obat (null = bukan obat); `sometimes` supaya klien lama tidak menghapus isian obat.
+            'GolonganObat' => ['sometimes', 'nullable', Rule::enum(GolonganObat::class)],
+            'ObatWajibApotek' => ['sometimes', 'boolean'],
+            'Prekursor' => ['sometimes', 'boolean'],
             'DurasiMenit' => ['nullable', 'integer', 'min:5', 'max:720'],
             'MasaGaransiBulan' => ['nullable', 'integer', 'min:1', 'max:240'],
             // Faktur Pajak Coretax (v3.11): kode barang/jasa 6 digit dan kode unit `UM.00xx` dari daftar DJP.
@@ -177,6 +183,11 @@ final class SimpanProdukPermintaan extends FormRequest
             kodeBarangJasaCoretax: $this->filled('KodeBarangJasaCoretax') ? $this->string('KodeBarangJasaCoretax')->toString() : null,
             kodeUnitCoretax: $this->filled('KodeUnitCoretax') ? $this->string('KodeUnitCoretax')->toString() : null,
             hargaTerbuka: $this->has('HargaTerbuka') ? $this->boolean('HargaTerbuka') : null,
+            obat: $this->has('GolonganObat') ? new DataObatProduk(
+                $this->filled('GolonganObat') ? GolonganObat::from($this->string('GolonganObat')->toString()) : null,
+                $this->boolean('ObatWajibApotek'),
+                $this->boolean('Prekursor'),
+            ) : null,
         );
     }
 

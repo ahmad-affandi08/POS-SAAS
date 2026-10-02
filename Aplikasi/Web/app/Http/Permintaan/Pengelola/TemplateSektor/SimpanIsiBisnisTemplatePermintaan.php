@@ -58,6 +58,8 @@ final class SimpanIsiBisnisTemplatePermintaan extends FormRequest
             'ProdukContoh.*.Harga' => ['required', 'string', 'regex:'.ValidatorTemplate::POLA_HARGA],
             'ProdukContoh.*.KodeSatuan' => ['required', 'string', 'max:20'],
             'ProdukContoh.*.Jenis' => ['required', 'string', Rule::enum(JenisProdukContoh::class)],
+            'ProdukContoh.*.Pelacakan' => ['sometimes', 'nullable', 'string', 'in:Tidak,Batch'],
+            'ProdukContoh.*.GolonganObat' => ['sometimes', 'nullable', 'string', 'max:20'],
         ];
     }
 
@@ -103,12 +105,15 @@ final class SimpanIsiBisnisTemplatePermintaan extends FormRequest
             'ProdukContoh' => array_map(function (array $produk): array {
                 $kategori = is_string($produk['Kategori'] ?? null) ? trim($produk['Kategori']) : '';
 
+                // Apotek (§9.5): `Pelacakan` & `GolonganObat` opsional dipertahankan (editor belum mengubahnya).
                 return [
                     'Nama' => trim((string) $produk['Nama']),
                     'Kategori' => $kategori === '' ? null : $kategori,
                     'Harga' => (string) $produk['Harga'],
                     'KodeSatuan' => (string) $produk['KodeSatuan'],
                     'Jenis' => (string) $produk['Jenis'],
+                    ...(is_string($produk['Pelacakan'] ?? null) ? ['Pelacakan' => $produk['Pelacakan']] : []),
+                    ...(is_string($produk['GolonganObat'] ?? null) ? ['GolonganObat' => $produk['GolonganObat']] : []),
                 ];
             }, array_values(array_filter((array) $this->input('ProdukContoh', []), 'is_array'))),
             'Pengaturan' => [

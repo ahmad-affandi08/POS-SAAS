@@ -26,6 +26,9 @@ export type ProdukContohTemplate = {
     Harga: string;
     KodeSatuan: string;
     Jenis: JenisProdukContoh;
+    /** Apotek (§9.5): pelacakan Batch & golongan obat opsional; dipertahankan apa adanya oleh editor. */
+    Pelacakan?: 'Tidak' | 'Batch';
+    GolonganObat?: string | null;
 };
 
 export type IsiBisnisTemplate = {

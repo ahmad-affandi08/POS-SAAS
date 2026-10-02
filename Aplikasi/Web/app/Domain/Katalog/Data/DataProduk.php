@@ -47,5 +47,7 @@ final readonly class DataProduk
         public ?string $kodeUnitCoretax = null,
         // K-25: harga diketik kasir; null = tidak diubah (impor & panduan awal).
         public ?bool $hargaTerbuka = null,
+        // Apotek (§9.5): golongan obat, OWA, prekursor; null = tidak diubah (impor & sumber tanpa isian obat).
+        public ?DataObatProduk $obat = null,
     ) {}
 }
