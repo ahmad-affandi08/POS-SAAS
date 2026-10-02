@@ -9,6 +9,7 @@ use App\Domain\Bersama\Audit\Layanan\PencatatAudit;
 use App\Domain\Bersama\Dokumen\Layanan\PencatatRiwayatStatus;
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Bersama\Nilai\Uang;
+use App\Domain\Bersama\Peristiwa\PeristiwaIntegrasi;
 use App\Domain\Bersama\Sinkron\Enum\StatusItemSinkron;
 use App\Domain\Bersama\Tenant\KonteksTenant;
 use App\Domain\Kasir\Data\DataTutupShift;
@@ -20,6 +21,7 @@ use App\Domain\Kasir\Model\Shift;
 use App\Domain\Organisasi\Data\DataAnggotaOutlet;
 use App\Domain\Organisasi\Enum\IzinTenant;
 use App\Domain\Organisasi\Kueri\AnggotaOutlet;
+use App\Domain\Organisasi\Kueri\PetaUuidOutlet;
 use App\Domain\Organisasi\Kueri\TanggalBisnisOutlet;
 use App\Domain\Penjualan\Data\DataRingkasanPenjualanShift;
 use App\Domain\Penjualan\Kueri\RingkasanPenjualanShift;
@@ -62,6 +64,7 @@ final class TutupShift
         private readonly PostingJurnal $postingJurnal,
         private readonly PencatatRiwayatStatus $riwayat,
         private readonly PencatatAudit $audit,
+        private readonly PetaUuidOutlet $petaOutlet,
     ) {}
 
     public function Jalankan(DataTutupShift $data): StatusItemSinkron
@@ -166,6 +169,19 @@ final class TutupShift
             'DisetujuiOleh' => $penyetuju?->nama,
             'PerluTinjauan' => $shift->PerluTinjauan,
         ], idPengguna: $penutup->id);
+
+        // X7 §16.4: webhook `shift.ditutup` (setelah commit; hanya angka kas, tanpa data pribadi kasir).
+        PeristiwaIntegrasi::dispatch($idTenant, 'shift.ditutup', $shift->Id, [
+            'Uuid' => $shift->Uuid,
+            'UuidOutlet' => $this->petaOutlet->Ambil([$shift->IdOutlet])[$shift->IdOutlet] ?? null,
+            'TanggalBisnis' => $shift->TanggalBisnis->toDateString(),
+            'DibukaPada' => $shift->DibukaPada->toIso8601ZuluString(),
+            'DitutupPada' => $shift->DitutupPada->toIso8601ZuluString(),
+            'KasAwal' => Uang::Dari($shift->KasAwal)->KeString(),
+            'KasSeharusnya' => $laporan->kasSeharusnya->KeString(),
+            'KasAktual' => $data->kasAktual->KeString(),
+            'Selisih' => $selisih->KeString(),
+        ], kunci: (string) ($bukaUlang + 1));
 
         return StatusItemSinkron::Diterima;
     }

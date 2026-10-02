@@ -551,6 +551,282 @@
           }
         }
       }
+    },
+    "produk.diubah": {
+      "post": {
+        "summary": "produk.diubah",
+        "description": "Produk dibuat atau diubah di back-office (termasuk harga & status). Data = bentuk GET /api/v1/produk/{uuid}. Kirim setiap perubahan; X-Id-Peristiwa berbeda per perubahan. Header: X-Id-Peristiwa (dedup), X-Peristiwa, X-Waktu-Kirim (detik Unix), X-Tanda-Tangan: sha256=<HMAC-SHA256 rahasia atas \"{X-Waktu-Kirim}.{badan}\">. Balas 2xx dalam 10 detik; selain itu dicoba ulang 1m, 5m, 30m, 2j, 12j.",
+        "tags": [
+          "Webhook"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "IdPeristiwa": {
+                    "type": "string"
+                  },
+                  "Peristiwa": {
+                    "type": "string",
+                    "const": "produk.diubah"
+                  },
+                  "TerjadiPada": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "Data": {
+                    "$ref": "#/components/schemas/Produk"
+                  }
+                },
+                "required": [
+                  "IdPeristiwa",
+                  "Peristiwa",
+                  "TerjadiPada",
+                  "Data"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Diterima penerima"
+          }
+        }
+      }
+    },
+    "pelanggan.dibuat": {
+      "post": {
+        "summary": "pelanggan.dibuat",
+        "description": "Pelanggan baru dibuat dari jalur mana pun (back-office, kasir, impor, toko online). Data = bentuk GET /api/v1/pelanggan. Header: X-Id-Peristiwa (dedup), X-Peristiwa, X-Waktu-Kirim (detik Unix), X-Tanda-Tangan: sha256=<HMAC-SHA256 rahasia atas \"{X-Waktu-Kirim}.{badan}\">. Balas 2xx dalam 10 detik; selain itu dicoba ulang 1m, 5m, 30m, 2j, 12j.",
+        "tags": [
+          "Webhook"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "IdPeristiwa": {
+                    "type": "string"
+                  },
+                  "Peristiwa": {
+                    "type": "string",
+                    "const": "pelanggan.dibuat"
+                  },
+                  "TerjadiPada": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "Data": {
+                    "$ref": "#/components/schemas/Pelanggan"
+                  }
+                },
+                "required": [
+                  "IdPeristiwa",
+                  "Peristiwa",
+                  "TerjadiPada",
+                  "Data"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Diterima penerima"
+          }
+        }
+      }
+    },
+    "shift.ditutup": {
+      "post": {
+        "summary": "shift.ditutup",
+        "description": "Shift kasir ditutup (termasuk tutup ulang setelah dibuka ulang supervisor: peristiwa baru). Header: X-Id-Peristiwa (dedup), X-Peristiwa, X-Waktu-Kirim (detik Unix), X-Tanda-Tangan: sha256=<HMAC-SHA256 rahasia atas \"{X-Waktu-Kirim}.{badan}\">. Balas 2xx dalam 10 detik; selain itu dicoba ulang 1m, 5m, 30m, 2j, 12j.",
+        "tags": [
+          "Webhook"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "IdPeristiwa": {
+                    "type": "string"
+                  },
+                  "Peristiwa": {
+                    "type": "string",
+                    "const": "shift.ditutup"
+                  },
+                  "TerjadiPada": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "Data": {
+                    "$ref": "#/components/schemas/Shift"
+                  }
+                },
+                "required": [
+                  "IdPeristiwa",
+                  "Peristiwa",
+                  "TerjadiPada",
+                  "Data"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Diterima penerima"
+          }
+        }
+      }
+    },
+    "stok.disesuaikan": {
+      "post": {
+        "summary": "stok.disesuaikan",
+        "description": "Penyesuaian stok diposting. Tanpa HPP/nilai. Header: X-Id-Peristiwa (dedup), X-Peristiwa, X-Waktu-Kirim (detik Unix), X-Tanda-Tangan: sha256=<HMAC-SHA256 rahasia atas \"{X-Waktu-Kirim}.{badan}\">. Balas 2xx dalam 10 detik; selain itu dicoba ulang 1m, 5m, 30m, 2j, 12j.",
+        "tags": [
+          "Webhook"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "IdPeristiwa": {
+                    "type": "string"
+                  },
+                  "Peristiwa": {
+                    "type": "string",
+                    "const": "stok.disesuaikan"
+                  },
+                  "TerjadiPada": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "Data": {
+                    "$ref": "#/components/schemas/PenyesuaianStok"
+                  }
+                },
+                "required": [
+                  "IdPeristiwa",
+                  "Peristiwa",
+                  "TerjadiPada",
+                  "Data"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Diterima penerima"
+          }
+        }
+      }
+    },
+    "pesanan-pembelian.disetujui": {
+      "post": {
+        "summary": "pesanan-pembelian.disetujui",
+        "description": "Pesanan pembelian (PO) disetujui dan siap dikirim ke pemasok. Header: X-Id-Peristiwa (dedup), X-Peristiwa, X-Waktu-Kirim (detik Unix), X-Tanda-Tangan: sha256=<HMAC-SHA256 rahasia atas \"{X-Waktu-Kirim}.{badan}\">. Balas 2xx dalam 10 detik; selain itu dicoba ulang 1m, 5m, 30m, 2j, 12j.",
+        "tags": [
+          "Webhook"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "IdPeristiwa": {
+                    "type": "string"
+                  },
+                  "Peristiwa": {
+                    "type": "string",
+                    "const": "pesanan-pembelian.disetujui"
+                  },
+                  "TerjadiPada": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "Data": {
+                    "$ref": "#/components/schemas/PesananPembelian"
+                  }
+                },
+                "required": [
+                  "IdPeristiwa",
+                  "Peristiwa",
+                  "TerjadiPada",
+                  "Data"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Diterima penerima"
+          }
+        }
+      }
+    },
+    "penerimaan-barang.diposting": {
+      "post": {
+        "summary": "penerimaan-barang.diposting",
+        "description": "Penerimaan barang (GRN) diposting; stok bertambah. Header: X-Id-Peristiwa (dedup), X-Peristiwa, X-Waktu-Kirim (detik Unix), X-Tanda-Tangan: sha256=<HMAC-SHA256 rahasia atas \"{X-Waktu-Kirim}.{badan}\">. Balas 2xx dalam 10 detik; selain itu dicoba ulang 1m, 5m, 30m, 2j, 12j.",
+        "tags": [
+          "Webhook"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "IdPeristiwa": {
+                    "type": "string"
+                  },
+                  "Peristiwa": {
+                    "type": "string",
+                    "const": "penerimaan-barang.diposting"
+                  },
+                  "TerjadiPada": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "Data": {
+                    "$ref": "#/components/schemas/PenerimaanBarang"
+                  }
+                },
+                "required": [
+                  "IdPeristiwa",
+                  "Peristiwa",
+                  "TerjadiPada",
+                  "Data"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Diterima penerima"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1128,6 +1404,314 @@
           "Tier",
           "DibuatPada",
           "DiubahPada"
+        ]
+      },
+      "Shift": {
+        "type": "object",
+        "properties": {
+          "Uuid": {
+            "type": "string"
+          },
+          "UuidOutlet": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "TanggalBisnis": {
+            "type": "string",
+            "format": "date"
+          },
+          "DibukaPada": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "DitutupPada": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "KasAwal": {
+            "type": "string",
+            "description": "String desimal, misal \"15000.00\""
+          },
+          "KasSeharusnya": {
+            "type": "string",
+            "description": "String desimal, misal \"15000.00\""
+          },
+          "KasAktual": {
+            "type": "string",
+            "description": "String desimal, misal \"15000.00\""
+          },
+          "Selisih": {
+            "type": "string",
+            "description": "String desimal bertanda: KasAktual − KasSeharusnya"
+          }
+        },
+        "required": [
+          "Uuid",
+          "UuidOutlet",
+          "TanggalBisnis",
+          "DibukaPada",
+          "DitutupPada",
+          "KasAwal",
+          "KasSeharusnya",
+          "KasAktual",
+          "Selisih"
+        ]
+      },
+      "PenyesuaianStok": {
+        "type": "object",
+        "properties": {
+          "Uuid": {
+            "type": "string"
+          },
+          "Nomor": {
+            "type": "string"
+          },
+          "UuidGudang": {
+            "type": "string"
+          },
+          "TanggalBisnis": {
+            "type": "string",
+            "format": "date"
+          },
+          "Alasan": {
+            "type": "string"
+          },
+          "Baris": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "UuidProduk": {
+                  "type": "string"
+                },
+                "Jumlah": {
+                  "type": "string",
+                  "description": "String desimal bertanda: + masuk, − keluar"
+                },
+                "NomorBatch": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "UuidProduk",
+                "Jumlah",
+                "NomorBatch"
+              ]
+            }
+          }
+        },
+        "required": [
+          "Uuid",
+          "Nomor",
+          "UuidGudang",
+          "TanggalBisnis",
+          "Alasan",
+          "Baris"
+        ]
+      },
+      "PesananPembelian": {
+        "type": "object",
+        "properties": {
+          "Uuid": {
+            "type": "string"
+          },
+          "Nomor": {
+            "type": "string"
+          },
+          "UuidPemasok": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "UuidGudang": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "Tanggal": {
+            "type": "string",
+            "format": "date"
+          },
+          "PerkiraanTiba": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "Subtotal": {
+            "type": "string",
+            "description": "String desimal, misal \"15000.00\""
+          },
+          "Diskon": {
+            "type": "string",
+            "description": "String desimal, misal \"15000.00\""
+          },
+          "Pajak": {
+            "type": "string",
+            "description": "String desimal, misal \"15000.00\""
+          },
+          "Ongkir": {
+            "type": "string",
+            "description": "String desimal, misal \"15000.00\""
+          },
+          "Total": {
+            "type": "string",
+            "description": "String desimal, misal \"15000.00\""
+          },
+          "Baris": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "UuidProduk": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "NamaProduk": {
+                  "type": "string"
+                },
+                "Satuan": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "Jumlah": {
+                  "type": "string",
+                  "description": "String desimal, misal \"15000.00\""
+                },
+                "Harga": {
+                  "type": "string",
+                  "description": "String desimal, misal \"15000.00\""
+                }
+              },
+              "required": [
+                "UuidProduk",
+                "NamaProduk",
+                "Satuan",
+                "Jumlah",
+                "Harga"
+              ]
+            }
+          }
+        },
+        "required": [
+          "Uuid",
+          "Nomor",
+          "UuidPemasok",
+          "UuidGudang",
+          "Tanggal",
+          "PerkiraanTiba",
+          "Subtotal",
+          "Diskon",
+          "Pajak",
+          "Ongkir",
+          "Total",
+          "Baris"
+        ]
+      },
+      "PenerimaanBarang": {
+        "type": "object",
+        "properties": {
+          "Uuid": {
+            "type": "string"
+          },
+          "Nomor": {
+            "type": "string"
+          },
+          "UuidPesananPembelian": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "UuidPemasok": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "UuidGudang": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "Tanggal": {
+            "type": "string",
+            "format": "date"
+          },
+          "NomorSuratJalan": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "TotalNilai": {
+            "type": "string",
+            "description": "String desimal, misal \"15000.00\""
+          },
+          "Baris": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "UuidProduk": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "NamaProduk": {
+                  "type": "string"
+                },
+                "Satuan": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "Jumlah": {
+                  "type": "string",
+                  "description": "String desimal, misal \"15000.00\""
+                },
+                "NomorBatch": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "UuidProduk",
+                "NamaProduk",
+                "Satuan",
+                "Jumlah",
+                "NomorBatch"
+              ]
+            }
+          }
+        },
+        "required": [
+          "Uuid",
+          "Nomor",
+          "UuidPesananPembelian",
+          "UuidPemasok",
+          "UuidGudang",
+          "Tanggal",
+          "NomorSuratJalan",
+          "TotalNilai",
+          "Baris"
         ]
       }
     },

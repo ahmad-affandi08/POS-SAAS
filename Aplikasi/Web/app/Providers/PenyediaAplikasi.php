@@ -6,11 +6,13 @@ namespace App\Providers;
 
 use App\Domain\Bersama\Audit\Layanan\PencatatAudit;
 use App\Domain\Bersama\Database\MakroSkema;
+use App\Domain\Bersama\Peristiwa\PeristiwaIntegrasi;
 use App\Domain\Bersama\Sinkron\Kontrak\PenjagaAsalItemSinkron;
 use App\Domain\Bersama\Sinkron\Layanan\PenandaSinkronPos;
 use App\Domain\Bersama\Tenant\KonteksTenant;
 use App\Domain\Dukungan\Peristiwa\TiketDukunganDibalasPelapor;
 use App\Domain\Dukungan\Peristiwa\TiketDukunganDibuat;
+use App\Domain\Integrasi\ApiPublik\Penangan\AntrekanWebhookIntegrasi;
 use App\Domain\Integrasi\ApiPublik\Penangan\AntrekanWebhookPenjualan;
 use App\Domain\Organisasi\Layanan\PenjagaAsalSinkronPerangkat;
 use App\Domain\Organisasi\Model\Perangkat;
@@ -169,6 +171,8 @@ final class PenyediaAplikasi extends ServiceProvider
         foreach ([PenjualanDiterima::class, PenjualanDivoid::class, ReturPenjualanDiterima::class] as $peristiwa) {
             Event::listen($peristiwa, AntrekanWebhookPenjualan::class);
         }
+
+        Event::listen(PeristiwaIntegrasi::class, AntrekanWebhookIntegrasi::class);
 
         // P-11 BR-P11.1: /sehat (uptime monitor eksternal) ikut memeriksa alert, agar scheduler mati tetap terdeteksi.
         Event::listen(DiagnosingHealth::class, PeriksaOperasionalSaatCekSehat::class);

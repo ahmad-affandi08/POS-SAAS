@@ -7,7 +7,9 @@ namespace App\Domain\Pembelian\Aksi;
 use App\Domain\Bersama\Audit\Layanan\PencatatAudit;
 use App\Domain\Bersama\Dokumen\Layanan\PencatatRiwayatStatus;
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
+use App\Domain\Bersama\Peristiwa\PeristiwaIntegrasi;
 use App\Domain\Pembelian\Enum\StatusPesananPembelian;
+use App\Domain\Pembelian\Layanan\PenyusunDataIntegrasiPembelian;
 use App\Domain\Pembelian\Model\PesananPembelian;
 use Illuminate\Support\Facades\DB;
 
@@ -19,6 +21,7 @@ use Illuminate\Support\Facades\DB;
 final class SetujuiPesananPembelian
 {
     public function __construct(
+        private readonly PenyusunDataIntegrasiPembelian $dataIntegrasi,
         private readonly PencatatRiwayatStatus $riwayat,
         private readonly PencatatAudit $audit,
     ) {}
@@ -57,6 +60,11 @@ final class SetujuiPesananPembelian
                 'Total' => $terkunci->Total,
                 'Alasan' => $setujui ? null : $alasan,
             ], idPengguna: $idPengguna);
+
+            if ($setujui) {
+                // X7 §16.4: webhook `pesanan-pembelian.disetujui` (dikirim setelah commit).
+                PeristiwaIntegrasi::dispatch($terkunci->IdTenant, 'pesanan-pembelian.disetujui', $terkunci->Id, $this->dataIntegrasi->Pesanan($terkunci));
+            }
 
             return $terkunci;
         }, 3);

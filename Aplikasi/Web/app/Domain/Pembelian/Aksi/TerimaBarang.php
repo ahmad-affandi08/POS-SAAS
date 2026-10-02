@@ -14,11 +14,13 @@ use App\Domain\Bersama\Dokumen\Enum\StatusDokumenTerposting;
 use App\Domain\Bersama\Dokumen\Layanan\PencatatRiwayatStatus;
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Bersama\Nilai\Uang;
+use App\Domain\Bersama\Peristiwa\PeristiwaIntegrasi;
 use App\Domain\Bersama\Tenant\KonteksTenant;
 use App\Domain\Organisasi\Kueri\InfoGudang;
 use App\Domain\Pembelian\Data\DataPenerimaanBarang;
 use App\Domain\Pembelian\Layanan\PemrosesPenerimaanBarang;
 use App\Domain\Pembelian\Layanan\PenyimpanLampiranPembelian;
+use App\Domain\Pembelian\Layanan\PenyusunDataIntegrasiPembelian;
 use App\Domain\Pembelian\Layanan\PenyusunJurnalPembelian;
 use App\Domain\Pembelian\Model\Pemasok;
 use App\Domain\Pembelian\Model\PenerimaanBarang;
@@ -38,6 +40,7 @@ use Throwable;
 final class TerimaBarang
 {
     public function __construct(
+        private readonly PenyusunDataIntegrasiPembelian $dataIntegrasi,
         private readonly KonteksTenant $konteks,
         private readonly PengaturanPersediaanTenant $pengaturanPersediaan,
         private readonly InfoGudang $infoGudang,
@@ -129,6 +132,9 @@ final class TerimaBarang
             'Pajak' => $dokumen->Pajak,
             'NomorJurnal' => $jurnal?->nomor,
         ], idPengguna: $data->idPengguna);
+
+        // X7 §16.4: webhook `penerimaan-barang.diposting` (dikirim setelah commit).
+        PeristiwaIntegrasi::dispatch($dokumen->IdTenant, 'penerimaan-barang.diposting', $dokumen->Id, $this->dataIntegrasi->Penerimaan($dokumen));
 
         return $dokumen;
     }

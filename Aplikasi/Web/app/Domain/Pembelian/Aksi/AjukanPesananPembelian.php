@@ -8,7 +8,9 @@ use App\Domain\Bersama\Audit\Layanan\PencatatAudit;
 use App\Domain\Bersama\Dokumen\Layanan\PencatatRiwayatStatus;
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Bersama\Nilai\Uang;
+use App\Domain\Bersama\Peristiwa\PeristiwaIntegrasi;
 use App\Domain\Pembelian\Enum\StatusPesananPembelian;
+use App\Domain\Pembelian\Layanan\PenyusunDataIntegrasiPembelian;
 use App\Domain\Pembelian\Model\PesananPembelian;
 use App\Domain\Tenant\Kueri\PengaturanPembelianTenant;
 use Illuminate\Support\Facades\DB;
@@ -24,6 +26,7 @@ final class AjukanPesananPembelian
         private readonly PengaturanPembelianTenant $pengaturan,
         private readonly PencatatRiwayatStatus $riwayat,
         private readonly PencatatAudit $audit,
+        private readonly PenyusunDataIntegrasiPembelian $dataIntegrasi,
     ) {}
 
     /**
@@ -62,6 +65,11 @@ final class AjukanPesananPembelian
                 'Total' => $terkunci->Total,
                 'BatasPersetujuanPo' => $batas->KeString(),
             ], idPengguna: $idPengguna);
+
+            if (! $butuhPersetujuan) {
+                // X7 §16.4: PO di bawah batas persetujuan langsung Disetujui → webhook `pesanan-pembelian.disetujui`.
+                PeristiwaIntegrasi::dispatch($terkunci->IdTenant, 'pesanan-pembelian.disetujui', $terkunci->Id, $this->dataIntegrasi->Pesanan($terkunci));
+            }
 
             return $terkunci;
         }, 3);

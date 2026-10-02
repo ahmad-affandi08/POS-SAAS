@@ -20,6 +20,7 @@ use Illuminate\Support\Carbon;
  * @property int $IdWebhookTenant
  * @property string $Peristiwa
  * @property int $IdDokumen
+ * @property string $KunciPeristiwa kunci kejadian (ULID) untuk peristiwa yang bisa berulang; '' untuk penjualan
  * @property array<string, mixed> $Muatan
  * @property StatusKirimanWebhook $Status
  * @property int $Percobaan

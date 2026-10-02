@@ -9,6 +9,7 @@ use App\Domain\Akuntansi\Enum\JenisSumberJurnal;
 use App\Domain\Akuntansi\Enum\PeranAkun;
 use App\Domain\Bersama\Nilai\Kuantitas;
 use App\Domain\Bersama\Nilai\Uang;
+use App\Domain\Bersama\Peristiwa\PeristiwaIntegrasi;
 use App\Domain\Katalog\Data\DataInfoProdukStok;
 use App\Domain\Katalog\Enum\PelacakanProduk;
 use App\Domain\Organisasi\Data\DataInfoGudang;
@@ -155,6 +156,21 @@ final class PemostingPenyesuaianStok
             'DiubahOleh' => $idPengguna,
         ]);
         $dokumen->save();
+
+        // X7 §16.4: webhook `stok.disesuaikan` (setelah commit; jumlah bertanda +masuk/−keluar, tanpa HPP/nilai, sama
+        // seperti API publik).
+        PeristiwaIntegrasi::dispatch($dokumen->IdTenant, 'stok.disesuaikan', $dokumen->Id, [
+            'Uuid' => $dokumen->Uuid,
+            'Nomor' => $nomor,
+            'UuidGudang' => $gudang->uuid,
+            'TanggalBisnis' => $tanggal->toDateString(),
+            'Alasan' => $alasan->value,
+            'Baris' => array_values($detail->map(fn (PenyesuaianStokDetail $d): array => [
+                'UuidProduk' => $produk[$d->IdProduk]->uuid,
+                'Jumlah' => Kuantitas::Dari($d->Jumlah)->KeString(),
+                'NomorBatch' => $d->NomorBatch,
+            ])->all()),
+        ]);
 
         return $jurnal;
     }

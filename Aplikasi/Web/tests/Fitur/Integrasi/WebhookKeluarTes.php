@@ -2,16 +2,21 @@
 
 declare(strict_types=1);
 
+use App\Domain\Bersama\Peristiwa\PeristiwaIntegrasi;
 use App\Domain\Integrasi\ApiPublik\Aksi\KirimKirimanWebhook;
 use App\Domain\Integrasi\ApiPublik\Enum\StatusKirimanWebhook;
 use App\Domain\Integrasi\ApiPublik\Layanan\PenjagaAlamatWebhook;
 use App\Domain\Integrasi\ApiPublik\Model\KirimanWebhook;
 use App\Domain\Integrasi\ApiPublik\Model\WebhookTenant;
+use App\Domain\Integrasi\ApiPublik\Penangan\AntrekanWebhookIntegrasi;
 use App\Domain\Integrasi\ApiPublik\Penangan\AntrekanWebhookPenjualan;
 use App\Domain\Organisasi\Enum\PeranTenantBawaan;
+use App\Domain\Pelanggan\Model\Pelanggan;
 use App\Domain\Pengelola\TimInternal\Enum\PeranPengelolaBawaan;
 use App\Domain\Penjualan\Model\PenjualanDetail;
 use App\Domain\Penjualan\Peristiwa\PenjualanDiterima;
+use App\Domain\Persediaan\Aksi\AjukanPenyesuaianStok;
+use App\Domain\Persediaan\Enum\AlasanPenyesuaian;
 use App\Domain\Tenant\Enum\JenisOverride;
 use App\Domain\Tenant\Model\OverrideTenant;
 use App\Domain\Tenant\Model\Tenant;
@@ -20,9 +25,13 @@ use Illuminate\Http\Client\Request as PermintaanHttp;
 use Illuminate\Support\Facades\Http;
 use Inertia\Testing\AssertableInertia;
 use Tests\Pendukung\Kasir\BantuanKasir;
+use Tests\Pendukung\Katalog\BantuanKatalog;
 use Tests\Pendukung\Organisasi\BantuanOrganisasi;
+use Tests\Pendukung\PanduanAwal\BantuanPanduanAwal;
+use Tests\Pendukung\Pembelian\BantuanPembelian;
 use Tests\Pendukung\Pengelola\BantuanPengelola;
 use Tests\Pendukung\Penjualan\BantuanPenjualan;
+use Tests\Pendukung\Persediaan\BantuanDokumenPersediaan;
 use Tests\Pendukung\Tenant\BantuanPendaftaran;
 
 /*
@@ -285,4 +294,119 @@ it('penangan yang diulang untuk peristiwa yang sama tidak menggandakan kiriman (
     BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
     expect(KirimanWebhook::query()->count())->toBe(1);
     Http::assertSentCount(1);
+});
+
+/**
+ * Kunci `Data` muatan webhook sama persis dengan properti skema spesifikasi OpenAPI untuk peristiwa itu (turun ke
+ * baris pertama `Baris`).
+ *
+ * @param  array<string, mixed>  $data
+ */
+function PeriksaDataWebhookSesuaiSpesifikasi(string $peristiwa, array $data): void
+{
+    $spesifikasi = json_decode((string) file_get_contents(public_path('pengembang/openapi-v1.json')), true, flags: JSON_THROW_ON_ERROR);
+    $ref = (string) $spesifikasi['webhooks'][$peristiwa]['post']['requestBody']['content']['application/json']['schema']['properties']['Data']['$ref'];
+    $skema = $spesifikasi['components']['schemas'][substr($ref, strlen('#/components/schemas/'))];
+    expect(array_keys($data))->toEqualCanonicalizing(array_keys($skema['properties']), "Data {$peristiwa}");
+
+    if (isset($skema['properties']['Baris']['items']['properties'])) {
+        expect($data['Baris'])->not->toBeEmpty()
+            ->and(array_keys($data['Baris'][0]))->toEqualCanonicalizing(array_keys($skema['properties']['Baris']['items']['properties']), "Data {$peristiwa}.Baris[0]");
+    }
+}
+
+it('produk.diubah dikirim setiap kali produk disimpan (IdPeristiwa berbeda), datanya berbentuk GET /api/v1/produk', function (): void {
+    Http::fake(['gudang.contoh.co.id/*' => Http::response('', 204)]);
+    $t = BantuanKatalog::SiapkanTenantProduk('Toko Bangunan Sumber Rejeki Boyolali');
+    AktifkanFiturWebhook($t['Tenant']);
+    DaftarkanWebhookUji($this, $t, ['produk.diubah']);
+
+    $form = BantuanKatalog::IsiFormProduk($t['Pcs'], $t['KelompokPajak'], [
+        'Nama' => 'Semen Gresik Portland Komposit 40 kg',
+        'Satuan' => [BantuanKatalog::IsiSatuanForm($t['Pcs'], '1', [], [['JumlahMinimum' => '1', 'Harga' => '63500']], defaultJual: true)],
+    ]);
+    BantuanKatalog::MasukSebagai($this, $t['Tenant']->Id)->post('/kelola/produk', $form)->assertSessionHasNoErrors();
+    BantuanKatalog::MasukSebagai($this, $t['Tenant']->Id)->put("/kelola/produk/{$form['Uuid']}", [...$form, 'Nama' => 'Semen Gresik Portland Komposit 40 kg (zak baru)'])->assertSessionHasNoErrors();
+
+    BantuanOrganisasi::AturKonteks($t['Tenant']->Id);
+    $kiriman = KirimanWebhook::query()->where('Peristiwa', 'produk.diubah')->orderBy('Id')->get();
+    expect($kiriman)->toHaveCount(2)
+        ->and($kiriman->pluck('Uuid')->unique())->toHaveCount(2)
+        ->and($kiriman->every(fn (KirimanWebhook $x): bool => $x->Status === StatusKirimanWebhook::Terkirim))->toBeTrue()
+        ->and($kiriman[0]->Muatan['Data']['Uuid'])->toBe($form['Uuid'])
+        ->and($kiriman[1]->Muatan['Data']['Nama'])->toBe('Semen Gresik Portland Komposit 40 kg (zak baru)')
+        ->and($kiriman[1]->Muatan['Data'])->not->toHaveKey('Id');
+    PeriksaDataWebhookSesuaiSpesifikasi('produk.diubah', $kiriman[1]->Muatan['Data']);
+    Http::assertSentCount(2);
+});
+
+it('pelanggan.dibuat, shift.ditutup, stok.disesuaikan, PO disetujui, dan GRN diposting terkirim sesuai spesifikasi; hanya yang dilanggan', function (): void {
+    Http::fake(['gudang.contoh.co.id/*' => Http::response('', 204)]);
+    $k = BantuanPenjualan::Siapkan($this, 'Toko Bangunan Sumber Rejeki Boyolali');
+    AktifkanFiturWebhook($k['Tenant']);
+    DaftarkanWebhookUji($this, $k, ['pelanggan.dibuat', 'shift.ditutup', 'stok.disesuaikan', 'pesanan-pembelian.disetujui', 'penerimaan-barang.diposting']);
+    BantuanPanduanAwal::TerbitkanTarif('Ppn', null, '12.000000');
+    $semen = BantuanPenjualan::BuatProdukBerstok($k['Gudang'], $k['Pemilik']->Id, 'Semen Gresik Portland Komposit 40 kg', '200', '52000', '63500.00');
+
+    // Pelanggan dari jalur mana pun (di sini langsung model, seperti impor/toko online).
+    $pelanggan = Pelanggan::query()->create(['Nama' => 'CV Karya Mandiri Bangun Persada', 'NoHp' => '081234567890']);
+
+    $penyesuaian = app(AjukanPenyesuaianStok::class)->Jalankan(BantuanDokumenPersediaan::DrafPenyesuaian($k['Gudang'], AlasanPenyesuaian::Rusak, [BantuanDokumenPersediaan::Baris($semen, '-3')]), $k['Pemilik']->Id);
+
+    $pemasok = BantuanPembelian::BuatPemasok('PT Semen Indonesia Distribusi Jateng', idPengguna: $k['Pemilik']->Id);
+    $po = BantuanPembelian::BuatPoDisetujui($pemasok, $k['Gudang'], [[$semen, '50', '51500']], $k['Pemilik']->Id);
+    $grn = BantuanPembelian::TerimaDariPo($po, ['50'], $k['Pemilik']->Id);
+
+    $tutup = [
+        'Jenis' => 'Shift.Tutup',
+        'Uuid' => BantuanKasir::Uuid(),
+        'Data' => [
+            'UuidShift' => $k['UuidShift'],
+            'UuidPengguna' => $k['Kasir']->Uuid,
+            'DitutupPada' => now()->subMinute()->utc()->toIso8601ZuluString(),
+            'KasAktual' => '500000.00',
+            'PecahanKasAkhir' => null,
+            'NonTunai' => [],
+            'Alasan' => null,
+            'UuidPenyetuju' => null,
+            'Ringkasan' => ['KasSeharusnya' => '500000.00', 'Selisih' => '0.00'],
+        ],
+    ];
+    expect(BantuanKasir::KirimRingkas($this, $k['Token'], [$tutup]))->toBe([['Diterima', null]]);
+    BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+
+    $data = fn (string $peristiwa): array => KirimanWebhook::query()->where('Peristiwa', $peristiwa)->sole()->Muatan['Data'];
+
+    expect($data('pelanggan.dibuat')['Uuid'])->toBe($pelanggan->Uuid)
+        ->and($data('stok.disesuaikan'))->toMatchArray(['Uuid' => $penyesuaian->Uuid, 'Nomor' => $penyesuaian->Nomor, 'UuidGudang' => $k['Gudang']->Uuid, 'Alasan' => 'Rusak'])
+        ->and($data('stok.disesuaikan')['Baris'][0])->toEqual(['UuidProduk' => $semen->Uuid, 'Jumlah' => '-3.0000', 'NomorBatch' => null])
+        ->and($data('pesanan-pembelian.disetujui'))->toMatchArray(['Uuid' => $po->Uuid, 'UuidPemasok' => $pemasok->Uuid, 'Total' => '2575000.00'])
+        ->and($data('pesanan-pembelian.disetujui')['Baris'][0])->toMatchArray(['UuidProduk' => $semen->Uuid, 'Jumlah' => '50.0000', 'Harga' => '51500.00'])
+        ->and($data('penerimaan-barang.diposting'))->toMatchArray(['Uuid' => $grn->Uuid, 'UuidPesananPembelian' => $po->Uuid, 'Nomor' => $grn->Nomor])
+        ->and($data('shift.ditutup'))->toMatchArray(['Uuid' => $k['UuidShift'], 'UuidOutlet' => $k['Outlet']->Uuid, 'KasSeharusnya' => '500000.00', 'KasAktual' => '500000.00', 'Selisih' => '0.00'])
+        ->and(KirimanWebhook::query()->count())->toBe(5)
+        ->and(KirimanWebhook::query()->where('Status', StatusKirimanWebhook::Terkirim->value)->count())->toBe(5);
+
+    foreach (['pelanggan.dibuat', 'shift.ditutup', 'stok.disesuaikan', 'pesanan-pembelian.disetujui', 'penerimaan-barang.diposting'] as $peristiwa) {
+        PeriksaDataWebhookSesuaiSpesifikasi($peristiwa, $data($peristiwa));
+    }
+
+    // Tanpa HPP/nilai persediaan di penyesuaian.
+    expect(json_encode($data('stok.disesuaikan')))->not->toContain('Hpp')->not->toContain('Nilai');
+});
+
+it('PeristiwaIntegrasi yang ditangani ulang tidak menggandakan kiriman; kunci berbeda (tutup ulang shift) = kiriman baru', function (): void {
+    Http::fake(['*' => Http::response('ok', 200)]);
+    $k = BantuanPenjualan::Siapkan($this, 'Toko Bangunan Sumber Rejeki Boyolali');
+    AktifkanFiturWebhook($k['Tenant']);
+    DaftarkanWebhookUji($this, $k, ['shift.ditutup']);
+
+    $peristiwa = new PeristiwaIntegrasi($k['Tenant']->Id, 'shift.ditutup', 991, ['Uuid' => 'shift-uji'], '1');
+    app(AntrekanWebhookIntegrasi::class)->handle($peristiwa);
+    app(AntrekanWebhookIntegrasi::class)->handle($peristiwa);
+    app(AntrekanWebhookIntegrasi::class)->handle(new PeristiwaIntegrasi($k['Tenant']->Id, 'shift.ditutup', 991, ['Uuid' => 'shift-uji'], '2'));
+    app(AntrekanWebhookIntegrasi::class)->handle(new PeristiwaIntegrasi($k['Tenant']->Id, 'jenis.tidak-dikenal', 991, []));
+
+    BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+    expect(KirimanWebhook::query()->pluck('KunciPeristiwa')->sort()->values()->all())->toBe(['1', '2']);
 });

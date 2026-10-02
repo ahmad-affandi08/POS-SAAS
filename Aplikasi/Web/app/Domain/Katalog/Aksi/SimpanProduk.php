@@ -6,6 +6,7 @@ namespace App\Domain\Katalog\Aksi;
 
 use App\Domain\Bersama\Audit\Layanan\PencatatAudit;
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
+use App\Domain\Bersama\Peristiwa\PeristiwaIntegrasi;
 use App\Domain\Bersama\Tenant\KonteksTenant;
 use App\Domain\Katalog\Data\DataProduk;
 use App\Domain\Katalog\Enum\GolonganObat;
@@ -58,7 +59,13 @@ final class SimpanProduk
         $idTenant = $this->konteks->Wajib();
 
         try {
-            return DB::transaction(fn (): Produk => $this->Simpan($idTenant, $produk, $data));
+            return DB::transaction(function () use ($idTenant, $produk, $data): Produk {
+                $hasil = $this->Simpan($idTenant, $produk, $data);
+                // X7 §16.4: webhook `produk.diubah` (data disusun penangan setelah commit, bentuk = GET /api/v1/produk).
+                PeristiwaIntegrasi::dispatch($idTenant, 'produk.diubah', $hasil->Id, ['Uuid' => $hasil->Uuid]);
+
+                return $hasil;
+            });
         } catch (UniqueConstraintViolationException $galat) {
             throw PemetaGalatUnikKatalog::Petakan($galat);
         }

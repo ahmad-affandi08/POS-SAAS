@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Pelanggan\Model;
 
 use App\Domain\Bersama\Model\ModelDasar;
+use App\Domain\Bersama\Peristiwa\PeristiwaIntegrasi;
 use App\Domain\Bersama\Tenant\MilikTenant;
 use App\Domain\Pelanggan\Enum\StatusPelanggan;
 use Illuminate\Support\Carbon;
@@ -48,6 +49,15 @@ final class Pelanggan extends ModelDasar
 
     /** @var array<string, mixed> */
     protected $attributes = ['SetujuPemasaran' => false, 'Status' => 'Aktif', 'TerminHari' => 30, 'SaldoDeposit' => '0.00'];
+
+    protected static function booted(): void
+    {
+        // X7 §16.4: webhook `pelanggan.dibuat` dari semua jalur (back-office, kasir, impor, toko online); dikirim setelah
+        // commit, data disusun penangan dengan bentuk GET /api/v1/pelanggan.
+        self::created(static function (Pelanggan $pelanggan): void {
+            PeristiwaIntegrasi::dispatch($pelanggan->IdTenant, 'pelanggan.dibuat', $pelanggan->Id, ['Uuid' => $pelanggan->Uuid]);
+        });
+    }
 
     /**
      * @return array<string, string>
