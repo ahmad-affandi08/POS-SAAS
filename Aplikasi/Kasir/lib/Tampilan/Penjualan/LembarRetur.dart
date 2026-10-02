@@ -26,7 +26,7 @@ import '../LembarMutasiKas.dart';
 enum CaraRefund { Tunai, Transfer, Campuran, Tukar }
 
 /// Formulir retur dari struk (Rincian F-09 fase 1) di dalam `PanelTugas` ruang kerja: masukkan/pindai nomor struk →
-/// cari online → pilih barang, jumlah, & kondisi → alasan & cara refund → PIN penyetuju ber-izin `penjualan.void` →
+/// cari online → pilih barang, jumlah, & kondisi → alasan & cara refund → PIN penyetuju ber-izin `penjualan.retur` (K-22) →
 /// simpan lokal + outbox. Pemindai barcode (keyboard wedge) mengetik nomor lalu Enter langsung mencari.
 class LembarRetur extends ConsumerStatefulWidget {
   const LembarRetur({super.key, required this.kasir, required this.saatSelesai, this.saatTukar});
@@ -223,7 +223,7 @@ class _LembarReturState extends ConsumerState<LembarRetur> {
       penyetuju = await showDialog<StafLokal>(
         context: context,
         builder: (_) => DialogPinSupervisor(
-          izin: IzinKasir.penjualanVoid,
+          izin: IzinKasir.penjualanRetur,
           pesan: 'Retur ${total.FormatRupiah()} wajib disetujui. Pilih supervisor yang menyetujui.',
           judul: 'Retur penjualan',
           nilai: total,

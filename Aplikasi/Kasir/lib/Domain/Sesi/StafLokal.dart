@@ -12,8 +12,11 @@ abstract final class IzinKasir {
   static const String penjualanDiskonSetujui = 'penjualan.diskon.setujui';
   static const String shiftSelisihSetujui = 'shift.selisih.setujui';
 
-  /// F-09: melayani & menyetujui void/retur penjualan.
+  /// F-09: melayani & menyetujui void penjualan (retur memakai [penjualanRetur] sejak K-22).
   static const String penjualanVoid = 'penjualan.void';
+
+  /// K-22: melayani & menyetujui retur (termasuk tukar barang), terpisah dari void.
+  static const String penjualanRetur = 'penjualan.retur';
 
   /// F-12 BR-12.1: menyetujui penjualan tempo melebihi limit kredit / piutang lewat jatuh tempo.
   static const String penjualanTempoSetujui = 'penjualan.tempo.setujui';

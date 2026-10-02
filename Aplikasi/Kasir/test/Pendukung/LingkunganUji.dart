@@ -250,6 +250,7 @@ Map<String, Object?> DataAwalUji({
       'penjualan.diskon.setujui',
       'shift.selisih.setujui',
       'penjualan.void',
+      'penjualan.retur',
       'penjualan.tempo.setujui',
       'persediaan.terbuang.catat',
       'persediaan.kelola',

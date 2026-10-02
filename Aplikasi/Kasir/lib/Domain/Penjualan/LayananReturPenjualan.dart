@@ -72,7 +72,7 @@ class ReturTersimpan {
 /// - jumlah per baris > 0 dan ≤ `JumlahBisaDiretur` (`JumlahReturMelebihi`), desimal hanya untuk satuan desimal;
 /// - nilai per baris dari [PenghitungNilaiRetur] (rumus server), Σ = `Ringkasan.TotalRefund`;
 /// - refund fase 1 tunai dari laci shift aktif dan/atau transfer manual, Σ refund = total;
-/// - pelaku ber-izin `penjualan.buat`/`penjualan.void`, penyetuju ber-izin `penjualan.void` (boleh diri sendiri);
+/// - pelaku ber-izin `penjualan.buat`/`penjualan.retur`, penyetuju ber-izin `penjualan.retur` (boleh diri sendiri, K-22);
 /// - butuh shift terbuka; nomor `RJ/{KodeOutlet}/{YYMMDD}/{KodePerangkat}-{SEQ4}` (sekuens per perangkat per hari);
 /// - retur + baris + refund + status penjualan asal lokal + outbox `ReturPenjualan.Buat` dalam satu transaksi SQLite.
 class LayananReturPenjualan {
@@ -179,9 +179,9 @@ class LayananReturPenjualan {
   static Uang HitungTotal(List<PilihanReturBaris> pilihan) =>
       PenghitungNilaiRetur.HitungTotal([for (final p in pilihan) (baris: p.baris, jumlah: p.jumlah)]);
 
-  /// Penyetuju efektif: penyetuju yang lolos PIN, atau kasir sendiri bila ber-izin `penjualan.void`.
+  /// Penyetuju efektif: penyetuju yang lolos PIN, atau kasir sendiri bila ber-izin `penjualan.retur` (K-22).
   static StafLokal? AmbilPenyetujuEfektif(StafLokal kasir, StafLokal? penyetuju) =>
-      penyetuju ?? (kasir.PunyaIzin(IzinKasir.penjualanVoid) ? kasir : null);
+      penyetuju ?? (kasir.PunyaIzin(IzinKasir.penjualanRetur) ? kasir : null);
 
   /// Validasi pilihan baris (tanpa menyentuh basis data), untuk layar sebelum meminta PIN.
   /// F-16d bagian 2: baris paket sesi tidak diretur di kasir; sisa sesinya dikembalikan dari back-office.
@@ -260,7 +260,7 @@ class LayananReturPenjualan {
   }
 
   /// Simpan retur. F-12: penjualan tempo memotong piutang dulu ([HitungPotongPiutang]); [refundTunai] = bagian tunai
-  /// dari laci shift aktif; sisanya (total − potong piutang − tunai) ditransfer manual lewat [metodeTransfer]. [penyetuju] = staf yang lolos PIN; null → kasir sendiri bila ber-izin `penjualan.void`.
+  /// dari laci shift aktif; sisanya (total − potong piutang − tunai) ditransfer manual lewat [metodeTransfer]. [penyetuju] = staf yang lolos PIN; null → kasir sendiri bila ber-izin `penjualan.retur`.
   Future<ReturTersimpan> Simpan({
     required HasilCariPenjualan hasil,
     required List<PilihanReturBaris> pilihan,
@@ -279,7 +279,7 @@ class LayananReturPenjualan {
     if (shift == null) {
       throw const GalatKasir('ShiftTidakDitemukan', 'Belum ada shift terbuka. Buka shift dulu sebelum retur.');
     }
-    if (!kasir.PunyaIzin(IzinKasir.penjualanBuat) && !kasir.PunyaIzin(IzinKasir.penjualanVoid)) {
+    if (!kasir.PunyaIzin(IzinKasir.penjualanBuat) && !kasir.PunyaIzin(IzinKasir.penjualanRetur)) {
       throw GalatKasir('TanpaIzin', '${kasir.nama} tidak punya izin melayani retur.');
     }
     final kodeOutlet = k.kodeOutlet ?? '';
@@ -346,7 +346,7 @@ class LayananReturPenjualan {
     if (efektif == null) {
       throw const GalatKasir('PersetujuanDiperlukan', 'Retur wajib disetujui supervisor dengan PIN.');
     }
-    if (!efektif.PunyaIzin(IzinKasir.penjualanVoid)) {
+    if (!efektif.PunyaIzin(IzinKasir.penjualanRetur)) {
       throw GalatKasir('PenyetujuTidakBerwenang', '${efektif.nama} tidak punya izin menyetujui retur.');
     }
 

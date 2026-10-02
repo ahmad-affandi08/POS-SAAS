@@ -29,7 +29,8 @@ class LayananPersetujuanJarakJauh {
     IzinKasir.kasKeluarSetujui => 'Kas keluar di atas batas',
     IzinKasir.penjualanDiskonSetujui => 'Diskon di atas batas',
     IzinKasir.shiftSelisihSetujui => 'Selisih kas tutup shift',
-    IzinKasir.penjualanVoid => 'Void / retur penjualan',
+    IzinKasir.penjualanVoid => 'Void penjualan',
+    IzinKasir.penjualanRetur => 'Retur penjualan',
     IzinKasir.penjualanTempoSetujui => 'Penjualan tempo',
     _ => 'Persetujuan pemilik',
   };

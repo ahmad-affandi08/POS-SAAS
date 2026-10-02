@@ -20,6 +20,7 @@ use App\Domain\Kasir\Data\DataInfoShift;
 use App\Domain\Kasir\Kueri\InfoShift;
 use App\Domain\Katalog\Kueri\InfoProdukStok;
 use App\Domain\Organisasi\Data\DataOutletPenjualan;
+use App\Domain\Organisasi\Enum\IzinTenant;
 use App\Domain\Organisasi\Kueri\OutletPenjualan;
 use App\Domain\Organisasi\Kueri\TanggalBisnisOutlet;
 use App\Domain\Pelanggan\Layanan\PencatatDepositPenjualan;
@@ -71,7 +72,7 @@ use Illuminate\Support\Facades\DB;
  * Urutan pemeriksaan: (1) Uuid sama → `Duplikat` bila Nomor & TotalRefund sama, selain itu `UuidSudahDipakai`;
  * (2) shift refund milik perangkat ini (`ShiftTidakDitemukan`); (3) penjualan asal di outlet perangkat
  * (`PenjualanTidakDitemukan`), bukan void dan paling lama `BatasHariRetur` hari sejak tanggal bisnisnya
- * (`ReturTidakDiizinkan`); (4) kasir & penyetuju ber-izin `penjualan.void` (`KasirTidakDitemukan`/`TanpaIzin`/
+ * (`ReturTidakDiizinkan`); (4) kasir & penyetuju ber-izin `penjualan.retur` (K-22) (`KasirTidakDitemukan`/`TanpaIzin`/
  * `PenyetujuTidakBerwenang`); (5) nomor `RJ/{KodeOutlet}/{YYMMDD}/{KodePerangkat}-{SEQ≥4}` unik per tenant
  * (`NomorTidakValid`/`NomorSudahDipakai`) dan periode terbuka (`PeriodeTerkunci`); (6) baris milik penjualan asal
  * (`BarisTidakDikenal`) dan jumlah ≤ sisa (`JumlahReturMelebihi`); (7) Σ nilai retur = `Ringkasan.TotalRefund`
@@ -178,8 +179,9 @@ final class TerimaReturPenjualanPos
         $this->PastikanBolehRetur($data, $penjualan, $tanggalBisnis);
 
         // (4) Pelaku.
-        $kasir = $this->pelaku->CariKasir($idTenant, $data->uuidPengguna, $outlet->idOutlet);
-        $penyetuju = $this->pelaku->CariPenyetuju($idTenant, $data->uuidPenyetuju, $outlet->idOutlet);
+        // K-22: retur memakai izin `penjualan.retur`, terpisah dari void.
+        $kasir = $this->pelaku->CariKasir($idTenant, $data->uuidPengguna, $outlet->idOutlet, IzinTenant::PenjualanRetur);
+        $penyetuju = $this->pelaku->CariPenyetuju($idTenant, $data->uuidPenyetuju, $outlet->idOutlet, IzinTenant::PenjualanRetur);
 
         // (5) Nomor & periode.
         $this->PeriksaNomor($data, $outlet, $tanggalBisnis);

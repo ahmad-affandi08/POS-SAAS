@@ -435,6 +435,17 @@ void main() {
       await expectLater(Simpan('2', tunai: Uang.DariBulat(70000)), GalatDengan('RefundTidakSesuai'));
       await expectLater(Simpan('2', tunai: Uang.DariBulat(60000)), GalatDengan('MetodeBayarTidakDikenal'));
       await expectLater(Simpan('2', p: sari), GalatDengan('PenyetujuTidakBerwenang'));
+      // K-22: hanya ber-izin void (tanpa penjualan.retur) tidak boleh menyetujui retur.
+      final hanyaVoid = StafLokal(
+        uuid: budi.uuid,
+        nama: budi.nama,
+        pemilik: false,
+        izin: [
+          for (final i in budi.izin)
+            if (i != IzinKasir.penjualanRetur) i,
+        ],
+      );
+      await expectLater(Simpan('2', p: hanyaVoid), GalatDengan('PenyetujuTidakBerwenang'));
       await expectLater(
         layananRetur.Simpan(
           hasil: hasil,
