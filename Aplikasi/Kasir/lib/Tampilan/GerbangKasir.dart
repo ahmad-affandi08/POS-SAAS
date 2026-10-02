@@ -33,10 +33,28 @@ class _GerbangKasirState extends ConsumerState<GerbangKasir> with WidgetsBinding
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _pewaktuPerangkat = Timer.periodic(
-      GerbangKasir.selangPeriksaPerangkat,
-      (_) => unawaited(ref.read(penyediaSesi.notifier).PeriksaPerangkat()),
-    );
+    _pewaktuPerangkat = Timer.periodic(GerbangKasir.selangPeriksaPerangkat, (_) => unawaited(_Periksa()));
+  }
+
+  /// Pemeriksaan berkala. Di layar pilih kasir (dan layar buka shift) pewaktu sinkron 30 detik Ruang Kerja tidak
+  /// berjalan, jadi outbox ikut dikirim di sini (§18.3 butir 6, K-6): perangkat yang ditinggal di layar pilih kasir
+  /// tetap menyetor transaksi offline-nya.
+  Future<void> _Periksa() async {
+    final sesi = ref.read(penyediaSesi.notifier);
+    await sesi.PeriksaPerangkat();
+    if (mounted && _CekDiLuarRuangKerja()) {
+      await sesi.Sinkronkan();
+    }
+  }
+
+  bool _CekDiLuarRuangKerja() {
+    final tahap = ref.read(penyediaSesi).tahap;
+    if (tahap == TahapSesi.PilihKasir) {
+      return true;
+    }
+    return tahap == TahapSesi.Masuk &&
+        ref.read(penyediaJenisPerangkat).value != 'Pelayan' &&
+        ref.read(penyediaShiftAktif).value == null;
   }
 
   @override
@@ -49,13 +67,21 @@ class _GerbangKasirState extends ConsumerState<GerbangKasir> with WidgetsBinding
   @override
   void didChangeAppLifecycleState(AppLifecycleState keadaan) {
     // Perangkat kasir sering ditinggal di latar; saat dibuka lagi pencabutan tidak perlu menunggu pewaktu.
+    // K-6: outbox yang menunggu jadwal coba ulang langsung dikirim, bukan menunggu jeda berikutnya.
     if (keadaan == AppLifecycleState.resumed) {
-      unawaited(ref.read(penyediaSesi.notifier).PeriksaPerangkat());
+      final sesi = ref.read(penyediaSesi.notifier);
+      unawaited(sesi.PeriksaPerangkat().then((_) => sesi.SinkronkanSegera()));
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    // K-6: koneksi pulih (Offline → Online) = kirim outbox sekarang juga.
+    ref.listen<StatusKoneksi>(penyediaKoneksi, (sebelum, sesudah) {
+      if (sebelum == StatusKoneksi.Offline && sesudah == StatusKoneksi.Online) {
+        unawaited(ref.read(penyediaSesi.notifier).SinkronkanSegera());
+      }
+    });
     final sesi = ref.watch(penyediaSesi);
     final jenis = ref.watch(penyediaJenisPerangkat).value;
     final kds = jenis == 'Kds';

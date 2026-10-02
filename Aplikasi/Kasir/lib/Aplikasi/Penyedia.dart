@@ -1130,6 +1130,17 @@ class PengaturSesi extends Notifier<KeadaanSesi> {
     return hasil;
   }
 
+  /// §18.3 butir 6 (K-6): kirim outbox sekarang juga, termasuk item yang sedang menunggu jadwal coba ulang. Dipakai saat
+  /// aplikasi kembali ke depan dan saat koneksi pulih, karena jeda coba ulang bisa sampai 5 menit dan transaksi offline
+  /// tidak perlu menunggu selama itu begitu jaringan kembali. Diabaikan sebelum perangkat aktif.
+  Future<RingkasanSinkron?> SinkronkanSegera() async {
+    if (_sedangDicabut || state.tahap == TahapSesi.BelumAktif || state.tahap == TahapSesi.Memuat) {
+      return null;
+    }
+    await ref.read(penyediaRepositori).SegerakanTertunda(ref.read(penyediaJam)());
+    return Sinkronkan();
+  }
+
   /// BR-02.3: pemeriksaan keabsahan perangkat di latar, dipanggil berkala dan saat aplikasi kembali ke depan.
   ///
   /// Pencabutan harus mengembalikan aplikasi ke layar aktivasi tanpa menunggu kasir melakukan apa pun — shift
