@@ -786,7 +786,10 @@ export default function HalamanFormProduk({
                             checked={data.HargaTerbuka ?? false}
                             onCheckedChange={(nilai) => Atur('HargaTerbuka', nilai)}
                         />
-                        <FieldLabel htmlFor={`${idForm}-harga-terbuka`} className="text-isi font-normal text-teks-utama">
+                        <FieldLabel
+                            htmlFor={`${idForm}-harga-terbuka`}
+                            className="text-isi font-normal text-teks-utama"
+                        >
                             Harga diketik kasir saat menjual (misal barang lain-lain, jasa servis)
                         </FieldLabel>
                     </Field>
