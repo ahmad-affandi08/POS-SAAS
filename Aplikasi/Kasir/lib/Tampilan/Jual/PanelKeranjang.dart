@@ -29,6 +29,8 @@ class PanelKeranjang extends StatelessWidget {
     this.saatLaundry,
     this.saatKanal,
     this.saatOngkir,
+    this.jenisPesanan = const [],
+    this.saatJenisPesanan,
   });
 
   final Keranjang keranjang;
@@ -66,6 +68,11 @@ class PanelKeranjang extends StatelessWidget {
   /// X8: pilih kanal (bawa pulang, GoFood, …). Null = tidak ditampilkan (tidak ada kanal platform/harga berkanal, mode
   /// meja, atau mode Pelayan).
   final VoidCallback? saatKanal;
+
+  /// v3.51: jenis pesanan outlet (Makan di tempat/Bawa pulang/Antar) sebagai tombol segmen di atas keranjang; kurang
+  /// dari dua = tidak ditampilkan.
+  final List<KanalPenjualan> jenisPesanan;
+  final ValueChanged<KanalPenjualan>? saatJenisPesanan;
 
   /// v3.29: isi ongkir penjualan kanal Antar. Null = tidak ditampilkan (kanal lain, pesanan online, mode Pelayan).
   final VoidCallback? saatOngkir;
@@ -126,6 +133,45 @@ class PanelKeranjang extends StatelessWidget {
                     icon: const Icon(Icons.remove_shopping_cart_outlined),
                   ),
                 ],
+              ),
+            ),
+          if (jenisPesanan.length >= 2 && saatJenisPesanan != null)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: TokenJarak.jarak16, vertical: TokenJarak.jarak8),
+              decoration: BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(color: warna.garis, width: TokenJarak.tebalGaris),
+                ),
+              ),
+              child: Semantics(
+                label: 'Jenis pesanan',
+                container: true,
+                child: SegmentedButton<KanalPenjualan>(
+                  key: const ValueKey('JenisPesanan'),
+                  showSelectedIcon: false,
+                  emptySelectionAllowed: true,
+                  segments: [
+                    for (final j in jenisPesanan)
+                      ButtonSegment(
+                        value: j,
+                        label: Text(LayananPenjualan.AmbilLabelKanal(j), maxLines: 1, overflow: TextOverflow.ellipsis),
+                        icon: Icon(switch (j) {
+                          KanalPenjualan.MakanDiTempat => Icons.restaurant_outlined,
+                          KanalPenjualan.Antar => Icons.delivery_dining_outlined,
+                          _ => Icons.shopping_bag_outlined,
+                        }),
+                      ),
+                  ],
+                  selected: {
+                    if (jenisPesanan.contains(LayananPenjualan.AmbilKanal(keranjang)))
+                      LayananPenjualan.AmbilKanal(keranjang),
+                  },
+                  onSelectionChanged: (pilih) {
+                    if (pilih.isNotEmpty) {
+                      saatJenisPesanan!(pilih.first);
+                    }
+                  },
+                ),
               ),
             ),
           if (saatKanal != null)

@@ -131,6 +131,8 @@ class KonteksPenjualan {
     this.deposit = const DepositPos(),
     this.laundry = const LaundryPos(),
     this.tokoOnlineAktif = false,
+    this.jenisPesanan = const [],
+    this.jenisPesananBawaan,
   });
 
   final String? uuidOutlet;
@@ -173,6 +175,13 @@ class KonteksPenjualan {
 
   /// F-17: toko online melayani outlet ini, jadi menu Pesanan toko online ditampilkan.
   final bool tokoOnlineAktif;
+
+  /// v3.51: jenis pesanan yang dipilih kasir per transaksi (Makan di tempat/Bawa pulang/Antar), dari data awal outlet.
+  /// Kosong = tanpa pilihan jenis pesanan (retail).
+  final List<KanalPenjualan> jenisPesanan;
+
+  /// Jenis pesanan bawaan transaksi baru; null = Bawa pulang.
+  final KanalPenjualan? jenisPesananBawaan;
 
   Decimal AmbilPersenBiayaLayanan() =>
       profilPajak.biayaLayananAktif ? Decimal.tryParse(profilPajak.persenBiayaLayanan) ?? Decimal.zero : Decimal.zero;
@@ -250,8 +259,17 @@ class KonteksPenjualan {
       deposit: await MuatDeposit(repositori),
       laundry: await MuatLaundry(repositori),
       tokoOnlineAktif: await repositori.AmbilPengaturan(KunciPengaturan.tokoOnlineAktif) == '1',
+      jenisPesanan: [
+        for (final nama in (jsonDecode(
+          await repositori.AmbilPengaturan(KunciPengaturan.jenisPesanan) ?? '[]',
+        ) as List).whereType<String>())
+          ?AmbilKanal(nama),
+      ],
+      jenisPesananBawaan: AmbilKanal(await repositori.AmbilPengaturan(KunciPengaturan.jenisPesananBawaan)),
     );
   }
+
+  static KanalPenjualan? AmbilKanal(String? nama) => KanalPenjualan.values.where((k) => k.name == nama).firstOrNull;
 
   /// Pengaturan deposit tersimpan dari data awal (tidak ada = tidak berlaku).
   static Future<DepositPos> MuatDeposit(RepositoriKasir repositori) async {

@@ -87,6 +87,8 @@ Map<String, Object?> DataAwalUji({
   bool tokoOnline = false,
   bool persetujuanJarakJauh = false,
   bool ojol = false,
+  List<String>? jenisPesanan,
+  String? jenisPesananBawaan,
 }) => {
   'Karyawan': ?karyawan,
   // F-16d: deposit pelanggan (fitur paket) hanya bila diminta test.
@@ -123,6 +125,9 @@ Map<String, Object?> DataAwalUji({
     'Telepon': '0271-555123',
     'JamTutupBuku': ?jamTutupBuku,
     'ZonaWaktu': ?zonaWaktu,
+    // v3.51: jenis pesanan outlet (FnB) hanya bila diminta test.
+    'JenisPesanan': ?jenisPesanan,
+    'JenisPesananBawaan': ?jenisPesananBawaan,
   },
   'Perangkat': {
     'Uuid': '01K5PERANGKAT0000000000001',

@@ -166,6 +166,8 @@ class OutletPos {
     required this.telepon,
     this.jamTutupBuku,
     this.zonaWaktu,
+    this.jenisPesanan = const [],
+    this.jenisPesananBawaan,
   });
 
   final String uuid;
@@ -181,6 +183,13 @@ class OutletPos {
   /// (PRD v1.46 (d)); null bila server lama tidak mengirimnya.
   final String? zonaWaktu;
 
+  /// v3.51: jenis pesanan yang dipilih kasir per transaksi (`MakanDiTempat`/`BawaPulang`/`Antar`); kosong = tanpa
+  /// pilihan (server lama juga tidak mengirimnya).
+  final List<String> jenisPesanan;
+
+  /// Jenis pesanan bawaan transaksi baru; null bila tidak ada pilihan.
+  final String? jenisPesananBawaan;
+
   static OutletPos? DariJson(Object? json) {
     final peta = UraiJson.AmbilPetaAtauNull(json);
     return peta == null
@@ -193,6 +202,8 @@ class OutletPos {
             telepon: UraiJson.AmbilTeksAtauNull(peta['Telepon']),
             jamTutupBuku: UraiJson.AmbilTeksAtauNull(peta['JamTutupBuku']),
             zonaWaktu: UraiJson.AmbilTeksAtauNull(peta['ZonaWaktu']),
+            jenisPesanan: UraiJson.AmbilDaftarTeks(peta['JenisPesanan']),
+            jenisPesananBawaan: UraiJson.AmbilTeksAtauNull(peta['JenisPesananBawaan']),
           );
   }
 }

@@ -1,6 +1,6 @@
 # Daftar Kekurangan & Pekerjaan Tertunda PAYOU
 
-Status per 1 Oktober 2026 (PRD v3.42; butir A3, A14, dan A15 disisir ulang di v3.25, sisanya belum disisir butir demi butir sejak v2.88, lihat catatan audit di bawah). Dokumen ini mencatat apa yang **belum ada**, **belum diuji di produksi**, atau **menunggu keputusan pemilik produk**, supaya sistem bisa dibuka ke publik lebih dulu dengan risiko yang diketahui. Perbarui setiap kali satu butir selesai.
+Status per 2 Oktober 2026 (PRD v3.51; bagian K disisir dari kode 2 Oktober 2026; butir A3, A14, dan A15 disisir ulang di v3.25, sisanya belum disisir butir demi butir sejak v2.88, lihat catatan audit di bawah). Dokumen ini mencatat apa yang **belum ada**, **belum diuji di produksi**, atau **menunggu keputusan pemilik produk**, supaya sistem bisa dibuka ke publik lebih dulu dengan risiko yang diketahui. Perbarui setiap kali satu butir selesai.
 
 Status butir (audit F-26): **TERBUKA** = belum dikerjakan; **SELESAI @ versi** = sudah dikerjakan & ada test regresinya; **DITUNDA** = sengaja ditunda; **MENUNGGU KEPUTUSAN** = butuh pemilik produk. Butir baru ditandai SELESAI hanya bila test regresinya ada.
 
@@ -78,3 +78,52 @@ Diverifikasi terhadap kode (bukan hanya dibaca ulang). **Sudah diperbaiki (v3.15
 - **MariaDB vs MySQL** (A2): putuskan setelah job `backend-mariadb` memberi bukti.
 - **Backup & restore drill** (A10), **uji beban** (A3), **legal/DPA** (A5), **berkas LICENSE** (`composer.json` menyebut MIT padahal produk komersial: pemilik produk memutuskan lisensinya), deskripsi repository GitHub.
 - **Ekspor Coretax belum divalidasi ke aplikasi resmi** (impor satu faktur) dan status CI Flutter belum diverifikasi (golden 1280dp, A18).
+
+## K. Celah aplikasi kasir — audit 2 Oktober 2026
+
+Hasil pemindaian aplikasi kasir (`Aplikasi/Kasir/lib`) terhadap PRD §8 F-07, §9 per sektor, §17.2, §18, dan §19, setelah
+pemilik produk menilai kasir "tertinggal" (contoh: FnB tidak bisa memilih jenis pesanan). Setiap butir sudah dicek ke
+kode. Urutan pengerjaan = urutan tabel; butir yang selesai diberi **SELESAI @ versi**.
+
+### K-a. Kritis untuk operasional
+
+| # | Celah | Bukti / PRD | Status |
+|---|---|---|---|
+| K-1 | **Jenis pesanan FnB** (Makan di tempat / Bawa pulang / Antar) tidak bisa dipilih di kasir; tanpa mode meja semua penjualan tercatat Bawa pulang. Pilihan kanal hanya muncul bila ada kanal ojol/harga berkanal | `LayananPenjualan.AmbilPilihanKanal`; §9.1–§9.2 | DIKERJAKAN (v3.51) |
+| K-2 | **Nomor antrian / nama pemesan** untuk penjualan bayar-dulu (QSR) tidak ada; struk & tiket dapur hanya nomor INV; layar panggil antrian tidak ada | §9.2 | TERBUKA |
+| K-3 | **Cetak tagihan sementara (pre-bill)** untuk pesanan meja tidak ada | §9.1 | TERBUKA |
+| K-4 | **Keranjang hilang bila aplikasi tertutup** (hanya di memori; PRD minta tersimpan di SQLite) | `Penyedia.dart` `PengaturKeranjang`; §17.2.7 | TERBUKA |
+| K-5 | **Barcode timbangan** (awalan 20–29, harga/berat di EAN-13) tidak dikenali | `KatalogLokal.CariKode`; §9.3, F-03 | TERBUKA |
+| K-6 | **Pemicu sinkron belum lengkap**: hanya timer 30 detik di ruang kerja; tidak saat aplikasi kembali ke depan, koneksi kembali, atau di layar kunci/pilih kasir | `RuangKerja.dart`, `GerbangKasir.dart`; §18.3 | TERBUKA |
+| K-7 | **Basis data lokal tidak terenkripsi** (SQLCipher) | `Persiapan.dart`; §17.2.6 | TERBUKA |
+
+### K-b. Penting
+
+| # | Celah | Bukti / PRD | Status |
+|---|---|---|---|
+| K-8 | `ModeKasir` template sektor (Retail/Cepat/Meja/Layanan/Grosir) tidak pernah sampai ke kasir; tata letak sama untuk semua sektor | §5.1, §9 | TERBUKA |
+| K-9 | **Pemilih varian** (ukuran × warna) di kasir tidak ada; produk induk varian ditolak | `KatalogLokal.dart`; §9.4 | TERBUKA |
+| K-10 | **Cek harga** tanpa menambah ke keranjang | §9.3 | TERBUKA |
+| K-11 | **Retur tanpa struk & tukar barang** satu layar | `LembarRetur.dart`; §9.3–§9.4 | TERBUKA |
+| K-12 | Status meja **minta bill / perlu dibersihkan** | `LayarMeja.dart`; §9.1 | TERBUKA |
+| K-13 | **Course / tahan & kirim** (hold & fire) per kursus | §9.1 | TERBUKA |
+| K-14 | **Bagi tagihan rata per orang / per nominal** (sekarang hanya per item, khusus meja) | BR-08.2, §9.1 | TERBUKA |
+| K-15 | Umpan balik pindai (suara + getar, sorot baris) | §17.2.7 prinsip 4 | TERBUKA |
+| K-16 | Produk **favorit/terlaris** di atas katalog, kategori terakhir diingat, daftar pintasan `?` | §17.2.7 | TERBUKA |
+| K-17 | Layar status sinkron: waktu sinkron terakhir, umur outbox tertua (> 2 jam), transaksi **PerluTinjauan**, peringatan jam perangkat | §18.3 butir 7 & 10 | TERBUKA |
+| K-18 | **Buka ulang shift** oleh supervisor, **foto bukti** kas masuk/keluar | F-06, §19.1 | TERBUKA |
+| K-19 | Info batch/kedaluwarsa saat jual (FEFO hanya di server) | §9.5 | TERBUKA |
+| K-20 | Buat **booking salon dari kasir** + kalender slot per staf | §9.8 | TERBUKA |
+| K-21 | Log lokal & pelaporan galat (Sentry) | §17.2.6 | TERBUKA |
+| K-22 | Izin retur terpisah dari void | F-09 | TERBUKA |
+
+### K-c. Tambahan / sektor baru (lihat K25 di `KeputusanMenunggu.md`)
+
+| # | Celah | Status |
+|---|---|---|
+| K-23 | Mode latihan (POS-18) | TERBUKA |
+| K-24 | Riwayat lebih dari hari ini & ringkasan akhir hari per outlet di perangkat | TERBUKA |
+| K-25 | Item harga terbuka / item kustom | TERBUKA |
+| K-26 | Sektor **Apotek** (golongan obat, resep, peran Apoteker, racikan, embalase) — belum ada di server maupun kasir | MENUNGGU KEPUTUSAN (K25) |
+| K-27 | Sektor **Bengkel** (kendaraan, work order, mekanik per jasa) — belum ada sama sekali | MENUNGGU KEPUTUSAN (K25) |
+| K-28 | Mode LAN / Outlet Hub (§18.5, fase 3), layar pelanggan monitor kedua Windows, pembaruan otomatis Windows | DITUNDA |

@@ -36,6 +36,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $TemplateSektorDiterapkanPada
  * @property string $JamTutupBuku
  * @property array<string, mixed>|null $ProfilPajak
+ * @property array<string, mixed>|null $PengaturanKasir jenis pesanan kasir (v3.51), null = otomatis menurut mode kasir
  * @property StatusOrganisasi $Status
  * @property bool $PesanSendiriAktif F-17: tamu boleh memesan lewat QR meja (juga butuh fitur `kanal.self-order`)
  * @property bool $TokoOnlineAktif
@@ -62,6 +63,7 @@ final class Outlet extends ModelDasar
         'TemplateSektorDiterapkanPada' => null,
         'JamTutupBuku' => '04:00',
         'ProfilPajak' => null,
+        'PengaturanKasir' => null,
         'Status' => 'Aktif',
         'PesanSendiriAktif' => false,
         'TokoOnlineAktif' => false,
@@ -94,6 +96,7 @@ final class Outlet extends ModelDasar
     {
         return [
             'ProfilPajak' => 'array',
+            'PengaturanKasir' => 'array',
             'Status' => StatusOrganisasi::class,
             'PesanSendiriAktif' => 'boolean',
             'TokoOnlineAktif' => 'boolean',

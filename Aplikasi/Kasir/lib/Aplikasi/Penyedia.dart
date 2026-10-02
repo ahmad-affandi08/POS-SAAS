@@ -7,7 +7,7 @@ import 'package:adaptor_perangkat/AdaptorPerangkat.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:klien_api/KlienApi.dart';
-import 'package:mesin_kasir/MesinKasir.dart' show Uang;
+import 'package:mesin_kasir/MesinKasir.dart' show KanalPenjualan, Uang;
 import 'package:sistem_desain/SistemDesain.dart' show TokenWarna;
 
 import '../Data/Printer/InfoPerangkatPlatform.dart';
@@ -559,13 +559,35 @@ final penyediaLaporanZTertunda = StreamProvider<String?>(
 );
 
 /// Keranjang yang sedang dibangun di layar Jual (bertahan saat pindah menu atau ganti kasir).
+///
+/// v3.51: transaksi baru memakai jenis pesanan bawaan outlet (misal Makan di tempat di kafe); Bawa pulang tetap
+/// `kanal == null` seperti sebelumnya.
 class PengaturKeranjang extends Notifier<Keranjang> {
+  KanalPenjualan? _bawaan;
+
   @override
   Keranjang build() => Keranjang.kosong;
 
   void Ganti(Keranjang keranjang) => state = keranjang;
 
-  void Kosongkan() => state = Keranjang.kosong;
+  void Kosongkan() => state = _AmbilKosong();
+
+  Keranjang _AmbilKosong() =>
+      _bawaan == null || _bawaan == KanalPenjualan.BawaPulang ? Keranjang.kosong : Keranjang(kanal: _bawaan);
+
+  /// Dipanggil saat konteks penjualan dimuat/berubah. Keranjang yang masih kosong dan belum memilih jenis pesanan
+  /// langsung ikut bawaan baru; keranjang yang sedang diisi tidak diubah.
+  void AturKanalBawaan(KanalPenjualan? bawaan) {
+    if (bawaan == _bawaan) {
+      return;
+    }
+    final lama = _bawaan;
+    _bawaan = bawaan;
+    final k = state;
+    if (k.CekKosong && k.pesananMeja == null && k.praPesan == null && k.reservasi == null && k.kanal == lama) {
+      state = _AmbilKosong();
+    }
+  }
 }
 
 final penyediaKeranjang = NotifierProvider<PengaturKeranjang, Keranjang>(PengaturKeranjang.new);

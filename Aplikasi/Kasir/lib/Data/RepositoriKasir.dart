@@ -33,6 +33,10 @@ abstract final class KunciPengaturan {
 
   /// F-17: `1` bila toko online melayani outlet perangkat ini (menu Pesanan toko online di kasir).
   static const String tokoOnlineAktif = 'TokoOnlineAktif';
+
+  /// v3.51: jenis pesanan outlet (JSON larik nama kanal) & bawaannya.
+  static const String jenisPesanan = 'JenisPesanan';
+  static const String jenisPesananBawaan = 'JenisPesananBawaan';
   static const String kodeOutlet = 'KodeOutlet';
   static const String jamTutupBuku = 'JamTutupBuku';
 
@@ -230,6 +234,8 @@ class RepositoriKasir {
       await SimpanPengaturan(KunciPengaturan.alamatOutlet, outlet.alamat ?? '');
       await SimpanPengaturan(KunciPengaturan.teleponOutlet, outlet.telepon ?? '');
       await SimpanPengaturan(KunciPengaturan.jamTutupBuku, outlet.jamTutupBuku ?? '00:00');
+      await SimpanPengaturan(KunciPengaturan.jenisPesanan, jsonEncode(outlet.jenisPesanan));
+      await SimpanPengaturan(KunciPengaturan.jenisPesananBawaan, outlet.jenisPesananBawaan ?? '');
       final zona = outlet.zonaWaktu?.trim();
       if (zona != null && zona.isNotEmpty) {
         await SimpanPengaturan(KunciPengaturan.zonaWaktu, zona);

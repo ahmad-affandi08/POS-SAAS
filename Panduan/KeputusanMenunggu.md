@@ -19,6 +19,7 @@ Format tiap butir: pertanyaan, pilihan yang tersedia, usulan agent, dan apa yang
 | K7 | Sub-merchant gerbang pembayaran di bawah platform | sekarang / nanti | Nanti | — |
 | K8 | **Geofence absensi**: butuh aplikasi staf (HP pribadi) atau cukup lokasi perangkat kasir | aplikasi staf baru / lokasi perangkat kasir | Tunda sampai ada aplikasi staf | Geofence absensi F-18 |
 | K9 | **PPh 21 & BPJS di rekap gaji** (EMP-07): hitung otomatis (TER PMK 168/2023) atau hanya kolom potongan manual | otomatis / manual | Manual dulu (kolom potongan PPh 21 & BPJS tercatat terpisah), otomatis setelah divalidasi konsultan pajak | Payroll penuh |
+| K25 | **Sektor Apotek & Bengkel**: dijual sekarang atau belum? Keduanya butuh modul baru (apotek: golongan obat, resep, peran Apoteker, racikan; bengkel: kendaraan, work order, mekanik) | (a) bangun sekarang; (b) sembunyikan template sektornya sampai siap | (b) dulu, kerjakan setelah celah kasir K-1…K-22 (`DaftarKekurangan.md` bagian K) | Template sektor Apotek/Bengkel |
 
 ## Situs, domain & merek
 

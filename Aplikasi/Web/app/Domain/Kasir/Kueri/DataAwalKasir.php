@@ -6,6 +6,7 @@ namespace App\Domain\Kasir\Kueri;
 
 use App\Domain\Karyawan\Kueri\KaryawanPos;
 use App\Domain\Kasir\Model\KategoriKas;
+use App\Domain\Organisasi\Kueri\JenisPesananOutlet;
 use App\Domain\Organisasi\Kueri\OutletPenjualan;
 use App\Domain\Organisasi\Kueri\ProfilPajakOutlet;
 use App\Domain\Organisasi\Kueri\StafPerangkat;
@@ -38,7 +39,8 @@ use stdClass;
  * PKP), `AdaLogo` (logo usaha tersedia & ditampilkan; diunduh lewat `/logo-struk`), dan `TandaAir` (paket tanpa fitur
  * `struk.tanpa-watermark`). F-16d: `Deposit` (`Berlaku`, `MinimalIsi`, `MaksimalIsi`) &
  * `Perangkat.NomorUrutIsiDeposit`. Laundry (§9.9): `Laundry` (`Aktif`, `JamReguler`, `JamExpress`, `Parfum`,
- * `AwalanLacak` = awalan tautan `/s/{kode}` untuk QR label cucian, selalu terisi).
+ * `AwalanLacak` = awalan tautan `/s/{kode}` untuk QR label cucian, selalu terisi). v3.51: `Outlet.JenisPesanan` (daftar
+ * `MakanDiTempat`/`BawaPulang`/`Antar` yang dipilih kasir) & `Outlet.JenisPesananBawaan` (bawaan transaksi baru).
  */
 final class DataAwalKasir
 {
@@ -58,6 +60,7 @@ final class DataAwalKasir
         private readonly PengaturanDepositTenant $deposit,
         private readonly PengaturanLaundryTenant $laundry,
         private readonly StatusTokoOnlineOutlet $statusTokoOnline,
+        private readonly JenisPesananOutlet $jenisPesanan,
     ) {}
 
     /**
@@ -102,6 +105,8 @@ final class DataAwalKasir
                 // Tambahan di luar PRD (aditif): perangkat menghitung tanggal bisnis & nomor BR-07.1 offline.
                 'ZonaWaktu' => $outlet->zonaWaktu,
                 'JamTutupBuku' => $outlet->jamTutupBuku,
+                // v3.51 (aditif): jenis pesanan yang dipilih kasir per transaksi & bawaannya (kosong = tanpa pilihan).
+                ...array_intersect_key($this->jenisPesanan->AmbilDariId($outlet->idOutlet), ['JenisPesanan' => 1, 'JenisPesananBawaan' => 1]),
             ],
             'Perangkat' => [
                 'Uuid' => $perangkat->Uuid,

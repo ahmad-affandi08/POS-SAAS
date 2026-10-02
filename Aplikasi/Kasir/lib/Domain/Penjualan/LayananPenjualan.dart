@@ -220,6 +220,16 @@ class LayananPenjualan {
     const kanalToko = [KanalPenjualan.BawaPulang, KanalPenjualan.MakanDiTempat, KanalPenjualan.Antar];
     // v3.29: toko yang punya promo gratis ongkir mengantar sendiri, jadi kanal Antar (dengan ongkir) ikut ditawarkan.
     final adaGratisOngkir = k.promo.any((p) => p.aksi == JenisAksiPromo.GratisOngkir);
+    // v3.51: jenis pesanan outlet (FnB) yang diatur pemilik selalu ditawarkan, walau tanpa harga berkanal/ojol.
+    if (k.jenisPesanan.isNotEmpty) {
+      return [
+        ...k.jenisPesanan,
+        if (!k.jenisPesanan.contains(KanalPenjualan.Antar) &&
+            (adaGratisOngkir || berharga.contains(KanalPenjualan.Antar)))
+          KanalPenjualan.Antar,
+        ...platform,
+      ];
+    }
     if (platform.isEmpty && !adaGratisOngkir && !berharga.any(kanalToko.contains)) {
       return const [];
     }

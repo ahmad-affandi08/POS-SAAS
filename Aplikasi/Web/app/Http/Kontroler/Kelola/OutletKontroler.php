@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace App\Http\Kontroler\Kelola;
 
+use App\Domain\Organisasi\Aksi\AturJenisPesananOutlet;
 use App\Domain\Organisasi\Aksi\SimpanOutlet;
 use App\Domain\Organisasi\Aksi\UbahStatusOutlet;
 use App\Domain\Organisasi\Enum\BentukMeja;
 use App\Domain\Organisasi\Enum\JenisGudang;
+use App\Domain\Organisasi\Enum\JenisPesanan;
 use App\Domain\Organisasi\Enum\StatusOrganisasi;
+use App\Domain\Organisasi\Kueri\JenisPesananOutlet;
 use App\Domain\Organisasi\Kueri\MejaOutlet;
 use App\Domain\Organisasi\Kueri\PemakaianBatasOrganisasi;
 use App\Domain\Organisasi\Layanan\PenjagaModeMeja;
@@ -19,6 +22,7 @@ use App\Domain\Referensi\Enum\ZonaWaktu;
 use App\Domain\Referensi\Kueri\WilayahKota;
 use App\Domain\Tenant\Layanan\PastikanBatasPaket;
 use App\Domain\Tenant\Layanan\PemeriksaFiturTenant;
+use App\Http\Permintaan\Kelola\AturJenisPesananOutletPermintaan;
 use App\Http\Permintaan\Kelola\SimpanOutletPermintaan;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
@@ -78,7 +82,14 @@ final class OutletKontroler extends DasarKelolaKontroler
         ]);
     }
 
-    public function Detail(string $outlet, WilayahKota $wilayahKota, MejaOutlet $mejaOutlet, PenjagaModeMeja $modeMeja, PemeriksaFiturTenant $fitur): Response
+    public function AturJenisPesanan(string $outlet, AturJenisPesananOutletPermintaan $permintaan, AturJenisPesananOutlet $atur): RedirectResponse
+    {
+        $baris = $atur->Jalankan($this->CariOutlet($outlet), $permintaan->boolean('Otomatis'), $permintaan->AmbilDaftar(), $permintaan->AmbilBawaan());
+
+        return back()->with('Kilat', "Jenis pesanan kasir {$baris->Nama} disimpan. Perangkat kasir memakainya setelah memuat ulang data.");
+    }
+
+    public function Detail(string $outlet, WilayahKota $wilayahKota, MejaOutlet $mejaOutlet, PenjagaModeMeja $modeMeja, PemeriksaFiturTenant $fitur, JenisPesananOutlet $jenisPesanan): Response
     {
         $baris = $this->CariOutlet($outlet);
 
@@ -117,6 +128,11 @@ final class OutletKontroler extends DasarKelolaKontroler
             // F-10a: bagian meja tampil bila fitur mode meja aktif di outlet ini atau sudah ada data meja.
             'ModeMeja' => ['Aktif' => $modeMeja->CekAktif($baris), ...$mejaOutlet->Ambil($baris->Id)],
             'BentukMeja' => array_map(fn (BentukMeja $bentuk): array => ['Nilai' => $bentuk->value, 'Label' => $bentuk->AmbilLabel()], BentukMeja::cases()),
+            // v3.51: jenis pesanan yang dipilih kasir per transaksi.
+            'JenisPesanan' => [
+                ...$jenisPesanan->Ambil($baris),
+                'Pilihan' => array_map(fn (JenisPesanan $j): array => ['Nilai' => $j->value, 'Label' => $j->AmbilLabel()], JenisPesanan::cases()),
+            ],
             // F-17: pesan sendiri QR meja (sakelar outlet + fitur paket `kanal.self-order`).
             'PesanSendiri' => [
                 'FiturAktif' => $fitur->CekAktifDiOutlet($baris->IdTenant, $baris->Id, PemeriksaFiturTenant::KUNCI_PESAN_SENDIRI),

@@ -107,6 +107,9 @@ abstract final class PenyusunStrukPenjualan {
           tebal: true,
         ),
       );
+    } else if (kanal case KanalPenjualan.MakanDiTempat || KanalPenjualan.Antar) {
+      // v3.51: jenis pesanan FnB dicetak supaya pramusaji/kurir tahu pesanan disajikan atau diantar.
+      baris.add(BarisTeks(LayananPenjualan.AmbilLabelKanal(kanal!), tebal: true));
     }
     baris.add(const BarisGaris());
 

@@ -1838,7 +1838,7 @@
     "src": "node_modules/@fontsource-variable/atkinson-hyperlegible-next/files/atkinson-hyperlegible-next-latin-wght-normal.woff2"
   },
   "resources/js/Aplikasi.tsx": {
-    "file": "assets/Aplikasi-D7hlbiOZ.js",
+    "file": "assets/Aplikasi-DApLs9r1.js",
     "name": "Aplikasi",
     "src": "resources/js/Aplikasi.tsx",
     "isEntry": true,
@@ -3747,7 +3747,7 @@
     ]
   },
   "resources/js/Halaman/Kelola/Outlet/Detail.tsx": {
-    "file": "assets/Detail-DggpxZDI.js",
+    "file": "assets/Detail-BglAthal.js",
     "name": "Detail",
     "src": "resources/js/Halaman/Kelola/Outlet/Detail.tsx",
     "isDynamicEntry": true,
@@ -3766,10 +3766,13 @@
       "_BidangPilihan-OEWZUhwQ.js",
       "_DialogFormulir-CrCukxvq.js",
       "_Organisasi-Bm7y-3MZ.js",
+      "_KotakCentang-DU-uh8c7.js",
       "_AksiHalaman-DJ29lISb.js",
       "_DialogKonfirmasi-BaoYVrKl.js",
       "_MenuAksiBaris-DZLgl7Wd.js",
+      "_Panel-CUb7ssmQ.js",
       "_LabelStatus-D11SpLnm.js",
+      "_GrupCentang-CtrPEukE.js",
       "_FormOutlet-Dsdb7RWA.js"
     ]
   },

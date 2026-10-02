@@ -149,6 +149,12 @@ class _LayarJualState extends ConsumerState<LayarJual> {
     if (widget.aktif) {
       _FokusAkar();
     }
+    // v3.51: transaksi baru memakai jenis pesanan bawaan outlet (misal Makan di tempat di kafe).
+    ref.listenManual(
+      penyediaKonteksPenjualan.select((k) => k.value?.jenisPesananBawaan),
+      (_, bawaan) => ref.read(penyediaKeranjang.notifier).AturKanalBawaan(bawaan),
+      fireImmediately: true,
+    );
   }
 
   @override
@@ -532,15 +538,23 @@ class _LayarJualState extends ConsumerState<LayarJual> {
     if (kanal == null || kanal == sekarang || !mounted) {
       return;
     }
+    _GantiKanal(kanal);
+  }
+
+  /// Ganti kanal/jenis pesanan; harga baris ditentukan ulang menurut daftar harga kanal baru (X8, v3.51).
+  void _GantiKanal(KanalPenjualan kanal) {
     final k = ref.read(penyediaKonteksPenjualan).value;
     final katalog = ref.read(penyediaKatalog).value;
-    if (k == null || katalog == null) {
+    final keranjang = ref.read(penyediaKeranjang);
+    if (k == null || katalog == null || kanal == LayananPenjualan.AmbilKanal(keranjang)) {
       return;
     }
     ref
         .read(penyediaKeranjang.notifier)
-        .Ganti(ref.read(penyediaLayananPenjualan).GantiKanal(ref.read(penyediaKeranjang), kanal, katalog, k));
-    _TampilPesan('Kanal ${LayananPenjualan.AmbilLabelKanal(kanal)}. Harga keranjang disesuaikan.');
+        .Ganti(ref.read(penyediaLayananPenjualan).GantiKanal(keranjang, kanal, katalog, k));
+    if (!keranjang.CekKosong) {
+      _TampilPesan('${LayananPenjualan.AmbilLabelKanal(kanal)}. Harga keranjang disesuaikan.', galat: false);
+    }
   }
 
   /// v3.29: isi ongkir kotor kanal Antar. Potongan gratis ongkir dihitung mesin promo dari promo yang berlaku.
@@ -1039,12 +1053,20 @@ class _LayarJualState extends ConsumerState<LayarJual> {
       saatBayar: widget.modePelayan ? null : _BukaBayar,
       saatPelanggan: widget.modePelayan ? null : _BukaPelanggan,
       // X8: kanal (GoFood, GrabFood, …) untuk penjualan langsung; pesanan meja selalu makan di tempat.
+      // v3.51: jenis pesanan outlet (FnB) sebagai tombol segmen; pesanan meja selalu makan di tempat.
+      jenisPesanan: widget.modePelayan || pesanan != null || keranjang.praPesan != null || keranjang.reservasi != null
+          ? const []
+          : (ref.watch(penyediaKonteksPenjualan).value?.jenisPesanan ?? const []),
+      saatJenisPesanan: _GantiKanal,
       saatKanal:
           widget.modePelayan ||
               pesanan != null ||
               keranjang.praPesan != null ||
               keranjang.reservasi != null ||
-              _AmbilPilihanKanal().isEmpty
+              // Hanya bila ada kanal di luar tombol jenis pesanan (Antar, ojol).
+              _AmbilPilihanKanal().every(
+                (p) => ref.watch(penyediaKonteksPenjualan).value?.jenisPesanan.contains(p) ?? false,
+              )
           ? null
           : () => unawaited(_PilihKanal()),
       // v3.29: ongkir penjualan yang diantar toko sendiri (kanal Antar); pesanan online membawa ongkirnya sendiri.

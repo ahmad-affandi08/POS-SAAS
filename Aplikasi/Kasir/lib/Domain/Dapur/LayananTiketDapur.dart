@@ -2,10 +2,13 @@ import 'dart:convert';
 
 import 'package:adaptor_perangkat/AdaptorPerangkat.dart';
 
+import 'package:mesin_kasir/MesinKasir.dart' show KanalPenjualan;
+
 import '../../Data/PesananMeja.dart';
 import '../../Data/RepositoriKasir.dart';
 import '../../Data/RepositoriPenjualan.dart';
 import '../Katalog/KatalogLokal.dart';
+import '../Penjualan/LayananPenjualan.dart';
 import '../Struk/LayananStruk.dart';
 import '../Struk/PenyusunDokumenKasir.dart';
 import '../Struk/ProfilPrinter.dart';
@@ -179,7 +182,11 @@ class LayananTiketDapur {
       nomor: jual.Nomor,
       uuidMeja: null,
       namaMeja: null,
-      label: namaPelanggan ?? (jual.Kanal == 'MakanDiTempat' ? 'Makan di tempat' : 'Bawa pulang'),
+      label:
+          namaPelanggan ??
+          LayananPenjualan.AmbilLabelKanal(
+            KanalPenjualan.values.where((k) => k.name == jual.Kanal).firstOrNull ?? KanalPenjualan.BawaPulang,
+          ),
       jumlahTamu: 0,
       dibukaOleh: jual.UuidPengguna,
       dibukaPada: jual.DibuatPada,

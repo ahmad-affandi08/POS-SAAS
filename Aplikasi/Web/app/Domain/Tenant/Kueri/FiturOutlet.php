@@ -47,6 +47,18 @@ final class FiturOutlet
         return array_values(array_map('strval', $baris->where('Aktif', true)->pluck('KunciFitur')->all()));
     }
 
+    /**
+     * Mode kasir dari template sektor outlet (`pos.retail` → `Konfigurasi.ModeKasir`), kosong bila belum ada.
+     *
+     * @return list<string>
+     */
+    public function AmbilModeKasir(int $idOutlet): array
+    {
+        $mode = $this->AmbilKonfigurasi($idOutlet, OutletFitur::KUNCI_POS)['ModeKasir'] ?? [];
+
+        return is_array($mode) ? array_values(array_filter($mode, 'is_string')) : [];
+    }
+
     /** @return array<string, mixed>|null */
     public function AmbilKonfigurasi(int $idOutlet, string $kunciFitur): ?array
     {

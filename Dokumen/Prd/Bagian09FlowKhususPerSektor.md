@@ -37,6 +37,7 @@ Fitur khusus:
 - Modifier wajib muncul sebagai pop-up cepat.
 - Nomor order/antrian otomatis, layar panggil antrian.
 - Mode "bayar dulu" (default QSR) vs "open bill" (kafe duduk).
+- **Jenis pesanan per transaksi** (Makan di tempat / Bawa pulang / Antar) dipilih kasir lewat tombol segmen di keranjang; daftar & bawaannya diatur per outlet, otomatis untuk outlet FnB (v3.51).
 - Customer Display (layar kedua) menampilkan pesanan & QRIS.
 
 ### 9.3 Retail Umum / Minimarket (Mode `retail`)

@@ -17,6 +17,17 @@ afterEach(() => cleanup());
 
 const batas = { Terpakai: 2, Batas: 5 };
 
+const jenisPesananOtomatis = {
+    JenisPesanan: ['MakanDiTempat', 'BawaPulang'],
+    JenisPesananBawaan: 'MakanDiTempat',
+    Otomatis: true,
+    Pilihan: [
+        { Nilai: 'MakanDiTempat', Label: 'Makan di tempat' },
+        { Nilai: 'BawaPulang', Label: 'Bawa pulang' },
+        { Nilai: 'Antar', Label: 'Antar (diantar toko)' },
+    ],
+};
+
 describe('Kelola/Outlet (F-02 langkah 1, TabelData D-16)', () => {
     const outlet = [
         {
@@ -102,6 +113,50 @@ describe('Kelola/Outlet (F-02 langkah 1, TabelData D-16)', () => {
         expect(screen.getByText('Batas outlet paket sudah tercapai')).toBeTruthy();
     });
 
+    it('detail outlet: jenis pesanan kasir diatur manual dengan bawaan (v3.51)', () => {
+        RenderUji(
+            <HalamanDetailOutlet
+                Outlet={{
+                    Uuid: 'O-1',
+                    Kode: 'JKT1',
+                    Nama: 'Kopi Nusantara Sudirman',
+                    UuidMerek: null,
+                    Alamat: null,
+                    KodeKota: null,
+                    ZonaWaktu: 'WIB',
+                    JamTutupBuku: '04:00',
+                    Pkp: false,
+                    Nitku: null,
+                    PungutPbjt: false,
+                    Status: 'Aktif',
+                    KodeTerkunci: true,
+                }}
+                Gudang={[]}
+                Merek={[]}
+                Kota={[]}
+                JenisGudang={[]}
+                ModeMeja={{ Aktif: false, Area: [], Meja: [] }}
+                BentukMeja={[]}
+                PesanSendiri={{ FiturAktif: false, Aktif: false }}
+                JenisPesanan={jenisPesananOtomatis}
+            />,
+        );
+
+        expect(screen.getByText('Makan di tempat, Bawa pulang · bawaan Makan di tempat (otomatis)')).toBeTruthy();
+        fireEvent.click(screen.getByLabelText('Otomatis menurut jenis usaha outlet'));
+        fireEvent.click(screen.getByLabelText('Antar (diantar toko)'));
+        fireEvent.click(screen.getByRole('button', { name: 'Simpan jenis pesanan' }));
+        expect(tiruanRouter.post).toHaveBeenCalledWith(
+            '/kelola/outlet/O-1/jenis-pesanan',
+            {
+                Otomatis: false,
+                JenisPesanan: ['MakanDiTempat', 'BawaPulang', 'Antar'],
+                JenisPesananBawaan: 'MakanDiTempat',
+            },
+            expect.anything(),
+        );
+    });
+
     it('detail outlet: lokasi stok diarsipkan lewat menu aksi baris', () => {
         RenderUji(
             <HalamanDetailOutlet
@@ -127,6 +182,7 @@ describe('Kelola/Outlet (F-02 langkah 1, TabelData D-16)', () => {
                 ModeMeja={{ Aktif: false, Area: [], Meja: [] }}
                 BentukMeja={[]}
                 PesanSendiri={{ FiturAktif: false, Aktif: false }}
+                JenisPesanan={jenisPesananOtomatis}
             />,
         );
 
@@ -184,6 +240,7 @@ describe('Kelola/Outlet (F-02 langkah 1, TabelData D-16)', () => {
                 ModeMeja={modeMeja}
                 BentukMeja={bentuk}
                 PesanSendiri={{ FiturAktif: true, Aktif: false }}
+                JenisPesanan={jenisPesananOtomatis}
             />,
         );
 
@@ -209,6 +266,7 @@ describe('Kelola/Outlet (F-02 langkah 1, TabelData D-16)', () => {
                 ModeMeja={{ ...modeMeja, Aktif: false }}
                 BentukMeja={bentuk}
                 PesanSendiri={{ FiturAktif: true, Aktif: false }}
+                JenisPesanan={jenisPesananOtomatis}
             />,
         );
         expect(screen.getByText('Mode meja tidak aktif')).toBeTruthy();
