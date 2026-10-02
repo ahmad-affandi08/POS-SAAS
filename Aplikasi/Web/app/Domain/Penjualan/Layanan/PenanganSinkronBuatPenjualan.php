@@ -20,11 +20,13 @@ use App\Domain\Penjualan\Data\DataPajakPenjualanPos;
 use App\Domain\Penjualan\Data\DataPembayaranPenjualanPos;
 use App\Domain\Penjualan\Data\DataPenjualanPos;
 use App\Domain\Penjualan\Data\DataPromoPenjualanPos;
+use App\Domain\Penjualan\Data\DataResepPenjualanPos;
 use App\Domain\Penjualan\Data\DataRingkasanPenjualanPos;
 use App\Domain\Penjualan\Enum\ArahPembulatan;
 use App\Domain\Penjualan\Enum\KanalPenjualan;
 use App\Domain\Penjualan\Kalkulasi\DataPembulatanTunai;
 use Brick\Math\BigDecimal;
+use Carbon\CarbonImmutable;
 use Illuminate\Validation\Rule;
 
 /**
@@ -36,9 +38,13 @@ use Illuminate\Validation\Rule;
  * HargaTermasukPajak|null, KodePajak [..]|null, DiskonManual {Persen|Jumlah}|null, Catatan}], DiskonManualPesanan
  * {Persen|Jumlah}|null, UuidPenyetujuDiskon|null, Pembayaran [{Uuid, UuidMetodePembayaran, Jumlah, Referensi|null}],
  * Ringkasan {Subtotal, TotalPajak, Pembulatan, TotalAkhir, Kembalian}, Catatan, NomorAntrian?, NamaPemesan? (v3.52), UuidPesananTerbuka?, KirimDapur?, UuidPelanggan?,
- * TukarPoin {Poin, Nilai}|null, Promo [{UuidPromo, Kode, DiskonBaris [{UuidBaris, Jumlah}], DiskonPesanan}]?, Voucher?, UuidPesananPenjualan?, UuidPesananOnline?, UuidReservasi?, Laundry?, UuidReturTukar?, UuidPerintahKerja?}`. K-11: `UuidReturTukar` = retur tukar
+ * TukarPoin {Poin, Nilai}|null, Promo [{UuidPromo, Kode, DiskonBaris [{UuidBaris, Jumlah}], DiskonPesanan}]?, Voucher?, UuidPesananPenjualan?, UuidPesananOnline?, UuidReservasi?, Laundry?, UuidReturTukar?, UuidPerintahKerja?, Resep?, UuidApoteker?}`. K-11: `UuidReturTukar` = retur tukar
  * barang yang nilainya membayar penjualan ini (wajib bila ada pembayaran metode `Tukar`). Bengkel (§9.10):
  * `UuidPerintahKerja` = perintah kerja yang ditagih lewat penjualan ini (ditandai Ditagih; mekaniknya jadi staf baris).
+ * Apotek (§9.5): `Resep {NomorResep, TanggalResep (YYYY-MM-DD), NamaDokter, NoSipDokter?, NamaPasien, UmurPasien?,
+ * AlamatPasien?, UuidApoteker?}` untuk baris obat wajib resep, `Baris[].DenganResep?` = baris yang ditutup resep, dan
+ * `UuidApoteker?` = apoteker yang menyerahkan obat keras/OWA bila bukan kasirnya. Pelanggaran aturan resep tidak menolak
+ * penjualan (ditinjau, lihat `PencatatResepPenjualan`).
  * `TukarPoin` (F-16b) wajib bersama `UuidPelanggan`; `Promo` (F-16c) = promo yang diterapkan perangkat;
  * `UuidPenyetujuTempo` (F-12) = penyetuju tempo di atas limit / piutang lewat jatuh tempo (BR-12.1); `Voucher` (F-16c
  * bagian 2) = kode voucher yang dipesan online untuk penjualan ini; `UuidPesananOnline` (F-17 bagian 2) = pesanan toko online berbayar yang ditagihkan; `UuidPesananPenjualan` (F-12 bagian 2) = pre-order yang
@@ -122,6 +128,7 @@ final class PenanganSinkronBuatPenjualan implements PenanganItemSinkron
             'Baris.*.Staf.*' => ['string', 'ulid', 'distinct'],
             'Baris.*.NomorSeri' => ['sometimes', 'nullable', 'array', 'max:200'],
             'Baris.*.NomorSeri.*' => ['string', 'min:1', 'max:100', 'distinct'],
+            'Baris.*.DenganResep' => ['sometimes', 'nullable', 'boolean'],
             'DiskonManualPesanan' => ['sometimes', 'nullable', 'array'],
             'DiskonManualPesanan.Persen' => ['sometimes', 'nullable', 'string', $persenDiskon],
             'DiskonManualPesanan.Jumlah' => ['sometimes', 'nullable', 'string', $uang],
@@ -153,6 +160,16 @@ final class PenanganSinkronBuatPenjualan implements PenanganItemSinkron
             'UuidReservasi' => ['sometimes', 'nullable', 'string', 'ulid'],
             'UuidReturTukar' => ['sometimes', 'nullable', 'string', 'ulid'],
             'UuidPerintahKerja' => ['sometimes', 'nullable', 'string', 'ulid'],
+            'UuidApoteker' => ['sometimes', 'nullable', 'string', 'ulid'],
+            'Resep' => ['sometimes', 'nullable', 'array'],
+            'Resep.NomorResep' => ['required_with:Resep', 'string', 'min:1', 'max:50'],
+            'Resep.TanggalResep' => ['required_with:Resep', 'string', 'date_format:Y-m-d'],
+            'Resep.NamaDokter' => ['required_with:Resep', 'string', 'min:1', 'max:100'],
+            'Resep.NoSipDokter' => ['nullable', 'string', 'max:50'],
+            'Resep.NamaPasien' => ['required_with:Resep', 'string', 'min:1', 'max:100'],
+            'Resep.UmurPasien' => ['nullable', 'string', 'max:20'],
+            'Resep.AlamatPasien' => ['nullable', 'string', 'max:255'],
+            'Resep.UuidApoteker' => ['nullable', 'string', 'ulid'],
             'Laundry' => ['sometimes', 'nullable', 'array'],
             'Laundry.JenisLayanan' => ['required_with:Laundry', 'string', 'in:Reguler,Express'],
             'Laundry.Berat' => ['nullable', 'string', 'regex:/^\d{1,4}(\.\d{1,2})?$/'],
@@ -233,6 +250,8 @@ final class PenanganSinkronBuatPenjualan implements PenanganItemSinkron
             namaPemesan: self::AmbilTeks($valid['NamaPemesan'] ?? null),
             uuidReturTukar: is_string($valid['UuidReturTukar'] ?? null) ? strtoupper($valid['UuidReturTukar']) : null,
             uuidPerintahKerja: is_string($valid['UuidPerintahKerja'] ?? null) ? strtoupper($valid['UuidPerintahKerja']) : null,
+            resep: is_array($valid['Resep'] ?? null) ? self::AmbilResep($valid['Resep']) : null,
+            uuidApoteker: is_string($valid['UuidApoteker'] ?? null) ? strtoupper($valid['UuidApoteker']) : null,
         ));
     }
 
@@ -303,6 +322,7 @@ final class PenanganSinkronBuatPenjualan implements PenanganItemSinkron
                 catatan: self::AmbilTeks($b['Catatan'] ?? null),
                 uuidKaryawan: is_array($b['Staf'] ?? null) ? array_values(array_map(fn ($u): string => strtoupper((string) $u), $b['Staf'])) : [],
                 nomorSeri: is_array($b['NomorSeri'] ?? null) ? array_values(array_map(fn ($n): string => trim((string) $n), $b['NomorSeri'])) : [],
+                denganResep: is_bool($b['DenganResep'] ?? null) ? $b['DenganResep'] : null,
             );
         }
 
@@ -342,6 +362,29 @@ final class PenanganSinkronBuatPenjualan implements PenanganItemSinkron
         $teks = trim($nilai);
 
         return $teks === '' ? null : $teks;
+    }
+
+    /**
+     * Apotek (§9.5): blok resep. Teks dipangkas; isian wajib yang kosong setelah dipangkas ditolak sebagai data tidak valid.
+     *
+     * @param  array<mixed>  $blok
+     */
+    private static function AmbilResep(array $blok): DataResepPenjualanPos
+    {
+        $wajib = function (string $kunci) use ($blok): string {
+            return self::AmbilTeks($blok[$kunci] ?? null) ?? throw new PelanggaranAturanBisnis('DataTidakValid', 'Isian resep wajib diisi.', "Resep.{$kunci}");
+        };
+
+        return new DataResepPenjualanPos(
+            nomorResep: $wajib('NomorResep'),
+            tanggalResep: CarbonImmutable::createFromFormat('!Y-m-d', (string) $blok['TanggalResep']) ?: throw new PelanggaranAturanBisnis('DataTidakValid', 'Tanggal resep tidak valid.', 'Resep.TanggalResep'),
+            namaDokter: $wajib('NamaDokter'),
+            noSipDokter: self::AmbilTeks($blok['NoSipDokter'] ?? null),
+            namaPasien: $wajib('NamaPasien'),
+            umurPasien: self::AmbilTeks($blok['UmurPasien'] ?? null),
+            alamatPasien: self::AmbilTeks($blok['AlamatPasien'] ?? null),
+            uuidApoteker: is_string($blok['UuidApoteker'] ?? null) ? strtoupper($blok['UuidApoteker']) : null,
+        );
     }
 
     /**

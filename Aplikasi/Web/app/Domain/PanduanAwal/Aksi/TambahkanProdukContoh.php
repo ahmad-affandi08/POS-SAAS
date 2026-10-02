@@ -66,6 +66,8 @@ final class TambahkanProdukContoh
                     idSatuanDasar: $this->penentu->PastikanIdSatuan($contoh->kodeSatuan),
                     jenis: $contoh->jenis,
                     idKelompokPajak: $idKelompokPajak,
+                    pelacakan: $contoh->pelacakan,
+                    golonganObat: $contoh->golonganObat,
                 );
             }
 

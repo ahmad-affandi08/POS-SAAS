@@ -8,6 +8,7 @@ use App\Domain\Akuntansi\Enum\PeranAkun;
 use App\Domain\Akuntansi\Enum\SaldoNormal;
 use App\Domain\Akuntansi\Enum\TipeAkun;
 use App\Domain\Bersama\Status\StatusDataMaster;
+use App\Domain\Katalog\Enum\GolonganObat;
 use App\Domain\Laporan\Enum\LaporanUnggulan;
 use App\Domain\Pajak\Data\BatasBiayaLayanan;
 use App\Domain\Pajak\Enum\CakupanPajak;
@@ -158,6 +159,44 @@ final class ValidatorTemplate
                 $pilihan = implode(', ', array_map(fn (JenisProdukContoh $jenisContoh) => $jenisContoh->value, JenisProdukContoh::cases()));
                 $this->Catat('ProdukContoh', "Produk contoh {$label}: jenis {$teks} tidak dikenal. Pilih salah satu: {$pilihan}.");
             }
+
+            $this->ValidasiObatContoh($produk, $label, is_string($jenis) ? $jenis : '');
+        }
+    }
+
+    /**
+     * Apotek (§9.5): `Pelacakan` opsional (`Tidak`/`Batch`) dan `GolonganObat` opsional pada produk contoh. Obat
+     * bergolongan wajib barang stok berpelacakan Batch (sama dengan aturan form produk).
+     *
+     * @param  array<mixed>  $produk
+     */
+    private function ValidasiObatContoh(array $produk, string $label, string $jenis): void
+    {
+        $pelacakan = $produk['Pelacakan'] ?? null;
+
+        if ($pelacakan !== null && ! in_array($pelacakan, ['Tidak', 'Batch'], true)) {
+            $this->Catat('ProdukContoh', "Produk contoh {$label}: pelacakan hanya Tidak atau Batch.");
+        }
+
+        if ($pelacakan === 'Batch' && $jenis !== JenisProdukContoh::Stok->value) {
+            $this->Catat('ProdukContoh', "Produk contoh {$label}: pelacakan Batch hanya untuk barang dengan stok.");
+        }
+
+        $golongan = $produk['GolonganObat'] ?? null;
+
+        if ($golongan === null) {
+            return;
+        }
+
+        if (! is_string($golongan) || GolonganObat::tryFrom($golongan) === null) {
+            $pilihan = implode(', ', array_map(fn (GolonganObat $g): string => $g->value, GolonganObat::cases()));
+            $this->Catat('ProdukContoh', "Produk contoh {$label}: golongan obat tidak dikenal. Pilih salah satu: {$pilihan}.");
+
+            return;
+        }
+
+        if ($jenis !== JenisProdukContoh::Stok->value || $pelacakan !== 'Batch') {
+            $this->Catat('ProdukContoh', "Produk contoh {$label}: obat bergolongan wajib barang dengan stok berpelacakan Batch.");
         }
     }
 

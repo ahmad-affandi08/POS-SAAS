@@ -295,3 +295,57 @@ export type PropsLaporanStok = {
     Kedaluwarsa: BatchKedaluwarsa | null;
     Restock: SaranRestock | null;
 };
+
+/** Apotek (§9.5): satu baris penjualan obat keras/psikotropika/narkotika (`DaftarPenjualanObatResep`). */
+export type BarisPenjualanObatResep = {
+    Uuid: string;
+    UuidPenjualan: string | null;
+    Tanggal: string | null;
+    Nomor: string | null;
+    Status: string | null;
+    NamaProduk: string;
+    Golongan: string | null;
+    LabelGolongan: string;
+    ObatWajibApotek: boolean;
+    Jumlah: string;
+    SimbolSatuan: string;
+    Batch: string;
+    DenganResep: boolean;
+    NomorResep: string | null;
+    TanggalResep: string | null;
+    NamaDokter: string | null;
+    NoSipDokter: string | null;
+    /** Disamarkan ("B*** S***") bila pelaku tanpa izin `apotek.resep.lihat`. */
+    NamaPasien: string | null;
+    UmurPasien: string | null;
+    AlamatPasien: string | null;
+    PasienTersamar: boolean;
+    NamaApoteker: string | null;
+    NamaKasir: string;
+};
+
+/** Apotek: data pendukung SIPNAP per produk psikotropika/narkotika untuk satu bulan (jumlah satuan dasar). */
+export type BarisSipnap = {
+    UuidProduk: string;
+    NamaProduk: string;
+    Sku: string | null;
+    Golongan: string;
+    LabelGolongan: string;
+    Prekursor: boolean;
+    SimbolSatuan: string;
+    StokAwal: string;
+    PemasukanPemasok: string;
+    PemasukanLain: string;
+    PengeluaranPenjualan: string;
+    PengeluaranLain: string;
+    StokAkhir: string;
+};
+
+export type PropsLaporanApotek = {
+    Tab: 'resep' | 'sipnap';
+    Penjualan: HasilTabel<BarisPenjualanObatResep>;
+    OpsiGolongan: { Nilai: string; Label: string }[];
+    LihatPasien: boolean;
+    Sipnap: { Bulan: string; Outlet: string; Baris: BarisSipnap[] };
+    OpsiOutlet: { Nilai: string; Label: string }[];
+};

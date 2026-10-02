@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Katalog\Data;
 
+use App\Domain\Katalog\Enum\GolonganObat;
 use App\Domain\Katalog\Enum\JenisProduk;
 use App\Domain\Katalog\Enum\PelacakanProduk;
 
@@ -31,5 +32,8 @@ final readonly class DataProdukPenjualan
         public ?string $uuidKategori = null,
         // F-05h: masa garansi standar (bulan), di-snapshot ke baris penjualan bernomor seri.
         public ?int $masaGaransiBulan = null,
+        // Apotek (§9.5): golongan obat & OWA, di-snapshot ke baris penjualan; dasar pemeriksaan resep & apoteker.
+        public ?GolonganObat $golonganObat = null,
+        public bool $obatWajibApotek = false,
     ) {}
 }

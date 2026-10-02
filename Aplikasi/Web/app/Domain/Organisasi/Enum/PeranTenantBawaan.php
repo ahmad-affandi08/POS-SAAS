@@ -6,7 +6,7 @@ namespace App\Domain\Organisasi\Enum;
 
 /**
  * Peran bawaan yang dibuat untuk setiap tenant (PRD §19.1). Nilai = kolom `Peran.Kode`. Peran khusus sektor
- * (Dapur/Barista, Apoteker) ditambahkan template sektor di F-01. `Pelayan` (v2.00) bawaan untuk mode Pelayan; `Salesman`
+ * (Dapur/Barista) ditambahkan template sektor di F-01; `Apoteker` (§9.5, K-26) bawaan untuk sektor Apotek. `Pelayan` (v2.00) bawaan untuk mode Pelayan; `Salesman`
  * (§19 "Sales/Salesman", SLS-11) bawaan untuk aplikasi mode Salesman.
  *
  * Peran bawaan diselaraskan sistem (tidak diubah tenant); tenant menyesuaikan lewat peran kustom.
@@ -24,6 +24,7 @@ enum PeranTenantBawaan: string
     case Akuntan = 'Akuntan';
     case Pelayan = 'Pelayan';
     case Salesman = 'Salesman';
+    case Apoteker = 'Apoteker';
 
     public function AmbilNama(): string
     {
@@ -38,6 +39,7 @@ enum PeranTenantBawaan: string
             self::Akuntan => 'Akuntan',
             self::Pelayan => 'Pelayan',
             self::Salesman => 'Salesman',
+            self::Apoteker => 'Apoteker',
         };
     }
 
@@ -54,6 +56,7 @@ enum PeranTenantBawaan: string
             self::Akuntan => 'Keuangan, jurnal, pajak, tutup buku; membaca semua laporan.',
             self::Pelayan => 'Aplikasi POS mode Pelayan: ambil pesanan meja & kirim ke dapur, tanpa pembayaran.',
             self::Salesman => 'Aplikasi mode Salesman: kunjungan pelanggan, lihat stok & piutang pelanggan, ambil pesanan grosir (dikonfirmasi back-office).',
+            self::Apoteker => 'POS apotek: jual seperti Kasir, ditambah menyerahkan obat keras/psikotropika/narkotika dengan resep dan Obat Wajib Apotek; laporan apotek dengan data pasien.',
         };
     }
 
@@ -150,6 +153,16 @@ enum PeranTenantBawaan: string
             // Salesman hanya mengambil pesanan (draf) dan mencatat kunjungan; konfirmasi SO & BR-12.6 tetap di tangan
             // pemegang `grosir.kelola`/`grosir.setujui-kredit` di back-office.
             self::Salesman => [IzinTenant::ProdukLihat, IzinTenant::PelangganLihat, IzinTenant::SalesmanKunjungan],
+            // Apotek (§9.5, §19): apoteker penanggung jawab pelayanan resep (PMK 73/2016). Laporan penjualan ikut karena
+            // laporan obat wajib resep & data pendukung SIPNAP berada di bawah izin itu; data pasien butuh `apotek.resep.lihat`.
+            self::Apoteker => [
+                IzinTenant::ProdukLihat,
+                IzinTenant::PenjualanBuat,
+                IzinTenant::PelangganLihat,
+                IzinTenant::LaporanPenjualanLihat,
+                IzinTenant::ApotekObatKerasJual,
+                IzinTenant::ApotekResepLihat,
+            ],
             self::StafGudang => [IzinTenant::ProdukLihat, IzinTenant::PersediaanLihat, IzinTenant::PersediaanKelola, IzinTenant::PersediaanTerbuangCatat, IzinTenant::PengirimanKelola],
             self::StafPembelian => [IzinTenant::ProdukLihat, IzinTenant::PersediaanLihat, IzinTenant::PembelianKelola],
             self::Akuntan => [

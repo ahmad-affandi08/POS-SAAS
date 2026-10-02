@@ -62,6 +62,7 @@ use App\Domain\Penjualan\Layanan\PemeriksaPromoPenjualan;
 use App\Domain\Penjualan\Layanan\PemeriksaSnapshotPengaturanPenjualan;
 use App\Domain\Penjualan\Layanan\PemeriksaTukarBarang;
 use App\Domain\Penjualan\Layanan\PenautTagihanQrisPenjualan;
+use App\Domain\Penjualan\Layanan\PencatatResepPenjualan;
 use App\Domain\Penjualan\Layanan\PenutupPesananPenjualan;
 use App\Domain\Penjualan\Layanan\PenutupPesananTerbuka;
 use App\Domain\Penjualan\Layanan\PenutupUangMukaPesananOnline;
@@ -118,7 +119,8 @@ use InvalidArgumentException;
  * `PengaturanBerbeda`/`PajakBerbeda` (snapshot pengaturan & pajak berbeda dari pengaturan server),
  * `ShiftSudahDitutup`, `PeriodeTerkunci` (F-15/§18: tanggal bisnis di periode terkunci, jurnal & stok dibukukan
  * di hari pertama periode terbuka berikutnya), dan F-08 `QrisDinamis*` (tagihan QRIS dinamis bermasalah, lihat
- * `PenautTagihanQrisPenjualan`).
+ * `PenautTagihanQrisPenjualan`), serta Apotek (§9.5) `ResepTidakLengkap`/`ApotekerTidakBerwenang` (lihat
+ * `PencatatResepPenjualan`; resep yang dikirim tetap dicatat di `ResepPenjualan`).
  */
 final class TerimaPenjualanPos
 {
@@ -179,6 +181,7 @@ final class TerimaPenjualanPos
         private readonly AlokatorBatchFefo $alokatorBatch,
         private readonly InfoNomorSeri $infoSeri,
         private readonly PelacakNomorSeri $pelacakSeri,
+        private readonly PencatatResepPenjualan $resep,
     ) {}
 
     public function Jalankan(DataPenjualanPos $data): StatusItemSinkron
@@ -380,9 +383,15 @@ final class TerimaPenjualanPos
             $this->penyediaAkun->Pastikan(PeranAkun::KliringTukarBarang, '2-1800', 'Kliring Tukar Barang');
         }
 
+        // Apotek (§9.5): obat keras/OWA/psikotropika/narkotika butuh apoteker berizin, obat wajib resep butuh resep.
+        // Pelanggaran = diterima + tinjauan (bisa offline); resep tetap dicatat bila dikirim.
+        [$apoteker, $denganResep, $tinjauanResep] = $this->resep->Periksa($data, $produk, $kasir, $idTenant, $outlet->idOutlet, $data->dibuatPada->setTimezone($outlet->zonaWaktu));
+        $tinjauan += $tinjauanResep;
+
         // Simpan dokumen, stok, jurnal.
-        $penjualan = $this->SimpanPenjualan($data, $shift->id, $outlet, $kasir, $penyetuju, $tanggalBisnis, $hasil, $totalDibayar, $pesanan?->Id, $idPelanggan, $penyetujuTempo?->id, $praPesan?->Id, $returTukar?->Id);
-        $detail = $this->SimpanDetail($data, $penjualan, $produk, $hasil);
+        $penjualan = $this->SimpanPenjualan($data, $shift->id, $outlet, $kasir, $penyetuju, $tanggalBisnis, $hasil, $totalDibayar, $pesanan?->Id, $idPelanggan, $penyetujuTempo?->id, $praPesan?->Id, $returTukar?->Id, $apoteker?->id);
+        $detail = $this->SimpanDetail($data, $penjualan, $produk, $hasil, $denganResep);
+        $this->resep->Catat($data, $penjualan->Id, $outlet->idOutlet, $apoteker);
         $this->penutupPesanan->Tutup($pesanan, $penjualan);
 
         // F-12 bagian 2: DP pre-order dipakai & pesanan ditandai diambil di transaksi yang sama.
@@ -1091,6 +1100,7 @@ final class TerimaPenjualanPos
         ?int $idPenyetujuTempo = null,
         ?int $idPesananPenjualan = null,
         ?int $idReturTukar = null,
+        ?int $idApoteker = null,
     ): Penjualan {
         return Penjualan::query()->create([
             'Uuid' => $data->uuid,
@@ -1107,6 +1117,7 @@ final class TerimaPenjualanPos
             'IdPengguna' => $kasir->id,
             'IdPenyetujuDiskon' => $penyetuju?->id,
             'IdPenyetujuTempo' => $idPenyetujuTempo,
+            'IdApoteker' => $idApoteker,
             'HargaTermasukPajak' => $data->hargaTermasukPajak,
             'PersenBiayaLayanan' => (string) $data->persenBiayaLayanan->toScale(2),
             'PembulatanTunai' => $data->pembulatanTunai === null ? null : ['Kelipatan' => $data->pembulatanTunai->kelipatan, 'Arah' => $data->pembulatanTunai->arah->value],
@@ -1138,9 +1149,10 @@ final class TerimaPenjualanPos
 
     /**
      * @param  array<string, DataProdukPenjualan>  $produk
+     * @param  array<int, bool>  $denganResep  Apotek: baris ditutup resep, kunci = indeks baris
      * @return list<PenjualanDetail> urutan sama dengan baris masukan
      */
-    private function SimpanDetail(DataPenjualanPos $data, Penjualan $penjualan, array $produk, HasilKalkulasi $hasil): array
+    private function SimpanDetail(DataPenjualanPos $data, Penjualan $penjualan, array $produk, HasilKalkulasi $hasil, array $denganResep): array
     {
         $pajakDokumen = [];
 
@@ -1188,6 +1200,10 @@ final class TerimaPenjualanPos
                 // F-05h: snapshot nomor seri yang dicatat kasir & masa garansi produk (struk, kartu garansi).
                 'NomorSeri' => $p->pelacakan === PelacakanProduk::Seri && $baris->nomorSeri !== [] ? $baris->nomorSeri : null,
                 'MasaGaransiBulan' => $p->pelacakan === PelacakanProduk::Seri ? $p->masaGaransiBulan : null,
+                // Apotek (§9.5): snapshot golongan obat & OWA saat dijual, dan apakah baris ini ditutup resep.
+                'GolonganObat' => $p->golonganObat?->value,
+                'ObatWajibApotek' => $p->golonganObat !== null && $p->obatWajibApotek,
+                'DenganResep' => $denganResep[$indeks] ?? false,
             ]);
         }
 

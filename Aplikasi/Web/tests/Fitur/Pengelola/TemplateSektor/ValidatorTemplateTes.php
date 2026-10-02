@@ -59,17 +59,17 @@ beforeEach(function (): void {
     app(SiapkanTemplateSektorBawaan::class)->Jalankan();
 });
 
-const KODE_TEMPLATE_AWAL = ['FNB-BAK', 'FNB-CAF', 'FNB-QSR', 'FNB-RST', 'RTL-BLD', 'RTL-ELC', 'RTL-FSH', 'RTL-GEN', 'SVC-GEN', 'SVC-LDR', 'SVC-SLN', 'SVC-WRK', 'WHS-DST'];
+const KODE_TEMPLATE_AWAL = ['FNB-BAK', 'FNB-CAF', 'FNB-QSR', 'FNB-RST', 'RTL-BLD', 'RTL-ELC', 'RTL-FSH', 'RTL-GEN', 'RTL-PHR', 'SVC-GEN', 'SVC-LDR', 'SVC-SLN', 'SVC-WRK', 'WHS-DST'];
 
 describe('Data awal template sektor (P-03)', function (): void {
-    // v3.80: 3 template MVP + 9 sektor lain; K25 (keputusan pemilik produk "bangun sekarang"): + Bengkel SVC-WRK.
-    // Apotek RTL-PHR ditambahkan tugasnya sendiri.
-    it('memuat 13 template sektor sebagai draf versi 1 secara idempoten (termasuk Bengkel)', function (): void {
+    // v3.80: 3 template MVP + 9 sektor lain; K25 (keputusan pemilik produk "bangun sekarang"): + Bengkel SVC-WRK
+    // dan Apotek RTL-PHR.
+    it('memuat 14 template sektor sebagai draf versi 1 secara idempoten (termasuk Bengkel & Apotek)', function (): void {
         app(SiapkanTemplateSektorBawaan::class)->Jalankan();
 
         expect(TemplateSektor::query()->orderBy('Kode')->pluck('Kode')->all())->toBe(KODE_TEMPLATE_AWAL)
-            ->and(TemplateSektorVersi::query()->count())->toBe(13)
-            ->and(TemplateSektorVersi::query()->where('Status', StatusTemplateSektor::Draf->value)->where('Versi', 1)->count())->toBe(13);
+            ->and(TemplateSektorVersi::query()->count())->toBe(14)
+            ->and(TemplateSektorVersi::query()->where('Status', StatusTemplateSektor::Draf->value)->where('Versi', 1)->count())->toBe(14);
     });
 
     it('semua template awal lolos validasi setelah tarif PPN terbit (BR-P03.3)', function (): void {

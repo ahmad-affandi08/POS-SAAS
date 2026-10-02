@@ -31,7 +31,7 @@ import { FormatTanggalWaktu } from '@/Pustaka/FormatWaktu';
 import { FormatMasukanJumlah } from '@/Pustaka/MasukanJumlah';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
 import type { PropsBersamaAplikasi } from '@/Tipe/Aplikasi';
-import type { PropsDetailProduk } from '@/Tipe/Katalog';
+import { labelGolonganObat, type PropsDetailProduk } from '@/Tipe/Katalog';
 
 type Satuan = PropsDetailProduk['Produk']['Satuan'][number];
 type Varian = PropsDetailProduk['Varian'][number];
@@ -298,6 +298,13 @@ export default function HalamanDetailProduk({
                         <Baris label="Tampil di kasir">{Produk.TampilDiPos ? 'Ya' : 'Tidak'}</Baris>
                         <Baris label="Tampil di toko online">{Produk.TampilOnline ? 'Ya' : 'Tidak'}</Baris>
                         {Produk.HargaTerbuka ? <Baris label="Harga">Diketik kasir saat menjual</Baris> : null}
+                        {Produk.GolonganObat ? (
+                            <Baris label="Golongan obat">
+                                {labelGolonganObat[Produk.GolonganObat]}
+                                {Produk.ObatWajibApotek ? ' (Obat Wajib Apotek)' : ''}
+                                {Produk.Prekursor ? ', prekursor' : ''}
+                            </Baris>
+                        ) : null}
                         <Baris label="Dibuat">{FormatTanggalWaktu(Produk.DibuatPada)}</Baris>
                         <Baris label="Terakhir diubah">{FormatTanggalWaktu(Produk.DiubahPada)}</Baris>
                         {Produk.DiarsipkanPada ? (

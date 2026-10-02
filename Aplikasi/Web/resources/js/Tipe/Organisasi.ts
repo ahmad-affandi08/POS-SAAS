@@ -60,6 +60,9 @@ export const IzinTenant = {
     GrosirSetujuiKredit: 'grosir.setujui-kredit',
     TokoOnlineKelola: 'toko-online.kelola',
     PengirimanKelola: 'pengiriman.kelola',
+    // Apotek (§9.5): menyerahkan obat wajib resep/OWA (Apoteker) & melihat data pasien di laporan apotek.
+    ApotekObatKerasJual: 'apotek.obat-keras.jual',
+    ApotekResepLihat: 'apotek.resep.lihat',
 } as const;
 
 export type KunciIzinTenant = (typeof IzinTenant)[keyof typeof IzinTenant];

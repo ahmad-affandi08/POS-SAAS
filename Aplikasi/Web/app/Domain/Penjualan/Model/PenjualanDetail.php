@@ -47,6 +47,9 @@ use LogicException;
  * @property string|null $Catatan
  * @property list<string>|null $NomorSeri F-05h snapshot nomor seri/IMEI yang dijual
  * @property int|null $MasaGaransiBulan F-05h snapshot masa garansi produk (bulan)
+ * @property string|null $GolonganObat Apotek (§9.5) snapshot golongan obat saat dijual
+ * @property bool $ObatWajibApotek Apotek snapshot OWA
+ * @property bool $DenganResep Apotek: baris ditutup `ResepPenjualan`
  * @property Carbon|null $DibuatPada
  */
 final class PenjualanDetail extends ModelDasar
@@ -72,6 +75,8 @@ final class PenjualanDetail extends ModelDasar
             'DiskonManual' => 'array',
             'NomorSeri' => 'array',
             'MasaGaransiBulan' => 'integer',
+            'ObatWajibApotek' => 'boolean',
+            'DenganResep' => 'boolean',
             'Bruto' => 'decimal:2',
             'JumlahDiskon' => 'decimal:2',
             'JumlahDiskonPesanan' => 'decimal:2',

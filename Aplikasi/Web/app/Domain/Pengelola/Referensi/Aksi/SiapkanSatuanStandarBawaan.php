@@ -28,6 +28,9 @@ final class SiapkanSatuanStandarBawaan
         ['LEMBAR', 'Lembar', 'lbr', false],
         ['PORSI', 'Porsi', 'porsi', false],
         ['JAM', 'Jam', 'jam', true],
+        // Sektor Apotek (§9.5, template RTL-PHR): kemasan obat.
+        ['STRIP', 'Strip', 'strip', false],
+        ['TUBE', 'Tube', 'tube', false],
     ];
 
     public function Jalankan(): void

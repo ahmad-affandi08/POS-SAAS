@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Domain\Organisasi\Enum\IzinTenant;
+use App\Http\Kontroler\Kelola\Laporan\LaporanApotekKontroler;
 use App\Http\Kontroler\Kelola\Laporan\LaporanKontroler;
 use App\Http\Perantara\SiapkanAuditTenant;
 use App\Http\Perantara\WajibIzinTenant;
@@ -21,6 +22,10 @@ Route::middleware(SiapkanAuditTenant::class)->group(function () use ($izin): voi
         Route::get('/laporan/penjualan', [LaporanKontroler::class, 'Penjualan'])->name('kelola.laporan.penjualan');
         Route::get('/laporan/penjualan/ekspor', [LaporanKontroler::class, 'EksporPenjualan'])->name('kelola.laporan.penjualan.ekspor');
         Route::put('/laporan/penjualan/insight-email', [LaporanKontroler::class, 'UbahInsightEmail'])->name('kelola.laporan.penjualan.insight-email');
+        // Apotek (§9.5): penjualan obat wajib resep & data pendukung SIPNAP (data pasien utuh butuh apotek.resep.lihat).
+        Route::get('/laporan/apotek', [LaporanApotekKontroler::class, 'Halaman'])->name('kelola.laporan.apotek');
+        Route::get('/laporan/apotek/ekspor', [LaporanApotekKontroler::class, 'EksporResep'])->name('kelola.laporan.apotek.ekspor');
+        Route::get('/laporan/apotek/sipnap/ekspor', [LaporanApotekKontroler::class, 'EksporSipnap'])->name('kelola.laporan.apotek.sipnap.ekspor');
     });
     Route::middleware($izin(IzinTenant::LaporanKeuanganLihat))->group(function (): void {
         Route::get('/laporan/pajak', [LaporanKontroler::class, 'Pajak'])->name('kelola.laporan.pajak');

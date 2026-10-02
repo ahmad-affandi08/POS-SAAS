@@ -33,6 +33,9 @@ enum KodeAlasanTinjauan: string
     // F-16d bagian 1: saldo deposit kurang saat penjualan dibayar deposit diterima; isi deposit untuk pelanggan arsip.
     case DepositKurang = 'DepositKurang';
     case PelangganDiarsipkan = 'PelangganDiarsipkan';
+    // Apotek (§9.5): obat wajib resep tanpa resep lengkap; obat keras/OWA/psikotropika/narkotika tanpa apoteker berizin.
+    case ResepTidakLengkap = 'ResepTidakLengkap';
+    case ApotekerTidakBerwenang = 'ApotekerTidakBerwenang';
 
     public function AmbilLabel(): string
     {
@@ -58,6 +61,8 @@ enum KodeAlasanTinjauan: string
             self::QrisDinamisJumlahBerbeda => 'Jumlah tagihan QRIS dinamis berbeda dengan pembayaran',
             self::DepositKurang => 'Saldo deposit pelanggan kurang',
             self::PelangganDiarsipkan => 'Pelanggan sudah diarsipkan',
+            self::ResepTidakLengkap => 'Obat wajib resep tanpa resep lengkap',
+            self::ApotekerTidakBerwenang => 'Obat keras diserahkan tanpa apoteker berizin',
         };
     }
 

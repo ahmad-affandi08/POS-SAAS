@@ -99,6 +99,11 @@ enum IzinTenant: string
     // F-17/F-10c: kanal toko online dan operasional pengiriman.
     case TokoOnlineKelola = 'toko-online.kelola';
     case PengirimanKelola = 'pengiriman.kelola';
+    // Apotek (§9.5, §19 "Apoteker"): menyerahkan obat keras/psikotropika/narkotika (dengan resep) & Obat Wajib Apotek
+    // (tanpa resep, dicatat), serta memvalidasi resep di kasir. Asisten apoteker = Kasir biasa tanpa izin ini.
+    case ApotekObatKerasJual = 'apotek.obat-keras.jual';
+    // Apotek: melihat resep penjualan lengkap dengan data pasien (nama & alamat tidak disamarkan) di laporan apotek.
+    case ApotekResepLihat = 'apotek.resep.lihat';
 
     public function AmbilLabel(): string
     {
@@ -158,6 +163,8 @@ enum IzinTenant: string
             self::SalesmanKunjungan => 'Mencatat kunjungan pelanggan & mengambil pesanan grosir dari aplikasi (Salesman)',
             self::TokoOnlineKelola => 'Mengelola toko online, zona ongkir, dan pesanan online',
             self::PengirimanKelola => 'Mengelola kurir dan status pengiriman pesanan',
+            self::ApotekObatKerasJual => 'Menyerahkan obat keras, psikotropika, narkotika, dan Obat Wajib Apotek; memvalidasi resep (Apoteker)',
+            self::ApotekResepLihat => 'Melihat resep penjualan beserta data pasien (laporan apotek)',
         };
     }
 
@@ -181,6 +188,7 @@ enum IzinTenant: string
             self::BantuanTiketLihat, self::BantuanTiketKelola => 'Bantuan',
             self::PelangganLihat, self::PelangganKelola, self::PelangganDepositKelola, self::PelangganSesiKelola => 'Pelanggan',
             self::KaryawanLihat, self::KaryawanKelola => 'Karyawan',
+            self::ApotekObatKerasJual, self::ApotekResepLihat => 'Apotek',
         };
     }
 

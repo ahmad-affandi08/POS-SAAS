@@ -36,6 +36,7 @@ use LogicException;
  * @property int $IdPengguna
  * @property int|null $IdPenyetujuDiskon
  * @property int|null $IdPenyetujuTempo
+ * @property int|null $IdApoteker Apotek (§9.5): apoteker yang menyerahkan obat keras/OWA/psikotropika/narkotika
  * @property bool $HargaTermasukPajak
  * @property string $PersenBiayaLayanan
  * @property array{Kelipatan: int, Arah: string}|null $PembulatanTunai

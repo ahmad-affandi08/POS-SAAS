@@ -16,6 +16,7 @@ import PenyuntingSatuanProduk, {
     SiapkanSatuanDasar,
 } from '@/Komponen/Katalog/PenyuntingSatuanProduk';
 import GrupRadio from '@/Komponen/Katalog/GrupRadio';
+import KalkulatorHja from '@/Komponen/Katalog/KalkulatorHja';
 import KepalaProduk from '@/Komponen/Katalog/KepalaProduk';
 import PesanHanyaLihat from '@/Komponen/Katalog/PesanHanyaLihat';
 import TabelHargaBertingkat, { PeriksaBarisHarga } from '@/Komponen/Katalog/TabelHargaBertingkat';
@@ -26,13 +27,15 @@ import { Card } from '@/Komponen/Ui/card';
 import { Field, FieldLabel, FieldLegend, FieldSet } from '@/Komponen/Ui/field';
 import { Switch } from '@/Komponen/Ui/switch';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
-import type {
-    AturanJenisProduk,
-    FormProduk,
-    JenisProduk,
-    PelacakanProduk,
-    PropsFormProduk,
-    TigaKeadaan,
+import {
+    labelGolonganObat,
+    type AturanJenisProduk,
+    type FormProduk,
+    type GolonganObat,
+    type JenisProduk,
+    type PelacakanProduk,
+    type PropsFormProduk,
+    type TigaKeadaan,
 } from '@/Tipe/Katalog';
 import { CekBatasPenuh, FormatBatas } from '@/Tipe/Organisasi';
 
@@ -51,6 +54,7 @@ const galatPerTab: Record<KunciTab, string[]> = {
         'Pelacakan',
         'DurasiMenit',
         'MasaGaransiBulan',
+        'GolonganObat',
     ],
     Satuan: ['Satuan'],
     Harga: [],
@@ -392,6 +396,53 @@ export default function HalamanFormProduk({
                 maxLength={3}
             />
         ) : null;
+    // Apotek (§9.5): golongan obat untuk barang ber-batch (obat wajib Batch & kedaluwarsa). Muncul begitu pelacakan
+    // Batch dipilih, atau bila produk sudah bergolongan (supaya galat "wajib Batch" tetap terlihat).
+    const golonganObat = data.GolonganObat ?? null;
+    const bagianObat =
+        aturan?.BolehPelacakan && (data.Pelacakan === 'Batch' || golonganObat !== null) ? (
+            <div className="flex flex-col gap-3 rounded-kontrol border border-garis p-3 sm:col-span-2">
+                <BidangPilihan
+                    label="Golongan obat (apotek)"
+                    nilai={golonganObat ?? ''}
+                    kosong="Bukan obat"
+                    opsi={(Object.keys(labelGolonganObat) as GolonganObat[]).map((g) => ({
+                        Nilai: g,
+                        Label: labelGolonganObat[g],
+                    }))}
+                    saatBerubah={(nilai) => {
+                        const baru = nilai === '' ? null : (nilai as GolonganObat);
+                        Atur('GolonganObat', baru);
+                        if (baru !== 'Keras') Atur('ObatWajibApotek', false);
+                        if (baru === null) Atur('Prekursor', false);
+                    }}
+                    galat={galat.GolonganObat}
+                />
+                {golonganObat === 'Keras' ? (
+                    <KotakCentang
+                        label="Obat Wajib Apotek (boleh diserahkan apoteker tanpa resep, tetap dicatat)"
+                        nilai={data.ObatWajibApotek ?? false}
+                        saatBerubah={(nilai) => Atur('ObatWajibApotek', nilai)}
+                    />
+                ) : null}
+                {golonganObat !== null ? (
+                    <KotakCentang
+                        label="Prekursor farmasi"
+                        nilai={data.Prekursor ?? false}
+                        saatBerubah={(nilai) => Atur('Prekursor', nilai)}
+                    />
+                ) : null}
+                <p className="text-keterangan text-teks-sekunder">
+                    {golonganObat === null
+                        ? 'Pilih golongan bila produk ini obat. Obat keras, psikotropika, dan narkotika hanya bisa dijual apoteker.'
+                        : golonganObat === 'Bebas' || golonganObat === 'BebasTerbatas' || data.ObatWajibApotek
+                          ? golonganObat === 'Keras'
+                              ? 'Dijual tanpa resep oleh apoteker; penyerahannya tetap tercatat.'
+                              : 'Dijual tanpa resep. Batch dipilih otomatis dari kedaluwarsa terdekat.'
+                          : 'Wajib resep dokter dan hanya bisa dijual apoteker. Tercatat di Laporan apotek.'}
+                </p>
+            </div>
+        ) : null;
     const bagianPaketSesi = bolehPaketSesi ? (
         <div className="flex flex-col gap-2 rounded-kontrol border border-garis p-3 sm:col-span-2">
             <KotakCentang
@@ -609,6 +660,7 @@ export default function HalamanFormProduk({
                     />
                 </div>
             ) : null}
+            {bagianObat}
         </div>
     );
 
@@ -668,6 +720,30 @@ export default function HalamanFormProduk({
                                         <p className="text-keterangan font-semibold text-bahaya">
                                             {galat[`Satuan.${String(indeks)}.HargaAwal`]}
                                         </p>
+                                    ) : null}
+                                    {golonganObat !== null ? (
+                                        <KalkulatorHja
+                                            simbolSatuan={simbol}
+                                            disabled={!Izin.UbahHarga}
+                                            saatPakai={(harga) =>
+                                                Atur(
+                                                    'Satuan',
+                                                    data.Satuan.map((item, i) =>
+                                                        i !== indeks
+                                                            ? item
+                                                            : {
+                                                                  ...item,
+                                                                  HargaAwal:
+                                                                      item.HargaAwal.length === 0
+                                                                          ? [{ JumlahMinimum: '1', Harga: harga }]
+                                                                          : item.HargaAwal.map((h, n) =>
+                                                                                n === 0 ? { ...h, Harga: harga } : h,
+                                                                            ),
+                                                              },
+                                                    ),
+                                                )
+                                            }
+                                        />
                                     ) : null}
                                 </section>
                             );

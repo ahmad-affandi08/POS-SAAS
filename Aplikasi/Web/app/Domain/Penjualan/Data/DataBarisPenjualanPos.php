@@ -34,5 +34,7 @@ final readonly class DataBarisPenjualanPos
         public ?string $catatan,
         public array $uuidKaryawan = [],
         public array $nomorSeri = [],
+        // Apotek (§9.5): baris ini ditutup resep di blok `Resep`; null = perangkat tidak menandai (semua baris wajib resep).
+        public ?bool $denganResep = null,
     ) {}
 }

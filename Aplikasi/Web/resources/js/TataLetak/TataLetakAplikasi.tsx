@@ -262,6 +262,8 @@ const menuLaporan: ItemMenu[] = [
     { label: 'Laporan penjualan', href: '/kelola/laporan/penjualan', izin: IzinTenant.LaporanPenjualanLihat },
     { label: 'Laporan pajak', href: '/kelola/laporan/pajak', izin: IzinTenant.LaporanKeuanganLihat },
     { label: 'Laporan stok', href: '/kelola/laporan/stok', izin: IzinTenant.PersediaanLihat },
+    // Apotek (§9.5): obat wajib resep & data pendukung SIPNAP.
+    { label: 'Laporan apotek', href: '/kelola/laporan/apotek', izin: IzinTenant.LaporanPenjualanLihat },
     { label: 'Laba rugi', href: '/kelola/akuntansi/laporan/laba-rugi', izin: IzinTenant.LaporanKeuanganLihat },
     {
         label: 'Neraca',

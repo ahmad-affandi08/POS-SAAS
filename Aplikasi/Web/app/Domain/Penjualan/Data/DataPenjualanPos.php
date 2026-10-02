@@ -75,5 +75,8 @@ final readonly class DataPenjualanPos
         public ?string $uuidReturTukar = null,
         // Sektor Bengkel (§9.10): perintah kerja yang ditagih lewat penjualan ini (ditandai Ditagih & ditautkan).
         public ?string $uuidPerintahKerja = null,
+        // Apotek (§9.5): resep dokter untuk baris obat wajib resep & apoteker yang menyerahkan obat keras/OWA.
+        public ?DataResepPenjualanPos $resep = null,
+        public ?string $uuidApoteker = null,
     ) {}
 }
