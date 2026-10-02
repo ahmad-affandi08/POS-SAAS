@@ -61,11 +61,14 @@ void main() {
     }
   }
 
-  Future<String?> KanalOutbox(WidgetTester tester, LingkunganUji u) async =>
+  Future<Map<String, Object?>> OutboxTerakhir(WidgetTester tester, LingkunganUji u) async =>
       (await tester.runAsync(() => u.db.select(u.db.outbox).get()))!
           .where((o) => o.Jenis == 'Penjualan.Buat')
-          .map((o) => (jsonDecode(o.Data) as Map<String, Object?>)['Kanal'] as String?)
+          .map((o) => jsonDecode(o.Data) as Map<String, Object?>)
           .last;
+
+  Future<String?> KanalOutbox(WidgetTester tester, LingkunganUji u) async =>
+      (await OutboxTerakhir(tester, u))['Kanal'] as String?;
 
   Future<void> Bayar(WidgetTester tester) async {
     await Ketuk(tester, find.widgetWithText(FilledButton, 'Bayar').last);
@@ -110,12 +113,52 @@ void main() {
     });
   }
 
-  testWidgets('retail tanpa jenis pesanan: tidak ada tombol segmen, penjualan tetap Bawa pulang', (tester) async {
+  testWidgets('retail tanpa jenis pesanan: tidak ada tombol segmen, nama pemesan, maupun nomor antrian', (
+    tester,
+  ) async {
     final u = await MasukJual(tester, const Size(1280, 900), fnb: false);
     await Ketuk(tester, Ubin('Americano Panas'));
     expect(find.byKey(const ValueKey('JenisPesanan')), findsNothing);
+    expect(find.byKey(const ValueKey('IsiNamaPemesan')), findsNothing);
     await Bayar(tester);
-    expect(await KanalOutbox(tester, u), 'BawaPulang');
+    expect(find.text('Nomor antrian'), findsNothing);
+    final outbox = await OutboxTerakhir(tester, u);
+    expect(outbox['Kanal'], 'BawaPulang');
+    expect(outbox.containsKey('NomorAntrian'), isFalse);
+    expect(outbox.containsKey('NamaPemesan'), isFalse);
     await Lepas(tester, u);
   });
+
+  for (final ukuran in const [Size(1280, 900), Size(360, 740)]) {
+    testWidgets('v3.52 FnB bayar-dulu: nama pemesan & nomor antrian dari urut harian (${ukuran.width.toInt()} dp)', (
+      tester,
+    ) async {
+      final u = await MasukJual(tester, ukuran);
+      await Ketuk(tester, Ubin('Americano Panas'));
+      await BukaKeranjangHp(tester, ukuran);
+      await Ketuk(tester, find.byKey(const ValueKey('IsiNamaPemesan')));
+      await tester.enterText(find.byKey(const ValueKey('NamaPemesan')), '  Budi Santoso ');
+      await Ketuk(tester, find.widgetWithText(FilledButton, 'Simpan'));
+      expect(find.text('Pemesan: Budi Santoso · ketuk untuk mengubah'), findsOneWidget);
+      await Bayar(tester);
+
+      expect(find.text('Nomor antrian'), findsOneWidget);
+      expect(find.text('001'), findsOneWidget);
+      expect(find.text('Budi Santoso'), findsOneWidget);
+      final outbox = await OutboxTerakhir(tester, u);
+      expect(outbox['NomorAntrian'], '001');
+      expect(outbox['NamaPemesan'], 'Budi Santoso');
+      expect((outbox['Nomor']! as String).endsWith('-0001'), isTrue);
+
+      // Transaksi berikutnya: nomor naik, nama pemesan tidak terbawa.
+      await Ketuk(tester, find.text('Transaksi baru'));
+      await Ketuk(tester, Ubin('Americano Panas'));
+      await BukaKeranjangHp(tester, ukuran);
+      expect(find.text('Nama pemesan · ketuk untuk mengisi'), findsOneWidget);
+      await Bayar(tester);
+      expect(find.text('002'), findsOneWidget);
+      expect((await OutboxTerakhir(tester, u)).containsKey('NamaPemesan'), isFalse);
+      await Lepas(tester, u);
+    });
+  }
 }

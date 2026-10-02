@@ -31,6 +31,7 @@ class PanelKeranjang extends StatelessWidget {
     this.saatOngkir,
     this.jenisPesanan = const [],
     this.saatJenisPesanan,
+    this.saatNamaPemesan,
   });
 
   final Keranjang keranjang;
@@ -73,6 +74,9 @@ class PanelKeranjang extends StatelessWidget {
   /// dari dua = tidak ditampilkan.
   final List<KanalPenjualan> jenisPesanan;
   final ValueChanged<KanalPenjualan>? saatJenisPesanan;
+
+  /// v3.52: isi nama pemesan (penjualan bayar-dulu FnB). Null = tidak ditampilkan.
+  final VoidCallback? saatNamaPemesan;
 
   /// v3.29: isi ongkir penjualan kanal Antar. Null = tidak ditampilkan (kanal lain, pesanan online, mode Pelayan).
   final VoidCallback? saatOngkir;
@@ -171,6 +175,44 @@ class PanelKeranjang extends StatelessWidget {
                       saatJenisPesanan!(pilih.first);
                     }
                   },
+                ),
+              ),
+            ),
+          if (saatNamaPemesan != null)
+            Material(
+              color: warna.permukaan,
+              child: InkWell(
+                key: const ValueKey('IsiNamaPemesan'),
+                onTap: saatNamaPemesan,
+                child: Container(
+                  constraints: const BoxConstraints(minHeight: TokenJarak.targetSentuh),
+                  padding: const EdgeInsets.symmetric(horizontal: TokenJarak.jarak16, vertical: TokenJarak.jarak8),
+                  decoration: BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(color: warna.garis, width: TokenJarak.tebalGaris),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.campaign_outlined,
+                        size: TokenJarak.ikonSedang,
+                        color: keranjang.namaPemesan == null ? warna.teksSekunder : warna.brand,
+                      ),
+                      const SizedBox(width: TokenJarak.jarak8),
+                      Expanded(
+                        child: Text(
+                          keranjang.namaPemesan == null
+                              ? 'Nama pemesan · ketuk untuk mengisi'
+                              : 'Pemesan: ${keranjang.namaPemesan} · ketuk untuk mengubah',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: teks.bodyMedium,
+                        ),
+                      ),
+                      Icon(Icons.chevron_right, color: warna.teksSekunder),
+                    ],
+                  ),
                 ),
               ),
             ),

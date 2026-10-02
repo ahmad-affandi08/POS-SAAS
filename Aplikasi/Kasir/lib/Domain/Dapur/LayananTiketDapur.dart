@@ -182,8 +182,12 @@ class LayananTiketDapur {
       nomor: jual.Nomor,
       uuidMeja: null,
       namaMeja: null,
+      // v3.52: nomor antrian + nama pemesan dipanggil saat pesanan siap; tanpa itu nama pelanggan atau jenis pesanan.
       label:
-          namaPelanggan ??
+          [
+            if (jual.NomorAntrian case final antrian?) '#$antrian',
+            ?(jual.NamaPemesan ?? namaPelanggan),
+          ].join(' ').nonKosong ??
           LayananPenjualan.AmbilLabelKanal(
             KanalPenjualan.values.where((k) => k.name == jual.Kanal).firstOrNull ?? KanalPenjualan.BawaPulang,
           ),
@@ -257,4 +261,8 @@ class LayananTiketDapur {
     }
     return hasil;
   }
+}
+
+extension on String {
+  String? get nonKosong => trim().isEmpty ? null : this;
 }

@@ -83,6 +83,8 @@ const propsDetail: PropsDetailPenjualan = {
         Kembalian: '3500.00',
         TotalHpp: '60000.00',
         Catatan: 'Pelanggan minta struk digital',
+        NomorAntrian: '042',
+        NamaPemesan: 'Budi',
         PerluTinjauan: true,
         AlasanTinjauan:
             'StokTidakCukup: Minyak Goreng Sawit Bening Kemasan Pouch 2 Liter (sisa −3); DiskonMelebihiBatas: diskon 30,0001% melebihi batas persetujuan 30%',
@@ -177,6 +179,9 @@ describe('F-07b halaman penjualan back-office', () => {
     it('detail: alasan tinjauan, ringkasan (pembulatan negatif), baris, pajak, pembayaran, mutasi stok bertautan kartu stok, jurnal & shift', () => {
         RenderUji(<HalamanDetailPenjualan {...propsDetail} />);
         expect(screen.getByText('Promo Diskon 10% kopi')).toBeTruthy();
+        // v3.52: nomor antrian & nama pemesan penjualan bayar-dulu.
+        expect(screen.getByText('042')).toBeTruthy();
+        expect(screen.getByText('Nama pemesan')).toBeTruthy();
 
         // PRD v1.46: alasan tinjauan tampil sebagai kalimat manusiawi, bukan kode mesin.
         expect(screen.getByText('Stok tidak cukup saat penjualan diterima')).toBeTruthy();

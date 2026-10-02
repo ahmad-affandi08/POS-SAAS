@@ -355,6 +355,8 @@ export default function HalamanDetailPenjualan({
                                 'Tanpa jurnal (nilai Rp 0)'
                             )}
                         </Nilai>
+                        {p.NomorAntrian ? <Nilai label="Nomor antrian">{p.NomorAntrian}</Nilai> : null}
+                        {p.NamaPemesan ? <Nilai label="Nama pemesan">{p.NamaPemesan}</Nilai> : null}
                         {p.Catatan ? <Nilai label="Catatan">{p.Catatan}</Nilai> : null}
                     </dl>
                 </Card>

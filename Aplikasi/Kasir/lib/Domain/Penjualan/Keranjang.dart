@@ -504,6 +504,7 @@ class Keranjang {
     this.reservasi,
     this.laundry,
     this.kanal,
+    this.namaPemesan,
     Uang? biayaKirim,
     Uang? diskonKirim,
   }) : biayaKirim = biayaKirim ?? Uang.Nol(),
@@ -539,6 +540,9 @@ class Keranjang {
   /// `BawaPulang`); lihat `LayananPenjualan.AmbilKanal`.
   final KanalPenjualan? kanal;
 
+  /// v3.52 (§9.2): nama yang dipanggil saat pesanan bayar-dulu siap; bukan data pelanggan, tidak wajib.
+  final String? namaPemesan;
+
   /// F-17 bagian 3: ongkir yang ditagih ke pembeli (nol = tanpa ongkir) dan diskonnya (mis. gratis ongkir). Dipisah
   /// supaya struk tetap bisa menulis ongkirnya beserta potongannya, bukan ongkir yang hilang.
   final Uang biayaKirim;
@@ -564,6 +568,7 @@ class Keranjang {
     ReservasiKeranjang? Function()? reservasi,
     LaundryKeranjang? Function()? laundry,
     KanalPenjualan? Function()? kanal,
+    String? Function()? namaPemesan,
     Uang? biayaKirim,
     Uang? diskonKirim,
   }) => Keranjang(
@@ -579,6 +584,7 @@ class Keranjang {
     reservasi: reservasi == null ? this.reservasi : reservasi(),
     laundry: laundry == null ? this.laundry : laundry(),
     kanal: kanal == null ? this.kanal : kanal(),
+    namaPemesan: namaPemesan == null ? this.namaPemesan : namaPemesan(),
     biayaKirim: biayaKirim ?? this.biayaKirim,
     diskonKirim: diskonKirim ?? this.diskonKirim,
   );
@@ -595,6 +601,7 @@ class Keranjang {
     'Reservasi': reservasi?.KeJson(),
     'Laundry': laundry?.KeJson(),
     'Kanal': kanal?.name,
+    'NamaPemesan': namaPemesan,
     'BiayaKirim': biayaKirim.KeString(),
     'DiskonKirim': diskonKirim.KeString(),
   };
@@ -615,6 +622,7 @@ class Keranjang {
     laundry: LaundryKeranjang.DariJson(json['Laundry']),
     // Kanal yang tidak dikenal aplikasi versi ini = bawaan.
     kanal: KanalPenjualan.values.where((k) => k.name == json['Kanal']).firstOrNull,
+    namaPemesan: json['NamaPemesan'] as String?,
     // Keranjang tertahan dari versi sebelum F-17 bagian 3 tidak punya kunci ini; tanpa ongkir.
     biayaKirim: json['BiayaKirim'] is String ? Uang.Dari(json['BiayaKirim']! as String) : null,
     diskonKirim: json['DiskonKirim'] is String ? Uang.Dari(json['DiskonKirim']! as String) : null,

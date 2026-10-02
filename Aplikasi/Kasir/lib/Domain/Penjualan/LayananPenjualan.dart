@@ -101,10 +101,16 @@ class PenjualanTersimpan {
     required this.pembayaran,
     this.namaPelanggan,
     this.labelPoin,
+    this.nomorAntrian,
+    this.namaPemesan,
   });
 
   final String uuid;
   final String nomor;
+
+  /// v3.52: nomor panggil (null = tidak bernomor antrian) & nama pemesan, ditampilkan besar setelah bayar.
+  final String? nomorAntrian;
+  final String? namaPemesan;
   final Uang totalAkhir;
   final Uang totalDibayar;
   final Uang kembalian;
@@ -1051,6 +1057,8 @@ class LayananPenjualan {
       pembayaran: pembayaran,
       namaPelanggan: keranjang.pelanggan?.nama,
       labelPoin: hitungan.AmbilLabelPoinBerlipat(),
+      nomorAntrian: dokumen.penjualan.NomorAntrian.value,
+      namaPemesan: dokumen.penjualan.NamaPemesan.value,
     );
   }
 
@@ -1097,6 +1105,20 @@ class LayananPenjualan {
     }
   }
 
+  /// v3.52 (§9.2): nomor antrian penjualan bayar-dulu di outlet yang menawarkan jenis pesanan (FnB) = urut harian
+  /// perangkat dari nomor BR-07.1 (`…-0042` → `042`), jadi tidak butuh sekuens baru dan tetap unik per perangkat per
+  /// hari offline. Pesanan meja, pengambilan pre-order, dan reservasi tidak bernomor antrian (sudah punya nama/meja).
+  static String? AmbilNomorAntrian(String nomor, Keranjang keranjang, KonteksPenjualan k) {
+    if (k.jenisPesanan.isEmpty ||
+        keranjang.pesananMeja != null ||
+        keranjang.praPesan != null ||
+        keranjang.reservasi != null) {
+      return null;
+    }
+    final urut = int.tryParse(nomor.split('-').last);
+    return urut?.toString().padLeft(3, '0');
+  }
+
   /// Susun penjualan lokal + payload outbox `Penjualan.Buat` persis kontrak Rincian F-07b (kunci PascalCase, uang
   /// string desimal, jumlah string desimal).
   static DokumenPenjualan SusunDokumen({
@@ -1121,6 +1143,8 @@ class LayananPenjualan {
     final catatan = keranjang.catatan?.trim();
     final pesananMeja = keranjang.pesananMeja;
     final kanal = AmbilKanal(keranjang).name;
+    final nomorAntrian = AmbilNomorAntrian(nomor, keranjang, k);
+    final namaPemesan = keranjang.namaPemesan?.trim();
 
     final data = <String, Object?>{
       'UuidShift': shift.Uuid,
@@ -1183,6 +1207,9 @@ class LayananPenjualan {
         'Kembalian': kembalian.KeString(),
       },
       'Catatan': catatan == null || catatan.isEmpty ? null : catatan,
+      // v3.52 (§9.2): nomor panggil & nama pemesan; hanya dikirim bila ada (muatan penjualan retail tidak berubah).
+      'NomorAntrian': ?nomorAntrian,
+      if (namaPemesan != null && namaPemesan.isNotEmpty) 'NamaPemesan': namaPemesan,
       'UuidPesananTerbuka': ?pesananMeja?.uuid,
       'UuidPelanggan': ?keranjang.pelanggan?.uuid,
       'TukarPoin': ?keranjang.tukarPoin?.KeJson(),
@@ -1232,6 +1259,8 @@ class LayananPenjualan {
         UuidPenyetujuDiskon: Value(penyetuju?.uuid),
         Catatan: Value(data['Catatan'] as String?),
         Laundry: Value(keranjang.laundry == null ? null : jsonEncode(keranjang.laundry!.KeJson())),
+        NomorAntrian: Value(nomorAntrian),
+        NamaPemesan: Value(data['NamaPemesan'] as String?),
       ),
       detail: [
         for (var i = 0; i < keranjang.baris.length; i++)

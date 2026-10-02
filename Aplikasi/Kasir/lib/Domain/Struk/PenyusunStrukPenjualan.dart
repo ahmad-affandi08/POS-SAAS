@@ -111,6 +111,13 @@ abstract final class PenyusunStrukPenjualan {
       // v3.51: jenis pesanan FnB dicetak supaya pramusaji/kurir tahu pesanan disajikan atau diantar.
       baris.add(BarisTeks(LayananPenjualan.AmbilLabelKanal(kanal!), tebal: true));
     }
+    // v3.52 (§9.2): nomor antrian besar di struk bayar-dulu supaya pembeli tahu nomor yang dipanggil.
+    if (jual.NomorAntrian case final antrian?) {
+      baris.add(BarisTeks('ANTRIAN $antrian', rata: RataStruk.Tengah, tebal: true, besar: true));
+      if (jual.NamaPemesan case final nama?) {
+        baris.add(BarisTeks(nama, rata: RataStruk.Tengah, tebal: true));
+      }
+    }
     baris.add(const BarisGaris());
 
     for (final d in data.detail) {

@@ -554,7 +554,8 @@ final class TerimaPenjualanPos
                 idPenjualan: $penjualan->Id,
                 nomorDokumen: $penjualan->Nomor,
                 namaMeja: null,
-                label: $penjualan->Catatan === null ? null : mb_substr($penjualan->Catatan, 0, 60),
+                // v3.52: tiket mode cepat berlabel nomor antrian + nama pemesan (dipanggil saat siap), lalu catatan.
+                label: self::LabelTiketDapur($penjualan),
                 ronde: 1,
                 dikirimPada: $data->dibuatPada,
                 baris: array_map(fn (PenjualanDetail $d): DataBarisKirimDapur => new DataBarisKirimDapur(
@@ -1074,6 +1075,8 @@ final class TerimaPenjualanPos
             'Kembalian' => ($hasil->kembalian ?? Uang::Nol())->KeString(),
             'TotalHpp' => '0.00',
             'Catatan' => $data->catatan === null ? null : mb_substr($data->catatan, 0, 500),
+            'NomorAntrian' => $data->nomorAntrian === null ? null : mb_substr($data->nomorAntrian, 0, 10),
+            'NamaPemesan' => $data->namaPemesan === null ? null : mb_substr($data->namaPemesan, 0, 60),
             'PerluTinjauan' => false,
             'DibuatOfflinePada' => $data->dibuatPada,
             'DiterimaPada' => CarbonImmutable::now(),
@@ -1589,5 +1592,17 @@ final class TerimaPenjualanPos
             422,
             ['Perangkat' => $perangkat->KeString(), 'Server' => $server->KeString()],
         );
+    }
+
+    /** Label tiket dapur penjualan bayar-dulu: `#042 Budi`, nama/nomor saja, atau catatan (maks. 60 karakter). */
+    private static function LabelTiketDapur(Penjualan $penjualan): ?string
+    {
+        $antrian = trim(implode(' ', array_filter([
+            $penjualan->NomorAntrian === null ? null : '#'.$penjualan->NomorAntrian,
+            $penjualan->NamaPemesan,
+        ], fn (?string $b): bool => $b !== null && $b !== '')));
+        $label = $antrian !== '' ? $antrian : $penjualan->Catatan;
+
+        return $label === null ? null : mb_substr($label, 0, 60);
     }
 }

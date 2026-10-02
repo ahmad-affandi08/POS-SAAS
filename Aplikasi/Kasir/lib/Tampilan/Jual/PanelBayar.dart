@@ -793,6 +793,21 @@ class TampilanSelesai extends StatelessWidget {
           Center(
             child: TeksKode(hasil.nomor, gaya: teks.bodyMedium?.copyWith(color: warna.teksSekunder)),
           ),
+          // v3.52 (§9.2): nomor panggil besar supaya kasir bisa menyebutkannya ke pembeli.
+          if (hasil.nomorAntrian case final antrian?) ...[
+            const SizedBox(height: TokenJarak.jarak16),
+            Semantics(
+              label: 'Nomor antrian $antrian${hasil.namaPemesan == null ? '' : ', ${hasil.namaPemesan}'}',
+              excludeSemantics: true,
+              child: Column(
+                children: [
+                  Text('Nomor antrian', style: teks.titleMedium, textAlign: TextAlign.center),
+                  TeksKode(antrian, gaya: teks.displaySmall?.copyWith(color: warna.brand)),
+                  if (hasil.namaPemesan case final nama?) Text(nama, style: teks.titleMedium),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: TokenJarak.jarak24),
           Text('Kembalian', style: teks.titleMedium),
           FittedBox(

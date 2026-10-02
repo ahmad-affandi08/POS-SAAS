@@ -65,6 +65,9 @@ export type RingkasanPenjualan = {
     Kembalian: string;
     TotalHpp: string;
     Catatan: string | null;
+    /** v3.52: nomor panggil & nama pemesan penjualan bayar-dulu (FnB). */
+    NomorAntrian: string | null;
+    NamaPemesan: string | null;
     PerluTinjauan: boolean;
     AlasanTinjauan: string | null;
     /** Alasan tinjauan dengan label manusiawi (kode mesin tidak ditampilkan). */

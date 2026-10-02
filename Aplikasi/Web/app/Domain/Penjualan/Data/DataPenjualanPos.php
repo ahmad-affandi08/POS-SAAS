@@ -68,5 +68,8 @@ final readonly class DataPenjualanPos
         // perangkat versi lama tetap diterima (CLAUDE.md #16).
         public ?Uang $biayaKirim = null,
         public ?Uang $diskonKirim = null,
+        // v3.52 (§9.2): nomor panggil & nama pemesan penjualan bayar-dulu; opsional (perangkat lama tidak mengirim).
+        public ?string $nomorAntrian = null,
+        public ?string $namaPemesan = null,
     ) {}
 }

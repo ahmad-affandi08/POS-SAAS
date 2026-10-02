@@ -111,6 +111,8 @@ final class DetailPenjualan
                 'Kembalian' => $p->Kembalian,
                 'TotalHpp' => $p->TotalHpp,
                 'Catatan' => $p->Catatan,
+                'NomorAntrian' => $p->NomorAntrian,
+                'NamaPemesan' => $p->NamaPemesan,
                 'PerluTinjauan' => $p->PerluTinjauan,
                 'AlasanTinjauan' => $p->AlasanTinjauan,
                 // PRD v1.46: alasan tinjauan dalam label manusiawi (kode mesin tidak ditampilkan).

@@ -35,7 +35,7 @@ use Illuminate\Validation\Rule;
  * UuidProduk, UuidProdukSatuan|null, Jumlah, HargaSatuan, HargaPilihan, Pilihan [{UuidPilihan, Nama, Harga}],
  * HargaTermasukPajak|null, KodePajak [..]|null, DiskonManual {Persen|Jumlah}|null, Catatan}], DiskonManualPesanan
  * {Persen|Jumlah}|null, UuidPenyetujuDiskon|null, Pembayaran [{Uuid, UuidMetodePembayaran, Jumlah, Referensi|null}],
- * Ringkasan {Subtotal, TotalPajak, Pembulatan, TotalAkhir, Kembalian}, Catatan, UuidPesananTerbuka?, KirimDapur?, UuidPelanggan?,
+ * Ringkasan {Subtotal, TotalPajak, Pembulatan, TotalAkhir, Kembalian}, Catatan, NomorAntrian?, NamaPemesan? (v3.52), UuidPesananTerbuka?, KirimDapur?, UuidPelanggan?,
  * TukarPoin {Poin, Nilai}|null, Promo [{UuidPromo, Kode, DiskonBaris [{UuidBaris, Jumlah}], DiskonPesanan}]?, Voucher?, UuidPesananPenjualan?, UuidPesananOnline?, UuidReservasi?, Laundry?}`.
  * `TukarPoin` (F-16b) wajib bersama `UuidPelanggan`; `Promo` (F-16c) = promo yang diterapkan perangkat;
  * `UuidPenyetujuTempo` (F-12) = penyetuju tempo di atas limit / piutang lewat jatuh tempo (BR-12.1); `Voucher` (F-16c
@@ -136,6 +136,8 @@ final class PenanganSinkronBuatPenjualan implements PenanganItemSinkron
             'Ringkasan.TotalAkhir' => ['required', 'string', $uang],
             'Ringkasan.Kembalian' => ['required', 'string', $uang],
             'Catatan' => ['sometimes', 'nullable', 'string', 'max:500'],
+            'NomorAntrian' => ['sometimes', 'nullable', 'string', 'max:10'],
+            'NamaPemesan' => ['sometimes', 'nullable', 'string', 'max:60'],
             'UuidPesananTerbuka' => ['sometimes', 'nullable', 'string', 'ulid'],
             'KirimDapur' => ['sometimes', 'boolean'],
             'UuidPelanggan' => ['sometimes', 'nullable', 'string', 'ulid', 'required_with:TukarPoin'],
@@ -223,6 +225,8 @@ final class PenanganSinkronBuatPenjualan implements PenanganItemSinkron
             laundry: is_array($valid['Laundry'] ?? null) ? self::AmbilLaundry($valid['Laundry']) : null,
             biayaKirim: is_string($valid['BiayaKirim'] ?? null) ? Uang::Dari($valid['BiayaKirim']) : null,
             diskonKirim: is_string($valid['DiskonKirim'] ?? null) ? Uang::Dari($valid['DiskonKirim']) : null,
+            nomorAntrian: self::AmbilTeks($valid['NomorAntrian'] ?? null),
+            namaPemesan: self::AmbilTeks($valid['NamaPemesan'] ?? null),
         ));
     }
 

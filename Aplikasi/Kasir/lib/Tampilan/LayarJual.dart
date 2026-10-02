@@ -557,6 +557,24 @@ class _LayarJualState extends ConsumerState<LayarJual> {
     }
   }
 
+  /// v3.52 (§9.2): nama pemesan yang dipanggil saat pesanan bayar-dulu siap (dicetak di struk & tiket dapur).
+  Future<void> _IsiNamaPemesan() async {
+    final awal = ref.read(penyediaKeranjang).namaPemesan ?? '';
+    final nama = await showDialog<String>(
+      context: context,
+      builder: (_) => _DialogNamaPemesan(awal: awal),
+    );
+    if (nama == null || !mounted) {
+      _FokusAkar();
+      return;
+    }
+    final rapi = nama.trim();
+    ref
+        .read(penyediaKeranjang.notifier)
+        .Ganti(ref.read(penyediaKeranjang).Salin(namaPemesan: () => rapi.isEmpty ? null : rapi));
+    _FokusAkar();
+  }
+
   /// v3.29: isi ongkir kotor kanal Antar. Potongan gratis ongkir dihitung mesin promo dari promo yang berlaku.
   Future<void> _IsiOngkir() async {
     final awal = ref.read(penyediaKeranjang).biayaKirim;
@@ -1058,6 +1076,15 @@ class _LayarJualState extends ConsumerState<LayarJual> {
           ? const []
           : (ref.watch(penyediaKonteksPenjualan).value?.jenisPesanan ?? const []),
       saatJenisPesanan: _GantiKanal,
+      // v3.52: nama pemesan untuk penjualan bayar-dulu di outlet FnB (pesanan meja sudah punya nama/meja).
+      saatNamaPemesan:
+          widget.modePelayan ||
+              pesanan != null ||
+              keranjang.praPesan != null ||
+              keranjang.reservasi != null ||
+              (ref.watch(penyediaKonteksPenjualan).value?.jenisPesanan.isEmpty ?? true)
+          ? null
+          : () => unawaited(_IsiNamaPemesan()),
       saatKanal:
           widget.modePelayan ||
               pesanan != null ||
@@ -1466,6 +1493,46 @@ class _InisialProduk extends StatelessWidget {
 }
 
 /// v3.29: isian ongkir (rupiah bulat) untuk penjualan kanal Antar. Kosong = tanpa ongkir.
+class _DialogNamaPemesan extends StatefulWidget {
+  const _DialogNamaPemesan({required this.awal});
+
+  final String awal;
+
+  @override
+  State<_DialogNamaPemesan> createState() => _DialogNamaPemesanState();
+}
+
+class _DialogNamaPemesanState extends State<_DialogNamaPemesan> {
+  late final TextEditingController _nama = TextEditingController(text: widget.awal);
+
+  @override
+  void dispose() {
+    _nama.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AlertDialog(
+    title: const Text('Nama pemesan'),
+    content: TextField(
+      key: const ValueKey('NamaPemesan'),
+      controller: _nama,
+      autofocus: true,
+      textCapitalization: TextCapitalization.words,
+      inputFormatters: [LengthLimitingTextInputFormatter(60)],
+      decoration: const InputDecoration(
+        labelText: 'Nama yang dipanggil saat pesanan siap',
+        border: OutlineInputBorder(),
+      ),
+      onSubmitted: (_) => Navigator.of(context).pop(_nama.text),
+    ),
+    actions: [
+      TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Batal')),
+      FilledButton(onPressed: () => Navigator.of(context).pop(_nama.text), child: const Text('Simpan')),
+    ],
+  );
+}
+
 class _DialogOngkir extends StatefulWidget {
   const _DialogOngkir({required this.awal});
 

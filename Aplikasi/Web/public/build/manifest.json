@@ -1838,7 +1838,7 @@
     "src": "node_modules/@fontsource-variable/atkinson-hyperlegible-next/files/atkinson-hyperlegible-next-latin-wght-normal.woff2"
   },
   "resources/js/Aplikasi.tsx": {
-    "file": "assets/Aplikasi-DApLs9r1.js",
+    "file": "assets/Aplikasi-CRoX28tY.js",
     "name": "Aplikasi",
     "src": "resources/js/Aplikasi.tsx",
     "isEntry": true,
@@ -4880,7 +4880,7 @@
     ]
   },
   "resources/js/Halaman/Kelola/Penjualan/Detail.tsx": {
-    "file": "assets/Detail-D_359hbM.js",
+    "file": "assets/Detail-CS3OXhju.js",
     "name": "Detail",
     "src": "resources/js/Halaman/Kelola/Penjualan/Detail.tsx",
     "isDynamicEntry": true,

@@ -204,7 +204,7 @@ class BasisDataKasir extends _$BasisDataKasir {
   /// outbox); 17 = F-05f bagian 2 (bahan terbuang lokal); 18 = X8 (kanal metode pembayaran platform ojol);
   /// 19 = F-17 bagian 3 (ongkir ikut DPP pajak).
   @override
-  int get schemaVersion => 21;
+  int get schemaVersion => 22;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -397,6 +397,20 @@ class BasisDataKasir extends _$BasisDataKasir {
           await m.addColumn(kelompokPajakDetail, kelompokPajakDetail.KenaBiayaKirim);
         }
         await (delete(pengaturan)..where((p) => p.Kunci.equals('KursorKatalog'))).go();
+      }
+      // Skema 22 (v3.52): nomor antrian & nama pemesan penjualan. Tabel penjualan dari skema < 2 sudah lengkap.
+      if (dari >= 2 && dari < 22) {
+        Future<bool> Ada(String kolom) async =>
+            await customSelect("SELECT COUNT(*) AS Jumlah FROM pragma_table_info('Penjualan') WHERE name = '$kolom'")
+                .map((r) => r.read<int>('Jumlah'))
+                .getSingle() >
+            0;
+        if (!await Ada('NomorAntrian')) {
+          await m.addColumn(penjualan, penjualan.NomorAntrian);
+        }
+        if (!await Ada('NamaPemesan')) {
+          await m.addColumn(penjualan, penjualan.NamaPemesan);
+        }
       }
     },
     beforeOpen: (detail) async {
