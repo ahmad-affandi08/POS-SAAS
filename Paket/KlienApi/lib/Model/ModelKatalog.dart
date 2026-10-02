@@ -113,10 +113,22 @@ class ProdukPos {
     this.masaGaransiBulan,
     this.atributVarian,
     this.hargaTerbuka = false,
+    this.golonganObat,
+    this.obatWajibApotek = false,
+    this.prekursor = false,
+    this.wajibResep = false,
   });
 
   final String uuid;
   final String? sku;
+
+  /// Apotek (§9.5): `Bebas`, `BebasTerbatas`, `Keras`, `Psikotropika`, `Narkotika`; null = bukan obat (atau server
+  /// lama). [obatWajibApotek] hanya bermakna untuk obat keras; [wajibResep] dihitung server (keras bukan OWA,
+  /// psikotropika, narkotika). Semua false untuk server lama.
+  final String? golonganObat;
+  final bool obatWajibApotek;
+  final bool prekursor;
+  final bool wajibResep;
   final String nama;
   final String? namaStruk;
 
@@ -170,6 +182,10 @@ class ProdukPos {
     masaGaransiBulan: UraiJson.AmbilBulatAtauNull(json['MasaGaransiBulan']),
     atributVarian: json['AtributVarian'] is Map || json['AtributVarian'] is List ? json['AtributVarian'] : null,
     hargaTerbuka: UraiJson.AmbilBenar(json['HargaTerbuka']),
+    golonganObat: UraiJson.AmbilTeksAtauNull(json['GolonganObat']),
+    obatWajibApotek: UraiJson.AmbilBenar(json['ObatWajibApotek']),
+    prekursor: UraiJson.AmbilBenar(json['Prekursor']),
+    wajibResep: UraiJson.AmbilBenar(json['WajibResep']),
   );
 }
 

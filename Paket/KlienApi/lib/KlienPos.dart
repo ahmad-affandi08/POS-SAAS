@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:inti/Inti.dart';
 
 import 'Galat/GalatApi.dart';
+import 'Model/ModelBengkel.dart';
 import 'Model/ModelKatalog.dart';
 import 'Model/ModelGudang.dart';
 import 'Model/ModelKonfigurasi.dart';
@@ -214,6 +215,18 @@ class KlienPos {
   Future<void> LepasKunciBayar(String uuidPesanan) async {
     await _Kirim('DELETE', 'pesanan-terbuka/${Uri.encodeComponent(uuidPesanan)}/kunci-bayar', null);
   }
+
+  /// Bengkel (§9.10): perintah kerja outlet perangkat. [semuaAktif] false = hanya yang siap ditagih (disetujui
+  /// pelanggan & belum ditagih), true = semua yang masih berjalan. Hanya baris yang disetujui yang dikirim.
+  Future<List<PerintahKerjaPos>> AmbilPerintahKerja({bool semuaAktif = false}) async {
+    final json = await _Kirim('GET', 'perintah-kerja?status=${semuaAktif ? 'aktif' : 'siap-tagih'}', null);
+    return [for (final p in UraiJson.AmbilDaftarPeta(json['PerintahKerja'])) PerintahKerjaPos.DariJson(p)];
+  }
+
+  /// Bengkel (§9.10): satu perintah kerja outlet perangkat (outlet/tenant lain = `GalatApi` 404).
+  Future<PerintahKerjaPos> AmbilSatuPerintahKerja(String uuid) async => PerintahKerjaPos.DariJson(
+    UraiJson.AmbilPeta((await _Kirim('GET', 'perintah-kerja/${Uri.encodeComponent(uuid)}', null))['PerintahKerja']),
+  );
 
   /// F-07 mode service bagian 2: reservasi outlet perangkat pada [tanggal] (`YYYY-MM-DD`, bawaan hari ini), urut jam.
   Future<List<ReservasiPos>> AmbilReservasi({String? tanggal}) async {

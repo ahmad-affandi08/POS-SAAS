@@ -211,9 +211,10 @@ class BasisDataKasir extends _$BasisDataKasir {
   /// bagian 2 (produk paket sesi); 15 = laundry (blok tiket di penjualan); 16 = audit P0 F-01 (perangkat pembuat item
   /// outbox); 17 = F-05f bagian 2 (bahan terbuang lokal); 18 = X8 (kanal metode pembayaran platform ojol);
   /// 19 = F-17 bagian 3 (ongkir ikut DPP pajak); 24 = K-12 (minta bill & meja perlu dibersihkan); 25 = K-25 (harga
-  /// terbuka); 26 = Modul Salesman bagian 2 (pelanggan salesman, kunjungan, pesanan grosir lokal).
+  /// terbuka); 26 = Modul Salesman bagian 2 (pelanggan salesman, kunjungan, pesanan grosir lokal); 27 = Bengkel & Apotek
+  /// bagian 2 (golongan obat produk, perintah kerja & ringkasan resep penjualan).
   @override
-  int get schemaVersion => 26;
+  int get schemaVersion => 27;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -461,6 +462,33 @@ class BasisDataKasir extends _$BasisDataKasir {
         await m.createTable(pelangganSalesmanLokal);
         await m.createTable(kunjunganSalesLokal);
         await m.createTable(pesananGrosirLokal);
+      }
+      // Skema 27 (Bengkel & Apotek bagian 2): golongan obat produk serta tautan perintah kerja & ringkasan resep
+      // penjualan; hanya menambah kolom, outbox & dokumen lama tidak disentuh. Kursor katalog dihapus supaya sinkron
+      // berikutnya memuat ulang produk beserta golongannya; tanpa itu obat keras lama terjual tanpa dialog resep.
+      if (dari >= 2 && dari < 27) {
+        Future<bool> Ada(String tabel, String kolom) async =>
+            await customSelect("SELECT COUNT(*) AS Jumlah FROM pragma_table_info('$tabel') WHERE name = '$kolom'")
+                .map((r) => r.read<int>('Jumlah'))
+                .getSingle() >
+            0;
+        for (final (nama, kolom) in [
+          ('GolonganObat', produk.GolonganObat),
+          ('ObatWajibApotek', produk.ObatWajibApotek),
+          ('Prekursor', produk.Prekursor),
+          ('WajibResep', produk.WajibResep),
+        ]) {
+          if (!await Ada('Produk', nama)) {
+            await m.addColumn(produk, kolom);
+          }
+        }
+        if (!await Ada('Penjualan', 'PerintahKerja')) {
+          await m.addColumn(penjualan, penjualan.PerintahKerja);
+        }
+        if (!await Ada('Penjualan', 'Resep')) {
+          await m.addColumn(penjualan, penjualan.Resep);
+        }
+        await (delete(pengaturan)..where((p) => p.Kunci.equals('KursorKatalog'))).go();
       }
     },
     beforeOpen: (detail) async {

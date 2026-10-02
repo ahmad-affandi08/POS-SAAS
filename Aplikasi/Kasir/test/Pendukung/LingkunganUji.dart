@@ -28,6 +28,7 @@ import 'package:kasir/Domain/Penjualan/LayananPenjualan.dart';
 import 'package:kasir/Domain/Penjualan/LayananLaundry.dart';
 import 'package:kasir/Domain/Penjualan/LayananPesananOnline.dart';
 import 'package:kasir/Domain/Penjualan/LayananPreOrder.dart';
+import 'package:kasir/Domain/Penjualan/LayananPerintahKerja.dart';
 import 'package:kasir/Domain/Penjualan/LayananReservasi.dart';
 import 'package:kasir/Domain/Persediaan/LayananBahanTerbuang.dart';
 import 'package:kasir/Domain/Persediaan/LayananGudang.dart';
@@ -264,6 +265,18 @@ Map<String, Object?> DataAwalUji({
   'WaktuServer': '2026-09-24T01:00:00Z',
 };
 
+/// Apotek bagian 2: data awal uji + apoteker "apt. Dewi Anggraini" (izin `apotek.obat-keras.jual`, PIN kasus 2
+/// "000000"). Rina (kasir) tidak berizin apoteker.
+Map<String, Object?> DataAwalApotekUji({bool tanpaApoteker = false}) {
+  final data = DataAwalUji();
+  data['Staf'] = [
+    ...(data['Staf']! as List<Object?>),
+    if (!tanpaApoteker)
+      StafJson('01K6STAF0000000000APOTEK01', 'apt. Dewi Anggraini', ['penjualan.buat', 'apotek.obat-keras.jual'], 2),
+  ];
+  return data;
+}
+
 /// Respons `GET /api/pos/v1/meja` uji.
 Map<String, Object?> DataMejaUji() => {
   'ModeMejaAktif': true,
@@ -367,6 +380,7 @@ class LingkunganUji {
   );
   late final LayananPesananOnline pesananOnline = LayananPesananOnline(klien: klien, penjualan: penjualan);
   late final LayananReservasi reservasi = LayananReservasi(klien: klien, penjualan: penjualan);
+  late final LayananPerintahKerja perintahKerja = LayananPerintahKerja(klien: klien, penjualan: penjualan);
   late final LayananLaundry laundry = LayananLaundry(klien: klien, jam: () => jam);
   late final LayananSinkron sinkron = LayananSinkron(
     klien: klien,

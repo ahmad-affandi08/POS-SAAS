@@ -173,4 +173,43 @@ void main() {
     // Rasio: ubin selalu setinggi lebarnya (gambar persegi) + blok teks.
     expect(UbinProduk.HitungRasio(148), closeTo(148 / (148 + UbinProduk.tinggiTeks), 0.0001));
   });
+
+  testWidgets(
+    'LencanaTeks golongan obat (Apotek §9.5) di ubin, baris daftar, dan baris keranjang: teks selalu tampil',
+    (tester) async {
+      const keras = LencanaTeks(teks: 'K', label: 'Obat keras, wajib resep', nada: NadaStatus.Bahaya);
+      await Pasang(
+        tester,
+        Column(
+          children: [
+            SizedBox(
+              width: 148,
+              height: 148 + UbinProduk.tinggiTeks,
+              child: UbinProduk(
+                nama: 'Amoxicillin Trihydrate 500 mg Kapsul Strip 10',
+                harga: Uang.DariBulat(8500),
+                saatDiketuk: () {},
+                lencana: keras,
+              ),
+            ),
+            BarisProduk(nama: 'Amoxicillin 500 mg', harga: Uang.DariBulat(8500), saatDiketuk: () {}, lencana: keras),
+            BarisKeranjang(
+              nama: 'Amoxicillin 500 mg',
+              jumlah: '1',
+              total: Uang.DariBulat(8500),
+              saatDiketuk: () {},
+              saatTambah: () {},
+              saatKurang: () {},
+              lencana: keras,
+            ),
+          ],
+        ),
+        tinggi: 640,
+      );
+
+      expect(tester.takeException(), isNull, reason: 'Tidak meluap di 360dp.');
+      expect(find.text('K'), findsNWidgets(3));
+      expect(find.bySemanticsLabel(RegExp('Obat keras, wajib resep')), findsWidgets);
+    },
+  );
 }

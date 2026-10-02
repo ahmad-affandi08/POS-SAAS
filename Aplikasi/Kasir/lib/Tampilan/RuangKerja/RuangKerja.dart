@@ -24,6 +24,7 @@ import '../Meja/LayarMeja.dart';
 import '../Penjualan/LembarAmbilPreOrder.dart';
 import '../Penjualan/LembarPesananOnline.dart';
 import '../Penjualan/LembarCucian.dart';
+import '../Penjualan/LembarPerintahKerja.dart';
 import '../Penjualan/LembarReservasi.dart';
 import '../Penjualan/LembarRetur.dart';
 import '../Penjualan/LembarVoid.dart';
@@ -364,6 +365,7 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
           ? () => _BukaPanelPenjualan(const _PanelPenjualan(pesananOnline: true))
           : null,
       saatReservasi: () => _BukaPanelPenjualan(const _PanelPenjualan(reservasi: true)),
+      saatServis: () => _BukaPanelPenjualan(const _PanelPenjualan(servis: true)),
       saatCucian: ref.watch(penyediaKonteksPenjualan).value?.laundry.aktif == true
           ? () => _BukaPanelPenjualan(const _PanelPenjualan(cucian: true))
           : null,
@@ -531,6 +533,17 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
         LembarReservasi.judul,
         LembarReservasi(
           key: const ValueKey('Reservasi'),
+          kasir: widget.kasir,
+          saatDimuat: () {
+            _TutupPanel();
+            _Buka(TujuanRuangKerja.Jual);
+          },
+        ) as Widget,
+      ),
+      (_, _, _PanelPenjualan(servis: true)) => (
+        LembarPerintahKerja.judul,
+        LembarPerintahKerja(
+          key: const ValueKey('PerintahKerja'),
           kasir: widget.kasir,
           saatDimuat: () {
             _TutupPanel();
@@ -756,6 +769,7 @@ class _PanelPenjualan {
     this.ambilPreOrder = false,
     this.pesananOnline = false,
     this.reservasi = false,
+    this.servis = false,
     this.cucian = false,
   });
 
@@ -769,6 +783,9 @@ class _PanelPenjualan {
 
   /// F-07 mode service: antrian reservasi hari ini.
   final bool reservasi;
+
+  /// Bengkel bagian 2: perintah kerja siap tagih.
+  final bool servis;
 
   /// Laundry: daftar cucian (siap diambil, ubah status, cetak nota).
   final bool cucian;

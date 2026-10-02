@@ -454,6 +454,33 @@ class ReservasiKeranjang {
       : null;
 }
 
+/// Perintah kerja bengkel yang sedang ditagih (Bengkel bagian 2, §9.10): `Penjualan.Buat` merujuk [uuid] supaya server
+/// menandainya Ditagih dan menautkannya di transaksi yang sama. [nomorPolisi] & [labelKendaraan] untuk struk & layar.
+class PerintahKerjaKeranjang {
+  const PerintahKerjaKeranjang({required this.uuid, required this.nomor, this.nomorPolisi, this.labelKendaraan});
+
+  final String uuid;
+  final String nomor;
+  final String? nomorPolisi;
+  final String? labelKendaraan;
+
+  Map<String, Object?> KeJson() => {
+    'Uuid': uuid,
+    'Nomor': nomor,
+    'NomorPolisi': nomorPolisi,
+    'LabelKendaraan': labelKendaraan,
+  };
+
+  static PerintahKerjaKeranjang? DariJson(Object? json) => json is Map<String, Object?> && json['Uuid'] is String
+      ? PerintahKerjaKeranjang(
+          uuid: json['Uuid']! as String,
+          nomor: '${json['Nomor'] ?? ''}',
+          nomorPolisi: json['NomorPolisi'] as String?,
+          labelKendaraan: json['LabelKendaraan'] as String?,
+        )
+      : null;
+}
+
 /// Tiket laundry yang dibuat bersama penjualan (§9.9): jenis layanan, berat (kg, 2 desimal) dan/atau item satuan,
 /// parfum, catatan, perkiraan selesai (UTC), serta nama & HP penerima (bila tanpa pelanggan tertaut). Dikirim sebagai
 /// blok `Laundry` di `Penjualan.Buat`.
@@ -542,6 +569,7 @@ class Keranjang {
     this.voucher,
     this.praPesan,
     this.reservasi,
+    this.perintahKerja,
     this.laundry,
     this.kanal,
     this.namaPemesan,
@@ -573,6 +601,9 @@ class Keranjang {
 
   /// F-07 mode service: reservasi yang sedang dilayani.
   final ReservasiKeranjang? reservasi;
+
+  /// Bengkel bagian 2: perintah kerja yang sedang ditagih.
+  final PerintahKerjaKeranjang? perintahKerja;
 
   /// Laundry (§9.9): tiket laundry yang dibuat bersama penjualan ini.
   final LaundryKeranjang? laundry;
@@ -610,6 +641,7 @@ class Keranjang {
     VoucherKeranjang? Function()? voucher,
     PraPesananKeranjang? Function()? praPesan,
     ReservasiKeranjang? Function()? reservasi,
+    PerintahKerjaKeranjang? Function()? perintahKerja,
     LaundryKeranjang? Function()? laundry,
     KanalPenjualan? Function()? kanal,
     String? Function()? namaPemesan,
@@ -627,6 +659,7 @@ class Keranjang {
     voucher: voucher == null ? this.voucher : voucher(),
     praPesan: praPesan == null ? this.praPesan : praPesan(),
     reservasi: reservasi == null ? this.reservasi : reservasi(),
+    perintahKerja: perintahKerja == null ? this.perintahKerja : perintahKerja(),
     laundry: laundry == null ? this.laundry : laundry(),
     kanal: kanal == null ? this.kanal : kanal(),
     namaPemesan: namaPemesan == null ? this.namaPemesan : namaPemesan(),
@@ -645,6 +678,7 @@ class Keranjang {
     'Voucher': voucher?.KeJson(),
     'PraPesan': praPesan?.KeJson(),
     'Reservasi': reservasi?.KeJson(),
+    'PerintahKerja': perintahKerja?.KeJson(),
     'Laundry': laundry?.KeJson(),
     'Kanal': kanal?.name,
     'NamaPemesan': namaPemesan,
@@ -665,6 +699,7 @@ class Keranjang {
     voucher: VoucherKeranjang.DariJson(json['Voucher']),
     praPesan: PraPesananKeranjang.DariJson(json['PraPesan']),
     reservasi: ReservasiKeranjang.DariJson(json['Reservasi']),
+    perintahKerja: PerintahKerjaKeranjang.DariJson(json['PerintahKerja']),
     laundry: LaundryKeranjang.DariJson(json['Laundry']),
     // Kanal yang tidak dikenal aplikasi versi ini = bawaan.
     kanal: KanalPenjualan.values.where((k) => k.name == json['Kanal']).firstOrNull,

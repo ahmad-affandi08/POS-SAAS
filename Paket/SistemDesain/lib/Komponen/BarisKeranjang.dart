@@ -3,6 +3,7 @@ import 'package:inti/Inti.dart';
 
 import '../Token/TokenJarak.dart';
 import '../Token/TokenWarna.dart';
+import 'LencanaTeks.dart';
 import 'TeksUang.dart';
 
 /// Satu baris keranjang (PRD §17.2.7): nama & total di baris atas, rincian (satuan, pilihan, catatan, diskon) dan
@@ -18,6 +19,7 @@ class BarisKeranjang extends StatelessWidget {
     required this.saatKurang,
     this.rincian = const [],
     this.disorot = false,
+    this.lencana,
   });
 
   /// Lama transisi sorot (§17.2.7 prinsip 4: sorot baris keranjang 150 ms).
@@ -35,6 +37,9 @@ class BarisKeranjang extends StatelessWidget {
 
   /// K-15: baris baru saja bertambah lewat pindaian (latar diwarnai sebentar).
   final bool disorot;
+
+  /// Tanda singkat sebelum nama (misal golongan obat "K"); null = tanpa lencana.
+  final LencanaTeks? lencana;
 
   @override
   Widget build(BuildContext context) {
@@ -60,6 +65,7 @@ class BarisKeranjang extends StatelessWidget {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    if (lencana case final LencanaTeks tanda) ...[tanda, const SizedBox(width: TokenJarak.jarak8)],
                     Expanded(
                       child: Text(nama, maxLines: 2, overflow: TextOverflow.ellipsis, style: teks.labelLarge),
                     ),

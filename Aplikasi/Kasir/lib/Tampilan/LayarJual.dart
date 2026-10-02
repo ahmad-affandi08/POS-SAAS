@@ -24,6 +24,7 @@ import '../Domain/Perangkat/LayananLayarPelanggan.dart';
 import '../Domain/Perangkat/PengaturanPerangkat.dart';
 import '../Domain/Sesi/StafLokal.dart';
 import 'Jual/DialogHargaTerbuka.dart';
+import 'Jual/LencanaObat.dart';
 import 'Jual/PanelBayar.dart';
 import 'Jual/PanelCekHarga.dart';
 import 'Jual/PanelDiskon.dart';
@@ -1405,6 +1406,7 @@ class _LayarJualState extends ConsumerState<LayarJual> {
                     return BarisProduk(
                       key: ValueKey(daftar[i].uuid),
                       nama: daftar[i].nama,
+                      lencana: LencanaObat.Buat(daftar[i]),
                       sku: daftar[i].sku,
                       harga: b.harga,
                       nonaktif: b.nonaktif,
@@ -1434,6 +1436,7 @@ class _LayarJualState extends ConsumerState<LayarJual> {
                         return UbinProduk(
                           key: ValueKey(p.uuid),
                           nama: p.nama,
+                          lencana: LencanaObat.Buat(p),
                           gambar: p.urlGambarKecil == null ? null : _GambarProduk(nama: p.nama, url: p.urlGambarKecil!),
                           harga: b.harga,
                           nonaktif: b.nonaktif,
@@ -1488,10 +1491,16 @@ class _LayarJualState extends ConsumerState<LayarJual> {
       // K-11: tukar barang menandai keranjang; "Batalkan transaksi" membatalkan tukarnya (returnya belum tersimpan).
       judul:
           pesanan?.AmbilJudul() ??
-          switch (keranjang.tukar) {
-            final tukar? => 'Tukar barang · ${tukar.nilai.FormatRupiah()}',
-            null => null,
+          switch ((keranjang.tukar, keranjang.perintahKerja)) {
+            (final tukar?, _) => 'Tukar barang · ${tukar.nilai.FormatRupiah()}',
+            // Bengkel bagian 2: keranjang menagih perintah kerja → kendaraannya jadi judul.
+            (null, final pk?) => 'Servis ${pk.nomorPolisi ?? pk.nomor}',
+            _ => null,
           },
+      lencanaProduk: {
+        for (final b in keranjang.baris)
+          b.uuidProduk: ?LencanaObat.Buat(ref.watch(penyediaKatalog).value?.CariProduk(b.uuidProduk)),
+      },
       statusBaris: {for (final b in pesanan?.baris ?? const <BarisPesananMeja>[]) b.uuid: b.AmbilLabelStatus()},
       labelTahan: switch ((pesanan, widget.modePelayan)) {
         (null, true) => 'Pilih meja',
@@ -1519,7 +1528,12 @@ class _LayarJualState extends ConsumerState<LayarJual> {
       saatKirimKursus: (k) => unawaited(_KirimKursus(k)),
       // X8: kanal (GoFood, GrabFood, …) untuk penjualan langsung; pesanan meja selalu makan di tempat.
       // v3.51: jenis pesanan outlet (FnB) sebagai tombol segmen; pesanan meja selalu makan di tempat.
-      jenisPesanan: widget.modePelayan || pesanan != null || keranjang.praPesan != null || keranjang.reservasi != null
+      jenisPesanan:
+          widget.modePelayan ||
+              pesanan != null ||
+              keranjang.praPesan != null ||
+              keranjang.reservasi != null ||
+              keranjang.perintahKerja != null
           ? const []
           : (ref.watch(penyediaKonteksPenjualan).value?.jenisPesanan ?? const []),
       saatJenisPesanan: _GantiKanal,
@@ -1529,6 +1543,7 @@ class _LayarJualState extends ConsumerState<LayarJual> {
               pesanan != null ||
               keranjang.praPesan != null ||
               keranjang.reservasi != null ||
+              keranjang.perintahKerja != null ||
               (ref.watch(penyediaKonteksPenjualan).value?.jenisPesanan.isEmpty ?? true)
           ? null
           : () => unawaited(_IsiNamaPemesan()),
@@ -1537,6 +1552,7 @@ class _LayarJualState extends ConsumerState<LayarJual> {
               pesanan != null ||
               keranjang.praPesan != null ||
               keranjang.reservasi != null ||
+              keranjang.perintahKerja != null ||
               // Hanya bila ada kanal di luar tombol jenis pesanan (Antar, ojol).
               _AmbilPilihanKanal().every(
                 (p) => ref.watch(penyediaKonteksPenjualan).value?.jenisPesanan.contains(p) ?? false,
@@ -1567,7 +1583,13 @@ class _LayarJualState extends ConsumerState<LayarJual> {
     final teks = Theme.of(context).textTheme;
     final warna = TokenWarna.AmbilDari(context);
     final keranjang = ref.watch(penyediaKeranjangEfektif);
-    final judul = keranjang.pesananMeja?.AmbilJudul() ?? (keranjang.tukar == null ? 'Keranjang' : 'Tukar barang');
+    final judul =
+        keranjang.pesananMeja?.AmbilJudul() ??
+        switch ((keranjang.tukar, keranjang.perintahKerja)) {
+          (null, final pk?) => 'Servis ${pk.nomorPolisi ?? pk.nomor}',
+          (null, null) => 'Keranjang',
+          _ => 'Tukar barang',
+        };
     return Material(
       color: warna.permukaan,
       child: Container(

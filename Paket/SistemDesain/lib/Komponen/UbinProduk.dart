@@ -4,6 +4,7 @@ import 'package:inti/Inti.dart';
 import '../Token/TokenJarak.dart';
 import '../Token/TokenTipografi.dart';
 import '../Token/TokenWarna.dart';
+import 'LencanaTeks.dart';
 import 'TeksUang.dart';
 
 /// Ubin produk di katalog layar Jual (PRD §17.2.3, §17.2.7): area gambar persegi di atas — foto produk bila ada,
@@ -26,6 +27,7 @@ class UbinProduk extends StatelessWidget {
     this.nonaktif = false,
     this.gambar,
     this.saatDitahan,
+    this.lencana,
   });
 
   /// Tinggi blok teks di bawah gambar: nama dua baris + harga, tanpa saling tabrak di ubin tersempit.
@@ -61,6 +63,9 @@ class UbinProduk extends StatelessWidget {
   /// Aksi tahan-lama (misal tandai habis); null = ubin tidak punya aksi tambahan.
   final VoidCallback? saatDitahan;
 
+  /// Tanda singkat di pojok kiri atas gambar (misal golongan obat "K"); null = tanpa lencana.
+  final LencanaTeks? lencana;
+
   /// Inisial dua huruf pertama kata (misal "Es Kopi Susu" → "EK").
   static String AmbilInisial(String nama) {
     final kata = nama.trim().split(RegExp(r'\s+')).where((k) => k.isNotEmpty).toList();
@@ -79,7 +84,12 @@ class UbinProduk extends StatelessWidget {
     final hargaTeks = harga;
     return Semantics(
       button: true,
-      label: [nama, hargaTeks == null ? 'harga belum diatur' : hargaTeks.FormatRupiah(), ?keterangan].join(', '),
+      label: [
+        nama,
+        ?lencana?.label,
+        hargaTeks == null ? 'harga belum diatur' : hargaTeks.FormatRupiah(),
+        ?keterangan,
+      ].join(', '),
       excludeSemantics: true,
       onLongPress: saatDitahan,
       child: Material(
@@ -111,6 +121,8 @@ class UbinProduk extends StatelessWidget {
                             ),
                           ),
                     ),
+                    if (lencana case final LencanaTeks tanda)
+                      Positioned(left: TokenJarak.jarak4, top: TokenJarak.jarak4, child: tanda),
                     if (keterangan case final String tanda)
                       Positioned(
                         left: TokenJarak.jarak4,

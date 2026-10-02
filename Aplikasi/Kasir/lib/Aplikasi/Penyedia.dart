@@ -54,6 +54,7 @@ import '../Domain/Penjualan/LayananPenjualan.dart';
 import '../Domain/Penjualan/LayananLaundry.dart';
 import '../Domain/Penjualan/LayananPesananOnline.dart';
 import '../Domain/Penjualan/LayananPreOrder.dart';
+import '../Domain/Penjualan/LayananPerintahKerja.dart';
 import '../Domain/Penjualan/LayananReservasi.dart';
 import '../Domain/Penjualan/LayananQrisDinamis.dart';
 import '../Domain/Struk/LayananKirimStruk.dart';
@@ -462,6 +463,11 @@ final penyediaLayananReservasi = Provider<LayananReservasi>(
   (ref) => LayananReservasi(klien: ref.watch(penyediaKlienPos), penjualan: ref.watch(penyediaLayananPenjualan)),
 );
 
+/// Bengkel bagian 2: perintah kerja siap tagih (online) → keranjang.
+final penyediaLayananPerintahKerja = Provider<LayananPerintahKerja>(
+  (ref) => LayananPerintahKerja(klien: ref.watch(penyediaKlienPos), penjualan: ref.watch(penyediaLayananPenjualan)),
+);
+
 final penyediaLayananKetersediaan = Provider<LayananKetersediaan>(
   (ref) => LayananKetersediaan(klien: ref.watch(penyediaKlienPos)),
 );
@@ -657,7 +663,12 @@ class PengaturKeranjang extends Notifier<Keranjang> {
     final lama = _bawaan;
     _bawaan = bawaan;
     final k = state;
-    if (k.CekKosong && k.pesananMeja == null && k.praPesan == null && k.reservasi == null && k.kanal == lama) {
+    if (k.CekKosong &&
+        k.pesananMeja == null &&
+        k.praPesan == null &&
+        k.reservasi == null &&
+        k.perintahKerja == null &&
+        k.kanal == lama) {
       state = _AmbilKosong();
     }
   }

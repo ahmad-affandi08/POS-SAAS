@@ -5,6 +5,7 @@ import 'package:mesin_kasir/MesinKasir.dart';
 
 import '../../Data/BasisData/BasisDataKasir.dart';
 import '../../Data/RepositoriPenjualan.dart';
+import '../Penjualan/AturanApotek.dart';
 import '../Penjualan/Keranjang.dart';
 import '../Penjualan/KonteksPenjualan.dart';
 import '../Penjualan/LayananPenjualan.dart';
@@ -91,6 +92,19 @@ abstract final class PenyusunStrukPenjualan {
     final pelanggan = data.namaPelanggan?.trim();
     if (p.tampilkanPelanggan && pelanggan != null && pelanggan.isNotEmpty) {
       baris.add(BarisTeks('Pelanggan: $pelanggan'));
+    }
+    // Bengkel bagian 2: perintah kerja yang ditagih & nomor polisi kendaraannya (tersimpan lokal, ikut cetak ulang).
+    if (_UraiPeta(jual.PerintahKerja) case final pk?) {
+      baris.add(BarisTeks('Perintah kerja ${pk['Nomor'] ?? ''}'));
+      if (pk['NomorPolisi'] case final String polisi when polisi.trim().isNotEmpty) {
+        baris.add(BarisTeks('Kendaraan $polisi'));
+      }
+    }
+    // Apotek bagian 2: nomor resep & dokter penulis. Data pasien sengaja tidak dicetak (struk bisa berpindah tangan).
+    if (_UraiPeta(jual.Resep) case final resep?) {
+      baris.add(
+        BarisTeks(AturanApotek.SusunBarisStruk('${resep['NomorResep'] ?? ''}', '${resep['NamaDokter'] ?? ''}')),
+      );
     }
     // X8: pesanan platform ojol dicetak jelas agar mudah dicocokkan dengan pengemudi; nomor pesanan dari referensi
     // pembayaran platform bila diisi kasir.
@@ -319,6 +333,18 @@ abstract final class PenyusunStrukPenjualan {
   static bool _Positif(Uang nilai) => !nilai.BernilaiNol() && !nilai.BernilaiNegatif();
 
   static String _Dua(int n) => n.toString().padLeft(2, '0');
+
+  static Map<String, Object?>? _UraiPeta(String? json) {
+    if (json == null || json.isEmpty) {
+      return null;
+    }
+    try {
+      final isi = jsonDecode(json);
+      return isi is Map<String, Object?> ? isi : null;
+    } on FormatException {
+      return null;
+    }
+  }
 
   static List<String> _NamaPilihan(String json) {
     try {

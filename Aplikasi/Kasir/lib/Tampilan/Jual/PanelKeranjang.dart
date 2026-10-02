@@ -38,6 +38,7 @@ class PanelKeranjang extends StatelessWidget {
     this.kursusDitahan = const [],
     this.saatKirimKursus,
     this.uuidSorot,
+    this.lencanaProduk = const {},
   });
 
   final Keranjang keranjang;
@@ -96,6 +97,10 @@ class PanelKeranjang extends StatelessWidget {
 
   /// K-15: Uuid baris yang baru bertambah lewat pindaian (disorot sebentar).
   final String? uuidSorot;
+
+  /// Apotek bagian 2: lencana golongan obat per Uuid produk (produk bukan obat tidak ada di peta). Artinya juga tampil
+  /// sebagai rincian berteks ("Obat keras, wajib resep").
+  final Map<String, LencanaTeks> lencanaProduk;
 
   /// v3.29: isi ongkir penjualan kanal Antar. Null = tidak ditampilkan (kanal lain, pesanan online, mode Pelayan).
   final VoidCallback? saatOngkir;
@@ -453,6 +458,7 @@ class PanelKeranjang extends StatelessWidget {
                         BarisKeranjang(
                           key: ValueKey(keranjang.baris[i].uuid),
                           disorot: keranjang.baris[i].uuid == uuidSorot,
+                          lencana: lencanaProduk[keranjang.baris[i].uuidProduk],
                           nama: keranjang.baris[i].nama,
                           jumlah: FormatAngka.FormatJumlah(keranjang.baris[i].jumlah),
                           total: hasil == null
@@ -462,6 +468,7 @@ class PanelKeranjang extends StatelessWidget {
                             if (statusBaris[keranjang.baris[i].uuid] case final status?) 'Status: $status',
                             if (keranjang.pesananMeja != null && !statusBaris.containsKey(keranjang.baris[i].uuid))
                               'Item baru',
+                            ?lencanaProduk[keranjang.baris[i].uuidProduk]?.label,
                             ...AmbilRincian(keranjang.baris[i]),
                             for (final p in hitungan?.promoTerpakai ?? const <PromoTerpakai>[])
                               if (p.diskonBaris[i] case final diskon?)

@@ -40,6 +40,13 @@ class Penjualan extends Table {
   TextColumn get NomorAntrian => text().nullable()();
   TextColumn get NamaPemesan => text().nullable()();
 
+  /// Skema 27 (Bengkel §9.10): perintah kerja yang ditagih (JSON `{Uuid, Nomor, NomorPolisi}`) untuk struk & cetak ulang.
+  TextColumn get PerintahKerja => text().nullable()();
+
+  /// Skema 27 (Apotek §9.5): ringkasan resep untuk struk (JSON `{NomorResep, TanggalResep, NamaDokter}`). Data pasien
+  /// sengaja tidak disimpan di sini; hanya di muatan outbox `Penjualan.Buat` (basis data lokal terenkripsi, K-7).
+  TextColumn get Resep => text().nullable()();
+
   @override
   Set<Column<Object>> get primaryKey => {Uuid};
 }

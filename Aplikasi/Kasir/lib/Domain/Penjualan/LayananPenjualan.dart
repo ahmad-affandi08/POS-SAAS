@@ -11,6 +11,7 @@ import '../../Data/RepositoriPenjualan.dart';
 import '../GalatKasir.dart';
 import '../Katalog/KatalogLokal.dart';
 import '../Sesi/StafLokal.dart';
+import 'AturanApotek.dart';
 import 'Keranjang.dart';
 import 'KonteksPenjualan.dart';
 
@@ -332,6 +333,7 @@ class LayananPenjualan {
     String? tierPelanggan,
     List<String> nomorSeri = const [],
     Uang? hargaManual,
+    Uang? hargaDokumen,
   }) {
     final alasan = produk.AmbilAlasanTidakBisaDijual();
     if (alasan != null) {
@@ -350,8 +352,11 @@ class LayananPenjualan {
       ValidasiHargaTerbuka(produk, hargaManual);
     }
     // K-25: harga terbuka = harga ketikan kasir; tanpa ketikan (panel pilihan/nomor seri) harga daftar jadi bawaan.
+    // Bengkel bagian 2: harga dokumen sumber yang sudah disepakati pelanggan (perintah kerja) dipakai apa adanya, seperti
+    // harga pre-order saat diambil; server menerima `HargaSatuan` perangkat dan menghitung ulang totalnya.
     final harga =
         hargaManual ??
+        hargaDokumen ??
         TentukanHarga(katalog, k, produk.uuid, satuanJual.uuid, qty, kanal: kanal, tierPelanggan: tierPelanggan);
     if (harga == null) {
       if (produk.hargaTerbuka) {
@@ -984,6 +989,49 @@ class LayananPenjualan {
     }
   }
 
+  /// Apotek bagian 2 (§9.5): obat wajib resep butuh [resep] yang lengkap (tanggal tidak setelah [hariIni], alamat pasien
+  /// untuk psikotropika/narkotika), dan obat keras/psikotropika/narkotika hanya diserahkan pemegang izin
+  /// `apotek.obat-keras.jual`: kasir sendiri, atau apoteker [uuidApoteker] yang lolos PIN. Barang bukan obat tidak
+  /// pernah diblokir.
+  static void ValidasiApotek({
+    required Keranjang keranjang,
+    required KatalogLokal? katalog,
+    required StafLokal kasir,
+    required String hariIni,
+    ResepPenjualan? resep,
+    String? uuidApoteker,
+  }) {
+    final syarat = AturanApotek.Periksa(keranjang, katalog);
+    if (syarat.CekWajibResep) {
+      if (resep == null) {
+        throw GalatKasir(
+          'ResepWajib',
+          'Wajib resep dokter untuk ${SyaratApotek.SebutNama(syarat.barisWajibResep)}. Isi resep dulu.',
+        );
+      }
+      final cek = AturanApotek.Susun(
+        nomorResep: resep.nomorResep,
+        tanggalResep: resep.tanggalResep,
+        namaDokter: resep.namaDokter,
+        noSipDokter: resep.noSipDokter ?? '',
+        namaPasien: resep.namaPasien,
+        umurPasien: resep.umurPasien ?? '',
+        alamatPasien: resep.alamatPasien ?? '',
+        hariIni: hariIni,
+        wajibAlamat: syarat.wajibAlamat,
+      );
+      if (cek.galat != null) {
+        throw GalatKasir('ResepTidakLengkap', cek.galat!);
+      }
+    }
+    if (syarat.CekWajibApoteker && uuidApoteker == null && !kasir.PunyaIzin(IzinKasir.apotekObatKerasJual)) {
+      throw GalatKasir(
+        'ApotekerWajib',
+        '${SyaratApotek.SebutNama(syarat.barisWajibApoteker)} hanya boleh diserahkan apoteker. Minta PIN apoteker.',
+      );
+    }
+  }
+
   // Bayar & simpan -----------------------------------------------------------------------------------------------------
 
   Future<PenjualanTersimpan> Bayar({
@@ -995,6 +1043,8 @@ class LayananPenjualan {
     Uang? saldoDeposit,
     KatalogLokal? katalog,
     bool latihan = false,
+    ResepPenjualan? resep,
+    String? uuidApoteker,
   }) async {
     final shift = await repositori.AmbilShiftAktif();
     if (shift == null) {
@@ -1038,6 +1088,14 @@ class LayananPenjualan {
     ValidasiDeposit(keranjang, pembayaran, saldoDeposit);
     ValidasiPaketSesi(keranjang, katalog);
     ValidasiNomorSeri(keranjang, katalog);
+    ValidasiApotek(
+      keranjang: keranjang,
+      katalog: katalog,
+      kasir: kasir,
+      hariIni: AturanApotek.HitungHariIni(_jam(), k.zonaWaktu),
+      resep: resep,
+      uuidApoteker: uuidApoteker,
+    );
     if (latihan) {
       return _SelesaikanLatihan(keranjang, pembayaran, hitungan, dibayar);
     }
@@ -1091,6 +1149,8 @@ class LayananPenjualan {
             sekarang: sekarang,
             uuidPenyetujuTempo: uuidPenyetujuTempo,
             katalog: katalog,
+            resep: resep,
+            uuidApoteker: uuidApoteker,
           );
         },
       );
@@ -1145,12 +1205,13 @@ class LayananPenjualan {
     if (keranjang.pesananMeja != null ||
         keranjang.voucher != null ||
         keranjang.reservasi != null ||
+        keranjang.perintahKerja != null ||
         keranjang.praPesan != null ||
         keranjang.laundry != null ||
         keranjang.tukar != null) {
       throw const GalatKasir(
         'TidakUntukLatihan',
-        'Mode latihan hanya untuk penjualan biasa. Hapus voucher atau pesanan meja/reservasi/pre-order/laundry/tukar.',
+        'Mode latihan hanya untuk penjualan biasa. Hapus voucher atau pesanan meja/reservasi/servis/pre-order/laundry/tukar.',
       );
     }
     final metode = pembayaran.where((p) => !metodeLatihan.contains(p.metode.Jenis)).firstOrNull;
@@ -1222,7 +1283,8 @@ class LayananPenjualan {
     if (k.jenisPesanan.isEmpty ||
         keranjang.pesananMeja != null ||
         keranjang.praPesan != null ||
-        keranjang.reservasi != null) {
+        keranjang.reservasi != null ||
+        keranjang.perintahKerja != null) {
       return null;
     }
     final urut = int.tryParse(nomor.split('-').last);
@@ -1245,8 +1307,15 @@ class LayananPenjualan {
     required DateTime sekarang,
     String? uuidPenyetujuTempo,
     KatalogLokal? katalog,
+    ResepPenjualan? resep,
+    String? uuidApoteker,
   }) {
     final hasil = hitungan.hasil;
+    // Apotek (§9.5): baris wajib resep yang ditutup resep ini ditandai `DenganResep` (server memakai tanda perangkat).
+    final denganResep = resep == null
+        ? const <String>{}
+        : {for (final b in AturanApotek.Periksa(keranjang, katalog).barisWajibResep) b.uuid};
+    final perintahKerja = keranjang.perintahKerja;
     final kembalian = hasil.kembalian ?? Uang.Nol();
     final dibayar = pembayaran.fold(Uang.Nol(), (t, p) => t.Tambah(p.jumlah));
     final pembulatan = k.pembulatanTunai;
@@ -1296,6 +1365,7 @@ class LayananPenjualan {
             'Catatan': keranjang.baris[i].catatan,
             if (keranjang.baris[i].staf.isNotEmpty) 'Staf': keranjang.baris[i].staf,
             if (keranjang.baris[i].nomorSeri.isNotEmpty) 'NomorSeri': keranjang.baris[i].nomorSeri,
+            if (denganResep.contains(keranjang.baris[i].uuid)) 'DenganResep': true,
           },
       ],
       'DiskonManualPesanan': keranjang.diskonPesanan?.KeJson(),
@@ -1327,6 +1397,11 @@ class LayananPenjualan {
       'Voucher': ?keranjang.voucher?.kode,
       if (keranjang.praPesan case final praPesan?) praPesan.sumber.KunciOutbox: praPesan.uuid,
       'UuidReservasi': ?keranjang.reservasi?.uuid,
+      // Bengkel bagian 2: perintah kerja yang ditagih (server menandainya Ditagih; mekanik = `Baris[].Staf`).
+      'UuidPerintahKerja': ?perintahKerja?.uuid,
+      // Apotek bagian 2: resep dokter & apoteker yang menyerahkan (hanya bila bukan kasirnya sendiri).
+      'Resep': ?resep?.KeJson(),
+      'UuidApoteker': ?uuidApoteker,
       // K-11: retur tukar barang yang nilainya membayar penjualan ini.
       'UuidReturTukar': ?keranjang.tukar?.uuidRetur,
       'Laundry': ?keranjang.laundry?.KeJson(),
@@ -1373,6 +1448,16 @@ class LayananPenjualan {
         Laundry: Value(keranjang.laundry == null ? null : jsonEncode(keranjang.laundry!.KeJson())),
         NomorAntrian: Value(nomorAntrian),
         NamaPemesan: Value(data['NamaPemesan'] as String?),
+        PerintahKerja: Value(
+          perintahKerja == null
+              ? null
+              : jsonEncode({
+                  'Uuid': perintahKerja.uuid,
+                  'Nomor': perintahKerja.nomor,
+                  'NomorPolisi': perintahKerja.nomorPolisi,
+                }),
+        ),
+        Resep: Value(resep == null ? null : jsonEncode(resep.KeRingkasanStruk())),
       ),
       detail: [
         for (var i = 0; i < keranjang.baris.length; i++)

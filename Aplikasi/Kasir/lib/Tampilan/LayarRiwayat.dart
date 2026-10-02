@@ -42,6 +42,7 @@ class LayarRiwayat extends ConsumerWidget {
     this.saatAmbilPreOrder,
     this.saatPesananOnline,
     this.saatReservasi,
+    this.saatServis,
     this.saatCucian,
   });
 
@@ -59,6 +60,9 @@ class LayarRiwayat extends ConsumerWidget {
 
   /// F-07 mode service: buka lembar antrian reservasi hari ini.
   final VoidCallback? saatReservasi;
+
+  /// Bengkel bagian 2: buka lembar perintah kerja siap tagih.
+  final VoidCallback? saatServis;
 
   /// Laundry: buka lembar daftar cucian (null = laundry belum aktif).
   final VoidCallback? saatCucian;
@@ -164,6 +168,15 @@ class LayarRiwayat extends ConsumerWidget {
                   onPressed: saatReservasi,
                   icon: const Icon(Icons.event_note_outlined),
                   label: const Text('Reservasi hari ini'),
+                ),
+              ),
+            if (saatServis != null)
+              SizedBox(
+                height: TokenJarak.targetSentuh,
+                child: OutlinedButton.icon(
+                  onPressed: saatServis,
+                  icon: const Icon(Icons.build_outlined),
+                  label: const Text('Servis siap tagih'),
                 ),
               ),
             if (saatCucian != null)

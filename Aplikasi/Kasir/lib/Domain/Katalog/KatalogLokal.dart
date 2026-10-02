@@ -121,6 +121,10 @@ class ProdukJual {
     this.jumlahSesiPaket,
     this.masaGaransiBulan,
     this.hargaTerbuka = false,
+    this.golonganObat,
+    this.obatWajibApotek = false,
+    this.prekursor = false,
+    this.wajibResep = false,
     this.aktif = true,
     this.satuanDasar,
     this.uuidInduk,
@@ -197,6 +201,13 @@ class ProdukJual {
 
   /// K-25: harga diketik kasir saat produk ditambahkan (harga daftar, bila ada, jadi saran).
   final bool hargaTerbuka;
+
+  /// Apotek (§9.5): golongan obat (`Bebas`/`BebasTerbatas`/`Keras`/`Psikotropika`/`Narkotika`; null = bukan obat),
+  /// Obat Wajib Apotek, prekursor, dan wajib resep dari server. Aturan penyerahannya di `AturanApotek`.
+  final String? golonganObat;
+  final bool obatWajibApotek;
+  final bool prekursor;
+  final bool wajibResep;
 
   bool get paketSesi => jumlahSesiPaket != null;
   final String? uuidKategori;
@@ -428,6 +439,10 @@ class KatalogLokal {
           jumlahSesiPaket: p.JumlahSesiPaket,
           masaGaransiBulan: p.MasaGaransiBulan,
           hargaTerbuka: p.HargaTerbuka,
+          golonganObat: p.GolonganObat,
+          obatWajibApotek: p.ObatWajibApotek,
+          prekursor: p.Prekursor,
+          wajibResep: p.WajibResep,
           aktif: p.Aktif,
           uuidInduk: p.UuidInduk,
           atributVarian: ProdukJual.UraiAtributVarian(p.AtributVarian).atribut,

@@ -213,6 +213,9 @@ class DialogPinSupervisor extends ConsumerStatefulWidget {
     this.judul,
     this.nilai,
     this.rincian = const [],
+    this.judulDialog = 'Persetujuan supervisor',
+    this.pesanKosong,
+    this.bolehJarakJauh = true,
   });
 
   final String izin;
@@ -225,6 +228,16 @@ class DialogPinSupervisor extends ConsumerStatefulWidget {
   /// Nilai uang yang dimintakan persetujuannya (ditampilkan di Aplikasi Owner).
   final Uang? nilai;
   final List<({String label, String nilai})> rincian;
+
+  /// Judul dialog (misal "PIN apoteker" untuk penyerahan obat keras, Apotek §9.5).
+  final String judulDialog;
+
+  /// Pesan bila tidak ada staf ber-[izin] di perangkat ini (null = pesan bawaan supervisor/pemilik).
+  final String? pesanKosong;
+
+  /// False = tombol persetujuan jarak jauh (X4) tidak ditawarkan, misal penyerahan obat keras yang wajib dilakukan
+  /// apoteker di tempat.
+  final bool bolehJarakJauh;
 
   @override
   ConsumerState<DialogPinSupervisor> createState() => _DialogPinSupervisorState();
@@ -384,7 +397,7 @@ class _DialogPinSupervisorState extends ConsumerState<DialogPinSupervisor> {
         TokenJarak.jarak16,
         TokenJarak.jarak24,
       ),
-      title: Text(menunggu == null ? 'Persetujuan supervisor' : 'Menunggu persetujuan'),
+      title: Text(menunggu == null ? widget.judulDialog : 'Menunggu persetujuan'),
       content: SingleChildScrollView(
         child: menunggu != null
             ? Column(
@@ -408,9 +421,10 @@ class _DialogPinSupervisorState extends ConsumerState<DialogPinSupervisor> {
                   const SizedBox(height: 12),
                   if (supervisor.isEmpty)
                     Text(
-                      widget.hanyaPemilik
-                          ? 'Pemilik belum terdaftar di perangkat ini.'
-                          : 'Tidak ada supervisor di outlet ini.',
+                      widget.pesanKosong ??
+                          (widget.hanyaPemilik
+                              ? 'Pemilik belum terdaftar di perangkat ini.'
+                              : 'Tidak ada supervisor di outlet ini.'),
                       style: TextStyle(color: warna.bahaya),
                     ),
                   for (final s in supervisor)
@@ -418,7 +432,7 @@ class _DialogPinSupervisorState extends ConsumerState<DialogPinSupervisor> {
                       padding: const EdgeInsets.symmetric(vertical: 4),
                       child: OutlinedButton(onPressed: () => setState(() => _dipilih = s), child: Text(s.nama)),
                     ),
-                  if (_jarakJauhTersedia) ...[
+                  if (_jarakJauhTersedia && widget.bolehJarakJauh) ...[
                     const SizedBox(height: 8),
                     FilledButton.tonalIcon(
                       onPressed: _sibuk ? null : () => unawaited(_MintaJarakJauh()),

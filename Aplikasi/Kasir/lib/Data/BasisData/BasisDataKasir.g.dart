@@ -4322,6 +4322,48 @@ class $ProdukTable extends Produk with TableInfo<$ProdukTable, BarisProduk> {
     defaultConstraints: GeneratedColumn.constraintIsAlways('CHECK ("HargaTerbuka" IN (0, 1))'),
     defaultValue: const Constant(false),
   );
+  static const VerificationMeta _GolonganObatMeta = const VerificationMeta('GolonganObat');
+  @override
+  late final GeneratedColumn<String> GolonganObat = GeneratedColumn<String>(
+    'GolonganObat',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _ObatWajibApotekMeta = const VerificationMeta('ObatWajibApotek');
+  @override
+  late final GeneratedColumn<bool> ObatWajibApotek = GeneratedColumn<bool>(
+    'ObatWajibApotek',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways('CHECK ("ObatWajibApotek" IN (0, 1))'),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _PrekursorMeta = const VerificationMeta('Prekursor');
+  @override
+  late final GeneratedColumn<bool> Prekursor = GeneratedColumn<bool>(
+    'Prekursor',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways('CHECK ("Prekursor" IN (0, 1))'),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _WajibResepMeta = const VerificationMeta('WajibResep');
+  @override
+  late final GeneratedColumn<bool> WajibResep = GeneratedColumn<bool>(
+    'WajibResep',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways('CHECK ("WajibResep" IN (0, 1))'),
+    defaultValue: const Constant(false),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     Uuid,
@@ -4342,6 +4384,10 @@ class $ProdukTable extends Produk with TableInfo<$ProdukTable, BarisProduk> {
     MasaGaransiBulan,
     AtributVarian,
     HargaTerbuka,
+    GolonganObat,
+    ObatWajibApotek,
+    Prekursor,
+    WajibResep,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -4439,6 +4485,21 @@ class $ProdukTable extends Produk with TableInfo<$ProdukTable, BarisProduk> {
     if (data.containsKey('HargaTerbuka')) {
       context.handle(_HargaTerbukaMeta, HargaTerbuka.isAcceptableOrUnknown(data['HargaTerbuka']!, _HargaTerbukaMeta));
     }
+    if (data.containsKey('GolonganObat')) {
+      context.handle(_GolonganObatMeta, GolonganObat.isAcceptableOrUnknown(data['GolonganObat']!, _GolonganObatMeta));
+    }
+    if (data.containsKey('ObatWajibApotek')) {
+      context.handle(
+        _ObatWajibApotekMeta,
+        ObatWajibApotek.isAcceptableOrUnknown(data['ObatWajibApotek']!, _ObatWajibApotekMeta),
+      );
+    }
+    if (data.containsKey('Prekursor')) {
+      context.handle(_PrekursorMeta, Prekursor.isAcceptableOrUnknown(data['Prekursor']!, _PrekursorMeta));
+    }
+    if (data.containsKey('WajibResep')) {
+      context.handle(_WajibResepMeta, WajibResep.isAcceptableOrUnknown(data['WajibResep']!, _WajibResepMeta));
+    }
     return context;
   }
 
@@ -4475,6 +4536,10 @@ class $ProdukTable extends Produk with TableInfo<$ProdukTable, BarisProduk> {
       MasaGaransiBulan: attachedDatabase.typeMapping.read(DriftSqlType.int, data['${effectivePrefix}MasaGaransiBulan']),
       AtributVarian: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}AtributVarian']),
       HargaTerbuka: attachedDatabase.typeMapping.read(DriftSqlType.bool, data['${effectivePrefix}HargaTerbuka'])!,
+      GolonganObat: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}GolonganObat']),
+      ObatWajibApotek: attachedDatabase.typeMapping.read(DriftSqlType.bool, data['${effectivePrefix}ObatWajibApotek'])!,
+      Prekursor: attachedDatabase.typeMapping.read(DriftSqlType.bool, data['${effectivePrefix}Prekursor'])!,
+      WajibResep: attachedDatabase.typeMapping.read(DriftSqlType.bool, data['${effectivePrefix}WajibResep'])!,
     );
   }
 
@@ -4512,6 +4577,13 @@ class BarisProduk extends DataClass implements Insertable<BarisProduk> {
 
   /// Skema 25 (K-25): harga diketik kasir per transaksi.
   final bool HargaTerbuka;
+
+  /// Skema 27 (Apotek §9.5): golongan obat (`Bebas`/`BebasTerbatas`/`Keras`/`Psikotropika`/`Narkotika`; null = bukan
+  /// obat), Obat Wajib Apotek, prekursor, dan wajib resep (dihitung server) untuk dialog resep & PIN apoteker.
+  final String? GolonganObat;
+  final bool ObatWajibApotek;
+  final bool Prekursor;
+  final bool WajibResep;
   const BarisProduk({
     required this.Uuid,
     this.Sku,
@@ -4531,6 +4603,10 @@ class BarisProduk extends DataClass implements Insertable<BarisProduk> {
     this.MasaGaransiBulan,
     this.AtributVarian,
     required this.HargaTerbuka,
+    this.GolonganObat,
+    required this.ObatWajibApotek,
+    required this.Prekursor,
+    required this.WajibResep,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -4575,6 +4651,12 @@ class BarisProduk extends DataClass implements Insertable<BarisProduk> {
       map['AtributVarian'] = Variable<String>(AtributVarian);
     }
     map['HargaTerbuka'] = Variable<bool>(HargaTerbuka);
+    if (!nullToAbsent || GolonganObat != null) {
+      map['GolonganObat'] = Variable<String>(GolonganObat);
+    }
+    map['ObatWajibApotek'] = Variable<bool>(ObatWajibApotek);
+    map['Prekursor'] = Variable<bool>(Prekursor);
+    map['WajibResep'] = Variable<bool>(WajibResep);
     return map;
   }
 
@@ -4598,6 +4680,10 @@ class BarisProduk extends DataClass implements Insertable<BarisProduk> {
       MasaGaransiBulan: MasaGaransiBulan == null && nullToAbsent ? const Value.absent() : Value(MasaGaransiBulan),
       AtributVarian: AtributVarian == null && nullToAbsent ? const Value.absent() : Value(AtributVarian),
       HargaTerbuka: Value(HargaTerbuka),
+      GolonganObat: GolonganObat == null && nullToAbsent ? const Value.absent() : Value(GolonganObat),
+      ObatWajibApotek: Value(ObatWajibApotek),
+      Prekursor: Value(Prekursor),
+      WajibResep: Value(WajibResep),
     );
   }
 
@@ -4622,6 +4708,10 @@ class BarisProduk extends DataClass implements Insertable<BarisProduk> {
       MasaGaransiBulan: serializer.fromJson<int?>(json['MasaGaransiBulan']),
       AtributVarian: serializer.fromJson<String?>(json['AtributVarian']),
       HargaTerbuka: serializer.fromJson<bool>(json['HargaTerbuka']),
+      GolonganObat: serializer.fromJson<String?>(json['GolonganObat']),
+      ObatWajibApotek: serializer.fromJson<bool>(json['ObatWajibApotek']),
+      Prekursor: serializer.fromJson<bool>(json['Prekursor']),
+      WajibResep: serializer.fromJson<bool>(json['WajibResep']),
     );
   }
   @override
@@ -4646,6 +4736,10 @@ class BarisProduk extends DataClass implements Insertable<BarisProduk> {
       'MasaGaransiBulan': serializer.toJson<int?>(MasaGaransiBulan),
       'AtributVarian': serializer.toJson<String?>(AtributVarian),
       'HargaTerbuka': serializer.toJson<bool>(HargaTerbuka),
+      'GolonganObat': serializer.toJson<String?>(GolonganObat),
+      'ObatWajibApotek': serializer.toJson<bool>(ObatWajibApotek),
+      'Prekursor': serializer.toJson<bool>(Prekursor),
+      'WajibResep': serializer.toJson<bool>(WajibResep),
     };
   }
 
@@ -4668,6 +4762,10 @@ class BarisProduk extends DataClass implements Insertable<BarisProduk> {
     Value<int?> MasaGaransiBulan = const Value.absent(),
     Value<String?> AtributVarian = const Value.absent(),
     bool? HargaTerbuka,
+    Value<String?> GolonganObat = const Value.absent(),
+    bool? ObatWajibApotek,
+    bool? Prekursor,
+    bool? WajibResep,
   }) => BarisProduk(
     Uuid: Uuid ?? this.Uuid,
     Sku: Sku.present ? Sku.value : this.Sku,
@@ -4687,6 +4785,10 @@ class BarisProduk extends DataClass implements Insertable<BarisProduk> {
     MasaGaransiBulan: MasaGaransiBulan.present ? MasaGaransiBulan.value : this.MasaGaransiBulan,
     AtributVarian: AtributVarian.present ? AtributVarian.value : this.AtributVarian,
     HargaTerbuka: HargaTerbuka ?? this.HargaTerbuka,
+    GolonganObat: GolonganObat.present ? GolonganObat.value : this.GolonganObat,
+    ObatWajibApotek: ObatWajibApotek ?? this.ObatWajibApotek,
+    Prekursor: Prekursor ?? this.Prekursor,
+    WajibResep: WajibResep ?? this.WajibResep,
   );
   BarisProduk copyWithCompanion(ProdukCompanion data) {
     return BarisProduk(
@@ -4708,6 +4810,10 @@ class BarisProduk extends DataClass implements Insertable<BarisProduk> {
       MasaGaransiBulan: data.MasaGaransiBulan.present ? data.MasaGaransiBulan.value : this.MasaGaransiBulan,
       AtributVarian: data.AtributVarian.present ? data.AtributVarian.value : this.AtributVarian,
       HargaTerbuka: data.HargaTerbuka.present ? data.HargaTerbuka.value : this.HargaTerbuka,
+      GolonganObat: data.GolonganObat.present ? data.GolonganObat.value : this.GolonganObat,
+      ObatWajibApotek: data.ObatWajibApotek.present ? data.ObatWajibApotek.value : this.ObatWajibApotek,
+      Prekursor: data.Prekursor.present ? data.Prekursor.value : this.Prekursor,
+      WajibResep: data.WajibResep.present ? data.WajibResep.value : this.WajibResep,
     );
   }
 
@@ -4731,13 +4837,17 @@ class BarisProduk extends DataClass implements Insertable<BarisProduk> {
           ..write('JumlahSesiPaket: $JumlahSesiPaket, ')
           ..write('MasaGaransiBulan: $MasaGaransiBulan, ')
           ..write('AtributVarian: $AtributVarian, ')
-          ..write('HargaTerbuka: $HargaTerbuka')
+          ..write('HargaTerbuka: $HargaTerbuka, ')
+          ..write('GolonganObat: $GolonganObat, ')
+          ..write('ObatWajibApotek: $ObatWajibApotek, ')
+          ..write('Prekursor: $Prekursor, ')
+          ..write('WajibResep: $WajibResep')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(
+  int get hashCode => Object.hashAll([
     Uuid,
     Sku,
     Nama,
@@ -4756,7 +4866,11 @@ class BarisProduk extends DataClass implements Insertable<BarisProduk> {
     MasaGaransiBulan,
     AtributVarian,
     HargaTerbuka,
-  );
+    GolonganObat,
+    ObatWajibApotek,
+    Prekursor,
+    WajibResep,
+  ]);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -4778,7 +4892,11 @@ class BarisProduk extends DataClass implements Insertable<BarisProduk> {
           other.JumlahSesiPaket == this.JumlahSesiPaket &&
           other.MasaGaransiBulan == this.MasaGaransiBulan &&
           other.AtributVarian == this.AtributVarian &&
-          other.HargaTerbuka == this.HargaTerbuka);
+          other.HargaTerbuka == this.HargaTerbuka &&
+          other.GolonganObat == this.GolonganObat &&
+          other.ObatWajibApotek == this.ObatWajibApotek &&
+          other.Prekursor == this.Prekursor &&
+          other.WajibResep == this.WajibResep);
 }
 
 class ProdukCompanion extends UpdateCompanion<BarisProduk> {
@@ -4800,6 +4918,10 @@ class ProdukCompanion extends UpdateCompanion<BarisProduk> {
   final Value<int?> MasaGaransiBulan;
   final Value<String?> AtributVarian;
   final Value<bool> HargaTerbuka;
+  final Value<String?> GolonganObat;
+  final Value<bool> ObatWajibApotek;
+  final Value<bool> Prekursor;
+  final Value<bool> WajibResep;
   final Value<int> rowid;
   const ProdukCompanion({
     this.Uuid = const Value.absent(),
@@ -4820,6 +4942,10 @@ class ProdukCompanion extends UpdateCompanion<BarisProduk> {
     this.MasaGaransiBulan = const Value.absent(),
     this.AtributVarian = const Value.absent(),
     this.HargaTerbuka = const Value.absent(),
+    this.GolonganObat = const Value.absent(),
+    this.ObatWajibApotek = const Value.absent(),
+    this.Prekursor = const Value.absent(),
+    this.WajibResep = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   ProdukCompanion.insert({
@@ -4841,6 +4967,10 @@ class ProdukCompanion extends UpdateCompanion<BarisProduk> {
     this.MasaGaransiBulan = const Value.absent(),
     this.AtributVarian = const Value.absent(),
     this.HargaTerbuka = const Value.absent(),
+    this.GolonganObat = const Value.absent(),
+    this.ObatWajibApotek = const Value.absent(),
+    this.Prekursor = const Value.absent(),
+    this.WajibResep = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : Uuid = Value(Uuid),
        Nama = Value(Nama),
@@ -4867,6 +4997,10 @@ class ProdukCompanion extends UpdateCompanion<BarisProduk> {
     Expression<int>? MasaGaransiBulan,
     Expression<String>? AtributVarian,
     Expression<bool>? HargaTerbuka,
+    Expression<String>? GolonganObat,
+    Expression<bool>? ObatWajibApotek,
+    Expression<bool>? Prekursor,
+    Expression<bool>? WajibResep,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -4888,6 +5022,10 @@ class ProdukCompanion extends UpdateCompanion<BarisProduk> {
       if (MasaGaransiBulan != null) 'MasaGaransiBulan': MasaGaransiBulan,
       if (AtributVarian != null) 'AtributVarian': AtributVarian,
       if (HargaTerbuka != null) 'HargaTerbuka': HargaTerbuka,
+      if (GolonganObat != null) 'GolonganObat': GolonganObat,
+      if (ObatWajibApotek != null) 'ObatWajibApotek': ObatWajibApotek,
+      if (Prekursor != null) 'Prekursor': Prekursor,
+      if (WajibResep != null) 'WajibResep': WajibResep,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -4911,6 +5049,10 @@ class ProdukCompanion extends UpdateCompanion<BarisProduk> {
     Value<int?>? MasaGaransiBulan,
     Value<String?>? AtributVarian,
     Value<bool>? HargaTerbuka,
+    Value<String?>? GolonganObat,
+    Value<bool>? ObatWajibApotek,
+    Value<bool>? Prekursor,
+    Value<bool>? WajibResep,
     Value<int>? rowid,
   }) {
     return ProdukCompanion(
@@ -4932,6 +5074,10 @@ class ProdukCompanion extends UpdateCompanion<BarisProduk> {
       MasaGaransiBulan: MasaGaransiBulan ?? this.MasaGaransiBulan,
       AtributVarian: AtributVarian ?? this.AtributVarian,
       HargaTerbuka: HargaTerbuka ?? this.HargaTerbuka,
+      GolonganObat: GolonganObat ?? this.GolonganObat,
+      ObatWajibApotek: ObatWajibApotek ?? this.ObatWajibApotek,
+      Prekursor: Prekursor ?? this.Prekursor,
+      WajibResep: WajibResep ?? this.WajibResep,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -4993,6 +5139,18 @@ class ProdukCompanion extends UpdateCompanion<BarisProduk> {
     if (HargaTerbuka.present) {
       map['HargaTerbuka'] = Variable<bool>(HargaTerbuka.value);
     }
+    if (GolonganObat.present) {
+      map['GolonganObat'] = Variable<String>(GolonganObat.value);
+    }
+    if (ObatWajibApotek.present) {
+      map['ObatWajibApotek'] = Variable<bool>(ObatWajibApotek.value);
+    }
+    if (Prekursor.present) {
+      map['Prekursor'] = Variable<bool>(Prekursor.value);
+    }
+    if (WajibResep.present) {
+      map['WajibResep'] = Variable<bool>(WajibResep.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -5020,6 +5178,10 @@ class ProdukCompanion extends UpdateCompanion<BarisProduk> {
           ..write('MasaGaransiBulan: $MasaGaransiBulan, ')
           ..write('AtributVarian: $AtributVarian, ')
           ..write('HargaTerbuka: $HargaTerbuka, ')
+          ..write('GolonganObat: $GolonganObat, ')
+          ..write('ObatWajibApotek: $ObatWajibApotek, ')
+          ..write('Prekursor: $Prekursor, ')
+          ..write('WajibResep: $WajibResep, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -8594,6 +8756,24 @@ class $PenjualanTable extends Penjualan with TableInfo<$PenjualanTable, BarisPen
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _PerintahKerjaMeta = const VerificationMeta('PerintahKerja');
+  @override
+  late final GeneratedColumn<String> PerintahKerja = GeneratedColumn<String>(
+    'PerintahKerja',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _ResepMeta = const VerificationMeta('Resep');
+  @override
+  late final GeneratedColumn<String> Resep = GeneratedColumn<String>(
+    'Resep',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     Uuid,
@@ -8620,6 +8800,8 @@ class $PenjualanTable extends Penjualan with TableInfo<$PenjualanTable, BarisPen
     Laundry,
     NomorAntrian,
     NamaPemesan,
+    PerintahKerja,
+    Resep,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -8742,6 +8924,15 @@ class $PenjualanTable extends Penjualan with TableInfo<$PenjualanTable, BarisPen
     if (data.containsKey('NamaPemesan')) {
       context.handle(_NamaPemesanMeta, NamaPemesan.isAcceptableOrUnknown(data['NamaPemesan']!, _NamaPemesanMeta));
     }
+    if (data.containsKey('PerintahKerja')) {
+      context.handle(
+        _PerintahKerjaMeta,
+        PerintahKerja.isAcceptableOrUnknown(data['PerintahKerja']!, _PerintahKerjaMeta),
+      );
+    }
+    if (data.containsKey('Resep')) {
+      context.handle(_ResepMeta, Resep.isAcceptableOrUnknown(data['Resep']!, _ResepMeta));
+    }
     return context;
   }
 
@@ -8778,6 +8969,8 @@ class $PenjualanTable extends Penjualan with TableInfo<$PenjualanTable, BarisPen
       Laundry: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}Laundry']),
       NomorAntrian: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}NomorAntrian']),
       NamaPemesan: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}NamaPemesan']),
+      PerintahKerja: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}PerintahKerja']),
+      Resep: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}Resep']),
     );
   }
 
@@ -8820,6 +9013,13 @@ class BarisPenjualan extends DataClass implements Insertable<BarisPenjualan> {
   /// Skema 22 (v3.52, §9.2): nomor panggil & nama pemesan penjualan bayar-dulu, untuk struk & tiket cetak ulang.
   final String? NomorAntrian;
   final String? NamaPemesan;
+
+  /// Skema 27 (Bengkel §9.10): perintah kerja yang ditagih (JSON `{Uuid, Nomor, NomorPolisi}`) untuk struk & cetak ulang.
+  final String? PerintahKerja;
+
+  /// Skema 27 (Apotek §9.5): ringkasan resep untuk struk (JSON `{NomorResep, TanggalResep, NamaDokter}`). Data pasien
+  /// sengaja tidak disimpan di sini; hanya di muatan outbox `Penjualan.Buat` (basis data lokal terenkripsi, K-7).
+  final String? Resep;
   const BarisPenjualan({
     required this.Uuid,
     required this.Nomor,
@@ -8845,6 +9045,8 @@ class BarisPenjualan extends DataClass implements Insertable<BarisPenjualan> {
     this.Laundry,
     this.NomorAntrian,
     this.NamaPemesan,
+    this.PerintahKerja,
+    this.Resep,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -8883,6 +9085,12 @@ class BarisPenjualan extends DataClass implements Insertable<BarisPenjualan> {
     if (!nullToAbsent || NamaPemesan != null) {
       map['NamaPemesan'] = Variable<String>(NamaPemesan);
     }
+    if (!nullToAbsent || PerintahKerja != null) {
+      map['PerintahKerja'] = Variable<String>(PerintahKerja);
+    }
+    if (!nullToAbsent || Resep != null) {
+      map['Resep'] = Variable<String>(Resep);
+    }
     return map;
   }
 
@@ -8914,6 +9122,8 @@ class BarisPenjualan extends DataClass implements Insertable<BarisPenjualan> {
       Laundry: Laundry == null && nullToAbsent ? const Value.absent() : Value(Laundry),
       NomorAntrian: NomorAntrian == null && nullToAbsent ? const Value.absent() : Value(NomorAntrian),
       NamaPemesan: NamaPemesan == null && nullToAbsent ? const Value.absent() : Value(NamaPemesan),
+      PerintahKerja: PerintahKerja == null && nullToAbsent ? const Value.absent() : Value(PerintahKerja),
+      Resep: Resep == null && nullToAbsent ? const Value.absent() : Value(Resep),
     );
   }
 
@@ -8944,6 +9154,8 @@ class BarisPenjualan extends DataClass implements Insertable<BarisPenjualan> {
       Laundry: serializer.fromJson<String?>(json['Laundry']),
       NomorAntrian: serializer.fromJson<String?>(json['NomorAntrian']),
       NamaPemesan: serializer.fromJson<String?>(json['NamaPemesan']),
+      PerintahKerja: serializer.fromJson<String?>(json['PerintahKerja']),
+      Resep: serializer.fromJson<String?>(json['Resep']),
     );
   }
   @override
@@ -8974,6 +9186,8 @@ class BarisPenjualan extends DataClass implements Insertable<BarisPenjualan> {
       'Laundry': serializer.toJson<String?>(Laundry),
       'NomorAntrian': serializer.toJson<String?>(NomorAntrian),
       'NamaPemesan': serializer.toJson<String?>(NamaPemesan),
+      'PerintahKerja': serializer.toJson<String?>(PerintahKerja),
+      'Resep': serializer.toJson<String?>(Resep),
     };
   }
 
@@ -9002,6 +9216,8 @@ class BarisPenjualan extends DataClass implements Insertable<BarisPenjualan> {
     Value<String?> Laundry = const Value.absent(),
     Value<String?> NomorAntrian = const Value.absent(),
     Value<String?> NamaPemesan = const Value.absent(),
+    Value<String?> PerintahKerja = const Value.absent(),
+    Value<String?> Resep = const Value.absent(),
   }) => BarisPenjualan(
     Uuid: Uuid ?? this.Uuid,
     Nomor: Nomor ?? this.Nomor,
@@ -9027,6 +9243,8 @@ class BarisPenjualan extends DataClass implements Insertable<BarisPenjualan> {
     Laundry: Laundry.present ? Laundry.value : this.Laundry,
     NomorAntrian: NomorAntrian.present ? NomorAntrian.value : this.NomorAntrian,
     NamaPemesan: NamaPemesan.present ? NamaPemesan.value : this.NamaPemesan,
+    PerintahKerja: PerintahKerja.present ? PerintahKerja.value : this.PerintahKerja,
+    Resep: Resep.present ? Resep.value : this.Resep,
   );
   BarisPenjualan copyWithCompanion(PenjualanCompanion data) {
     return BarisPenjualan(
@@ -9054,6 +9272,8 @@ class BarisPenjualan extends DataClass implements Insertable<BarisPenjualan> {
       Laundry: data.Laundry.present ? data.Laundry.value : this.Laundry,
       NomorAntrian: data.NomorAntrian.present ? data.NomorAntrian.value : this.NomorAntrian,
       NamaPemesan: data.NamaPemesan.present ? data.NamaPemesan.value : this.NamaPemesan,
+      PerintahKerja: data.PerintahKerja.present ? data.PerintahKerja.value : this.PerintahKerja,
+      Resep: data.Resep.present ? data.Resep.value : this.Resep,
     );
   }
 
@@ -9083,7 +9303,9 @@ class BarisPenjualan extends DataClass implements Insertable<BarisPenjualan> {
           ..write('Catatan: $Catatan, ')
           ..write('Laundry: $Laundry, ')
           ..write('NomorAntrian: $NomorAntrian, ')
-          ..write('NamaPemesan: $NamaPemesan')
+          ..write('NamaPemesan: $NamaPemesan, ')
+          ..write('PerintahKerja: $PerintahKerja, ')
+          ..write('Resep: $Resep')
           ..write(')'))
         .toString();
   }
@@ -9114,6 +9336,8 @@ class BarisPenjualan extends DataClass implements Insertable<BarisPenjualan> {
     Laundry,
     NomorAntrian,
     NamaPemesan,
+    PerintahKerja,
+    Resep,
   ]);
   @override
   bool operator ==(Object other) =>
@@ -9142,7 +9366,9 @@ class BarisPenjualan extends DataClass implements Insertable<BarisPenjualan> {
           other.Catatan == this.Catatan &&
           other.Laundry == this.Laundry &&
           other.NomorAntrian == this.NomorAntrian &&
-          other.NamaPemesan == this.NamaPemesan);
+          other.NamaPemesan == this.NamaPemesan &&
+          other.PerintahKerja == this.PerintahKerja &&
+          other.Resep == this.Resep);
 }
 
 class PenjualanCompanion extends UpdateCompanion<BarisPenjualan> {
@@ -9170,6 +9396,8 @@ class PenjualanCompanion extends UpdateCompanion<BarisPenjualan> {
   final Value<String?> Laundry;
   final Value<String?> NomorAntrian;
   final Value<String?> NamaPemesan;
+  final Value<String?> PerintahKerja;
+  final Value<String?> Resep;
   final Value<int> rowid;
   const PenjualanCompanion({
     this.Uuid = const Value.absent(),
@@ -9196,6 +9424,8 @@ class PenjualanCompanion extends UpdateCompanion<BarisPenjualan> {
     this.Laundry = const Value.absent(),
     this.NomorAntrian = const Value.absent(),
     this.NamaPemesan = const Value.absent(),
+    this.PerintahKerja = const Value.absent(),
+    this.Resep = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   PenjualanCompanion.insert({
@@ -9223,6 +9453,8 @@ class PenjualanCompanion extends UpdateCompanion<BarisPenjualan> {
     this.Laundry = const Value.absent(),
     this.NomorAntrian = const Value.absent(),
     this.NamaPemesan = const Value.absent(),
+    this.PerintahKerja = const Value.absent(),
+    this.Resep = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : Uuid = Value(Uuid),
        Nomor = Value(Nomor),
@@ -9266,6 +9498,8 @@ class PenjualanCompanion extends UpdateCompanion<BarisPenjualan> {
     Expression<String>? Laundry,
     Expression<String>? NomorAntrian,
     Expression<String>? NamaPemesan,
+    Expression<String>? PerintahKerja,
+    Expression<String>? Resep,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -9293,6 +9527,8 @@ class PenjualanCompanion extends UpdateCompanion<BarisPenjualan> {
       if (Laundry != null) 'Laundry': Laundry,
       if (NomorAntrian != null) 'NomorAntrian': NomorAntrian,
       if (NamaPemesan != null) 'NamaPemesan': NamaPemesan,
+      if (PerintahKerja != null) 'PerintahKerja': PerintahKerja,
+      if (Resep != null) 'Resep': Resep,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -9322,6 +9558,8 @@ class PenjualanCompanion extends UpdateCompanion<BarisPenjualan> {
     Value<String?>? Laundry,
     Value<String?>? NomorAntrian,
     Value<String?>? NamaPemesan,
+    Value<String?>? PerintahKerja,
+    Value<String?>? Resep,
     Value<int>? rowid,
   }) {
     return PenjualanCompanion(
@@ -9349,6 +9587,8 @@ class PenjualanCompanion extends UpdateCompanion<BarisPenjualan> {
       Laundry: Laundry ?? this.Laundry,
       NomorAntrian: NomorAntrian ?? this.NomorAntrian,
       NamaPemesan: NamaPemesan ?? this.NamaPemesan,
+      PerintahKerja: PerintahKerja ?? this.PerintahKerja,
+      Resep: Resep ?? this.Resep,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -9428,6 +9668,12 @@ class PenjualanCompanion extends UpdateCompanion<BarisPenjualan> {
     if (NamaPemesan.present) {
       map['NamaPemesan'] = Variable<String>(NamaPemesan.value);
     }
+    if (PerintahKerja.present) {
+      map['PerintahKerja'] = Variable<String>(PerintahKerja.value);
+    }
+    if (Resep.present) {
+      map['Resep'] = Variable<String>(Resep.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -9461,6 +9707,8 @@ class PenjualanCompanion extends UpdateCompanion<BarisPenjualan> {
           ..write('Laundry: $Laundry, ')
           ..write('NomorAntrian: $NomorAntrian, ')
           ..write('NamaPemesan: $NamaPemesan, ')
+          ..write('PerintahKerja: $PerintahKerja, ')
+          ..write('Resep: $Resep, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -22903,6 +23151,10 @@ typedef $$ProdukTableCreateCompanionBuilder = ProdukCompanion Function({
   Value<int?> MasaGaransiBulan,
   Value<String?> AtributVarian,
   Value<bool> HargaTerbuka,
+  Value<String?> GolonganObat,
+  Value<bool> ObatWajibApotek,
+  Value<bool> Prekursor,
+  Value<bool> WajibResep,
   Value<int> rowid,
 });
 typedef $$ProdukTableUpdateCompanionBuilder = ProdukCompanion Function({
@@ -22924,6 +23176,10 @@ typedef $$ProdukTableUpdateCompanionBuilder = ProdukCompanion Function({
   Value<int?> MasaGaransiBulan,
   Value<String?> AtributVarian,
   Value<bool> HargaTerbuka,
+  Value<String?> GolonganObat,
+  Value<bool> ObatWajibApotek,
+  Value<bool> Prekursor,
+  Value<bool> WajibResep,
   Value<int> rowid,
 });
 
@@ -22984,6 +23240,18 @@ class $$ProdukTableFilterComposer extends Composer<_$BasisDataKasir, $ProdukTabl
 
   ColumnFilters<bool> get HargaTerbuka =>
       $composableBuilder(column: $table.HargaTerbuka, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get GolonganObat =>
+      $composableBuilder(column: $table.GolonganObat, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get ObatWajibApotek =>
+      $composableBuilder(column: $table.ObatWajibApotek, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get Prekursor =>
+      $composableBuilder(column: $table.Prekursor, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get WajibResep =>
+      $composableBuilder(column: $table.WajibResep, builder: (column) => ColumnFilters(column));
 }
 
 class $$ProdukTableOrderingComposer extends Composer<_$BasisDataKasir, $ProdukTable> {
@@ -23047,6 +23315,18 @@ class $$ProdukTableOrderingComposer extends Composer<_$BasisDataKasir, $ProdukTa
 
   ColumnOrderings<bool> get HargaTerbuka =>
       $composableBuilder(column: $table.HargaTerbuka, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get GolonganObat =>
+      $composableBuilder(column: $table.GolonganObat, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get ObatWajibApotek =>
+      $composableBuilder(column: $table.ObatWajibApotek, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get Prekursor =>
+      $composableBuilder(column: $table.Prekursor, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get WajibResep =>
+      $composableBuilder(column: $table.WajibResep, builder: (column) => ColumnOrderings(column));
 }
 
 class $$ProdukTableAnnotationComposer extends Composer<_$BasisDataKasir, $ProdukTable> {
@@ -23101,6 +23381,16 @@ class $$ProdukTableAnnotationComposer extends Composer<_$BasisDataKasir, $Produk
 
   GeneratedColumn<bool> get HargaTerbuka =>
       $composableBuilder(column: $table.HargaTerbuka, builder: (column) => column);
+
+  GeneratedColumn<String> get GolonganObat =>
+      $composableBuilder(column: $table.GolonganObat, builder: (column) => column);
+
+  GeneratedColumn<bool> get ObatWajibApotek =>
+      $composableBuilder(column: $table.ObatWajibApotek, builder: (column) => column);
+
+  GeneratedColumn<bool> get Prekursor => $composableBuilder(column: $table.Prekursor, builder: (column) => column);
+
+  GeneratedColumn<bool> get WajibResep => $composableBuilder(column: $table.WajibResep, builder: (column) => column);
 }
 
 class $$ProdukTableTableManager
@@ -23146,6 +23436,10 @@ class $$ProdukTableTableManager
                 Value<int?> MasaGaransiBulan = const Value.absent(),
                 Value<String?> AtributVarian = const Value.absent(),
                 Value<bool> HargaTerbuka = const Value.absent(),
+                Value<String?> GolonganObat = const Value.absent(),
+                Value<bool> ObatWajibApotek = const Value.absent(),
+                Value<bool> Prekursor = const Value.absent(),
+                Value<bool> WajibResep = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ProdukCompanion(
                 Uuid: Uuid,
@@ -23166,6 +23460,10 @@ class $$ProdukTableTableManager
                 MasaGaransiBulan: MasaGaransiBulan,
                 AtributVarian: AtributVarian,
                 HargaTerbuka: HargaTerbuka,
+                GolonganObat: GolonganObat,
+                ObatWajibApotek: ObatWajibApotek,
+                Prekursor: Prekursor,
+                WajibResep: WajibResep,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -23188,6 +23486,10 @@ class $$ProdukTableTableManager
                 Value<int?> MasaGaransiBulan = const Value.absent(),
                 Value<String?> AtributVarian = const Value.absent(),
                 Value<bool> HargaTerbuka = const Value.absent(),
+                Value<String?> GolonganObat = const Value.absent(),
+                Value<bool> ObatWajibApotek = const Value.absent(),
+                Value<bool> Prekursor = const Value.absent(),
+                Value<bool> WajibResep = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ProdukCompanion.insert(
                 Uuid: Uuid,
@@ -23208,6 +23510,10 @@ class $$ProdukTableTableManager
                 MasaGaransiBulan: MasaGaransiBulan,
                 AtributVarian: AtributVarian,
                 HargaTerbuka: HargaTerbuka,
+                GolonganObat: GolonganObat,
+                ObatWajibApotek: ObatWajibApotek,
+                Prekursor: Prekursor,
+                WajibResep: WajibResep,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -24917,6 +25223,8 @@ typedef $$PenjualanTableCreateCompanionBuilder = PenjualanCompanion Function({
   Value<String?> Laundry,
   Value<String?> NomorAntrian,
   Value<String?> NamaPemesan,
+  Value<String?> PerintahKerja,
+  Value<String?> Resep,
   Value<int> rowid,
 });
 typedef $$PenjualanTableUpdateCompanionBuilder = PenjualanCompanion Function({
@@ -24944,6 +25252,8 @@ typedef $$PenjualanTableUpdateCompanionBuilder = PenjualanCompanion Function({
   Value<String?> Laundry,
   Value<String?> NomorAntrian,
   Value<String?> NamaPemesan,
+  Value<String?> PerintahKerja,
+  Value<String?> Resep,
   Value<int> rowid,
 });
 
@@ -25061,6 +25371,12 @@ class $$PenjualanTableFilterComposer extends Composer<_$BasisDataKasir, $Penjual
   ColumnFilters<String> get NamaPemesan =>
       $composableBuilder(column: $table.NamaPemesan, builder: (column) => ColumnFilters(column));
 
+  ColumnFilters<String> get PerintahKerja =>
+      $composableBuilder(column: $table.PerintahKerja, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get Resep =>
+      $composableBuilder(column: $table.Resep, builder: (column) => ColumnFilters(column));
+
   Expression<bool> penjualanDetailRefs(Expression<bool> Function($$PenjualanDetailTableFilterComposer f) f) {
     final $$PenjualanDetailTableFilterComposer composer = $composerBuilder(
       composer: this,
@@ -25177,6 +25493,12 @@ class $$PenjualanTableOrderingComposer extends Composer<_$BasisDataKasir, $Penju
 
   ColumnOrderings<String> get NamaPemesan =>
       $composableBuilder(column: $table.NamaPemesan, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get PerintahKerja =>
+      $composableBuilder(column: $table.PerintahKerja, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get Resep =>
+      $composableBuilder(column: $table.Resep, builder: (column) => ColumnOrderings(column));
 }
 
 class $$PenjualanTableAnnotationComposer extends Composer<_$BasisDataKasir, $PenjualanTable> {
@@ -25244,6 +25566,11 @@ class $$PenjualanTableAnnotationComposer extends Composer<_$BasisDataKasir, $Pen
 
   GeneratedColumn<String> get NamaPemesan =>
       $composableBuilder(column: $table.NamaPemesan, builder: (column) => column);
+
+  GeneratedColumn<String> get PerintahKerja =>
+      $composableBuilder(column: $table.PerintahKerja, builder: (column) => column);
+
+  GeneratedColumn<String> get Resep => $composableBuilder(column: $table.Resep, builder: (column) => column);
 
   Expression<T> penjualanDetailRefs<T extends Object>(
     Expression<T> Function($$PenjualanDetailTableAnnotationComposer a) f,
@@ -25335,6 +25662,8 @@ class $$PenjualanTableTableManager
                 Value<String?> Laundry = const Value.absent(),
                 Value<String?> NomorAntrian = const Value.absent(),
                 Value<String?> NamaPemesan = const Value.absent(),
+                Value<String?> PerintahKerja = const Value.absent(),
+                Value<String?> Resep = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => PenjualanCompanion(
                 Uuid: Uuid,
@@ -25361,6 +25690,8 @@ class $$PenjualanTableTableManager
                 Laundry: Laundry,
                 NomorAntrian: NomorAntrian,
                 NamaPemesan: NamaPemesan,
+                PerintahKerja: PerintahKerja,
+                Resep: Resep,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -25389,6 +25720,8 @@ class $$PenjualanTableTableManager
                 Value<String?> Laundry = const Value.absent(),
                 Value<String?> NomorAntrian = const Value.absent(),
                 Value<String?> NamaPemesan = const Value.absent(),
+                Value<String?> PerintahKerja = const Value.absent(),
+                Value<String?> Resep = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => PenjualanCompanion.insert(
                 Uuid: Uuid,
@@ -25415,6 +25748,8 @@ class $$PenjualanTableTableManager
                 Laundry: Laundry,
                 NomorAntrian: NomorAntrian,
                 NamaPemesan: NamaPemesan,
+                PerintahKerja: PerintahKerja,
+                Resep: Resep,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

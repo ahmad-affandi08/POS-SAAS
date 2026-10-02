@@ -3,6 +3,7 @@ import 'package:inti/Inti.dart';
 
 import '../Token/TokenJarak.dart';
 import '../Token/TokenWarna.dart';
+import 'LencanaTeks.dart';
 import 'TeksKode.dart';
 import 'TeksUang.dart';
 
@@ -20,6 +21,7 @@ class BarisProduk extends StatelessWidget {
     this.keterangan,
     this.nonaktif = false,
     this.saatDitahan,
+    this.lencana,
   });
 
   final String nama;
@@ -32,6 +34,9 @@ class BarisProduk extends StatelessWidget {
   final bool nonaktif;
   final VoidCallback? saatDitahan;
 
+  /// Tanda singkat sebelum nama (misal golongan obat "K"); null = tanpa lencana.
+  final LencanaTeks? lencana;
+
   @override
   Widget build(BuildContext context) {
     final warna = TokenWarna.AmbilDari(context);
@@ -41,7 +46,13 @@ class BarisProduk extends StatelessWidget {
     final kecil = teks.bodySmall?.copyWith(color: warna.teksSekunder);
     return Semantics(
       button: true,
-      label: [nama, ?sku, hargaTeks == null ? 'harga belum diatur' : hargaTeks.FormatRupiah(), ?keterangan].join(', '),
+      label: [
+        nama,
+        ?lencana?.label,
+        ?sku,
+        hargaTeks == null ? 'harga belum diatur' : hargaTeks.FormatRupiah(),
+        ?keterangan,
+      ].join(', '),
       excludeSemantics: true,
       onLongPress: saatDitahan,
       child: InkWell(
@@ -62,11 +73,19 @@ class BarisProduk extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      nama,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: teks.bodyMedium?.copyWith(color: warnaTeks),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (lencana case final LencanaTeks tanda) ...[tanda, const SizedBox(width: TokenJarak.jarak4)],
+                        Expanded(
+                          child: Text(
+                            nama,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: teks.bodyMedium?.copyWith(color: warnaTeks),
+                          ),
+                        ),
+                      ],
                     ),
                     if (sku case final String kode) TeksKode(kode, gaya: kecil),
                     if (keterangan case final String tanda)

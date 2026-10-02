@@ -6,6 +6,7 @@ export 'Komponen/BarisProduk.dart';
 export 'Komponen/BilahStatus.dart';
 export 'Komponen/HitungPecahan.dart';
 export 'Komponen/KotakPanel.dart';
+export 'Komponen/LencanaTeks.dart';
 export 'Komponen/LogoMerek.dart';
 export 'Komponen/PanelTugas.dart';
 export 'Komponen/PapanAngka.dart';

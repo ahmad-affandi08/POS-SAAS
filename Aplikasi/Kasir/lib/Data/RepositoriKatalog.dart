@@ -162,6 +162,10 @@ class RepositoriKatalog {
             MasaGaransiBulan: Value(x.masaGaransiBulan),
             AtributVarian: Value(x.atributVarian == null ? null : jsonEncode(x.atributVarian)),
             HargaTerbuka: Value(x.hargaTerbuka),
+            GolonganObat: Value(x.golonganObat),
+            ObatWajibApotek: Value(x.obatWajibApotek),
+            Prekursor: Value(x.prekursor),
+            WajibResep: Value(x.wajibResep),
           ),
       ]);
       b.insertAllOnConflictUpdate(db.produkSatuan, [

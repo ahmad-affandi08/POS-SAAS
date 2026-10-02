@@ -44,6 +44,9 @@ abstract final class IzinKasir {
 
   /// F-17 BR-17.3: kelola pesanan toko online (konfirmasi/tolak/siap) — juga boleh dengan `penjualan.buat`.
   static const String tokoOnlineKelola = 'toko-online.kelola';
+
+  /// Apotek (§9.5): menyerahkan obat keras (termasuk OWA), psikotropika, dan narkotika (apoteker).
+  static const String apotekObatKerasJual = 'apotek.obat-keras.jual';
 }
 
 /// Staf dari data awal (tabel `Staf` lokal).

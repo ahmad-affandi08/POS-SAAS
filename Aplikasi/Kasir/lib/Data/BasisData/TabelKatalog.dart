@@ -84,6 +84,13 @@ class Produk extends Table {
   /// Skema 25 (K-25): harga diketik kasir per transaksi.
   BoolColumn get HargaTerbuka => boolean().withDefault(const Constant(false))();
 
+  /// Skema 27 (Apotek §9.5): golongan obat (`Bebas`/`BebasTerbatas`/`Keras`/`Psikotropika`/`Narkotika`; null = bukan
+  /// obat), Obat Wajib Apotek, prekursor, dan wajib resep (dihitung server) untuk dialog resep & PIN apoteker.
+  TextColumn get GolonganObat => text().nullable()();
+  BoolColumn get ObatWajibApotek => boolean().withDefault(const Constant(false))();
+  BoolColumn get Prekursor => boolean().withDefault(const Constant(false))();
+  BoolColumn get WajibResep => boolean().withDefault(const Constant(false))();
+
   @override
   Set<Column<Object>> get primaryKey => {Uuid};
 }

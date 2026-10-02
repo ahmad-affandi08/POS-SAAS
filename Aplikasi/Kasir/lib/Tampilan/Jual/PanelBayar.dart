@@ -10,6 +10,7 @@ import 'package:sistem_desain/SistemDesain.dart';
 import '../../Aplikasi/Penyedia.dart';
 import '../../Data/BasisData/BasisDataKasir.dart';
 import '../../Domain/GalatKasir.dart';
+import '../../Domain/Penjualan/AturanApotek.dart';
 import '../../Domain/Penjualan/Keranjang.dart';
 import '../../Domain/Penjualan/KonteksPenjualan.dart';
 import '../../Domain/Penjualan/LayananPenjualan.dart';
@@ -20,6 +21,7 @@ import '../Struk/BagianCetakStruk.dart';
 import '../Struk/BagianTiketDapur.dart';
 import '../Struk/TombolKirimStruk.dart';
 import 'DialogQrisDinamis.dart';
+import 'DialogResep.dart';
 import 'PanelKeranjang.dart';
 
 /// Gambar QRIS statis metode pembayaran (diunduh sekali per sesi aplikasi).
@@ -101,6 +103,11 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
 
   /// F-12: staf yang menyetujui tempo lewat PIN (BR-12.1).
   StafLokal? _penyetujuTempo;
+
+  /// Apotek bagian 2 (§9.5): resep dokter untuk obat wajib resep dan apoteker yang lolos PIN untuk obat keras/
+  /// psikotropika/narkotika. Hanya hidup selama panel Bayar terbuka (tidak ikut draf keranjang).
+  ResepPenjualan? _resep;
+  StafLokal? _apoteker;
 
   /// F-16d: saldo deposit pelanggan terakhir dibaca online (null = belum/ gagal dibaca).
   Uang? _saldoDeposit;
@@ -466,11 +473,62 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
     await _Selesaikan(k, [..._entri, PembayaranMasukan(metode: tunai, jumlah: tagihan)]);
   }
 
+  /// Apotek bagian 2: syarat penyerahan obat keranjang saat ini (kosong = tidak ada obat yang diatur).
+  SyaratApotek _AmbilSyaratApotek() =>
+      AturanApotek.Periksa(ref.read(penyediaKeranjangEfektif), ref.read(penyediaKatalog).value);
+
+  bool get _kasirApoteker => widget.kasir.PunyaIzin(IzinKasir.apotekObatKerasJual);
+
+  /// Isi/ubah resep dokter (PMK 73/2016). Batal = resep lama tetap.
+  Future<void> _IsiResep(KonteksPenjualan k, SyaratApotek syarat) async {
+    final resep = await showDialog<ResepPenjualan>(
+      context: context,
+      builder: (_) => DialogResep(
+        hariIni: AturanApotek.HitungHariIni(ref.read(penyediaJam)(), k.zonaWaktu),
+        wajibAlamat: syarat.wajibAlamat,
+        namaObat: SyaratApotek.SebutNama(syarat.barisWajibResep),
+        awal: _resep,
+      ),
+    );
+    if (resep != null && mounted) {
+      setState(() {
+        _resep = resep;
+        _galat = null;
+      });
+    }
+  }
+
+  /// Obat keras/psikotropika/narkotika diserahkan apoteker: PIN staf ber-izin `apotek.obat-keras.jual` dari data staf
+  /// tersimpan (bisa offline). Tanpa persetujuan jarak jauh: apoteker harus ada di tempat.
+  Future<void> _MintaApoteker(SyaratApotek syarat) async {
+    final staf = await showDialog<StafLokal>(
+      context: context,
+      builder: (_) => DialogPinSupervisor(
+        izin: IzinKasir.apotekObatKerasJual,
+        judulDialog: 'PIN apoteker',
+        pesan:
+            '${SyaratApotek.SebutNama(syarat.barisWajibApoteker)} hanya boleh diserahkan apoteker. Pilih apoteker '
+            'yang menyerahkan obat.',
+        pesanKosong:
+            'Belum ada apoteker berizin di perangkat ini. Obat ini tidak bisa diserahkan; keluarkan dari keranjang '
+            'atau minta pemilik memberi izin "apotek.obat-keras.jual" lalu sinkronkan perangkat.',
+        bolehJarakJauh: false,
+      ),
+    );
+    if (staf != null && mounted) {
+      setState(() {
+        _apoteker = staf;
+        _galat = null;
+      });
+    }
+  }
+
   Future<void> _Selesaikan(KonteksPenjualan k, List<PembayaranMasukan> pembayaran) async {
     setState(() {
       _sibuk = true;
       _galat = null;
     });
+    final syarat = _AmbilSyaratApotek();
     try {
       final hasil = await ref
           .read(penyediaLayananPenjualan)
@@ -485,6 +543,8 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
             saldoDeposit: _saldoDeposit,
             katalog: ref.read(penyediaKatalog).value,
             latihan: ref.read(penyediaModeLatihan),
+            resep: syarat.CekWajibResep ? _resep : null,
+            uuidApoteker: syarat.CekWajibApoteker && !_kasirApoteker ? _apoteker?.uuid : null,
           );
       ref.read(penyediaKeranjang.notifier).Kosongkan();
       final sesi = ref.read(penyediaSesi.notifier);
@@ -673,6 +733,90 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
     );
   }
 
+  /// Apotek bagian 2: ringkasan syarat penyerahan obat (resep dokter, apoteker) dan tombol untuk melengkapinya. Status
+  /// selalu berteks + ikon, bukan warna saja.
+  Widget _BangunApotek(BuildContext context, KonteksPenjualan k, SyaratApotek syarat) {
+    final teks = Theme.of(context).textTheme;
+    final warna = TokenWarna.AmbilDari(context);
+    final resep = _resep;
+    final apoteker = _kasirApoteker ? widget.kasir : _apoteker;
+    Widget Status(bool lengkap, String isi) => Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(
+          lengkap ? Icons.check_circle_outline : Icons.error_outline,
+          size: TokenJarak.ikonKecil,
+          color: lengkap ? warna.sukses : warna.peringatan,
+        ),
+        const SizedBox(width: TokenJarak.jarak8),
+        Expanded(child: Text(isi, style: teks.bodyMedium)),
+      ],
+    );
+    return Container(
+      key: const ValueKey('SyaratApotek'),
+      padding: const EdgeInsets.all(TokenJarak.jarak12),
+      decoration: BoxDecoration(
+        border: Border.all(color: warna.garis, width: TokenJarak.tebalGaris),
+        borderRadius: BorderRadius.circular(TokenJarak.radiusPanel),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text('Penyerahan obat', style: teks.titleSmall),
+          if (syarat.CekWajibResep) ...[
+            const SizedBox(height: TokenJarak.jarak8),
+            Status(
+              resep != null,
+              resep == null
+                  ? 'Wajib resep dokter: ${SyaratApotek.SebutNama(syarat.barisWajibResep)}.'
+                  : AturanApotek.SusunBarisStruk(resep.nomorResep, resep.namaDokter),
+            ),
+            const SizedBox(height: TokenJarak.jarak4),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: SizedBox(
+                height: TokenJarak.targetSentuh,
+                child: resep == null
+                    ? FilledButton.icon(
+                        onPressed: _sibuk ? null : () => unawaited(_IsiResep(k, syarat)),
+                        icon: const Icon(Icons.description_outlined),
+                        label: const Text('Isi resep dokter'),
+                      )
+                    : OutlinedButton(
+                        onPressed: _sibuk ? null : () => unawaited(_IsiResep(k, syarat)),
+                        child: const Text('Ubah resep'),
+                      ),
+              ),
+            ),
+          ],
+          if (syarat.CekWajibApoteker) ...[
+            const SizedBox(height: TokenJarak.jarak8),
+            Status(
+              apoteker != null,
+              apoteker == null
+                  ? 'Hanya diserahkan apoteker: ${SyaratApotek.SebutNama(syarat.barisWajibApoteker)}.'
+                  : 'Diserahkan apoteker ${apoteker.nama}.',
+            ),
+            if (apoteker == null) ...[
+              const SizedBox(height: TokenJarak.jarak4),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: SizedBox(
+                  height: TokenJarak.targetSentuh,
+                  child: FilledButton.tonalIcon(
+                    onPressed: _sibuk ? null : () => unawaited(_MintaApoteker(syarat)),
+                    icon: const Icon(Icons.pin_outlined),
+                    label: const Text('PIN apoteker'),
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ],
+      ),
+    );
+  }
+
   /// F-16d: saldo deposit pelanggan (online) atau alasan belum bisa dipakai.
   Widget _BangunInfoDeposit(BuildContext context) {
     final teks = Theme.of(context).textTheme;
@@ -759,6 +903,11 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
     final melunasi = nominal != null && nominal.Bandingkan(sisa) >= 0;
     // Semua tagihan sudah tertutup (misal QRIS dinamis lunas tetapi penyimpanan gagal): cukup selesaikan lagi.
     final lunasTanpaMetode = metode == null && _entri.isNotEmpty && sisa.Bandingkan(Uang.Nol()) <= 0;
+    // Apotek bagian 2: obat wajib resep / hanya apoteker → metode bayar baru tampil setelah syaratnya lengkap.
+    final syaratApotek = AturanApotek.Periksa(keranjang, ref.watch(penyediaKatalog).value);
+    final gerbangApotek =
+        (syaratApotek.CekWajibResep && _resep == null) ||
+        (syaratApotek.CekWajibApoteker && _apoteker == null && !_kasirApoteker);
 
     return Padding(
       padding: const EdgeInsets.all(TokenJarak.jarak24),
@@ -785,6 +934,11 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
             Padding(
               padding: const EdgeInsets.only(bottom: TokenJarak.jarak8),
               child: Text('Melayani reservasi ${reservasi.nomor}', style: teks.bodySmall),
+            ),
+          if (keranjang.perintahKerja case final pk?)
+            Padding(
+              padding: const EdgeInsets.only(bottom: TokenJarak.jarak8),
+              child: Text(['Menagih perintah kerja ${pk.nomor}', ?pk.nomorPolisi].join(' · '), style: teks.bodySmall),
             ),
           if (keranjang.tukar case final tukar?)
             Padding(
@@ -868,8 +1022,18 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
                 TeksUang(sisa, gaya: teks.titleMedium),
               ],
             ),
+          if (!syaratApotek.CekKosong) ...[
+            const SizedBox(height: TokenJarak.jarak12),
+            _BangunApotek(context, k, syaratApotek),
+          ],
           const SizedBox(height: TokenJarak.jarak16),
-          if (k.metodePembayaran.isEmpty)
+          if (gerbangApotek)
+            Text(
+              'Lengkapi syarat obat di atas sebelum menerima pembayaran.',
+              key: const ValueKey('GerbangApotek'),
+              style: teks.bodyMedium?.copyWith(color: warna.peringatan),
+            )
+          else if (k.metodePembayaran.isEmpty)
             Text(
               'Metode pembayaran belum tersedia di perangkat ini. Sambungkan ke internet agar data terbaru terunduh.',
               style: TextStyle(color: warna.bahaya),
@@ -895,7 +1059,7 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
                     ),
               ],
             ),
-          if (metode != null) ...[
+          if (metode != null && !gerbangApotek) ...[
             const SizedBox(height: TokenJarak.jarak16),
             if (metode.Jenis == JenisMetodeBayar.tunai)
               _BangunTunai(context, k)
@@ -911,7 +1075,7 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
           SizedBox(
             height: 56,
             child: FilledButton(
-              onPressed: _sibuk
+              onPressed: _sibuk || gerbangApotek
                   ? null
                   : metode != null
                   ? () => _Terapkan(k)
@@ -958,6 +1122,7 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
               keranjang.pelanggan != null &&
               keranjang.praPesan == null &&
               keranjang.reservasi == null &&
+              keranjang.perintahKerja == null &&
               keranjang.laundry == null &&
               keranjang.pesananMeja == null &&
               _entri.isEmpty) ...[

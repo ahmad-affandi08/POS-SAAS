@@ -338,3 +338,116 @@ Map<String, Object?> KatalogHargaTerbukaUji() {
   ];
   return katalog;
 }
+
+/// Bengkel bagian 2: jasa servis (Jasa, harga terbuka tanpa harga daftar — harga dari perintah kerja) dan oli (harga
+/// daftar Rp 60.000; perintah kerja menyepakati Rp 55.000).
+const String jasaServisMotor = '01K6PRD000000000000SERV1S1';
+const String psJasaServisMotor = '01K6PS0000000000000SERV1S1';
+const String oliMesin = '01K6PRD0000000000000OL1001';
+const String psOliMesin = '01K6PS00000000000000OL1001';
+
+/// Apotek bagian 2: obat per golongan (Rupiah realistis, nama panjang).
+const String amoxicillin = '01K6PRD00000000000AM0X1C01';
+const String asamMefenamat = '01K6PRD0000000000MEFENAM01';
+const String diazepam = '01K6PRD0000000000D1AZEPAM1';
+const String paracetamol = '01K6PRD000000000PARACETAM1';
+const String ctm = '01K6PRD0000000000000CTM001';
+const String psAmoxicillin = '01K6PS000000000000AM0X1C01';
+const String psAsamMefenamat = '01K6PS0000000000MEFENAM001';
+const String psDiazepam = '01K6PS0000000000D1AZEPAM01';
+const String psParacetamol = '01K6PS000000000PARACETAM01';
+const String psCtm = '01K6PS00000000000000CTM001';
+
+Map<String, Object?> KatalogBengkelApotekUji() {
+  final katalog = KatalogUji();
+  Map<String, Object?> Obat(String uuid, String nama, String golongan, {bool owa = false, bool resep = false}) => {
+    ...ProdukUji(uuid, nama, kelompokPajak: UuidUji.kelompokPpn),
+    'GolonganObat': golongan,
+    'ObatWajibApotek': owa,
+    'Prekursor': false,
+    'WajibResep': resep,
+  };
+  katalog['Produk'] = [
+    ...(katalog['Produk']! as List<Object?>),
+    {
+      ...ProdukUji(jasaServisMotor, 'Servis rutin motor matic', jenis: 'Jasa', kelompokPajak: null),
+      'HargaTerbuka': true,
+    },
+    ProdukUji(oliMesin, 'Oli Mesin MPX2 10W-30 0,8 Liter', kelompokPajak: null),
+    Obat(amoxicillin, 'Amoxicillin Trihydrate 500 mg Kapsul Strip 10', 'Keras', resep: true),
+    Obat(asamMefenamat, 'Asam Mefenamat 500 mg Tablet Strip 10', 'Keras', owa: true),
+    Obat(diazepam, 'Diazepam 2 mg Tablet Strip 10', 'Psikotropika', resep: true),
+    Obat(paracetamol, 'Paracetamol 500 mg Tablet Strip 10', 'Bebas'),
+    Obat(ctm, 'CTM Chlorpheniramine 4 mg Tablet Strip 10', 'BebasTerbatas'),
+  ];
+  katalog['ProdukSatuan'] = [
+    ...(katalog['ProdukSatuan']! as List<Object?>),
+    SatuanProdukUji(psJasaServisMotor, jasaServisMotor, UuidUji.satuanPcs),
+    SatuanProdukUji(psOliMesin, oliMesin, UuidUji.satuanPcs),
+    SatuanProdukUji(psAmoxicillin, amoxicillin, UuidUji.satuanPcs),
+    SatuanProdukUji(psAsamMefenamat, asamMefenamat, UuidUji.satuanPcs),
+    SatuanProdukUji(psDiazepam, diazepam, UuidUji.satuanPcs),
+    SatuanProdukUji(psParacetamol, paracetamol, UuidUji.satuanPcs),
+    SatuanProdukUji(psCtm, ctm, UuidUji.satuanPcs),
+  ];
+  katalog['ProdukHarga'] = [
+    ...(katalog['ProdukHarga']! as List<Object?>),
+    HargaUji('01K6HRG00000000000000L1001', oliMesin, psOliMesin, '60000.00'),
+    HargaUji('01K6HRG00000000000AM0X1C01', amoxicillin, psAmoxicillin, '8500.00'),
+    HargaUji('01K6HRG0000000000MEFENAM01', asamMefenamat, psAsamMefenamat, '12000.00'),
+    HargaUji('01K6HRG0000000000D1AZEPAM1', diazepam, psDiazepam, '15000.00'),
+    HargaUji('01K6HRG000000000PARACETAM1', paracetamol, psParacetamol, '5000.00'),
+    HargaUji('01K6HRG00000000000000CTM01', ctm, psCtm, '3500.00'),
+  ];
+  return katalog;
+}
+
+/// Bentuk persis `GET /api/pos/v1/perintah-kerja/{uuid}` (`PerintahKerjaPos::Petakan`): servis Rp 50.000 dengan
+/// mekanik Joko, oli Rp 55.000 diskon Rp 5.000, kendaraan AD 1234 XY milik pelanggan Bambang.
+Map<String, Object?> PerintahKerjaUji({bool siapTagih = true, String status = 'Selesai'}) => {
+  'Uuid': '01K6PK000000000000000000A1',
+  'Nomor': 'WO/SLB/2610/0007',
+  'Status': status,
+  'LabelStatus': status == 'Selesai' ? 'Selesai' : 'Dikerjakan',
+  'SiapTagih': siapTagih,
+  'DibuatPada': '2026-09-24T00:15:00Z',
+  'Pelanggan': {
+    'Uuid': '01K5PELANGGAN0000000000009',
+    'Nama': 'Bambang Sutrisno',
+    'NoHp': '0812****7890',
+    'KodeTier': null,
+  },
+  'Kendaraan': {'Uuid': '01K6KND00000000000000000A1', 'NomorPolisi': 'AD 1234 XY', 'Label': 'Honda Vario 125 Hitam'},
+  'KmMasuk': 23450,
+  'Keluhan': 'Rem belakang bunyi, tarikan berat',
+  'CatatanQc': 'Rem & tarikan sudah normal',
+  'TotalDisetujui': '100000.00',
+  'Baris': [
+    {
+      'Uuid': '01K6PKD0000000000000000001',
+      'Jenis': 'Jasa',
+      'UuidProduk': jasaServisMotor,
+      'UuidProdukSatuan': psJasaServisMotor,
+      'NamaProduk': 'Servis rutin motor matic',
+      'Jumlah': '1.0000',
+      'HargaSatuan': '50000.00',
+      'Diskon': '0.00',
+      'UuidKaryawan': '01K6KRY00000000000000MKN01',
+      'NamaKaryawan': 'Joko Prasetyo',
+      'Catatan': null,
+    },
+    {
+      'Uuid': '01K6PKD0000000000000000002',
+      'Jenis': 'Sparepart',
+      'UuidProduk': oliMesin,
+      'UuidProdukSatuan': psOliMesin,
+      'NamaProduk': 'Oli Mesin MPX2 10W-30 0,8 Liter',
+      'Jumlah': '1.0000',
+      'HargaSatuan': '55000.00',
+      'Diskon': '5000.00',
+      'UuidKaryawan': null,
+      'NamaKaryawan': null,
+      'Catatan': 'Ganti baru',
+    },
+  ],
+};
