@@ -98,6 +98,9 @@ abstract final class KunciPengaturan {
   static const String menitKunciOtomatis = 'MenitKunciOtomatis';
   static const String tampilanKatalog = 'TampilanKatalog';
 
+  /// K-16: kategori katalog terakhir dipilih di layar Jual (Uuid kategori, `Terlaris`, atau kosong = Semua).
+  static const String kategoriTerakhirJual = 'KategoriTerakhirJual';
+
   /// K-15: bunyi & getar saat memindai ('0' = mati; bawaan hidup).
   static const String umpanBalikPindai = 'UmpanBalikPindai';
 

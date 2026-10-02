@@ -497,6 +497,13 @@ final penyediaLayananRetur = Provider<LayananReturPenjualan>(
 );
 
 /// Katalog lokal di memori (dibangun ulang setelah katalog diperbarui: `ref.invalidate(penyediaKatalog)`).
+/// K-16: produk terlaris perangkat ini dalam 30 hari tanggal bisnis terakhir (Uuid produk, terlaris dulu).
+final penyediaProdukTerlaris = StreamProvider<List<String>>((ref) async* {
+  final k = await ref.watch(penyediaKonteksPenjualan.future);
+  final sejak = k.HitungTanggalBisnis(ref.read(penyediaJam)().subtract(const Duration(days: 30)));
+  yield* ref.watch(penyediaRepositoriPenjualan).PantauProdukTerlaris(sejakTanggal: sejak);
+});
+
 final penyediaKatalog = FutureProvider<KatalogLokal>(
   (ref) async => KatalogLokal.Bangun(await ref.watch(penyediaRepositoriKatalog).Muat()),
 );

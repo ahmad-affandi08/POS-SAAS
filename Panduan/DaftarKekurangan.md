@@ -1,6 +1,6 @@
 # Daftar Kekurangan & Pekerjaan Tertunda PAYOU
 
-Status per 2 Oktober 2026 (PRD v3.66; bagian K disisir dari kode 2 Oktober 2026 dan statusnya diperbarui tiap butir selesai sampai K-15; butir A3, A14, dan A15 disisir ulang di v3.25, sisanya belum disisir butir demi butir sejak v2.88, lihat catatan audit di bawah). Dokumen ini mencatat apa yang **belum ada**, **belum diuji di produksi**, atau **menunggu keputusan pemilik produk**, supaya sistem bisa dibuka ke publik lebih dulu dengan risiko yang diketahui. Perbarui setiap kali satu butir selesai.
+Status per 2 Oktober 2026 (PRD v3.67; bagian K disisir dari kode 2 Oktober 2026 dan statusnya diperbarui tiap butir selesai sampai K-16; butir A3, A14, dan A15 disisir ulang di v3.25, sisanya belum disisir butir demi butir sejak v2.88, lihat catatan audit di bawah). Dokumen ini mencatat apa yang **belum ada**, **belum diuji di produksi**, atau **menunggu keputusan pemilik produk**, supaya sistem bisa dibuka ke publik lebih dulu dengan risiko yang diketahui. Perbarui setiap kali satu butir selesai.
 
 Status butir (audit F-26): **TERBUKA** = belum dikerjakan; **SELESAI @ versi** = sudah dikerjakan & ada test regresinya; **DITUNDA** = sengaja ditunda; **MENUNGGU KEPUTUSAN** = butuh pemilik produk. Butir baru ditandai SELESAI hanya bila test regresinya ada.
 
@@ -109,7 +109,7 @@ kode. Urutan pengerjaan = urutan tabel; butir yang selesai diberi **SELESAI @ ve
 | K-13 | **Course / tahan & kirim** (hold & fire) per kursus | §9.1 | SELESAI v3.64 (`Baris[].Kursus`, "Tahan Utama" & "Kirim Utama") |
 | K-14 | **Bagi tagihan rata per orang / per nominal** (sekarang hanya per item, khusus meja) | BR-08.2, §9.1 | SELESAI v3.65 (tombol Bagi tagihan di Bayar; struk per tamu belum) |
 | K-15 | Umpan balik pindai (suara + getar, sorot baris) | §17.2.7 prinsip 4 | SELESAI v3.66 (`UmpanBalikPindai`, sorot `BarisKeranjang`, sakelar di Pengaturan) |
-| K-16 | Produk **favorit/terlaris** di atas katalog, kategori terakhir diingat, daftar pintasan `?` | §17.2.7 | TERBUKA |
+| K-16 | Produk **favorit/terlaris** di atas katalog, kategori terakhir diingat, daftar pintasan `?` | §17.2.7 | SELESAI v3.67 (kategori Terlaris lokal, kategori diingat, `?`; favorit pilihan pemilik belum) |
 | K-17 | Layar status sinkron: waktu sinkron terakhir, umur outbox tertua (> 2 jam), transaksi **PerluTinjauan**, peringatan jam perangkat | §18.3 butir 7 & 10 | TERBUKA |
 | K-18 | **Buka ulang shift** oleh supervisor, **foto bukti** kas masuk/keluar | F-06, §19.1 | TERBUKA |
 | K-19 | Info batch/kedaluwarsa saat jual (FEFO hanya di server) | §9.5 | TERBUKA |

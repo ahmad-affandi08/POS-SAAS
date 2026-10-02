@@ -123,6 +123,25 @@ class RepositoriPenjualan {
     return dokumen;
   });
 
+  /// K-16: produk yang paling sering dijual di perangkat ini sejak [sejakTanggal] (`YYYY-MM-DD`, tanggal bisnis),
+  /// diurutkan menurut jumlah transaksi yang memuatnya (bukan kuantitas, agar tidak menjumlah desimal di SQLite) lalu
+  /// penjualan terakhir. Penjualan void dilewati. Ikut berubah saat penjualan baru tersimpan.
+  Stream<List<String>> PantauProdukTerlaris({required String sejakTanggal, int batas = 12}) => db
+      .customSelect(
+        'SELECT d.UuidProduk AS Uuid, COUNT(DISTINCT d.UuidPenjualan) AS Kali, MAX(p.DibuatPada) AS Terakhir '
+        'FROM PenjualanDetail d JOIN Penjualan p ON p.Uuid = d.UuidPenjualan '
+        'WHERE p.Status != ? AND p.TanggalBisnis >= ? '
+        'GROUP BY d.UuidProduk ORDER BY Kali DESC, Terakhir DESC LIMIT ?',
+        variables: [
+          Variable.withString(StatusPenjualanLokal.divoid),
+          Variable.withString(sejakTanggal),
+          Variable.withInt(batas),
+        ],
+        readsFrom: {db.penjualan, db.penjualanDetail},
+      )
+      .watch()
+      .map((baris) => [for (final b in baris) b.read<String>('Uuid')]);
+
   Future<BarisPenjualan?> CariPenjualan(String uuid) =>
       (db.select(db.penjualan)..where((p) => p.Uuid.equals(uuid))).getSingleOrNull();
 

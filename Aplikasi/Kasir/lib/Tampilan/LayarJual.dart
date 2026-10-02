@@ -8,6 +8,7 @@ import 'package:sistem_desain/SistemDesain.dart';
 
 import '../Aplikasi/Penyedia.dart';
 import '../Data/PesananMeja.dart';
+import '../Data/RepositoriKasir.dart';
 import '../Domain/GalatKasir.dart';
 import '../Domain/Katalog/BarcodeTimbangan.dart';
 import '../Domain/Katalog/KatalogLokal.dart';
@@ -95,6 +96,9 @@ class LayarJual extends ConsumerStatefulWidget {
   /// Selang perpanjangan kunci bayar pesanan meja selama panel Bayar terbuka (kunci server berlaku 2 menit).
   static const Duration selangKunciBayar = Duration(seconds: 60);
 
+  /// K-16: penanda "kategori" Terlaris di bar kategori (bukan Uuid kategori sungguhan).
+  static const String kategoriTerlaris = 'Terlaris';
+
   /// K-15: lama baris keranjang disorot setelah pindaian (transisinya 150 ms, §17.2.7 prinsip 4).
   static const Duration lamaSorot = Duration(milliseconds: 900);
 
@@ -171,6 +175,7 @@ class _LayarJualState extends ConsumerState<LayarJual> {
     if (widget.aktif) {
       _FokusAkar();
     }
+    unawaited(_MuatKategoriTerakhir());
     // v3.51: transaksi baru memakai jenis pesanan bawaan outlet (misal Makan di tempat di kafe).
     ref.listenManual(
       penyediaKonteksPenjualan.select((k) => k.value?.jenisPesananBawaan),
@@ -282,7 +287,57 @@ class _LayarJualState extends ConsumerState<LayarJual> {
       _Esc();
       return KeyEventResult.handled;
     }
+    // K-16: `?` (di luar kolom isian) membuka daftar pintasan keyboard.
+    if (event.character == '?' && !_CekFokusDiIsian()) {
+      unawaited(_TampilPintasan());
+      return KeyEventResult.handled;
+    }
     return KeyEventResult.ignored;
+  }
+
+  /// K-16 (§17.2.7): daftar pintasan keyboard layar Jual.
+  static const List<(String, String)> daftarPintasan = [
+    ('F1', 'Cari produk'),
+    ('F2', 'Pilih pelanggan'),
+    ('F4', 'Cek harga tanpa menambah ke keranjang'),
+    ('F8', 'Bayar'),
+    ('F9', 'Bayar tunai uang pas'),
+    ('Esc', 'Tutup panel, kosongkan pencarian, atau hapus item terakhir'),
+    ('12*', 'Ketik di kolom cari lalu pindai: tambah 12 unit'),
+    ('?', 'Tampilkan daftar ini'),
+  ];
+
+  Future<void> _TampilPintasan() async {
+    await showDialog<void>(
+      context: context,
+      builder: (konteks) {
+        final teks = Theme.of(konteks).textTheme;
+        return AlertDialog(
+          title: const Text('Pintasan keyboard'),
+          content: SizedBox(
+            width: 420,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (final (tombol, arti) in daftarPintasan)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: TokenJarak.jarak4),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(width: 56, child: Text(tombol, style: teks.labelLarge)),
+                        Expanded(child: Text(arti, style: teks.bodyMedium)),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          actions: [TextButton(onPressed: () => Navigator.of(konteks).pop(), child: const Text('Tutup'))],
+        );
+      },
+    );
+    _FokusAkar();
   }
 
   /// Esc: tutup panel yang terbuka; tanpa panel → hapus item terakhir keranjang. Saat mengetik di kolom cari, Esc
@@ -1039,14 +1094,46 @@ class _LayarJualState extends ConsumerState<LayarJual> {
 
   // Tampilan -----------------------------------------------------------------------------------------------------------
 
+  /// K-16: produk yang tampil di katalog. Kategori Terlaris = produk terlaris yang masih tampil, urut terlaris dulu.
+  List<ProdukJual>? _AmbilDaftarProduk(KatalogLokal? katalog, List<String> terlaris) {
+    if (katalog == null) {
+      return null;
+    }
+    final kata = PengaliJumlah.Urai(_cari.text).sisa;
+    if (_uuidKategori != LayarJual.kategoriTerlaris) {
+      return katalog.AmbilTampil(uuidKategori: _uuidKategori, kata: kata);
+    }
+    final tampil = {for (final p in katalog.AmbilTampil(kata: kata)) p.uuid: p};
+    return [for (final uuid in terlaris) ?tampil[uuid]];
+  }
+
+  /// K-16: kategori terakhir diingat per perangkat; kategori yang sudah tidak ada kembali ke Semua.
+  Future<void> _MuatKategoriTerakhir() async {
+    final tersimpan = await ref.read(penyediaRepositori).AmbilPengaturan(KunciPengaturan.kategoriTerakhirJual);
+    if (tersimpan == null || tersimpan.isEmpty || !mounted) {
+      return;
+    }
+    final katalog = await ref.read(penyediaKatalog.future);
+    if (!mounted || _uuidKategori != null) {
+      return;
+    }
+    if (tersimpan == LayarJual.kategoriTerlaris || katalog.kategori.any((k) => k.Uuid == tersimpan)) {
+      setState(() => _uuidKategori = tersimpan);
+    }
+  }
+
+  void _PilihKategori(String? uuid) {
+    setState(() => _uuidKategori = uuid);
+    unawaited(ref.read(penyediaRepositori).SimpanPengaturan(KunciPengaturan.kategoriTerakhirJual, uuid ?? ''));
+  }
+
   Widget _BangunKatalog(BuildContext context, KatalogLokal? katalog, KonteksPenjualan? k, bool sempit) {
     final teks = Theme.of(context).textTheme;
     final warna = TokenWarna.AmbilDari(context);
     final tepi = sempit ? TokenJarak.jarak16 : TokenJarak.jarak24;
     final tertahan = ref.watch(penyediaPesananTertahan).value?.length ?? 0;
-    final daftar =
-        katalog?.AmbilTampil(uuidKategori: _uuidKategori, kata: PengaliJumlah.Urai(_cari.text).sisa) ??
-        const <ProdukJual>[];
+    final terlaris = ref.watch(penyediaProdukTerlaris).value ?? const <String>[];
+    final daftar = _AmbilDaftarProduk(katalog, terlaris) ?? const <ProdukJual>[];
     final layanan = ref.read(penyediaLayananPenjualan);
     final kanal = LayananPenjualan.AmbilKanal(ref.watch(penyediaKeranjang));
     final tier = ref.watch(penyediaKeranjang.select((k) => k.pelanggan?.kodeTier));
@@ -1195,13 +1282,19 @@ class _LayarJualState extends ConsumerState<LayarJual> {
               scrollDirection: Axis.horizontal,
               padding: EdgeInsets.symmetric(horizontal: tepi),
               children: [
-                for (final (uuid, nama) in [(null, 'Semua'), for (final k in katalog.kategori) (k.Uuid, k.Nama)])
+                for (final (uuid, nama) in [
+                  (null, 'Semua'),
+                  // K-16: produk yang paling sering dijual di perangkat ini (30 hari).
+                  if (terlaris.isNotEmpty) (LayarJual.kategoriTerlaris, 'Terlaris'),
+                  for (final k in katalog.kategori) (k.Uuid, k.Nama),
+                ])
                   Padding(
                     padding: const EdgeInsets.only(right: TokenJarak.jarak8),
                     child: ChoiceChip(
+                      avatar: uuid == LayarJual.kategoriTerlaris ? const Icon(Icons.trending_up) : null,
                       label: Text(nama),
                       selected: _uuidKategori == uuid,
-                      onSelected: (_) => setState(() => _uuidKategori = uuid),
+                      onSelected: (_) => _PilihKategori(uuid),
                     ),
                   ),
               ],
