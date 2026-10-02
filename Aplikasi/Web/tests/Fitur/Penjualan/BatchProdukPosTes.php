@@ -18,6 +18,9 @@ use Tests\Pendukung\Tenant\BantuanPendaftaran;
  */
 
 beforeEach(function (): void {
+    // Jam dibekukan di siang hari WIB: sisa hari dihitung dari tanggal kalender outlet (WIB), sedangkan tanggal
+    // kedaluwarsa uji dibuat dari `now()`; setelah 17.00 UTC keduanya beda sehari dan hasilnya bergantung jam CI.
+    $this->travelTo(CarbonImmutable::parse('2026-10-05 03:00:00', 'UTC'));
     BantuanPendaftaran::SiapkanPrasyarat();
 });
 
