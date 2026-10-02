@@ -530,6 +530,46 @@ void main() {
       expect(_AdaPulsaLaci(u.printer.kiriman.last), isFalse);
     },
   );
+
+  test(
+    'v3.53 tagihan sementara: TAGIHAN SEMENTARA + BELUM LUNAS, item, pajak, TOTAL sama dengan mesin bayar',
+    () async {
+      await Siapkan();
+      await profil.Simpan(u.repositori);
+      var keranjang = Keranjang.kosong;
+      for (final uuid in [UuidUji.croissant, UuidUji.croissant]) {
+        keranjang = u.penjualan.TambahBaris(
+          keranjang,
+          u.penjualan.BuatBaris(katalog, k, katalog.CariProduk(uuid)!),
+          katalog,
+          k,
+        );
+      }
+      final hitungan = u.penjualan.Hitung(keranjang, k);
+      final outboxSebelum = (await u.db.select(u.db.outbox).get()).length;
+      await u.struk.CetakTagihanSementara(
+        judul: 'Meja 7',
+        nomor: 'PT/SLB/261002/POS-001-0003',
+        keranjang: keranjang,
+        hitungan: hitungan,
+        waktu: DateTime.utc(2026, 10, 2, 5, 30),
+        namaKasir: 'Rina Wulandari',
+        jumlahTamu: 4,
+      );
+      final teks = u.printer.AmbilTeks();
+      expect(teks, contains('TAGIHAN SEMENTARA'));
+      expect(teks, contains('BELUM LUNAS'));
+      expect(teks, contains('Meja 7'));
+      expect(teks, contains('Tamu: 4 orang'));
+      expect(teks, contains('Bukan bukti pembayaran.'));
+      expect(teks, contains(hitungan.hasil.totalAkhir.FormatRupiah()));
+      expect(
+        await u.db.select(u.db.outbox).get(),
+        hasLength(outboxSebelum),
+        reason: 'Tagihan sementara tidak mencatat apa pun.',
+      );
+    },
+  );
 }
 
 /// Pulsa buka laci `ESC p` ada di kiriman printer.

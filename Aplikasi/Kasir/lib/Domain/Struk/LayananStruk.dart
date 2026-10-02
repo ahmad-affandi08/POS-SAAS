@@ -10,6 +10,7 @@ import '../GalatKasir.dart';
 import '../Pelanggan/LayananDeposit.dart';
 import '../Penjualan/Keranjang.dart';
 import '../Penjualan/KonteksPenjualan.dart';
+import '../Penjualan/LayananPenjualan.dart';
 import '../Penjualan/LayananPreOrder.dart';
 import '../Shift/LayananTutupShift.dart';
 import 'IdentitasStruk.dart';
@@ -124,6 +125,30 @@ class LayananStruk {
   }
 
   /// Nota/label laundry (§9.9) dari daftar cucian; QR lacak memakai awalan dari data awal.
+  /// Tagihan sementara pesanan meja (§9.1, v3.53); tanpa laci & tanpa mencatat apa pun.
+  Future<void> CetakTagihanSementara({
+    required String judul,
+    required String nomor,
+    required Keranjang keranjang,
+    required HitunganKeranjang hitungan,
+    required DateTime waktu,
+    String? namaKasir,
+    int jumlahTamu = 0,
+  }) async {
+    final profil = await _WajibProfil();
+    final dokumen = PenyusunDokumenKasir.SusunTagihanSementara(
+      await IdentitasStruk.Muat(repositori),
+      judul: judul,
+      nomor: nomor,
+      keranjang: keranjang,
+      hitungan: hitungan,
+      waktu: waktu,
+      namaKasir: namaKasir,
+      jumlahTamu: jumlahTamu,
+    );
+    await PrinterStruk(pembuatTransport(profil), profil.lebar).Cetak(dokumen);
+  }
+
   Future<void> CetakNotaLaundry(TiketLaundryPos tiket) async {
     final profil = await _WajibProfil();
     await PrinterStruk(pembuatTransport(profil), profil.lebar).Cetak(

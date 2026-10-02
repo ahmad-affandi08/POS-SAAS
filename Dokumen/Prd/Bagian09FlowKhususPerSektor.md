@@ -25,6 +25,7 @@ sequenceDiagram
 Fitur khusus:
 - Denah meja visual (drag & drop editor), area (Indoor/Outdoor/VIP), status warna (kosong/terisi/minta bill/perlu dibersihkan).
 - Pindah meja, gabung meja, gabung bill, pisah bill.
+- **Cetak tagihan sementara (pre-bill)** dari menu pesanan meja, dihitung sama dengan layar Bayar (v3.53).
 - Kursus/course (appetizer, main, dessert) dengan "tahan & kirim" (hold & fire).
 - Reservasi meja dengan DP (fase 3).
 - Minimum charge per meja/area (VIP).

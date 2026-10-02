@@ -1,6 +1,6 @@
 # Daftar Kekurangan & Pekerjaan Tertunda PAYOU
 
-Status per 2 Oktober 2026 (PRD v3.52; bagian K disisir dari kode 2 Oktober 2026; butir A3, A14, dan A15 disisir ulang di v3.25, sisanya belum disisir butir demi butir sejak v2.88, lihat catatan audit di bawah). Dokumen ini mencatat apa yang **belum ada**, **belum diuji di produksi**, atau **menunggu keputusan pemilik produk**, supaya sistem bisa dibuka ke publik lebih dulu dengan risiko yang diketahui. Perbarui setiap kali satu butir selesai.
+Status per 2 Oktober 2026 (PRD v3.53; bagian K disisir dari kode 2 Oktober 2026; butir A3, A14, dan A15 disisir ulang di v3.25, sisanya belum disisir butir demi butir sejak v2.88, lihat catatan audit di bawah). Dokumen ini mencatat apa yang **belum ada**, **belum diuji di produksi**, atau **menunggu keputusan pemilik produk**, supaya sistem bisa dibuka ke publik lebih dulu dengan risiko yang diketahui. Perbarui setiap kali satu butir selesai.
 
 Status butir (audit F-26): **TERBUKA** = belum dikerjakan; **SELESAI @ versi** = sudah dikerjakan & ada test regresinya; **DITUNDA** = sengaja ditunda; **MENUNGGU KEPUTUSAN** = butuh pemilik produk. Butir baru ditandai SELESAI hanya bila test regresinya ada.
 
@@ -91,7 +91,7 @@ kode. Urutan pengerjaan = urutan tabel; butir yang selesai diberi **SELESAI @ ve
 |---|---|---|---|
 | K-1 | **Jenis pesanan FnB** (Makan di tempat / Bawa pulang / Antar) tidak bisa dipilih di kasir; tanpa mode meja semua penjualan tercatat Bawa pulang. Pilihan kanal hanya muncul bila ada kanal ojol/harga berkanal | `LayananPenjualan.AmbilPilihanKanal`; §9.1–§9.2 | SELESAI @ v3.51 |
 | K-2 | **Nomor antrian / nama pemesan** untuk penjualan bayar-dulu (QSR) tidak ada; struk & tiket dapur hanya nomor INV; layar panggil antrian tidak ada | §9.2 | SELESAI @ v3.52 (layar panggil antrian menyusul) |
-| K-3 | **Cetak tagihan sementara (pre-bill)** untuk pesanan meja tidak ada | §9.1 | TERBUKA |
+| K-3 | **Cetak tagihan sementara (pre-bill)** untuk pesanan meja tidak ada | §9.1 | SELESAI @ v3.53 |
 | K-4 | **Keranjang hilang bila aplikasi tertutup** (hanya di memori; PRD minta tersimpan di SQLite) | `Penyedia.dart` `PengaturKeranjang`; §17.2.7 | TERBUKA |
 | K-5 | **Barcode timbangan** (awalan 20–29, harga/berat di EAN-13) tidak dikenali | `KatalogLokal.CariKode`; §9.3, F-03 | TERBUKA |
 | K-6 | **Pemicu sinkron belum lengkap**: hanya timer 30 detik di ruang kerja; tidak saat aplikasi kembali ke depan, koneksi kembali, atau di layar kunci/pilih kasir | `RuangKerja.dart`, `GerbangKasir.dart`; §18.3 | TERBUKA |

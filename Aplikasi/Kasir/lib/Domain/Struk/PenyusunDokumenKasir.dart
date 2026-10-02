@@ -6,6 +6,8 @@ import '../../Data/BasisData/BasisDataKasir.dart';
 import 'package:klien_api/KlienApi.dart';
 
 import '../../Data/PesananMeja.dart';
+import '../Penjualan/Keranjang.dart';
+import '../Penjualan/LayananPenjualan.dart';
 import '../Pelanggan/LayananDeposit.dart';
 import '../Penjualan/LayananPreOrder.dart';
 import '../Shift/LayananTutupShift.dart';
@@ -128,6 +130,59 @@ abstract final class PenyusunDokumenKasir {
       const BarisGaris(),
       ...PenyusunStrukPenjualan.SusunKaki(identitas),
     ], bukaLaci: bukaLaci);
+  }
+
+  /// Tagihan sementara (pre-bill, §9.1, v3.53) pesanan meja sebelum dibayar: item, subtotal, diskon, biaya layanan,
+  /// pajak per jenis, dan TOTAL dari mesin kalkulasi yang sama dengan layar Bayar, ditandai jelas "BELUM LUNAS" dan
+  /// "bukan bukti pembayaran". Promo metode bayar & pembulatan tunai belum diketahui, jadi total bisa berubah saat bayar.
+  static DokumenStruk SusunTagihanSementara(
+    IdentitasStruk identitas, {
+    required String judul,
+    required String nomor,
+    required Keranjang keranjang,
+    required HitunganKeranjang hitungan,
+    required DateTime waktu,
+    String? namaKasir,
+    int jumlahTamu = 0,
+  }) {
+    final (tanggal, jam) = PenyusunStrukPenjualan.TanggalJam(waktu);
+    final hasil = hitungan.hasil;
+    final angka = PenyusunStrukPenjualan.Angka;
+    return DokumenStruk([
+      ...PenyusunStrukPenjualan.SusunKepala(identitas),
+      const BarisGaris(),
+      const BarisTeks('TAGIHAN SEMENTARA', rata: RataStruk.Tengah, tebal: true),
+      const BarisTeks('BELUM LUNAS', rata: RataStruk.Tengah),
+      BarisTeks(judul, rata: RataStruk.Tengah, tebal: true, besar: true),
+      BarisTeks(nomor),
+      BarisDuaKolom(tanggal, jam),
+      if (identitas.pengaturan.tampilkanKasir && namaKasir != null && namaKasir.isNotEmpty)
+        BarisTeks('Kasir: $namaKasir'),
+      if (jumlahTamu > 0) BarisTeks('Tamu: $jumlahTamu orang'),
+      const BarisGaris(),
+      for (var i = 0; i < keranjang.baris.length; i++) ...[
+        BarisTeks(keranjang.baris[i].nama),
+        for (final p in keranjang.baris[i].pilihan) BarisTeks('  + ${p.nama}'),
+        BarisDuaKolom(
+          '  ${PenyusunStrukPenjualan.Jumlah(keranjang.baris[i].jumlah.KeString())} x '
+          '${angka(keranjang.baris[i].hargaSatuan)}',
+          angka(hasil.baris[i].bruto),
+        ),
+        if (!hasil.baris[i].diskon.BernilaiNol()) BarisDuaKolom('  Diskon', '-${angka(hasil.baris[i].diskon)}'),
+      ],
+      const BarisGaris(),
+      BarisDuaKolom('Subtotal', angka(hasil.subtotal)),
+      if (!hasil.diskonPesanan.BernilaiNol()) BarisDuaKolom('Diskon', '-${angka(hasil.diskonPesanan)}'),
+      if (!hasil.biayaLayanan.BernilaiNol()) BarisDuaKolom('Biaya layanan', angka(hasil.biayaLayanan)),
+      for (final p in hitungan.pajakDokumen)
+        if (hasil.pajak[p.kode] case final pajak? when !pajak.jumlah.BernilaiNol())
+          BarisDuaKolom(hitungan.labelPajak[p.kode] ?? p.kode, angka(pajak.jumlah)),
+      BarisDuaKolom('TOTAL', hasil.totalAkhir.FormatRupiah(), tebal: true),
+      const BarisGaris(),
+      const BarisTeks('Bukan bukti pembayaran.', rata: RataStruk.Tengah),
+      const BarisTeks('Total dapat berubah karena promo metode bayar atau pembulatan tunai.', rata: RataStruk.Tengah),
+      ...PenyusunStrukPenjualan.SusunKaki(identitas),
+    ]);
   }
 
   /// Nota/label laundry (§9.9) dari daftar cucian (online): nomor nota besar, pemilik, layanan, isi, parfum, perkiraan

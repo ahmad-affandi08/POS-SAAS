@@ -10,6 +10,7 @@ import '../../Data/PesananMeja.dart';
 import '../../Domain/GalatKasir.dart';
 import '../../Domain/Katalog/KatalogLokal.dart';
 import '../../Domain/Meja/KonteksPesananMeja.dart';
+import '../../Domain/Meja/LayananPesananMeja.dart';
 import '../../Domain/Penjualan/Keranjang.dart';
 import '../../Domain/Sesi/StafLokal.dart';
 import 'BagianPesanSendiri.dart';
@@ -124,6 +125,42 @@ class _LayarMejaState extends ConsumerState<LayarMeja> {
     _PasangPesanan(pesanan);
   }
 
+  /// v3.53 (§9.1): tagihan sementara (pre-bill) untuk tamu yang minta bill; dihitung dengan mesin yang sama dengan
+  /// layar Bayar dari item aktif pesanan. Tidak mengubah pesanan.
+  Future<void> _CetakTagihanSementara(PesananMeja pesanan) async {
+    final katalog = ref.read(penyediaKatalog).value ?? KatalogLokal.kosong;
+    final konteks = ref.read(penyediaKonteksPenjualan).value;
+    final keranjang = LayananPesananMeja.SusunKeranjangEfektif(
+      Keranjang(pesananMeja: KonteksPesananMeja.DariPesanan(pesanan)),
+      pesanan,
+      katalog,
+    );
+    if (konteks == null || keranjang.CekKosong) {
+      setState(() => _pesan = 'Pesanan ${pesanan.AmbilJudul()} belum berisi item untuk ditagih.');
+      return;
+    }
+    try {
+      await ref
+          .read(penyediaLayananStruk)
+          .CetakTagihanSementara(
+            judul: pesanan.AmbilJudul(),
+            nomor: pesanan.nomor,
+            keranjang: keranjang,
+            hitungan: ref.read(penyediaLayananPenjualan).Hitung(keranjang, konteks),
+            waktu: ref.read(penyediaJam)(),
+            namaKasir: widget.kasir.nama,
+            jumlahTamu: pesanan.jumlahTamu,
+          );
+      if (mounted) {
+        setState(() => _pesan = 'Tagihan sementara ${pesanan.AmbilJudul()} dicetak.');
+      }
+    } on GalatKasir catch (galat) {
+      if (mounted) {
+        setState(() => _pesan = galat.pesan);
+      }
+    }
+  }
+
   /// Cetak struk bagian 4c (v1.89): cetak ulang tiket dapur semua item yang sudah dikirim, bertanda CETAK ULANG.
   Future<void> _CetakUlangTiket(PesananMeja pesanan) async {
     final hasil = await ref
@@ -180,6 +217,12 @@ class _LayarMejaState extends ConsumerState<LayarMeja> {
                 title: const Text('Gabung ke pesanan lain'),
                 onTap: () => Navigator.of(konteks).pop('Gabung'),
               ),
+            if (pesanan.AmbilBarisAktif().isNotEmpty)
+              ListTile(
+                leading: const Icon(Icons.receipt_outlined),
+                title: const Text('Cetak tagihan sementara'),
+                onTap: () => Navigator.of(konteks).pop('CetakTagihan'),
+              ),
             if (pesanan.AmbilBarisAktif().any((b) => b.dikirimKeDapur))
               ListTile(
                 leading: const Icon(Icons.soup_kitchen_outlined),
@@ -208,6 +251,8 @@ class _LayarMejaState extends ConsumerState<LayarMeja> {
         _Lanjutkan(pesanan);
       case 'CetakTiket':
         await _CetakUlangTiket(pesanan);
+      case 'CetakTagihan':
+        await _CetakTagihanSementara(pesanan);
       case 'Pisah':
         final pilihan = await PilihItemPisah(context, pesanan);
         if (pilihan != null && mounted) {
