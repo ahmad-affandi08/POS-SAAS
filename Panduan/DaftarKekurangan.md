@@ -89,7 +89,7 @@ kode. Urutan pengerjaan = urutan tabel; butir yang selesai diberi **SELESAI @ ve
 
 | # | Celah | Bukti / PRD | Status |
 |---|---|---|---|
-| K-1 | **Jenis pesanan FnB** (Makan di tempat / Bawa pulang / Antar) tidak bisa dipilih di kasir; tanpa mode meja semua penjualan tercatat Bawa pulang. Pilihan kanal hanya muncul bila ada kanal ojol/harga berkanal | `LayananPenjualan.AmbilPilihanKanal`; §9.1–§9.2 | DIKERJAKAN (v3.51) |
+| K-1 | **Jenis pesanan FnB** (Makan di tempat / Bawa pulang / Antar) tidak bisa dipilih di kasir; tanpa mode meja semua penjualan tercatat Bawa pulang. Pilihan kanal hanya muncul bila ada kanal ojol/harga berkanal | `LayananPenjualan.AmbilPilihanKanal`; §9.1–§9.2 | SELESAI @ v3.51 |
 | K-2 | **Nomor antrian / nama pemesan** untuk penjualan bayar-dulu (QSR) tidak ada; struk & tiket dapur hanya nomor INV; layar panggil antrian tidak ada | §9.2 | TERBUKA |
 | K-3 | **Cetak tagihan sementara (pre-bill)** untuk pesanan meja tidak ada | §9.1 | TERBUKA |
 | K-4 | **Keranjang hilang bila aplikasi tertutup** (hanya di memori; PRD minta tersimpan di SQLite) | `Penyedia.dart` `PengaturKeranjang`; §17.2.7 | TERBUKA |
