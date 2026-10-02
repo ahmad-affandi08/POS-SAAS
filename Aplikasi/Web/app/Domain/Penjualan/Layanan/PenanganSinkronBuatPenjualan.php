@@ -20,6 +20,7 @@ use App\Domain\Penjualan\Data\DataPajakPenjualanPos;
 use App\Domain\Penjualan\Data\DataPembayaranPenjualanPos;
 use App\Domain\Penjualan\Data\DataPenjualanPos;
 use App\Domain\Penjualan\Data\DataPromoPenjualanPos;
+use App\Domain\Penjualan\Data\DataRacikanPenjualanPos;
 use App\Domain\Penjualan\Data\DataResepPenjualanPos;
 use App\Domain\Penjualan\Data\DataRingkasanPenjualanPos;
 use App\Domain\Penjualan\Enum\ArahPembulatan;
@@ -129,6 +130,15 @@ final class PenanganSinkronBuatPenjualan implements PenanganItemSinkron
             'Baris.*.NomorSeri' => ['sometimes', 'nullable', 'array', 'max:200'],
             'Baris.*.NomorSeri.*' => ['string', 'min:1', 'max:100', 'distinct'],
             'Baris.*.DenganResep' => ['sometimes', 'nullable', 'boolean'],
+            // Apotek bagian 3: racikan (opsional; perangkat lama tidak mengirimnya).
+            'Baris.*.Racikan' => ['sometimes', 'nullable', 'array'],
+            'Baris.*.Racikan.Nama' => ['required_with:Baris.*.Racikan', 'string', 'min:1', 'max:100'],
+            'Baris.*.Racikan.JumlahKemasan' => ['required_with:Baris.*.Racikan', 'integer', 'min:1', 'max:999'],
+            'Baris.*.Racikan.AturanPakai' => ['sometimes', 'nullable', 'string', 'max:100'],
+            'Baris.*.Racikan.Komponen' => ['required_with:Baris.*.Racikan', 'array', 'min:1', 'max:'.PenyusunRacikanPenjualan::MAKS_KOMPONEN],
+            'Baris.*.Racikan.Komponen.*.UuidProduk' => ['required', 'string', 'ulid'],
+            'Baris.*.Racikan.Komponen.*.UuidProdukSatuan' => ['sometimes', 'nullable', 'string', 'ulid'],
+            'Baris.*.Racikan.Komponen.*.Jumlah' => ['required', 'string', 'regex:'.self::POLA_JUMLAH],
             'DiskonManualPesanan' => ['sometimes', 'nullable', 'array'],
             'DiskonManualPesanan.Persen' => ['sometimes', 'nullable', 'string', $persenDiskon],
             'DiskonManualPesanan.Jumlah' => ['sometimes', 'nullable', 'string', $uang],
@@ -323,10 +333,38 @@ final class PenanganSinkronBuatPenjualan implements PenanganItemSinkron
                 uuidKaryawan: is_array($b['Staf'] ?? null) ? array_values(array_map(fn ($u): string => strtoupper((string) $u), $b['Staf'])) : [],
                 nomorSeri: is_array($b['NomorSeri'] ?? null) ? array_values(array_map(fn ($n): string => trim((string) $n), $b['NomorSeri'])) : [],
                 denganResep: is_bool($b['DenganResep'] ?? null) ? $b['DenganResep'] : null,
+                racikan: is_array($b['Racikan'] ?? null) ? self::AmbilRacikan($b['Racikan'], $indeks) : null,
             );
         }
 
         return $hasil;
+    }
+
+    /** @param  array<mixed>  $r */
+    private static function AmbilRacikan(array $r, int $indeks): DataRacikanPenjualanPos
+    {
+        $komponen = [];
+
+        foreach (array_values(is_array($r['Komponen'] ?? null) ? $r['Komponen'] : []) as $i => $k) {
+            $jumlah = Kuantitas::Dari((string) $k['Jumlah']);
+
+            if (! $jumlah->KeDesimal()->isPositive()) {
+                throw new PelanggaranAturanBisnis('DataTidakValid', 'Jumlah obat racikan harus lebih dari 0.', "Baris.{$indeks}.Racikan.Komponen.{$i}.Jumlah");
+            }
+
+            $komponen[] = [
+                'UuidProduk' => strtoupper((string) $k['UuidProduk']),
+                'UuidProdukSatuan' => is_string($k['UuidProdukSatuan'] ?? null) ? strtoupper($k['UuidProdukSatuan']) : null,
+                'Jumlah' => $jumlah,
+            ];
+        }
+
+        return new DataRacikanPenjualanPos(
+            nama: trim((string) $r['Nama']),
+            jumlahKemasan: (int) $r['JumlahKemasan'],
+            aturanPakai: self::AmbilTeks($r['AturanPakai'] ?? null),
+            komponen: $komponen,
+        );
     }
 
     private static function AmbilDiskon(mixed $nilai, string $bidang): ?DataDiskonManual

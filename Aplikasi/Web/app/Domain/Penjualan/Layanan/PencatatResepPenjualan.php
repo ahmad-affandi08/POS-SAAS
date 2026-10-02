@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Penjualan\Layanan;
 
 use App\Domain\Katalog\Data\DataProdukPenjualan;
+use App\Domain\Katalog\Enum\GolonganObat;
 use App\Domain\Organisasi\Data\DataAnggotaOutlet;
 use App\Domain\Organisasi\Enum\IzinTenant;
 use App\Domain\Organisasi\Kueri\AnggotaOutlet;
@@ -34,9 +35,10 @@ final class PencatatResepPenjualan
 
     /**
      * @param  array<string, DataProdukPenjualan>  $produk  kunci = Uuid produk
+     * @param  array<int, array{0: GolonganObat|null, 1: string}>  $racikan  golongan & nama baris racikan per indeks (racikan tidak pernah OWA)
      * @return array{0: DataAnggotaOutlet|null, 1: array<int, bool>, 2: array<string, string>} [apoteker, DenganResep per indeks baris, tinjauan]
      */
-    public function Periksa(DataPenjualanPos $data, array $produk, DataAnggotaOutlet $kasir, int $idTenant, int $idOutlet, CarbonImmutable $waktuLokal): array
+    public function Periksa(DataPenjualanPos $data, array $produk, DataAnggotaOutlet $kasir, int $idTenant, int $idOutlet, CarbonImmutable $waktuLokal, array $racikan = []): array
     {
         $resep = $data->resep;
         $uuidApoteker = $resep !== null && $resep->uuidApoteker !== null ? $resep->uuidApoteker : $data->uuidApoteker;
@@ -54,23 +56,23 @@ final class PencatatResepPenjualan
 
         foreach ($data->baris as $indeks => $baris) {
             $p = $produk[$baris->uuidProduk];
-            $golongan = $p->golonganObat;
-            $denganResep[$indeks] = $resep !== null && $golongan !== null && ($adaTanda ? $baris->denganResep === true : $golongan->CekWajibResep($p->obatWajibApotek));
+            [$golongan, $nama, $owa] = isset($racikan[$indeks]) ? [$racikan[$indeks][0], $racikan[$indeks][1], false] : [$p->golonganObat, $p->nama, $p->obatWajibApotek];
+            $denganResep[$indeks] = $resep !== null && $golongan !== null && ($adaTanda ? $baris->denganResep === true : $golongan->CekWajibResep($owa));
 
             if ($golongan === null) {
                 continue;
             }
 
             if ($golongan->CekWajibApoteker()) {
-                $butuhApoteker[$p->nama] = true;
+                $butuhApoteker[$nama] = true;
             }
 
-            if ($golongan->CekWajibResep($p->obatWajibApotek) && ! $denganResep[$indeks]) {
-                $tanpaResep[$p->nama] = true;
+            if ($golongan->CekWajibResep($owa) && ! $denganResep[$indeks]) {
+                $tanpaResep[$nama] = true;
             }
 
             if ($golongan->CekDilaporkanSipnap() && $resep !== null && $resep->alamatPasien === null) {
-                $tanpaAlamat[$p->nama] = true;
+                $tanpaAlamat[$nama] = true;
             }
         }
 

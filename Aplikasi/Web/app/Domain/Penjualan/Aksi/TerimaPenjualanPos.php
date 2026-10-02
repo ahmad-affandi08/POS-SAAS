@@ -45,6 +45,7 @@ use App\Domain\Pemenuhan\Layanan\PencatatLaundryPenjualan;
 use App\Domain\Penjualan\Data\DataBarisPenjualanPos;
 use App\Domain\Penjualan\Data\DataPajakPenjualanPos;
 use App\Domain\Penjualan\Data\DataPenjualanPos;
+use App\Domain\Penjualan\Data\DataRacikanSiap;
 use App\Domain\Penjualan\Enum\JenisMetodePembayaran;
 use App\Domain\Penjualan\Enum\StatusPenjualan;
 use App\Domain\Penjualan\Kalkulasi\DataBarisKalkulasi;
@@ -67,6 +68,7 @@ use App\Domain\Penjualan\Layanan\PenutupPesananPenjualan;
 use App\Domain\Penjualan\Layanan\PenutupPesananTerbuka;
 use App\Domain\Penjualan\Layanan\PenutupUangMukaPesananOnline;
 use App\Domain\Penjualan\Layanan\PenyusunJurnalPenjualan;
+use App\Domain\Penjualan\Layanan\PenyusunRacikanPenjualan;
 use App\Domain\Penjualan\Model\MetodePembayaran;
 use App\Domain\Penjualan\Model\Penjualan;
 use App\Domain\Penjualan\Model\PenjualanDetail;
@@ -182,6 +184,7 @@ final class TerimaPenjualanPos
         private readonly InfoNomorSeri $infoSeri,
         private readonly PelacakNomorSeri $pelacakSeri,
         private readonly PencatatResepPenjualan $resep,
+        private readonly PenyusunRacikanPenjualan $racikan,
     ) {}
 
     public function Jalankan(DataPenjualanPos $data): StatusItemSinkron
@@ -283,6 +286,8 @@ final class TerimaPenjualanPos
 
         // (5) Produk & satuan, (6) tarif pajak, (9) metode bayar.
         $produk = $this->AmbilProduk($data);
+        // Apotek bagian 3: racikan (resep sementara per baris) divalidasi sebelum apa pun disimpan.
+        $racikan = $this->racikan->Siapkan($data, $produk);
         $paketSesi = $this->AmbilPaketSesi($data, $produk);
         $this->PeriksaTarifPajak($data, $outlet, $tanggalBisnis);
         $metode = $this->AmbilMetode($data);
@@ -385,12 +390,15 @@ final class TerimaPenjualanPos
 
         // Apotek (§9.5): obat keras/OWA/psikotropika/narkotika butuh apoteker berizin, obat wajib resep butuh resep.
         // Pelanggaran = diterima + tinjauan (bisa offline); resep tetap dicatat bila dikirim.
-        [$apoteker, $denganResep, $tinjauanResep] = $this->resep->Periksa($data, $produk, $kasir, $idTenant, $outlet->idOutlet, $data->dibuatPada->setTimezone($outlet->zonaWaktu));
+        [$apoteker, $denganResep, $tinjauanResep] = $this->resep->Periksa($data, $produk, $kasir, $idTenant, $outlet->idOutlet, $data->dibuatPada->setTimezone($outlet->zonaWaktu), array_map(
+            fn (DataRacikanSiap $r): array => [$r->golongan, 'Racikan '.$r->nama],
+            $racikan,
+        ));
         $tinjauan += $tinjauanResep;
 
         // Simpan dokumen, stok, jurnal.
         $penjualan = $this->SimpanPenjualan($data, $shift->id, $outlet, $kasir, $penyetuju, $tanggalBisnis, $hasil, $totalDibayar, $pesanan?->Id, $idPelanggan, $penyetujuTempo?->id, $praPesan?->Id, $returTukar?->Id, $apoteker?->id);
-        $detail = $this->SimpanDetail($data, $penjualan, $produk, $hasil, $denganResep);
+        $detail = $this->SimpanDetail($data, $penjualan, $produk, $hasil, $denganResep, $racikan);
         $this->resep->Catat($data, $penjualan->Id, $outlet->idOutlet, $apoteker);
         $this->penutupPesanan->Tutup($pesanan, $penjualan);
 
@@ -624,7 +632,7 @@ final class TerimaPenjualanPos
         $tinjauan += $tinjauanQris;
         $this->SimpanPembayaran($data, $penjualan, $metode, $refEksternal);
 
-        [$tinjauanStok, $perubahanPersediaan] = $this->CatatStok($data, $penjualan, $outlet, $produk, $detail, $kasir->id);
+        [$tinjauanStok, $perubahanPersediaan] = $this->CatatStok($data, $penjualan, $outlet, $produk, $detail, $kasir->id, $racikan);
         $tinjauan += $tinjauanStok;
         ksort($tinjauan);
         $tinjauan = array_values($tinjauan);
@@ -1150,9 +1158,10 @@ final class TerimaPenjualanPos
     /**
      * @param  array<string, DataProdukPenjualan>  $produk
      * @param  array<int, bool>  $denganResep  Apotek: baris ditutup resep, kunci = indeks baris
+     * @param  array<int, DataRacikanSiap>  $racikan  Apotek bagian 3: racikan per indeks baris
      * @return list<PenjualanDetail> urutan sama dengan baris masukan
      */
-    private function SimpanDetail(DataPenjualanPos $data, Penjualan $penjualan, array $produk, HasilKalkulasi $hasil, array $denganResep): array
+    private function SimpanDetail(DataPenjualanPos $data, Penjualan $penjualan, array $produk, HasilKalkulasi $hasil, array $denganResep, array $racikan = []): array
     {
         $pajakDokumen = [];
 
@@ -1201,9 +1210,11 @@ final class TerimaPenjualanPos
                 'NomorSeri' => $p->pelacakan === PelacakanProduk::Seri && $baris->nomorSeri !== [] ? $baris->nomorSeri : null,
                 'MasaGaransiBulan' => $p->pelacakan === PelacakanProduk::Seri ? $p->masaGaransiBulan : null,
                 // Apotek (§9.5): snapshot golongan obat & OWA saat dijual, dan apakah baris ini ditutup resep.
-                'GolonganObat' => $p->golonganObat?->value,
-                'ObatWajibApotek' => $p->golonganObat !== null && $p->obatWajibApotek,
+                // Racikan: golongan terkuat komponennya (bukan OWA) supaya ikut laporan obat wajib resep.
+                'GolonganObat' => isset($racikan[$indeks]) ? $racikan[$indeks]->golongan?->value : $p->golonganObat?->value,
+                'ObatWajibApotek' => ! isset($racikan[$indeks]) && $p->golonganObat !== null && $p->obatWajibApotek,
                 'DenganResep' => $denganResep[$indeks] ?? false,
+                'Racikan' => isset($racikan[$indeks]) ? $racikan[$indeks]->snapshot : null,
             ]);
         }
 
@@ -1256,13 +1267,14 @@ final class TerimaPenjualanPos
 
     /**
      * Mutasi stok `Penjualan` dari lokasi stok Toko outlet (produk berstok, bahan resep, komponen paket, bahan pilihan;
-     * satuan dasar), lalu HPP per baris dari hasil mutasi.
+     * satuan dasar; komponen racikan), lalu HPP per baris dari hasil mutasi.
      *
      * @param  array<string, DataProdukPenjualan>  $produk
      * @param  list<PenjualanDetail>  $detail
+     * @param  array<int, DataRacikanSiap>  $racikan
      * @return array{0: array<string, string>, 1: array<string, Uang>} [kode → alasan tinjauan, perubahan nilai per peran akun persediaan]
      */
-    private function CatatStok(DataPenjualanPos $data, Penjualan $penjualan, DataOutletPenjualan $outlet, array $produk, array $detail, int $idKasir): array
+    private function CatatStok(DataPenjualanPos $data, Penjualan $penjualan, DataOutletPenjualan $outlet, array $produk, array $detail, int $idKasir, array $racikan = []): array
     {
         $kebutuhan = $this->komposisi->AmbilKebutuhanStok(array_values(array_map(fn (DataProdukPenjualan $p): int => $p->id, $produk)));
         $uuidPilihan = [];
@@ -1302,6 +1314,11 @@ final class TerimaPenjualanPos
                 if ($dataPilihan->bahan !== null) {
                     $daftar[] = [$dataPilihan->bahan, $baris->jumlah];
                 }
+            }
+
+            // Apotek bagian 3: komponen racikan untuk satu racikan × jumlah dasar baris (obat ber-batch tetap FEFO).
+            foreach (isset($racikan[$indeks]) ? $racikan[$indeks]->kebutuhan : [] as [$k, $perRacikan]) {
+                $daftar[] = [$k, Kuantitas::Dari((string) $jumlahDasar->KeDesimal()->multipliedBy($perRacikan)->toScale(Kuantitas::SKALA, RoundingMode::HalfUp))];
             }
 
             $urutan = 0;

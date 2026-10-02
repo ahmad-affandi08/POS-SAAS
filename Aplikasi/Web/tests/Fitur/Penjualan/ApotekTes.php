@@ -16,9 +16,13 @@ use App\Domain\Penjualan\Model\PenjualanDetail;
 use App\Domain\Penjualan\Model\ResepPenjualan;
 use App\Domain\Persediaan\Enum\JenisMutasi;
 use App\Domain\Persediaan\Enum\JenisReferensiMutasi;
+use App\Domain\Persediaan\Model\BatchStok;
+use App\Domain\Persediaan\Model\MutasiStok;
+use App\Domain\Persediaan\Model\SaldoStok;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Tests\Pendukung\Kasir\BantuanKasir;
 use Tests\Pendukung\Katalog\BantuanKatalog;
 use Tests\Pendukung\Organisasi\BantuanOrganisasi;
@@ -272,6 +276,130 @@ describe('Penjualan.Buat dengan resep (BR apotek, diterima + tinjauan)', functio
             ->and(BantuanKasir::KirimRingkas($this, $k['Token'], [$item]))->toBe([['Duplikat', null]]);
         BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
         expect(ResepPenjualan::query()->count())->toBe(1)->and(Penjualan::query()->count())->toBe(1);
+    });
+});
+
+/** Stok tersedia produk di lokasi Toko uji. */
+function StokObatUji(array $k, Produk $produk): string
+{
+    BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+
+    return (string) SaldoStok::query()->where('IdProduk', $produk->Id)->where('IdGudang', $k['Gudang']->Id)->value('JumlahTersedia');
+}
+
+/**
+ * Baris jasa racik + blok Racikan (komponen untuk satu racikan).
+ *
+ * @param  list<array{0: Produk, 1: string}>  $komponen
+ * @return array<string, mixed>
+ */
+function BarisRacikanUji(Produk $jasaRacik, array $komponen, array $timpa = []): array
+{
+    return [
+        'Produk' => $jasaRacik,
+        'Jumlah' => '1',
+        'Harga' => '45000.00',
+        'Racikan' => array_replace([
+            'Nama' => 'Puyer batuk pilek anak',
+            'JumlahKemasan' => 10,
+            'AturanPakai' => '3 x 1 bungkus sesudah makan',
+            'Komponen' => array_map(fn (array $c): array => ['UuidProduk' => $c[0]->Uuid, 'Jumlah' => $c[1]], $komponen),
+        ], $timpa),
+    ];
+}
+
+describe('Racikan apotek (bagian 3): resep racik sebagai resep sementara pada baris jasa racik', function (): void {
+    it('apoteker + resep: komponen berkurang FEFO dari batch, HPP baris = Σ komponen, golongan terkuat & DenganResep, snapshot komposisi; kirim ulang Duplikat; void mengembalikan stok; retur ditolak', function (): void {
+        $k = BantuanPenjualan::Siapkan($this, 'Apotek Sehat Sentosa Solo');
+        $apoteker = BantuanOrganisasi::TambahAnggota($k['Tenant']->Id, PeranTenantBawaan::Apoteker);
+        $ctm = BuatObatUji($k, 'CTM Chlorpheniramine 4 mg Tablet', GolonganObat::BebasTerbatas);
+        $dexa = BuatObatUji($k, 'Dexamethasone 0,5 mg Tablet', GolonganObat::Keras);
+        // Paracetamol dua batch: yang kedaluwarsa lebih dulu (3 tablet) diambil lebih dulu (FEFO).
+        $para = BantuanKatalog::BuatProduk(['Nama' => 'Paracetamol 500 mg Tablet', 'Pelacakan' => PelacakanProduk::Batch, 'GolonganObat' => GolonganObat::Bebas], '500.00');
+        BantuanStokAwal::BuatDanPosting($k['Gudang'], [
+            BantuanStokAwal::Baris($para, '100', '8000', 'BT-2601', CarbonImmutable::now()->addYear()->toDateString()),
+            BantuanStokAwal::Baris($para, '3', '7000', 'BT-2512', CarbonImmutable::now()->addMonths(2)->toDateString()),
+        ], $k['Pemilik']->Id);
+        $racik = BantuanKatalog::BuatProduk(['Nama' => 'Jasa Racik Puyer (per resep)', 'Jenis' => JenisProduk::Jasa], '15000.00');
+
+        $item = BantuanPenjualan::Item($k, ['Kasir' => $apoteker, 'Baris' => [BarisRacikanUji($racik, [[$para, '5'], [$ctm, '2'], [$dexa, '2']])]], ['Resep' => ResepUji()]);
+        expect(BantuanKasir::KirimRingkas($this, $k['Token'], [$item]))->toBe([['Diterima', null]])
+            ->and(BantuanKasir::KirimRingkas($this, $k['Token'], [$item]))->toBe([['Duplikat', null]]);
+        BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+        $p = Penjualan::query()->where('Uuid', $item['Uuid'])->sole();
+        $d = PenjualanDetail::query()->where('IdPenjualan', $p->Id)->sole();
+
+        expect($p->PerluTinjauan)->toBeFalse()
+            ->and($p->IdApoteker)->toBe($apoteker->Id)
+            ->and($d->GolonganObat)->toBe('Keras')
+            ->and($d->ObatWajibApotek)->toBeFalse()
+            ->and($d->DenganResep)->toBeTrue()
+            ->and($d->Racikan['Nama'])->toBe('Puyer batuk pilek anak')
+            ->and($d->Racikan['JumlahKemasan'])->toBe(10)
+            ->and(array_column($d->Racikan['Komponen'], 'JumlahDasar'))->toBe(['5.0000', '2.0000', '2.0000'])
+            ->and(array_column($d->Racikan['Komponen'], 'GolonganObat'))->toBe(['Bebas', 'BebasTerbatas', 'Keras'])
+            // HPP rata-rata bergerak (batch hanya membagi jumlah): paracetamol (100 × 8.000 + 3 × 7.000) ÷ 103 × 5
+            // = 39.854,37, ditambah CTM 2 × 8.000 dan dexamethasone 2 × 8.000.
+            ->and($d->TotalHpp)->toBe('71854.37')
+            ->and(BatchStok::query()->where('IdProduk', $para->Id)->orderBy('NomorBatch')->pluck('JumlahSisa', 'NomorBatch')->all())->toBe(['BT-2512' => '0.0000', 'BT-2601' => '98.0000'])
+            ->and(StokObatUji($k, $para))->toBe('98.0000')
+            ->and(StokObatUji($k, $ctm))->toBe('98.0000')
+            ->and(StokObatUji($k, $dexa))->toBe('98.0000')
+            ->and(MutasiStok::query()->where('JenisReferensi', JenisReferensiMutasi::Penjualan->value)->where('IdProduk', $para->Id)->count())->toBe(2)
+            ->and(PemeriksaInvarian::PeriksaSemua($k['Tenant']->Id))->toBe([]);
+
+        // Back-office: komposisi racikan tampil di rincian penjualan.
+        BantuanOrganisasi::Masuk($this, $k['Pemilik'], $k['Tenant']->Id)->get("/kelola/penjualan/{$p->Uuid}")->assertOk()
+            ->assertInertia(fn ($h) => $h->where('Baris.0.Racikan.Nama', 'Puyer batuk pilek anak')
+                ->where('Baris.0.Racikan.Komponen.2.NamaProduk', 'Dexamethasone 0,5 mg Tablet')
+                ->where('Baris.0.Racikan.Komponen.2.Jumlah', '2.0000'));
+
+        // Obat racikan tidak bisa diretur.
+        expect(BantuanKasir::KirimRingkas($this, $k['Token'], [BantuanPenjualan::ItemRetur($k, $p, [['Detail' => $d, 'Jumlah' => '1']])]))
+            ->toBe([['Ditolak', 'ReturRacikanTidakDidukung']]);
+
+        // Void mengembalikan semua komponen ke batch asalnya.
+        expect(BantuanKasir::KirimRingkas($this, $k['Token'], [BantuanPenjualan::ItemVoid($k, $p)]))->toBe([['Diterima', null]]);
+        expect(StokObatUji($k, $para))->toBe('103.0000')
+            ->and(StokObatUji($k, $dexa))->toBe('100.0000')
+            ->and(PemeriksaInvarian::PeriksaSemua($k['Tenant']->Id))->toBe([]);
+    });
+
+    it('racikan berisi obat keras oleh kasir biasa tanpa resep: diterima + ResepTidakLengkap & ApotekerTidakBerwenang atas nama racikannya; racikan obat bebas tanpa tinjauan', function (): void {
+        $k = BantuanPenjualan::Siapkan($this, 'Apotek Sehat Sentosa Solo');
+        $para = BuatObatUji($k, 'Paracetamol 500 mg Tablet', GolonganObat::Bebas);
+        $amox = BuatObatUji($k, 'Amoxicillin 500 mg Kapsul', GolonganObat::Keras, owa: true);
+        $racik = BantuanKatalog::BuatProduk(['Nama' => 'Jasa Racik Kapsul', 'Jenis' => JenisProduk::Jasa], '20000.00');
+
+        // Komponen OWA pun tetap wajib resep di dalam racikan (racikan berasal dari resep dokter).
+        $keras = JualObatUji($this, $k, ['Baris' => [BarisRacikanUji($racik, [[$para, '2'], [$amox, '3']], ['Nama' => 'Kapsul racik anak'])]]);
+        $bebas = JualObatUji($this, $k, ['Baris' => [BarisRacikanUji($racik, [[$para, '2']], ['Nama' => 'Puyer demam'])]]);
+
+        expect($keras->PerluTinjauan)->toBeTrue()
+            ->and($keras->AlasanTinjauan)->toContain('ResepTidakLengkap')->toContain('Racikan Kapsul racik anak')
+            ->and($keras->AlasanTinjauan)->toContain('ApotekerTidakBerwenang')
+            ->and(StokObatUji($k, $amox))->toBe('97.0000')
+            ->and($bebas->PerluTinjauan)->toBeFalse()
+            ->and(PenjualanDetail::query()->where('IdPenjualan', $bebas->Id)->sole()->GolonganObat)->toBe('Bebas');
+    });
+
+    it('racikan tidak valid ditolak: bukan jasa racik, komponen tanpa stok/seri/ganda/tidak dikenal, kemasan 0, tanpa komponen', function (): void {
+        $k = BantuanPenjualan::Siapkan($this, 'Apotek Sehat Sentosa Solo');
+        $para = BuatObatUji($k, 'Paracetamol 500 mg Tablet', GolonganObat::Bebas);
+        $racik = BantuanKatalog::BuatProduk(['Nama' => 'Jasa Racik Puyer', 'Jenis' => JenisProduk::Jasa], '15000.00');
+        $tuslah = BantuanKatalog::BuatProduk(['Nama' => 'Tuslah Resep', 'Jenis' => JenisProduk::Jasa], '3000.00');
+        $termometer = BantuanKatalog::BuatProduk(['Nama' => 'Termometer Digital', 'Pelacakan' => PelacakanProduk::Seri], '45000.00');
+        $kirim = fn (array $baris): array => BantuanKasir::KirimRingkas($this, $k['Token'], [BantuanPenjualan::Item($k, ['Baris' => [$baris]])]);
+
+        expect($kirim(BarisRacikanUji($para, [[$para, '1']])))->toBe([['Ditolak', 'RacikanBukanJasa']])
+            ->and($kirim(BarisRacikanUji($racik, [[$tuslah, '1']])))->toBe([['Ditolak', 'KomponenRacikanTidakValid']])
+            ->and($kirim(BarisRacikanUji($racik, [[$termometer, '1']])))->toBe([['Ditolak', 'PelacakanBelumDidukung']])
+            ->and($kirim(BarisRacikanUji($racik, [[$para, '1'], [$para, '2']])))->toBe([['Ditolak', 'KomponenRacikanGanda']])
+            ->and($kirim(BarisRacikanUji($racik, [[$para, '1']], ['JumlahKemasan' => 0])))->toBe([['Ditolak', 'DataTidakValid']])
+            ->and($kirim(BarisRacikanUji($racik, [], ['Komponen' => []])))->toBe([['Ditolak', 'DataTidakValid']])
+            ->and($kirim(BarisRacikanUji($racik, [], ['Komponen' => [['UuidProduk' => (string) Str::ulid(), 'Jumlah' => '1']]])))->toBe([['Ditolak', 'ProdukTidakDikenal']]);
+        BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+        expect(Penjualan::query()->count())->toBe(0)->and(StokObatUji($k, $para))->toBe('100.0000');
     });
 });
 

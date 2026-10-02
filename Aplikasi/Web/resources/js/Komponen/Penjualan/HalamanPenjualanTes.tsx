@@ -120,6 +120,7 @@ const propsDetail: PropsDetailPenjualan = {
             HppSatuan: '30000.000000',
             TotalHpp: '60000.00',
             Catatan: null,
+            Racikan: null,
         },
     ],
     Pajak: [
@@ -232,6 +233,41 @@ describe('F-07b halaman penjualan back-office', () => {
         expect(screen.getByText('Tanpa jurnal (nilai Rp 0)')).toBeTruthy();
         expect(screen.queryByRole('table', { name: 'Rincian pajak penjualan' })).toBeNull();
         expect(screen.getByText(/tidak mengurangi stok/)).toBeTruthy();
+    });
+
+    it('detail: baris racikan apotek menampilkan nama, kemasan, aturan pakai, dan komposisi per racikan', () => {
+        const [baris] = propsDetail.Baris;
+
+        if (baris === undefined) {
+            throw new Error('Fixture baris kosong');
+        }
+
+        RenderUji(
+            <HalamanDetailPenjualan
+                {...propsDetail}
+                Baris={[
+                    {
+                        ...baris,
+                        NamaProduk: 'Jasa Racik Puyer',
+                        Racikan: {
+                            Nama: 'Puyer batuk anak',
+                            JumlahKemasan: 10,
+                            AturanPakai: '3 x 1 bungkus sesudah makan',
+                            Komponen: [
+                                { NamaProduk: 'Paracetamol 500 mg Tablet', Jumlah: '2.5000', GolonganObat: 'Bebas' },
+                                { NamaProduk: 'CTM 4 mg Tablet', Jumlah: '1.0000', GolonganObat: 'BebasTerbatas' },
+                            ],
+                        },
+                    },
+                ]}
+            />,
+        );
+
+        expect(
+            screen.getByText(
+                /Racikan Puyer batuk anak · 10 kemasan · 3 x 1 bungkus sesudah makan: Paracetamol 500 mg Tablet 2,5, CTM 4 mg Tablet 1/,
+            ),
+        ).toBeTruthy();
     });
 });
 

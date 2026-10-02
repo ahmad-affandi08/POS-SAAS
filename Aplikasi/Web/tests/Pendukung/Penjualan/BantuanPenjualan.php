@@ -249,6 +249,8 @@ final class BantuanPenjualan
                 ...(isset($b['NomorSeri']) ? ['NomorSeri' => $b['NomorSeri']] : []),
                 // Apotek (§9.5): baris yang ditutup resep.
                 ...(isset($b['DenganResep']) ? ['DenganResep' => $b['DenganResep']] : []),
+                // Apotek bagian 3: racikan pada baris jasa racik.
+                ...(isset($b['Racikan']) ? ['Racikan' => $b['Racikan']] : []),
             ];
         }
 

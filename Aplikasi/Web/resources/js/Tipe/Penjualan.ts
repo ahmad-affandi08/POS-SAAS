@@ -93,6 +93,15 @@ export type BarisDetailPenjualan = {
     HppSatuan: string;
     TotalHpp: string;
     Catatan: string | null;
+    /** Apotek bagian 3: komposisi obat racikan (jumlah per satu racikan, satuan dasar). */
+    Racikan: RacikanDetailPenjualan | null;
+};
+
+export type RacikanDetailPenjualan = {
+    Nama: string;
+    JumlahKemasan: number;
+    AturanPakai: string | null;
+    Komponen: { NamaProduk: string; Jumlah: string; GolonganObat: string | null }[];
 };
 
 export type BarisPajakPenjualan = {

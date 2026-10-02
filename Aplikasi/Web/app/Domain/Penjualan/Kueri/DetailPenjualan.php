@@ -136,6 +136,17 @@ final class DetailPenjualan
                 'HppSatuan' => $d->HppSatuan,
                 'TotalHpp' => $d->TotalHpp,
                 'Catatan' => $d->Catatan,
+                // Apotek bagian 3: komposisi racikan (jumlah per satu racikan, satuan dasar komponen).
+                'Racikan' => $d->Racikan === null ? null : [
+                    'Nama' => (string) ($d->Racikan['Nama'] ?? ''),
+                    'JumlahKemasan' => (int) ($d->Racikan['JumlahKemasan'] ?? 0),
+                    'AturanPakai' => $d->Racikan['AturanPakai'] ?? null,
+                    'Komponen' => array_values(array_map(fn (array $k): array => [
+                        'NamaProduk' => (string) $k['NamaProduk'],
+                        'Jumlah' => (string) $k['JumlahDasar'],
+                        'GolonganObat' => $k['GolonganObat'] ?? null,
+                    ], (array) ($d->Racikan['Komponen'] ?? []))),
+                ],
             ])->all()),
             'Pajak' => array_values(PenjualanPajak::query()->where('IdPenjualan', $p->Id)->orderBy('Id')->get()->map(fn (PenjualanPajak $pajak): array => [
                 'KodeJenisPajak' => $pajak->KodeJenisPajak,

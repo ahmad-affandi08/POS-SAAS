@@ -36,5 +36,7 @@ final readonly class DataBarisPenjualanPos
         public array $nomorSeri = [],
         // Apotek (§9.5): baris ini ditutup resep di blok `Resep`; null = perangkat tidak menandai (semua baris wajib resep).
         public ?bool $denganResep = null,
+        // Apotek bagian 3: obat racikan (komponen dikurangi dari stok; baris = produk Jasa racik).
+        public ?DataRacikanPenjualanPos $racikan = null,
     ) {}
 }

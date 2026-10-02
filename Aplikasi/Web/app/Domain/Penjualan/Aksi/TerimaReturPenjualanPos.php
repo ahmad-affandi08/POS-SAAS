@@ -377,6 +377,12 @@ final class TerimaReturPenjualanPos
                 throw new PelanggaranAturanBisnis('ReturPaketSesiTidakDidukung', "{$d->NamaProduk} adalah paket sesi dan tidak bisa diretur. Kembalikan sisa sesinya dari back-office.", "Baris.{$indeks}.UuidPenjualanDetail");
             }
 
+            if ($d->Racikan !== null) {
+                // Apotek bagian 3: obat racikan dibuat khusus untuk satu pasien; obat yang sudah diracik tidak bisa
+                // dikembalikan ke stok.
+                throw new PelanggaranAturanBisnis('ReturRacikanTidakDidukung', "{$d->NamaProduk} adalah obat racikan dan tidak bisa diretur.", "Baris.{$indeks}.UuidPenjualanDetail");
+            }
+
             $s = $sudah[$d->Id] ?? DataSudahDiretur::Kosong();
             $sisa = $this->penghitung->HitungSisa($d, $s);
 

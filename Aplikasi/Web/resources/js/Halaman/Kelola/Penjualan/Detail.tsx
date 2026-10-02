@@ -40,6 +40,13 @@ const kolomBaris: KolomTabel<BarisDetailPenjualan>[] = [
                 {b.Catatan ? (
                     <span className="block text-label break-words text-teks-sekunder">{b.Catatan}</span>
                 ) : null}
+                {b.Racikan ? (
+                    <span className="block text-label break-words text-teks-sekunder">
+                        Racikan {b.Racikan.Nama} · {b.Racikan.JumlahKemasan} kemasan
+                        {b.Racikan.AturanPakai ? ` · ${b.Racikan.AturanPakai}` : ''}:{' '}
+                        {b.Racikan.Komponen.map((k) => `${k.NamaProduk} ${FormatJumlahStok(k.Jumlah)}`).join(', ')}
+                    </span>
+                ) : null}
             </>
         ),
     },
