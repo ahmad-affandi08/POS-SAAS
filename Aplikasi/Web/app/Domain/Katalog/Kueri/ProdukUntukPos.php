@@ -79,6 +79,8 @@ final class ProdukUntukPos implements BagianKatalogPos
                 'BolehMinus' => $p->BolehMinus,
                 'TampilDiPos' => $p->TampilDiPos,
                 'TampilOnline' => $p->TampilOnline,
+                // K-25: kasir mengetik harga per transaksi (harga daftar jadi saran).
+                'HargaTerbuka' => $p->HargaTerbuka,
                 'UuidInduk' => $p->IdInduk === null ? null : $uuidProduk->get($p->IdInduk),
                 'AtributVarian' => $p->AtributVarian,
                 'UrlGambar' => PenyimpanGambarProduk::BuatUrl($p, 'besar', $dasarGambar),

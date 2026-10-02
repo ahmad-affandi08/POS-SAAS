@@ -161,6 +161,7 @@ class RepositoriKatalog {
             JumlahSesiPaket: Value(x.jumlahSesiPaket),
             MasaGaransiBulan: Value(x.masaGaransiBulan),
             AtributVarian: Value(x.atributVarian == null ? null : jsonEncode(x.atributVarian)),
+            HargaTerbuka: Value(x.hargaTerbuka),
           ),
       ]);
       b.insertAllOnConflictUpdate(db.produkSatuan, [

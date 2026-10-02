@@ -187,7 +187,7 @@ class LayananPenjualan {
   Keranjang HitungUlangHarga(Keranjang keranjang, KatalogLokal katalog, KonteksPenjualan k) => keranjang.Salin(
     baris: [
       for (final b in keranjang.baris)
-        b.uuidProdukSatuan == null
+        b.uuidProdukSatuan == null || b.hargaTerbuka
             ? b
             : b.Salin(
                 hargaSatuan:
@@ -331,6 +331,7 @@ class LayananPenjualan {
     KanalPenjualan kanal = KanalPenjualan.BawaPulang,
     String? tierPelanggan,
     List<String> nomorSeri = const [],
+    Uang? hargaManual,
   }) {
     final alasan = produk.AmbilAlasanTidakBisaDijual();
     if (alasan != null) {
@@ -345,16 +346,17 @@ class LayananPenjualan {
     final qty = produk.bernomorSeri && nomorSeri.isNotEmpty
         ? Kuantitas.DariBulat(nomorSeri.length)
         : jumlah ?? Kuantitas.DariBulat(1);
-    final harga = TentukanHarga(
-      katalog,
-      k,
-      produk.uuid,
-      satuanJual.uuid,
-      qty,
-      kanal: kanal,
-      tierPelanggan: tierPelanggan,
-    );
+    if (hargaManual != null) {
+      ValidasiHargaTerbuka(produk, hargaManual);
+    }
+    // K-25: harga terbuka = harga ketikan kasir; tanpa ketikan (panel pilihan/nomor seri) harga daftar jadi bawaan.
+    final harga =
+        hargaManual ??
+        TentukanHarga(katalog, k, produk.uuid, satuanJual.uuid, qty, kanal: kanal, tierPelanggan: tierPelanggan);
     if (harga == null) {
+      if (produk.hargaTerbuka) {
+        throw GalatKasir('HargaTerbukaWajib', 'Ketik harga "${produk.nama}" dulu.');
+      }
       throw GalatKasir(
         'HargaTidakDitemukan',
         'Harga "${produk.nama}" (${satuanJual.nama}) belum diatur. Atur di back-office menu Harga.',
@@ -376,7 +378,21 @@ class LayananPenjualan {
       hargaTermasukPajak: produk.hargaTermasukPajak,
       pajak: produk.pajak,
       nomorSeri: produk.bernomorSeri ? nomorSeri : const [],
+      hargaTerbuka: produk.hargaTerbuka,
     );
+  }
+
+  /// K-25: harga ketikan hanya untuk produk harga terbuka, lebih dari nol, dan tanpa pecahan rupiah.
+  static void ValidasiHargaTerbuka(ProdukJual produk, Uang harga) {
+    if (!produk.hargaTerbuka) {
+      throw GalatKasir('HargaBukanTerbuka', 'Harga "${produk.nama}" mengikuti daftar harga dan tidak bisa diketik.');
+    }
+    if (harga.BernilaiNol() || harga.BernilaiNegatif()) {
+      throw GalatKasir('HargaTidakValid', 'Harga "${produk.nama}" harus lebih dari Rp0.');
+    }
+    if (!harga.SamaDengan(Uang.Dari(harga.KeDesimal().truncate().toString()))) {
+      throw GalatKasir('HargaTidakValid', 'Harga "${produk.nama}" harus rupiah bulat.');
+    }
   }
 
   /// Pilihan wajib/opsional sesuai `MinimalPilih`/`MaksimalPilih` tiap kelompok produk.
@@ -424,7 +440,7 @@ class LayananPenjualan {
       if (!b.bolehDesimal && jumlah.KeDesimal() != jumlah.KeDesimal().truncate()) {
         throw GalatKasir('JumlahTidakValid', 'Jumlah ${b.namaSatuan ?? 'satuan ini'} harus bilangan bulat.');
       }
-      final harga = b.uuidProdukSatuan == null
+      final harga = b.uuidProdukSatuan == null || b.hargaTerbuka
           ? null
           : TentukanHarga(
               katalog,
@@ -447,6 +463,12 @@ class LayananPenjualan {
     KonteksPenjualan k,
   ) => _UbahBaris(keranjang, uuidBaris, (b) {
     final jumlah = satuan.bolehDesimal ? b.jumlah : Kuantitas.DariDesimal(b.jumlah.KeDesimal().ceil());
+    if (b.hargaTerbuka) {
+      throw GalatKasir(
+        'HargaTerbukaSatuan',
+        'Harga "${b.nama}" diketik kasir. Hapus lalu tambahkan lagi dengan satuan lain.',
+      );
+    }
     final harga = TentukanHarga(
       katalog,
       k,

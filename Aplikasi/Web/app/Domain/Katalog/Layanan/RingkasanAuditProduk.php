@@ -31,6 +31,7 @@ final class RingkasanAuditProduk
             'BolehMinus' => $produk->BolehMinus,
             'TampilDiPos' => $produk->TampilDiPos,
             'TampilOnline' => $produk->TampilOnline,
+            'HargaTerbuka' => $produk->HargaTerbuka,
             'AtributVarian' => $produk->AtributVarian,
             'Satuan' => ProdukSatuan::query()->where('IdProduk', $produk->Id)->orderBy('Id')->get()
                 ->map(fn (ProdukSatuan $s): array => ['IdSatuan' => $s->IdSatuan, 'KonversiKeDasar' => $s->KonversiKeDasar, 'Barcode' => $s->Barcode()->orderBy('Id')->pluck('Barcode')->all()])

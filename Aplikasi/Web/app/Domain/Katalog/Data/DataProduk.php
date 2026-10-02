@@ -45,5 +45,7 @@ final readonly class DataProduk
         // Kode Coretax (v3.11): kode barang/jasa 6 digit & unit `UM.00xx`; null = kode umum saat ekspor.
         public ?string $kodeBarangJasaCoretax = null,
         public ?string $kodeUnitCoretax = null,
+        // K-25: harga diketik kasir; null = tidak diubah (impor & panduan awal).
+        public ?bool $hargaTerbuka = null,
     ) {}
 }

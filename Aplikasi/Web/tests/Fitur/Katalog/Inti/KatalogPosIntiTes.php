@@ -127,3 +127,16 @@ describe('F-05h katalog POS: masa garansi produk bernomor seri', function (): vo
             ->and($produk[$biasa->Uuid]['MasaGaransiBulan'])->toBeNull();
     });
 });
+
+describe('K-25 katalog POS: item harga terbuka', function (): void {
+    it('Produk membawa HargaTerbuka supaya kasir meminta harga saat produk ditambahkan', function (): void {
+        $t = BantuanKatalog::SiapkanTenantProduk();
+        $lain = BantuanKatalog::BuatProduk(['Nama' => 'Barang lain-lain', 'Jenis' => 'NonStok', 'HargaTerbuka' => true, 'IdKelompokPajak' => $t['KelompokPajak']->Id], null, $t['Pcs']);
+        $biasa = BantuanKatalog::BuatProduk(['Nama' => 'Casing Silikon Bening', 'IdKelompokPajak' => $t['KelompokPajak']->Id], null, $t['Pcs']);
+
+        $produk = collect(AmbilBagianPosUji($t['Tenant']->Id, $t['Outlet']->Id, null)['Produk'])->keyBy('Uuid');
+
+        expect($produk[$lain->Uuid]['HargaTerbuka'])->toBeTrue()
+            ->and($produk[$biasa->Uuid]['HargaTerbuka'])->toBeFalse();
+    });
+});

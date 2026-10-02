@@ -813,4 +813,20 @@ describe('Kelola/Produk: dialog & sakelar shadcn/ui', () => {
         expect(body.TampilOnline).toBe(true);
         window.localStorage.clear();
     });
+
+    it('K-25: sakelar harga terbuka mengisi HargaTerbuka di body FormProduk', () => {
+        window.localStorage.setItem('Katalog.FormProduk.Mode', 'Lengkap');
+        render(<HalamanFormProduk {...PropsForm()} />);
+        fireEvent.click(screen.getByRole('tab', { name: 'Pajak & tampilan' }));
+
+        fireEvent.click(screen.getByRole('switch', { name: /Harga diketik kasir/ }));
+        fireEvent.change(screen.getByLabelText('Nama produk'), { target: { value: 'Barang lain-lain' } });
+        fireEvent.click(screen.getByRole('tab', { name: 'Harga' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Isi harga dasar' }));
+        fireEvent.change(screen.getByLabelText('Harga baris 1'), { target: { value: '0' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Simpan produk' }));
+
+        expect((kirimanForm[0]?.data as FormProduk).HargaTerbuka).toBe(true);
+        window.localStorage.clear();
+    });
 });

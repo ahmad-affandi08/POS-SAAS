@@ -81,6 +81,9 @@ class Produk extends Table {
   /// `{"Ukuran":"M","Warna":"Hitam"}`; null = bukan produk varian.
   TextColumn get AtributVarian => text().nullable()();
 
+  /// Skema 25 (K-25): harga diketik kasir per transaksi.
+  BoolColumn get HargaTerbuka => boolean().withDefault(const Constant(false))();
+
   @override
   Set<Column<Object>> get primaryKey => {Uuid};
 }

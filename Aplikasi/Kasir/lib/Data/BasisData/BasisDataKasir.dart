@@ -206,7 +206,7 @@ class BasisDataKasir extends _$BasisDataKasir {
   /// outbox); 17 = F-05f bagian 2 (bahan terbuang lokal); 18 = X8 (kanal metode pembayaran platform ojol);
   /// 19 = F-17 bagian 3 (ongkir ikut DPP pajak); 24 = K-12 (minta bill & meja perlu dibersihkan).
   @override
-  int get schemaVersion => 24;
+  int get schemaVersion => 25;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -437,6 +437,17 @@ class BasisDataKasir extends _$BasisDataKasir {
       }
       if (dari < 24) {
         await m.createTable(mejaPerluDibersihkan);
+      }
+      // Skema 25 (K-25): item harga terbuka. Kursor katalog dihapus supaya sinkron berikutnya memuat ulang produk beserta
+      // benderanya; tanpa itu produk harga terbuka lama terjual dengan harga daftar sampai produknya diubah.
+      if (dari >= 2 && dari < 25) {
+        final kolom = await customSelect(
+          "SELECT COUNT(*) AS Jumlah FROM pragma_table_info('Produk') WHERE name = 'HargaTerbuka'",
+        ).map((r) => r.read<int>('Jumlah')).getSingle();
+        if (kolom == 0) {
+          await m.addColumn(produk, produk.HargaTerbuka);
+        }
+        await (delete(pengaturan)..where((p) => p.Kunci.equals('KursorKatalog'))).go();
       }
     },
     beforeOpen: (detail) async {

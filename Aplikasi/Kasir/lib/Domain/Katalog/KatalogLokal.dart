@@ -120,6 +120,7 @@ class ProdukJual {
     required this.pajak,
     this.jumlahSesiPaket,
     this.masaGaransiBulan,
+    this.hargaTerbuka = false,
     this.aktif = true,
     this.satuanDasar,
     this.uuidInduk,
@@ -193,6 +194,9 @@ class ProdukJual {
 
   /// F-05h: masa garansi standar (bulan) produk bernomor seri; di-snapshot ke baris penjualan untuk struk.
   final int? masaGaransiBulan;
+
+  /// K-25: harga diketik kasir saat produk ditambahkan (harga daftar, bila ada, jadi saran).
+  final bool hargaTerbuka;
 
   bool get paketSesi => jumlahSesiPaket != null;
   final String? uuidKategori;
@@ -423,6 +427,7 @@ class KatalogLokal {
           pajak: p.UuidKelompokPajak == null ? const [] : pajakKelompok[p.UuidKelompokPajak] ?? const [],
           jumlahSesiPaket: p.JumlahSesiPaket,
           masaGaransiBulan: p.MasaGaransiBulan,
+          hargaTerbuka: p.HargaTerbuka,
           aktif: p.Aktif,
           uuidInduk: p.UuidInduk,
           atributVarian: ProdukJual.UraiAtributVarian(p.AtributVarian).atribut,

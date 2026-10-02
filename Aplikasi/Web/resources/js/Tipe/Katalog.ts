@@ -112,6 +112,8 @@ export type FormProduk = {
     BolehMinus: TigaKeadaan;
     TampilDiPos: boolean;
     TampilOnline: boolean;
+    /** K-25: kasir mengetik harga per transaksi (Stok, NonStok, Jasa, Resep); tidak ada = false. */
+    HargaTerbuka?: boolean;
     Satuan: FormSatuanProduk[];
     AtributVarian: { Nama: string; Nilai: string[] }[];
     /** F-07 mode service: lama layanan jasa (menit) untuk reservasi; null = tidak bisa direservasi. */
@@ -191,6 +193,7 @@ export type DetailProduk = {
     BolehMinus: TigaKeadaan;
     TampilDiPos: boolean;
     TampilOnline: boolean;
+    HargaTerbuka?: boolean;
     UrlGambar: string | null;
     UrlGambarKecil: string | null;
     Satuan: SatuanDetail[];

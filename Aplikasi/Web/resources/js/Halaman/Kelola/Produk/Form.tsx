@@ -61,6 +61,7 @@ const galatPerTab: Record<KunciTab, string[]> = {
         'BolehMinus',
         'TampilDiPos',
         'TampilOnline',
+        'HargaTerbuka',
         'KodeBarangJasaCoretax',
         'KodeUnitCoretax',
     ],
@@ -121,6 +122,9 @@ function SimpanModeFormulir(mode: ModeFormulir): void {
 }
 
 /** Jenis yang ditawarkan di mode Sederhana, dengan contoh yang mudah dipahami. */
+/** K-25: jenis yang boleh berharga terbuka (sama dengan `JenisProduk::CekBolehHargaTerbuka`). */
+const jenisHargaTerbuka: JenisProduk[] = ['Stok', 'NonStok', 'Jasa', 'Resep'];
+
 const jenisSederhana: Partial<Record<JenisProduk, string>> = {
     Stok: 'Barang yang dihitung stoknya, misal sabun atau minuman botol.',
     Resep: 'Menu dari bahan baku, misal kopi susu. Resep diisi setelah produk disimpan.',
@@ -775,6 +779,18 @@ export default function HalamanFormProduk({
                         Tampil di toko online
                     </FieldLabel>
                 </Field>
+                {jenisHargaTerbuka.includes(data.Jenis) ? (
+                    <Field orientation="horizontal" className="min-h-10 items-center">
+                        <Switch
+                            id={`${idForm}-harga-terbuka`}
+                            checked={data.HargaTerbuka ?? false}
+                            onCheckedChange={(nilai) => Atur('HargaTerbuka', nilai)}
+                        />
+                        <FieldLabel htmlFor={`${idForm}-harga-terbuka`} className="text-isi font-normal text-teks-utama">
+                            Harga diketik kasir saat menjual (misal barang lain-lain, jasa servis)
+                        </FieldLabel>
+                    </Field>
+                ) : null}
             </FieldSet>
         </div>
     );

@@ -312,3 +312,29 @@ Map<String, Object?> KatalogTimbanganUji() {
   ];
   return katalog;
 }
+
+/// K-25: "Barang lain-lain" (NonStok, harga terbuka tanpa harga daftar) dan "Jasa servis ringan" (Jasa, harga terbuka
+/// dengan harga daftar Rp 50.000 sebagai saran).
+const String barangLainLain = '01K5PRD00000000000LA1NLA1N1';
+const String jasaServis = '01K5PRD000000000000SERV1S01';
+const String psBarangLain = '01K5PS00000000000LA1NLA1N1';
+const String psJasaServis = '01K5PS000000000000SERV1S01';
+
+Map<String, Object?> KatalogHargaTerbukaUji() {
+  final katalog = KatalogUji();
+  katalog['Produk'] = [
+    ...(katalog['Produk']! as List<Object?>),
+    {...ProdukUji(barangLainLain, 'Barang lain-lain', jenis: 'NonStok', sku: 'LAIN'), 'HargaTerbuka': true},
+    {...ProdukUji(jasaServis, 'Jasa servis ringan', jenis: 'Jasa', sku: 'SRV-01'), 'HargaTerbuka': true},
+  ];
+  katalog['ProdukSatuan'] = [
+    ...(katalog['ProdukSatuan']! as List<Object?>),
+    SatuanProdukUji(psBarangLain, barangLainLain, UuidUji.satuanPcs),
+    SatuanProdukUji(psJasaServis, jasaServis, UuidUji.satuanPcs),
+  ];
+  katalog['ProdukHarga'] = [
+    ...(katalog['ProdukHarga']! as List<Object?>),
+    HargaUji('01K5HRG0000000000SERV1S001', jasaServis, psJasaServis, '50000.00'),
+  ];
+  return katalog;
+}

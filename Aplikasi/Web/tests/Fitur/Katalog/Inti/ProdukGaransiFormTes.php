@@ -80,3 +80,28 @@ it('kode barang/jasa dan kode satuan Coretax disimpan dari form produk (format d
     BantuanOrganisasi::AturKonteks($t['Tenant']->Id);
     expect($produk->refresh()->KodeBarangJasaCoretax)->toBeNull()->and($produk->KodeUnitCoretax)->toBeNull();
 });
+
+it('K-25: harga terbuka disimpan dari form untuk jenis yang boleh; jenis lain & impor tidak mengubahnya', function (): void {
+    $t = BantuanKatalog::SiapkanTenantProduk('Toko Ponsel Nusantara Solo');
+    $masuk = fn () => BantuanKatalog::MasukSebagai($this, $t['Tenant']->Id);
+
+    $form = IsiFormGaransi($t, ['Nama' => 'Jasa servis ringan', 'Jenis' => 'Jasa', 'Pelacakan' => PelacakanProduk::Tidak->value, 'MasaGaransiBulan' => null, 'HargaTerbuka' => true]);
+    $masuk()->post('/kelola/produk', $form)->assertSessionHasNoErrors();
+    BantuanOrganisasi::AturKonteks($t['Tenant']->Id);
+    $produk = Produk::query()->where('Uuid', $form['Uuid'])->sole();
+    expect($produk->HargaTerbuka)->toBeTrue();
+
+    // Form tanpa bidang HargaTerbuka (klien lama) tidak mematikannya.
+    $tanpa = $form;
+    unset($tanpa['HargaTerbuka']);
+    $masuk()->put("/kelola/produk/{$form['Uuid']}", $tanpa)->assertSessionHasNoErrors();
+    expect($produk->refresh()->HargaTerbuka)->toBeTrue();
+
+    $masuk()->put("/kelola/produk/{$form['Uuid']}", [...$form, 'HargaTerbuka' => false])->assertSessionHasNoErrors();
+    expect($produk->refresh()->HargaTerbuka)->toBeFalse();
+
+    $varian = IsiFormGaransi($t, ['Nama' => 'Ponsel Seri Harga Terbuka', 'HargaTerbuka' => true]);
+    $masuk()->post('/kelola/produk', [...$varian, 'Jenis' => 'Konsinyasi', 'Pelacakan' => PelacakanProduk::Tidak->value, 'MasaGaransiBulan' => null])->assertSessionHasNoErrors();
+    BantuanOrganisasi::AturKonteks($t['Tenant']->Id);
+    expect(Produk::query()->where('Uuid', $varian['Uuid'])->sole()->HargaTerbuka)->toBeFalse();
+});

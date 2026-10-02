@@ -67,6 +67,7 @@ class ItemKeranjang {
     this.pajak = const [],
     this.staf = const [],
     this.nomorSeri = const [],
+    this.hargaTerbuka = false,
   });
 
   final String uuid;
@@ -93,6 +94,9 @@ class ItemKeranjang {
   /// F-05h: nomor seri/IMEI tiap unit yang dijual (produk bernomor seri); jumlah baris = banyaknya nomor.
   final List<String> nomorSeri;
 
+  /// K-25: harga diketik kasir; tidak ditentukan ulang saat jumlah/satuan/pelanggan/kanal berubah dan tidak digabung.
+  final bool hargaTerbuka;
+
   Uang AmbilHargaPilihan() => pilihan.fold(Uang.Nol(), (total, p) => total.Tambah(p.harga));
 
   /// Baris yang sama (produk, satuan, pilihan) tanpa catatan & diskon digabung saat produk ditambah lagi.
@@ -107,6 +111,8 @@ class ItemKeranjang {
       lain.staf.isEmpty &&
       nomorSeri.isEmpty &&
       lain.nomorSeri.isEmpty &&
+      !hargaTerbuka &&
+      !lain.hargaTerbuka &&
       pilihan.map((p) => p.uuid).toSet().containsAll(lain.pilihan.map((p) => p.uuid)) &&
       pilihan.length == lain.pilihan.length;
 
@@ -137,6 +143,7 @@ class ItemKeranjang {
     pajak: pajak,
     staf: staf ?? this.staf,
     nomorSeri: nomorSeri ?? this.nomorSeri,
+    hargaTerbuka: hargaTerbuka,
   );
 
   Map<String, Object?> KeJson() => {
@@ -155,6 +162,7 @@ class ItemKeranjang {
     'Pajak': [for (final p in pajak) p.KeJson()],
     'Staf': staf,
     'NomorSeri': nomorSeri,
+    'HargaTerbuka': hargaTerbuka,
   };
 
   static ItemKeranjang DariJson(Map<String, Object?> json) => ItemKeranjang(
@@ -179,6 +187,7 @@ class ItemKeranjang {
     ],
     staf: [...(json['Staf'] as List<Object?>? ?? const []).whereType<String>()],
     nomorSeri: [...(json['NomorSeri'] as List<Object?>? ?? const []).whereType<String>()],
+    hargaTerbuka: json['HargaTerbuka'] == true,
   );
 }
 

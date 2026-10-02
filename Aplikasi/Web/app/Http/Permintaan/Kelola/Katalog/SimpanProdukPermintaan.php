@@ -54,6 +54,7 @@ final class SimpanProdukPermintaan extends FormRequest
             'BolehMinus' => ['required', $tigaKeadaan],
             'TampilDiPos' => ['required', 'boolean'],
             'TampilOnline' => ['required', 'boolean'],
+            'HargaTerbuka' => ['sometimes', 'boolean'],
             'DurasiMenit' => ['nullable', 'integer', 'min:5', 'max:720'],
             'MasaGaransiBulan' => ['nullable', 'integer', 'min:1', 'max:240'],
             // Faktur Pajak Coretax (v3.11): kode barang/jasa 6 digit dan kode unit `UM.00xx` dari daftar DJP.
@@ -175,6 +176,7 @@ final class SimpanProdukPermintaan extends FormRequest
             masaGaransiBulan: $this->filled('MasaGaransiBulan') ? $this->integer('MasaGaransiBulan') : null,
             kodeBarangJasaCoretax: $this->filled('KodeBarangJasaCoretax') ? $this->string('KodeBarangJasaCoretax')->toString() : null,
             kodeUnitCoretax: $this->filled('KodeUnitCoretax') ? $this->string('KodeUnitCoretax')->toString() : null,
+            hargaTerbuka: $this->has('HargaTerbuka') ? $this->boolean('HargaTerbuka') : null,
         );
     }
 

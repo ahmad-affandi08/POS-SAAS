@@ -122,6 +122,7 @@ final class SimpanProduk
             'BolehMinus' => $bolehMinus,
             'TampilDiPos' => AturanProduk::TentukanTampilDiPos($data->jenis, $data->tampilDiPos),
             'TampilOnline' => $data->tampilOnline,
+            'HargaTerbuka' => $data->jenis->CekBolehHargaTerbuka() && ($data->hargaTerbuka ?? $produk->HargaTerbuka),
             'DurasiMenit' => $data->jenis === JenisProduk::Jasa ? $data->durasiMenit : null,
             // F-05h: hanya produk bernomor seri; impor & panduan awal tidak mengubah garansi yang sudah diatur.
             // Kode Coretax (v3.11): hanya form back-office; impor & panduan awal tidak menimpa yang sudah diatur.

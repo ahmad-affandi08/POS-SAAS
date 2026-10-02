@@ -44,6 +44,7 @@ use Illuminate\Support\Carbon;
  * @property bool $Aktif
  * @property bool $TampilDiPos
  * @property bool $TampilOnline
+ * @property bool $HargaTerbuka
  * @property int|null $DurasiMenit F-07 mode service: lama layanan jasa untuk slot reservasi
  * @property string|null $PathGambar
  * @property Carbon|null $DiarsipkanPada
@@ -82,6 +83,7 @@ final class Produk extends ModelDasar
         'Aktif' => true,
         'TampilDiPos' => true,
         'TampilOnline' => false,
+        'HargaTerbuka' => false,
         'DurasiMenit' => null,
         'MasaGaransiBulan' => null,
         'KodeBarangJasaCoretax' => null,
@@ -165,6 +167,7 @@ final class Produk extends ModelDasar
             'Aktif' => 'boolean',
             'TampilDiPos' => 'boolean',
             'TampilOnline' => 'boolean',
+            'HargaTerbuka' => 'boolean',
             'DurasiMenit' => 'integer',
             'MasaGaransiBulan' => 'integer',
             'DiarsipkanPada' => 'datetime',

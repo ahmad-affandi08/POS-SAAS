@@ -23,6 +23,7 @@ import '../Domain/Penjualan/PengaliJumlah.dart';
 import '../Domain/Perangkat/LayananLayarPelanggan.dart';
 import '../Domain/Perangkat/PengaturanPerangkat.dart';
 import '../Domain/Sesi/StafLokal.dart';
+import 'Jual/DialogHargaTerbuka.dart';
 import 'Jual/PanelBayar.dart';
 import 'Jual/PanelCekHarga.dart';
 import 'Jual/PanelDiskon.dart';
@@ -461,6 +462,46 @@ class _LayarJualState extends ConsumerState<LayarJual> {
       });
       return;
     }
+    if (produk.hargaTerbuka) {
+      unawaited(_TambahHargaTerbuka(produk, satuan: satuan, jumlah: jumlah));
+      return;
+    }
+    _TambahBaris(produk, satuan: satuan, jumlah: jumlah);
+  }
+
+  /// K-25: produk harga terbuka meminta harga (harga daftar jadi isian awal) & keterangan sebelum masuk keranjang.
+  Future<void> _TambahHargaTerbuka(ProdukJual produk, {SatuanJual? satuan, Kuantitas? jumlah}) async {
+    final katalog = ref.read(penyediaKatalog).value;
+    final k = ref.read(penyediaKonteksPenjualan).value;
+    final satuanJual = satuan ?? produk.AmbilSatuanBawaan();
+    if (katalog == null || k == null) {
+      return;
+    }
+    final keranjang = ref.read(penyediaKeranjang);
+    final saran = satuanJual == null
+        ? null
+        : ref
+              .read(penyediaLayananPenjualan)
+              .TentukanHarga(
+                katalog,
+                k,
+                produk.uuid,
+                satuanJual.uuid,
+                jumlah ?? Kuantitas.DariBulat(1),
+                kanal: LayananPenjualan.AmbilKanal(keranjang),
+                tierPelanggan: keranjang.pelanggan?.kodeTier,
+              );
+    final hasil = await showDialog<HargaTerbukaDiketik>(
+      context: context,
+      builder: (_) => DialogHargaTerbuka(namaProduk: produk.nama, namaSatuan: satuanJual?.nama, saran: saran),
+    );
+    if (hasil == null || !mounted) {
+      return;
+    }
+    _TambahBaris(produk, satuan: satuan, jumlah: jumlah, hargaManual: hasil.harga, catatan: hasil.keterangan);
+  }
+
+  void _TambahBaris(ProdukJual produk, {SatuanJual? satuan, Kuantitas? jumlah, Uang? hargaManual, String? catatan}) {
     final katalog = ref.read(penyediaKatalog).value;
     final k = ref.read(penyediaKonteksPenjualan).value;
     if (katalog == null || k == null) {
@@ -476,6 +517,8 @@ class _LayarJualState extends ConsumerState<LayarJual> {
         jumlah: jumlah,
         kanal: LayananPenjualan.AmbilKanal(ref.read(penyediaKeranjang)),
         tierPelanggan: ref.read(penyediaKeranjang).pelanggan?.kodeTier,
+        hargaManual: hargaManual,
+        catatan: catatan,
       );
       ref.read(penyediaKeranjang.notifier).Ganti(layanan.TambahBaris(ref.read(penyediaKeranjang), baris, katalog, k));
       if (_pesan != null) {

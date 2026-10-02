@@ -53,6 +53,12 @@ enum JenisProduk: string
         return ! in_array($this, [self::IndukVarian, self::BahanBaku], true);
     }
 
+    /** K-25: harga diketik kasir per transaksi. Paket/varian/produksi/konsinyasi punya harga atau nilai sendiri. */
+    public function CekBolehHargaTerbuka(): bool
+    {
+        return in_array($this, [self::Stok, self::NonStok, self::Jasa, self::Resep], true);
+    }
+
     /** `Pelacakan` Batch/Seri hanya untuk jenis ini. */
     public function CekBolehPelacakan(): bool
     {
