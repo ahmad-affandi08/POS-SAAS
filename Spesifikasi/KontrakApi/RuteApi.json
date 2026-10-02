@@ -393,5 +393,25 @@
         "Metode": "GET",
         "Jalur": "api/v1/stok",
         "Nama": "api.v1.stok"
+    },
+    "GET api/pos/v1/salesman/kunjungan": {
+        "Metode": "GET",
+        "Jalur": "api/pos/v1/salesman/kunjungan",
+        "Nama": "pos.salesman.kunjungan"
+    },
+    "GET api/pos/v1/salesman/pelanggan": {
+        "Metode": "GET",
+        "Jalur": "api/pos/v1/salesman/pelanggan",
+        "Nama": "pos.salesman.pelanggan"
+    },
+    "GET api/pos/v1/salesman/pelanggan/{uuidPelanggan}/piutang": {
+        "Metode": "GET",
+        "Jalur": "api/pos/v1/salesman/pelanggan/{uuidPelanggan}/piutang",
+        "Nama": "pos.salesman.pelanggan.piutang"
+    },
+    "GET api/pos/v1/salesman/stok": {
+        "Metode": "GET",
+        "Jalur": "api/pos/v1/salesman/stok",
+        "Nama": "pos.salesman.stok"
     }
 }

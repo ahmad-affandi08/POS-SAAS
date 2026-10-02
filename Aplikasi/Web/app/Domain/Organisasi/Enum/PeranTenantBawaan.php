@@ -6,7 +6,8 @@ namespace App\Domain\Organisasi\Enum;
 
 /**
  * Peran bawaan yang dibuat untuk setiap tenant (PRD §19.1). Nilai = kolom `Peran.Kode`. Peran khusus sektor
- * (Dapur/Barista, Apoteker, Salesman) ditambahkan template sektor di F-01. `Pelayan` (v2.00) bawaan untuk mode Pelayan.
+ * (Dapur/Barista, Apoteker) ditambahkan template sektor di F-01. `Pelayan` (v2.00) bawaan untuk mode Pelayan; `Salesman`
+ * (§19 "Sales/Salesman", SLS-11) bawaan untuk aplikasi mode Salesman.
  *
  * Peran bawaan diselaraskan sistem (tidak diubah tenant); tenant menyesuaikan lewat peran kustom.
  * `Pemilik` selalu lolos pemeriksaan izin, apa pun isi tabel `PeranIzin`.
@@ -22,6 +23,7 @@ enum PeranTenantBawaan: string
     case StafPembelian = 'StafPembelian';
     case Akuntan = 'Akuntan';
     case Pelayan = 'Pelayan';
+    case Salesman = 'Salesman';
 
     public function AmbilNama(): string
     {
@@ -35,6 +37,7 @@ enum PeranTenantBawaan: string
             self::StafPembelian => 'Staf Pembelian',
             self::Akuntan => 'Akuntan',
             self::Pelayan => 'Pelayan',
+            self::Salesman => 'Salesman',
         };
     }
 
@@ -50,6 +53,7 @@ enum PeranTenantBawaan: string
             self::StafPembelian => 'Pemasok & pesanan pembelian.',
             self::Akuntan => 'Keuangan, jurnal, pajak, tutup buku; membaca semua laporan.',
             self::Pelayan => 'Aplikasi POS mode Pelayan: ambil pesanan meja & kirim ke dapur, tanpa pembayaran.',
+            self::Salesman => 'Aplikasi mode Salesman: kunjungan pelanggan, lihat stok & piutang pelanggan, ambil pesanan grosir (dikonfirmasi back-office).',
         };
     }
 
@@ -140,6 +144,9 @@ enum PeranTenantBawaan: string
             ],
             self::Kasir => [IzinTenant::ProdukLihat, IzinTenant::PenjualanBuat],
             self::Pelayan => [IzinTenant::ProdukLihat, IzinTenant::PesananMejaCatat],
+            // Salesman hanya mengambil pesanan (draf) dan mencatat kunjungan; konfirmasi SO & BR-12.6 tetap di tangan
+            // pemegang `grosir.kelola`/`grosir.setujui-kredit` di back-office.
+            self::Salesman => [IzinTenant::ProdukLihat, IzinTenant::PelangganLihat, IzinTenant::SalesmanKunjungan],
             self::StafGudang => [IzinTenant::ProdukLihat, IzinTenant::PersediaanLihat, IzinTenant::PersediaanKelola, IzinTenant::PersediaanTerbuangCatat, IzinTenant::PengirimanKelola],
             self::StafPembelian => [IzinTenant::ProdukLihat, IzinTenant::PersediaanLihat, IzinTenant::PembelianKelola],
             self::Akuntan => [

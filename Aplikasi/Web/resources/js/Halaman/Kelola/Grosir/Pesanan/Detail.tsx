@@ -160,6 +160,13 @@ export default function HalamanDetailPesananGrosir({
 
             <KartuKeteranganGrosir>
                 <KeteranganGrosir label="Pelanggan">{Pesanan.NamaPelanggan}</KeteranganGrosir>
+                {Pesanan.Sumber === 'Salesman' ? (
+                    <KeteranganGrosir label="Sumber pesanan">
+                        {Pesanan.NamaSalesman !== null
+                            ? `Dari salesman ${Pesanan.NamaSalesman}`
+                            : 'Dari aplikasi salesman'}
+                    </KeteranganGrosir>
+                ) : null}
                 <KeteranganGrosir label="Outlet penjual">{Pesanan.KodeOutlet}</KeteranganGrosir>
                 <KeteranganGrosir label="Tanggal">{FormatTanggal(Pesanan.Tanggal)}</KeteranganGrosir>
                 <KeteranganGrosir label="Minta dikirim">

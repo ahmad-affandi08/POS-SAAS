@@ -128,6 +128,8 @@ const menuGrosir: ItemMenu[] = [
     { label: 'Surat jalan', href: '/kelola/grosir/surat-jalan', izin: IzinTenant.GrosirKelola },
     { label: 'Faktur penjualan', href: '/kelola/grosir/faktur', izin: IzinTenant.GrosirKelola },
     { label: 'Retur grosir', href: '/kelola/grosir/retur', izin: IzinTenant.GrosirKelola },
+    // Modul Salesman bagian 1: kunjungan & pesanan dari aplikasi salesman.
+    { label: 'Kunjungan salesman', href: '/kelola/grosir/kunjungan', izin: IzinTenant.GrosirKelola },
 ];
 
 // F-06: grup menu "Shift & kas" (pemantauan back-office; layar kasir ada di aplikasi Flutter): shift (laporan.penjualan.lihat), kategori kas (akuntansi.kelola), pengaturan (outlet.kelola).

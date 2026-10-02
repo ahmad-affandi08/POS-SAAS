@@ -100,8 +100,12 @@ final class SimpanPesananGrosir
             if ($pesanan === null) {
                 $pesanan = PesananGrosir::query()->create([
                     ...$nilai,
+                    ...($data->uuid === null ? [] : ['Uuid' => $data->uuid]),
                     'Nomor' => $this->penomor->AmbilNomorOutlet(JenisDokumenBernomor::PesananGrosir, $data->tanggal, $outlet->Id),
                     'Status' => StatusPesananGrosir::Draf,
+                    'Sumber' => $data->sumber,
+                    'IdSalesman' => $data->idSalesman,
+                    'IdPerangkat' => $data->idPerangkat,
                     'DibuatOleh' => $idPengguna,
                 ]);
             } else {
@@ -135,6 +139,7 @@ final class SimpanPesananGrosir
                 'IdPelanggan' => $pelanggan->Id,
                 'JumlahBaris' => count($baris),
                 'Total' => $pesanan->Total,
+                'Sumber' => $pesanan->Sumber->value,
             ]);
 
             return $pesanan->load('Detail');
@@ -149,7 +154,7 @@ final class SimpanPesananGrosir
         $hasil = [];
 
         foreach ($data->baris as $baris) {
-            $satuan = ProdukSatuan::query()->with('Produk', 'SatuanUnit')->where('Uuid', $baris->uuidProdukSatuan)->first()
+            $satuan = ($baris->uuidProdukSatuan === null ? $this->AmbilSatuanDasar($baris->uuidProduk) : ProdukSatuan::query()->with('Produk', 'SatuanUnit')->where('Uuid', $baris->uuidProdukSatuan)->first())
                 ?? throw new PelanggaranAturanBisnis('SatuanTidakDikenal', 'Satuan produk tidak ditemukan.', 'Baris');
             $produk = $satuan->Produk;
 
@@ -186,6 +191,17 @@ final class SimpanPesananGrosir
         }
 
         return $hasil;
+    }
+
+    /** Satuan dasar produk (baris tanpa satuan dari aplikasi salesman); null bila produknya tidak dikenal. */
+    private function AmbilSatuanDasar(string $uuidProduk): ?ProdukSatuan
+    {
+        $produk = Produk::query()->where('Uuid', $uuidProduk)->first();
+
+        return $produk === null ? null : ProdukSatuan::query()->with('Produk', 'SatuanUnit')
+            ->where('IdProduk', $produk->Id)
+            ->where('IdSatuan', $produk->IdSatuanDasar)
+            ->first();
     }
 
     /**

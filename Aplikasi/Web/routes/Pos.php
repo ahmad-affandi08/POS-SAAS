@@ -27,6 +27,7 @@ use App\Http\Kontroler\Pos\V1\PesanSendiriKontroler;
 use App\Http\Kontroler\Pos\V1\PromoKontroler;
 use App\Http\Kontroler\Pos\V1\ReservasiKontroler;
 use App\Http\Kontroler\Pos\V1\RingkasanHarianKontroler;
+use App\Http\Kontroler\Pos\V1\SalesmanKontroler;
 use App\Http\Kontroler\Pos\V1\SinkronKontroler;
 use App\Http\Kontroler\Pos\V1\TagihanQrisKontroler;
 use App\Http\Kontroler\Pos\V1\VoucherKontroler;
@@ -151,6 +152,14 @@ Route::middleware([AutentikasiPerangkat::class, IdempotensiPos::class])->group(f
         Route::get('/gudang/opname', [GudangKontroler::class, 'DaftarOpname'])->middleware('throttle:pos-30')->name('pos.gudang.opname');
         Route::post('/gudang/opname/{opname}/hitung', [GudangKontroler::class, 'SimpanHitung'])
             ->middleware('throttle:pos-60')->where('opname', $ulid)->name('pos.gudang.opname.hitung');
+
+        // Modul Salesman bagian 1 (§9.7, SLS-11): data cache offline aplikasi salesman (pelaku dari `X-Id-Kasir`, izin
+        // `salesman.kunjungan`). Pesanan & kunjungan dikirim lewat outbox `PesananGrosir.Buat` / `Kunjungan.Catat`.
+        Route::get('/salesman/pelanggan', [SalesmanKontroler::class, 'Pelanggan'])->middleware('throttle:pos-60')->name('pos.salesman.pelanggan');
+        Route::get('/salesman/pelanggan/{uuidPelanggan}/piutang', [SalesmanKontroler::class, 'Piutang'])
+            ->middleware('throttle:pos-60')->where('uuidPelanggan', $ulid)->name('pos.salesman.pelanggan.piutang');
+        Route::get('/salesman/stok', [SalesmanKontroler::class, 'Stok'])->middleware('throttle:pos-30')->name('pos.salesman.stok');
+        Route::get('/salesman/kunjungan', [SalesmanKontroler::class, 'Kunjungan'])->middleware('throttle:pos-60')->name('pos.salesman.kunjungan');
 
         Route::get('/laundry', [LaundryKontroler::class, 'Cari'])->middleware('throttle:pos-30')->name('pos.laundry');
         Route::post('/laundry/{tiket}/status', [LaundryKontroler::class, 'UbahStatus'])

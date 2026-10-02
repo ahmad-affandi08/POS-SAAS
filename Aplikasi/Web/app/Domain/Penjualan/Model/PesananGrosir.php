@@ -11,6 +11,7 @@ use App\Domain\Bersama\Tenant\MilikTenant;
 use App\Domain\Organisasi\Model\Outlet;
 use App\Domain\Pelanggan\Model\Pelanggan;
 use App\Domain\Penjualan\Enum\StatusPesananGrosir;
+use App\Domain\Penjualan\Enum\SumberPesananGrosir;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -19,7 +20,8 @@ use LogicException;
 
 /**
  * Sales order grosir `PG/{OUTLET}/{YYMM}/{SEQ4}` (F-12, §9.7, D-32). Bebas diubah selama Draf; setelah dikonfirmasi
- * hanya kolom perpindahan status dan `JumlahTerkirim` di barisnya yang bergerak.
+ * hanya kolom perpindahan status dan `JumlahTerkirim` di barisnya yang bergerak. `Sumber` = `Salesman` bila diambil
+ * salesman lewat aplikasi (`IdSalesman`, `IdPerangkat`), tetap Draf sampai dikonfirmasi di back-office.
  *
  * **Bukan peristiwa akuntansi:** tidak ada jurnal maupun mutasi stok di sini. Pengakuan HPP, pendapatan, dan PPN
  * terjadi saat penyerahan barang lewat `SuratJalan` (BR-12.2, J-12.1).
@@ -33,6 +35,9 @@ use LogicException;
  * @property Carbon $Tanggal
  * @property Carbon|null $TanggalKirimDiminta
  * @property StatusPesananGrosir $Status
+ * @property SumberPesananGrosir $Sumber
+ * @property int|null $IdSalesman
+ * @property int|null $IdPerangkat
  * @property int $TerminHari
  * @property string|null $TarifPpn
  * @property int|null $PengaliDppPembilang
@@ -77,6 +82,9 @@ final class PesananGrosir extends ModelDasar
     /** @var array<string, mixed> */
     protected $attributes = [
         'Status' => 'Draf',
+        'Sumber' => 'BackOffice',
+        'IdSalesman' => null,
+        'IdPerangkat' => null,
         'TanggalKirimDiminta' => null,
         'TerminHari' => 0,
         'TarifPpn' => null,
@@ -153,6 +161,7 @@ final class PesananGrosir extends ModelDasar
             'Tanggal' => 'date',
             'TanggalKirimDiminta' => 'date',
             'Status' => StatusPesananGrosir::class,
+            'Sumber' => SumberPesananGrosir::class,
             'TerminHari' => 'integer',
             'TarifPpn' => 'decimal:6',
             'PengaliDppPembilang' => 'integer',

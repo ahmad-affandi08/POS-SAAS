@@ -62,6 +62,9 @@ final class DetailGrosir
                 'Catatan' => $pesanan->Catatan,
                 'AlasanPersetujuanKredit' => $pesanan->AlasanPersetujuanKredit,
                 'AlasanBatal' => $pesanan->AlasanBatal,
+                // Modul Salesman: pesanan yang diambil salesman di lapangan (harga tetap dari server).
+                'Sumber' => $pesanan->Sumber->value,
+                'NamaSalesman' => $pesanan->IdSalesman === null ? null : ($this->anggota->AmbilNamaPengguna($this->konteks->Wajib(), [$pesanan->IdSalesman])[$pesanan->IdSalesman] ?? null),
                 'BolehDiubah' => $pesanan->Status->CekBolehDiubah(),
                 'BolehDikirim' => $pesanan->Status->CekBolehDikirim(),
             ],

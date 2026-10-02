@@ -7,6 +7,10 @@ export type StatusPesananGrosir = 'Draf' | 'Dikonfirmasi' | 'SebagianDikirim' | 
 
 export type StatusDokumenGrosir = 'Diposting' | 'Dibatalkan';
 
+export type SumberPesananGrosir = 'BackOffice' | 'Salesman';
+
+export type HasilKunjungan = 'PesananDibuat' | 'TidakPesan' | 'TokoTutup' | 'Lainnya';
+
 export type IzinGrosir = {
     Kelola: boolean;
     SetujuiKredit: boolean;
@@ -150,6 +154,32 @@ export type PropsDaftarFaktur = {
     Izin: IzinGrosir;
 };
 
+/** Kunjungan salesman (Modul Salesman bagian 1). Waktu ISO-8601 UTC; koordinat string desimal, bukan number. */
+export type BarisKunjunganSales = {
+    Uuid: string;
+    Tanggal: string;
+    MasukPada: string;
+    KeluarPada: string | null;
+    DurasiMenit: number | null;
+    NamaSalesman: string;
+    NamaPelanggan: string;
+    Hasil: HasilKunjungan;
+    LabelHasil: string;
+    Catatan: string | null;
+    UuidPesananGrosir: string | null;
+    NomorPesananGrosir: string | null;
+    Latitude: string | null;
+    Longitude: string | null;
+    AkurasiMeter: number | null;
+};
+
+export type PropsDaftarKunjunganSales = {
+    Kunjungan: Tabel<BarisKunjunganSales>;
+    OpsiSalesman: Opsi[];
+    OpsiHasil: Opsi[];
+    Izin: IzinGrosir;
+};
+
 export type PropsDaftarRetur = {
     Retur: Tabel<BarisDaftarRetur>;
     OpsiStatus: Opsi[];
@@ -221,6 +251,9 @@ export type PropsDetailPesananGrosir = {
         Catatan: string | null;
         AlasanPersetujuanKredit: string | null;
         AlasanBatal: string | null;
+        /** Modul Salesman: `Salesman` bila diambil salesman lewat aplikasi (harga tetap dari server). */
+        Sumber: SumberPesananGrosir;
+        NamaSalesman: string | null;
         BolehDiubah: boolean;
         BolehDikirim: boolean;
     };

@@ -38,7 +38,8 @@ class HasilAktivasi {
   final String namaOutlet;
   final String namaUsaha;
 
-  /// Kasir/Pelayan/Kds/Gudang (F-10b: perangkat `Kds` membuka layar dapur, bukan layar kasir).
+  /// Kasir/Pelayan/Kds/Gudang/Salesman (F-10b: perangkat `Kds` membuka layar dapur, bukan layar kasir). Teks bebas:
+  /// jenis yang belum dikenal aplikasi (misal `Salesman` sebelum modulnya ada) diperlakukan seperti Kasir.
   final String jenisPerangkat;
 
   static HasilAktivasi DariJson(Map<String, Object?> json) {

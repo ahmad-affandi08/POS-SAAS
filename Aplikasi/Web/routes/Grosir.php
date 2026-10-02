@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Domain\Organisasi\Enum\IzinTenant;
 use App\Http\Kontroler\Kelola\Grosir\FakturPenjualanKontroler;
+use App\Http\Kontroler\Kelola\Grosir\KunjunganSalesKontroler;
 use App\Http\Kontroler\Kelola\Grosir\PesananGrosirKontroler;
 use App\Http\Kontroler\Kelola\Grosir\ProdukGrosirKontroler;
 use App\Http\Kontroler\Kelola\Grosir\ReturGrosirKontroler;
@@ -14,8 +15,8 @@ use Illuminate\Support\Facades\Route;
 
 /*
  * Rute back-office grosir (F-12, §9.7, D-32): pesanan grosir (SO), surat jalan, faktur penjualan, retur (BR-12.7),
- * dan halaman cetak A4 keempatnya (daftar ambil barang dicetak dari SO-nya). Didaftarkan dari
- * routes/web.php di dalam grup `/kelola` (auth + IdentifikasiTenantSesi … BatasiTenantDitangguhkan). Semua rute memakai
+ * kunjungan salesman (Modul Salesman, hanya baca), dan halaman cetak A4 (daftar ambil barang dicetak dari SO-nya).
+ * Didaftarkan dari routes/web.php di dalam grup `/kelola` (auth + IdentifikasiTenantSesi … BatasiTenantDitangguhkan). Semua rute memakai
  * `SiapkanAuditTenant` dan izin `grosir.kelola`; konfirmasi SO yang melewati limit kredit butuh `grosir.setujui-kredit`
  * (diperiksa di Aksi, BR-12.6, karena yang tahu paparannya hanya Aksi itu).
  * Parameter dokumen dibatasi pola ULID dan dicari lewat `MilikTenant` + batas outlet di kontroler (lainnya = 404).
@@ -58,4 +59,8 @@ Route::middleware([SiapkanAuditTenant::class, $izin(IzinTenant::GrosirKelola)])-
     Route::get('/retur/{retur}', [ReturGrosirKontroler::class, 'Detail'])->where('retur', $ulid)->name('kelola.grosir.retur.detail');
     Route::get('/retur/{retur}/cetak', [ReturGrosirKontroler::class, 'Cetak'])->where('retur', $ulid)->name('kelola.grosir.retur.cetak');
     Route::post('/retur/{retur}/batalkan', [ReturGrosirKontroler::class, 'Batalkan'])->where('retur', $ulid)->name('kelola.grosir.retur.batalkan');
+
+    // Modul Salesman bagian 1: kunjungan dari aplikasi salesman (hanya baca) + ekspor CSV.
+    Route::get('/kunjungan', [KunjunganSalesKontroler::class, 'Daftar'])->name('kelola.grosir.kunjungan.daftar');
+    Route::get('/kunjungan/ekspor', [KunjunganSalesKontroler::class, 'Ekspor'])->name('kelola.grosir.kunjungan.ekspor');
 });
