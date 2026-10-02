@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 /**
  * Baris perintah kerja (jasa atau sparepart). Nama produk, SKU, simbol satuan, dan harga di-**snapshot** dari price
  * engine server saat baris disimpan. `IdKaryawan` = mekanik baris jasa (komisi F-18 lewat staf baris penjualan saat
- * ditagih). `Disetujui` = baris ini disetujui pelanggan (persetujuan boleh sebagian); hanya baris disetujui yang
+ * ditagih). `NomorSeri` = unit sparepart bernomor seri yang akan dipasang (boleh kosong, diisi kasir saat menagih). `Disetujui` = baris ini disetujui pelanggan (persetujuan boleh sebagian); hanya baris disetujui yang
  * diberikan ke kasir untuk ditagih. `Uuid` dipakai halaman persetujuan publik untuk memilih baris.
  *
  * @property int $Id
@@ -34,6 +34,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int|null $IdKelompokPajak
  * @property int|null $IdKaryawan
  * @property string|null $Catatan
+ * @property list<string>|null $NomorSeri
  * @property bool $Disetujui
  * @property-read PerintahKerja $PerintahKerja
  */
@@ -51,6 +52,7 @@ final class PerintahKerjaDetail extends ModelDasar
         'IdKelompokPajak' => null,
         'IdKaryawan' => null,
         'Catatan' => null,
+        'NomorSeri' => null,
         'Disetujui' => false,
     ];
 
@@ -67,6 +69,7 @@ final class PerintahKerjaDetail extends ModelDasar
             'Subtotal' => 'decimal:2',
             'HargaTermasukPajak' => 'boolean',
             'Disetujui' => 'boolean',
+            'NomorSeri' => 'array',
         ];
     }
 

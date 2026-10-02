@@ -143,6 +143,7 @@ final class SimpanPerintahKerja
                     'IdKelompokPajak' => $b['IdKelompokPajak'],
                     'IdKaryawan' => $b['IdKaryawan'],
                     'Catatan' => $b['Catatan'],
+                    'NomorSeri' => $b['NomorSeri'],
                     'Disetujui' => false,
                 ]);
             }

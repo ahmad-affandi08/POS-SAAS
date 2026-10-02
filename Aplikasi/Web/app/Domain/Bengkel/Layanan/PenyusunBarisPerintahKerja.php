@@ -16,8 +16,10 @@ use App\Domain\Katalog\Enum\PelacakanProduk;
 use App\Domain\Katalog\Harga\Kueri\HargaProdukBerlaku;
 use App\Domain\Katalog\Model\Produk;
 use App\Domain\Katalog\Model\ProdukSatuan;
+use App\Domain\Organisasi\Kueri\OutletPenjualan;
 use App\Domain\Penjualan\Data\HasilHitungGrosir;
 use App\Domain\Penjualan\Layanan\PenghitungGrosir;
+use App\Domain\Persediaan\Kueri\InfoNomorSeri;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
 
@@ -29,10 +31,13 @@ use Illuminate\Support\Collection;
  * Angka estimasi adalah **perkiraan**: saat ditagih, kasir masih bisa menerapkan promo, pembulatan tunai, atau biaya
  * layanan, dan penjualan itulah dokumen keuangannya.
  *
- * Bagian 1 sengaja menolak sparepart berpelacakan batch/nomor seri: alokasi batch/seri terjadi di penjualan kasir, dan
- * estimasi yang tidak tahu unit mana yang dipasang hanya akan menunda galatnya ke kasir.
+ * Sparepart berpelacakan (bagian 3): **batch** tidak dipilih di sini — server mengalokasikannya FEFO saat penjualan
+ * tagihannya diterima (F-05g). **Nomor seri** boleh dicatat per unit (`NomorSeri`, jumlah satuan dasar harus bulat);
+ * bila diisi, jumlahnya harus sama dengan unit dan setiap nomor harus `Tersedia` di gudang toko outlet saat disimpan.
+ * Nomor tidak dipesan (perintah kerja tidak menggerakkan stok): penjualan tagihan memvalidasinya lagi, dan nomor yang
+ * keburu terjual menjadi tinjauan `SerialBermasalah` seperti penjualan kasir biasa. Kosong = diisi kasir saat menagih.
  *
- * @phpstan-type BarisSiap array{Jenis: JenisBarisPerintahKerja, IdProduk: int, NamaProduk: string, Sku: string|null, IdProdukSatuan: int, SimbolSatuan: string, Jumlah: Kuantitas, HargaSatuan: Uang, Diskon: Uang, IdKelompokPajak: int|null, HargaTermasukPajak: bool|null, IdKaryawan: int|null, Catatan: string|null}
+ * @phpstan-type BarisSiap array{Jenis: JenisBarisPerintahKerja, IdProduk: int, NamaProduk: string, Sku: string|null, IdProdukSatuan: int, SimbolSatuan: string, Jumlah: Kuantitas, HargaSatuan: Uang, Diskon: Uang, IdKelompokPajak: int|null, HargaTermasukPajak: bool|null, IdKaryawan: int|null, Catatan: string|null, NomorSeri: list<string>|null}
  */
 final class PenyusunBarisPerintahKerja
 {
@@ -40,6 +45,8 @@ final class PenyusunBarisPerintahKerja
         private readonly HargaProdukBerlaku $harga,
         private readonly JadwalStafReservasi $staf,
         private readonly PenghitungGrosir $penghitung,
+        private readonly InfoNomorSeri $seri,
+        private readonly OutletPenjualan $outlet,
     ) {}
 
     /**
@@ -62,6 +69,7 @@ final class PenyusunBarisPerintahKerja
                 throw new PelanggaranAturanBisnis('JumlahTidakValid', "Jumlah {$produk->Nama} harus lebih dari nol.", "{$bidang}.Jumlah");
             }
 
+            $nomorSeri = $this->PeriksaNomorSeri($produk, $satuan, $b, $idOutlet, $bidang);
             $harga = $this->harga->Tentukan($produk, $satuan, $b->jumlah, $idOutlet, null, $kodeTier, CarbonImmutable::now())
                 ?? throw new PelanggaranAturanBisnis('HargaBelumDiatur', "{$produk->Nama} belum punya harga jual untuk satuan itu. Atur harganya dulu di katalog.", "{$bidang}.UuidProduk");
 
@@ -95,6 +103,7 @@ final class PenyusunBarisPerintahKerja
                 'HargaTermasukPajak' => $produk->HargaTermasukPajak,
                 'IdKaryawan' => $idKaryawan,
                 'Catatan' => $catatan === '' || $catatan === null ? null : mb_substr($catatan, 0, 255),
+                'NomorSeri' => $nomorSeri,
             ];
         }
 
@@ -163,12 +172,54 @@ final class PenyusunBarisPerintahKerja
             throw new PelanggaranAturanBisnis('BukanProdukStok', "Sparepart harus produk berstok biasa; {$produk->Nama} berjenis {$produk->Jenis->value}.", $bidang);
         }
 
-        if ($jenis === JenisBarisPerintahKerja::Sparepart && $produk->Pelacakan !== PelacakanProduk::Tidak) {
-            throw new PelanggaranAturanBisnis(
-                'PelacakanBelumDidukung',
-                "Perintah kerja belum mendukung sparepart bernomor batch atau seri ({$produk->Nama}). Tambahkan sparepart itu langsung di kasir saat menagih.",
-                $bidang,
-            );
+    }
+
+    /**
+     * Nomor seri baris (null bila produk tidak bernomor seri atau belum diisi).
+     *
+     * @return list<string>|null
+     */
+    private function PeriksaNomorSeri(Produk $produk, ProdukSatuan $satuan, DataBarisPerintahKerja $b, int $idOutlet, string $bidang): ?array
+    {
+        if ($produk->Pelacakan !== PelacakanProduk::Seri) {
+            if ($b->nomorSeri !== []) {
+                throw new PelanggaranAturanBisnis('NomorSeriBukanUntukProduk', "{$produk->Nama} tidak memakai nomor seri.", "{$bidang}.NomorSeri");
+            }
+
+            return null;
         }
+
+        $unit = $b->jumlah->KeDesimal()->multipliedBy((string) $satuan->KonversiKeDasar);
+
+        if (! $unit->getFractionalPart()->isZero()) {
+            throw new PelanggaranAturanBisnis('JumlahSeriHarusBulat', "{$produk->Nama} memakai nomor seri: jumlahnya harus unit bulat.", "{$bidang}.Jumlah");
+        }
+
+        if ($b->nomorSeri === []) {
+            return null;
+        }
+
+        $nomor = array_values(array_map(fn (string $n): string => mb_substr(trim($n), 0, 100), $b->nomorSeri));
+        $kunci = array_map('mb_strtoupper', $nomor);
+
+        if (count(array_unique($kunci)) !== count($kunci)) {
+            throw new PelanggaranAturanBisnis('NomorSeriGanda', "Nomor seri {$produk->Nama} tidak boleh ganda.", "{$bidang}.NomorSeri");
+        }
+
+        $jumlahUnit = $unit->toBigInteger()->toInt();
+
+        if (count($nomor) !== $jumlahUnit) {
+            throw new PelanggaranAturanBisnis('JumlahNomorSeriTidakCocok', "Isi {$jumlahUnit} nomor seri {$produk->Nama} (satu per unit), baru ".count($nomor).'.', "{$bidang}.NomorSeri");
+        }
+
+        $idGudang = $this->outlet->AmbilIdGudangToko($idOutlet);
+        $tersedia = $idGudang === null ? [] : $this->seri->CariTersedia($produk->Id, $idGudang, $nomor);
+        $hilang = array_values(array_filter($nomor, fn (string $n): bool => ! isset($tersedia[mb_strtoupper($n)])));
+
+        if ($hilang !== []) {
+            throw new PelanggaranAturanBisnis('NomorSeriTidakTersedia', 'Nomor seri '.implode(', ', $hilang)." {$produk->Nama} tidak tersedia di stok toko outlet ini.", "{$bidang}.NomorSeri");
+        }
+
+        return $nomor;
     }
 }

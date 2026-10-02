@@ -22,5 +22,7 @@ final readonly class DataBarisPerintahKerja
         public Uang $diskon,
         public ?string $uuidKaryawan,
         public ?string $catatan,
+        /** @var list<string> nomor seri unit (hanya sparepart bernomor seri; boleh kosong) */
+        public array $nomorSeri = [],
     ) {}
 }

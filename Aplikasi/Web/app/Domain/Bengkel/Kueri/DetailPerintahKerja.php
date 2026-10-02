@@ -139,6 +139,7 @@ final class DetailPerintahKerja
                 'Subtotal' => (string) $d->Subtotal,
                 'Karyawan' => $d->IdKaryawan === null || ! isset($mekanik[$d->IdKaryawan]) ? null : $mekanik[$d->IdKaryawan],
                 'Catatan' => $d->Catatan,
+                'NomorSeri' => $d->NomorSeri ?? [],
                 'Disetujui' => $d->Disetujui,
                 'StokTersedia' => $denganStok && $d->Jenis === JenisBarisPerintahKerja::Sparepart ? ($stok[$d->IdProduk] ?? '0.0000') : null,
             ])->all()),

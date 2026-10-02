@@ -56,6 +56,8 @@ final class IsianFormPerintahKerja
                 'Diskon' => $b['Diskon'],
                 'UuidKaryawan' => $b['Karyawan']['Uuid'] ?? null,
                 'Catatan' => $b['Catatan'],
+                'NomorSeri' => $b['NomorSeri'],
+                'Pelacakan' => ($info[(string) $b['UuidProduk']] ?? null)?->pelacakan->value ?? 'Tidak',
                 'StokTersedia' => $b['StokTersedia'],
                 'Satuan' => array_map(
                     fn (array $s): array => ['Uuid' => $s['Uuid'], 'Simbol' => $s['Simbol'], 'Konversi' => $s['Konversi']],

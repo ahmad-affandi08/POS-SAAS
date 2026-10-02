@@ -19,7 +19,9 @@ use App\Domain\Organisasi\Enum\PeranTenantBawaan;
 use App\Domain\Pelanggan\Model\Pelanggan;
 use App\Domain\Pelanggan\Model\TierPelanggan;
 use App\Domain\Penjualan\Model\Penjualan;
+use App\Domain\Persediaan\Model\BatchStok;
 use App\Domain\Persediaan\Model\MutasiStok;
+use App\Domain\Persediaan\Model\NomorSeri;
 use App\Domain\Persediaan\Model\SaldoStok;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Client\Request as PermintaanHttp;
@@ -32,6 +34,7 @@ use Tests\Pendukung\Katalog\BantuanHarga;
 use Tests\Pendukung\Katalog\BantuanKatalog;
 use Tests\Pendukung\Organisasi\BantuanOrganisasi;
 use Tests\Pendukung\Penjualan\BantuanPenjualan;
+use Tests\Pendukung\Persediaan\BantuanStokAwal;
 use Tests\Pendukung\Persediaan\PemeriksaInvarian;
 use Tests\Pendukung\Tenant\BantuanPendaftaran;
 use Tests\TestCase;
@@ -288,7 +291,7 @@ it('perintah kerja yang belum disetujui atau tidak dikenal tidak tertagih: penju
         ->and(PemeriksaInvarian::PeriksaSemua($k['Tenant']->Id))->toBe([]);
 });
 
-it('harga mengikuti tier pelanggan; jenis produk, pelacakan batch, dan mekanik di sparepart ditolak; revisi setelah ditolak kembali ke Diagnosis', function (): void {
+it('harga mengikuti tier pelanggan; jenis produk dan mekanik di sparepart ditolak; revisi setelah ditolak kembali ke Diagnosis', function (): void {
     $k = SiapkanBengkel($this, 'Bengkel Mitra Gold Boyolali');
     $kendaraan = BuatKendaraanUji($this, $k, 'B 9876 KJT');
     $gold = TierPelanggan::query()->create(['Kode' => 'GOLD', 'Nama' => 'Gold', 'MinimalBelanja' => '0']);
@@ -300,7 +303,6 @@ it('harga mengikuti tier pelanggan; jenis produk, pelacakan batch, dan mekanik d
     expect(PerintahKerjaDetail::query()->where('IdPerintahKerja', $pk->Id)->orderBy('Urutan')->value('HargaSatuan'))->toBe('42500.00')
         ->and($pk->Total)->toBe('192500.00');
 
-    $batch = BantuanKatalog::BuatProduk(['Nama' => 'Aki Kering GS Astra 5Ah', 'Pelacakan' => PelacakanProduk::Batch], '275000.00');
     $isian = fn (array $baris): array => [
         'UuidOutlet' => $k['Outlet']->Uuid, 'UuidPelanggan' => $k['Pelanggan']->Uuid, 'UuidKendaraan' => $kendaraan->Uuid,
         'Keluhan' => 'Aki tekor', 'Baris' => [$baris],
@@ -309,8 +311,6 @@ it('harga mengikuti tier pelanggan; jenis produk, pelacakan batch, dan mekanik d
         ->assertSessionHasErrors('Baris.0.UuidProduk');
     MasukBengkel($this, $k)->post('/kelola/bengkel/perintah-kerja', $isian(['Jenis' => 'Jasa', 'UuidProduk' => $k['Oli']->Uuid, 'Jumlah' => '1']))
         ->assertSessionHasErrors('Baris.0.UuidProduk');
-    MasukBengkel($this, $k)->post('/kelola/bengkel/perintah-kerja', $isian(['Jenis' => 'Sparepart', 'UuidProduk' => $batch->Uuid, 'Jumlah' => '1']))
-        ->assertSessionHasErrors(['Baris.0.UuidProduk' => 'Perintah kerja belum mendukung sparepart bernomor batch atau seri (Aki Kering GS Astra 5Ah). Tambahkan sparepart itu langsung di kasir saat menagih.']);
     MasukBengkel($this, $k)->post('/kelola/bengkel/perintah-kerja', $isian(['Jenis' => 'Sparepart', 'UuidProduk' => $k['Oli']->Uuid, 'Jumlah' => '1', 'UuidKaryawan' => $k['Mekanik']->Uuid]))
         ->assertSessionHasErrors('Baris.0.UuidKaryawan');
     BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
@@ -405,4 +405,78 @@ it('pengingat servis berkala H-3 sekali lewat WhatsApp, Kotak Tindakan servis ja
     // Kendaraan datang lagi (perintah kerja baru): butir selesai sendiri.
     BuatPerintahKerjaUji($this, $k, $kendaraan);
     expect($butir()['Jumlah'] ?? 0)->toBe(0);
+});
+
+it('bagian 3: sparepart ber-batch (FEFO saat ditagih) dan bernomor seri (dicatat per unit, divalidasi tersedia) sampai tagihan kasir', function (): void {
+    $k = SiapkanBengkel($this, 'Bengkel Ban & Aki Sukoharjo');
+    $kendaraan = BuatKendaraanUji($this, $k, 'AD 5521 QA');
+    $aki = BantuanKatalog::BuatProduk(['Nama' => 'Aki Kering GS Astra GTZ5S 12V 3,5Ah', 'Pelacakan' => PelacakanProduk::Batch], '275000.00');
+    $ban = BantuanKatalog::BuatProduk(['Nama' => 'Ban Tubeless IRC NR83 90/80-14', 'Pelacakan' => PelacakanProduk::Seri], '310000.00');
+    BantuanStokAwal::BuatDanPosting($k['Gudang'], [
+        BantuanStokAwal::Baris($aki, '2', '210000', 'GS-2611', '2027-02-28'),
+        BantuanStokAwal::Baris($aki, '3', '205000', 'GS-2609', '2026-12-31'),
+        BantuanStokAwal::Baris($ban, '3', '240000', nomorSeri: ['IRC-0001', 'IRC-0002', 'IRC-0003']),
+    ], $k['Pemilik']->Id, '2026-10-01');
+
+    $isian = fn (array $baris): array => [
+        'UuidOutlet' => $k['Outlet']->Uuid, 'UuidPelanggan' => $k['Pelanggan']->Uuid, 'UuidKendaraan' => $kendaraan->Uuid,
+        'Keluhan' => 'Ban belakang gundul, aki soak', 'Baris' => $baris,
+    ];
+    $kirim = fn (array $baris) => MasukBengkel($this, $k)->post('/kelola/bengkel/perintah-kerja', $isian($baris));
+
+    // Nomor seri: jumlah harus cocok per unit, tidak ganda, tersedia di stok toko; produk non-seri tidak boleh membawanya.
+    $kirim([['Jenis' => 'Sparepart', 'UuidProduk' => $ban->Uuid, 'Jumlah' => '2', 'NomorSeri' => ['IRC-0001']]])
+        ->assertSessionHasErrors(['Baris.0.NomorSeri' => 'Isi 2 nomor seri Ban Tubeless IRC NR83 90/80-14 (satu per unit), baru 1.']);
+    $kirim([['Jenis' => 'Sparepart', 'UuidProduk' => $ban->Uuid, 'Jumlah' => '2', 'NomorSeri' => ['IRC-0001', 'irc-0001']]])
+        ->assertSessionHasErrors('Baris.0.NomorSeri');
+    $kirim([['Jenis' => 'Sparepart', 'UuidProduk' => $ban->Uuid, 'Jumlah' => '1', 'NomorSeri' => ['IRC-9999']]])
+        ->assertSessionHasErrors(['Baris.0.NomorSeri' => 'Nomor seri IRC-9999 Ban Tubeless IRC NR83 90/80-14 tidak tersedia di stok toko outlet ini.']);
+    $kirim([['Jenis' => 'Sparepart', 'UuidProduk' => $ban->Uuid, 'Jumlah' => '1.5']])->assertSessionHasErrors('Baris.0.Jumlah');
+    $kirim([['Jenis' => 'Sparepart', 'UuidProduk' => $k['Oli']->Uuid, 'Jumlah' => '1', 'NomorSeri' => ['IRC-0001']]])->assertSessionHasErrors('Baris.0.NomorSeri');
+    BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+    expect(PerintahKerja::query()->count())->toBe(0);
+
+    // Pencarian sparepart kini memuat produk berpelacakan beserta jenis pelacakannya.
+    MasukBengkel($this, $k)->getJson('/kelola/bengkel/produk/cari?kata=IRC&jenis=Sparepart&outlet='.$k['Outlet']->Uuid)->assertOk()
+        ->assertJsonPath('Data.0.Uuid', $ban->Uuid)->assertJsonPath('Data.0.Pelacakan', 'Seri')->assertJsonPath('Data.0.StokTersedia', '3.0000');
+
+    $kirim([
+        ['Jenis' => 'Jasa', 'UuidProduk' => $k['Servis']->Uuid, 'Jumlah' => '1', 'UuidKaryawan' => $k['Mekanik']->Uuid],
+        ['Jenis' => 'Sparepart', 'UuidProduk' => $aki->Uuid, 'Jumlah' => '1'],
+        ['Jenis' => 'Sparepart', 'UuidProduk' => $ban->Uuid, 'Jumlah' => '2', 'NomorSeri' => [' irc-0002 ', 'IRC-0003']],
+    ])->assertSessionHasNoErrors();
+    BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+    $pk = PerintahKerja::query()->sole();
+    $baris = PerintahKerjaDetail::query()->where('IdPerintahKerja', $pk->Id)->orderBy('Urutan')->get();
+    expect($baris[1]->NomorSeri)->toBeNull()
+        ->and($baris[2]->NomorSeri)->toBe(['irc-0002', 'IRC-0003'])
+        ->and($pk->Total)->toBe('945000.00')
+        // Perintah kerja tidak menggerakkan stok maupun status nomor seri.
+        ->and(StokProduk($k, $ban))->toBe('3.0000');
+
+    MasukBengkel($this, $k)->get("/kelola/bengkel/perintah-kerja/{$pk->Uuid}/ubah")->assertOk()->assertInertia(fn (AssertableInertia $h) => $h
+        ->where('Isian.Baris.2.Pelacakan', 'Seri')
+        ->where('Isian.Baris.2.NomorSeri', ['irc-0002', 'IRC-0003'])
+        ->where('Isian.Baris.1.Pelacakan', 'Batch'));
+
+    MasukBengkel($this, $k)->post("/kelola/bengkel/perintah-kerja/{$pk->Uuid}/persetujuan/catat", ['Setuju' => true, 'Baris' => $baris->pluck('Uuid')->all()])->assertSessionHasNoErrors();
+    $this->withToken($k['Token'])->getJson("/api/pos/v1/perintah-kerja/{$pk->Uuid}")->assertOk()
+        ->assertJsonPath('PerintahKerja.Baris.1.NomorSeri', [])
+        ->assertJsonPath('PerintahKerja.Baris.2.NomorSeri', ['irc-0002', 'IRC-0003']);
+
+    // Ditagih di kasir: nomor seri dari perintah kerja ikut baris, batch aki dialokasikan FEFO (GS-2609 lebih dulu).
+    $item = BantuanPenjualan::Item($k, ['Baris' => [
+        ['Produk' => $k['Servis'], 'Jumlah' => '1', 'Harga' => '50000.00'],
+        ['Produk' => $aki, 'Jumlah' => '1', 'Harga' => '275000.00'],
+        ['Produk' => $ban, 'Jumlah' => '2', 'Harga' => '310000.00', 'NomorSeri' => ['irc-0002', 'IRC-0003']],
+    ]], ['UuidPerintahKerja' => $pk->Uuid, 'UuidPelanggan' => $k['Pelanggan']->Uuid]);
+    expect(BantuanKasir::KirimRingkas($this, $k['Token'], [$item]))->toBe([['Diterima', null]]);
+    BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+    $penjualan = Penjualan::query()->where('Uuid', $item['Uuid'])->sole();
+    expect($penjualan->PerluTinjauan)->toBeFalse()
+        ->and($pk->refresh()->Status)->toBe(StatusPerintahKerja::Ditagih)
+        ->and(StokProduk($k, $ban))->toBe('1.0000')
+        ->and(NomorSeri::query()->where('IdProduk', $ban->Id)->orderBy('Nomor')->pluck('Status')->map(fn ($s) => $s->value)->all())->toBe(['Tersedia', 'Terjual', 'Terjual'])
+        ->and(BatchStok::query()->where('IdProduk', $aki->Id)->orderBy('NomorBatch')->pluck('JumlahSisa', 'NomorBatch')->all())->toBe(['GS-2609' => '2.0000', 'GS-2611' => '2.0000'])
+        ->and(PemeriksaInvarian::PeriksaSemua($k['Tenant']->Id))->toBe([]);
 });

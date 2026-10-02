@@ -32,16 +32,12 @@ final class CariProdukBengkel
     ) {}
 
     /**
-     * @return list<array{Uuid: string, Nama: string, Sku: string|null, Jenis: string, StokTersedia: string|null, Satuan: list<array{Uuid: string, Simbol: string, Konversi: string}>}>
+     * @return list<array{Uuid: string, Nama: string, Sku: string|null, Jenis: string, Pelacakan: string, StokTersedia: string|null, Satuan: list<array{Uuid: string, Simbol: string, Konversi: string}>}>
      */
     public function Cari(string $kata, JenisBarisPerintahKerja $jenis, ?int $idOutlet, int $batas = 20): array
     {
         $hasil = $this->cari->Cari($kata, [$jenis === JenisBarisPerintahKerja::Jasa ? JenisProduk::Jasa : JenisProduk::Stok], $batas);
         $info = $this->info->AmbilDariUuid(array_map(fn (array $p): string => $p['Uuid'], $hasil));
-
-        if ($jenis === JenisBarisPerintahKerja::Sparepart) {
-            $hasil = array_values(array_filter($hasil, fn (array $p): bool => isset($info[$p['Uuid']]) && $info[$p['Uuid']]->pelacakan === PelacakanProduk::Tidak));
-        }
 
         $id = array_values(array_map(fn (array $p): int => $info[$p['Uuid']]->id, array_filter($hasil, fn (array $p): bool => isset($info[$p['Uuid']]))));
         $satuan = $this->satuan->AmbilUntukProduk($id);
@@ -56,6 +52,7 @@ final class CariProdukBengkel
                 'Nama' => $p['Nama'],
                 'Sku' => $p['Sku'],
                 'Jenis' => $jenis->value,
+                'Pelacakan' => ($info[$p['Uuid']] ?? null)?->pelacakan->value ?? PelacakanProduk::Tidak->value,
                 'StokTersedia' => $jenis === JenisBarisPerintahKerja::Sparepart && $idGudang !== null ? ($stok[$idProduk] ?? '0.0000') : null,
                 'Satuan' => array_map(fn (array $s): array => ['Uuid' => $s['Uuid'], 'Simbol' => $s['Simbol'], 'Konversi' => $s['Konversi']], $satuan[$idProduk] ?? []),
             ];

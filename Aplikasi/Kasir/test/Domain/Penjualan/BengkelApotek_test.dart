@@ -182,6 +182,66 @@ void main() {
       },
     );
 
+    test(
+      'bagian 3: nomor seri sparepart dari perintah kerja ikut baris & Penjualan.Buat; kosong = kasir mengisi dulu',
+      () async {
+        // Katalog bengkel + satu sparepart bernomor seri (pakai produk seri uji: ponsel).
+        final dasar = KatalogBengkelApotekUji();
+        final seri = KatalogPonselUji();
+        for (final kunci in ['Produk', 'ProdukSatuan', 'ProdukHarga']) {
+          final ada = {for (final x in (dasar[kunci]! as List<Object?>)) (x! as Map<String, Object?>)['Uuid']};
+          dasar[kunci] = [
+            ...(dasar[kunci]! as List<Object?>),
+            ...(seri[kunci]! as List<Object?>).where((x) => !ada.contains((x! as Map<String, Object?>)['Uuid'])),
+          ];
+        }
+        await u.SiapkanKatalog(dasar);
+        katalog = await u.MuatKatalog();
+        k = await u.MuatKonteks();
+
+        Map<String, Object?> Wo(List<String>? nomorSeri) {
+          final pk = PerintahKerjaUji();
+          pk['Baris'] = [
+            ...(pk['Baris']! as List<Object?>),
+            {
+              'Uuid': '01K6PKD0000000000000000003',
+              'Jenis': 'Sparepart',
+              'UuidProduk': ponsel,
+              'UuidProdukSatuan': psPonsel,
+              'NamaProduk': 'Ponsel Android 8/256 GB Hitam',
+              'Jumlah': '2.0000',
+              'HargaSatuan': '6500000.00',
+              'Diskon': '0.00',
+              'UuidKaryawan': null,
+              'NamaKaryawan': null,
+              'Catatan': null,
+              'NomorSeri': ?nomorSeri,
+            },
+          ];
+          return pk;
+        }
+
+        // Server lama (tanpa NomorSeri) & WO tanpa nomor: baris tetap 2 unit, Bayar menolak sampai kasir mengisi.
+        final kosong = u.perintahKerja.MuatKeKeranjang(PerintahKerjaPos.DariJson(Wo(null)), katalog, k);
+        expect(kosong.baris.last.jumlah, Kuantitas.DariBulat(2));
+      expect(kosong.baris.last.nomorSeri, isEmpty);
+        await expectLater(BayarTunai(kosong), throwsA(isA<GalatKasir>()));
+
+        final keranjang = u.perintahKerja.MuatKeKeranjang(
+          PerintahKerjaPos.DariJson(Wo(['IMEI-3561001', 'IMEI-3561002'])),
+          katalog,
+          k,
+        );
+        expect(keranjang.baris.last.nomorSeri, ['IMEI-3561001', 'IMEI-3561002']);
+        expect(keranjang.baris.first.nomorSeri, isEmpty);
+        await BayarTunai(keranjang);
+        final baris = ((await OutboxTerakhir())['Baris']! as List<Object?>).cast<Map<String, Object?>>();
+        expect(baris.last['NomorSeri'], ['IMEI-3561001', 'IMEI-3561002']);
+        expect(baris.last['Jumlah'], '2.0000');
+        expect(baris.first.containsKey('NomorSeri'), isFalse);
+      },
+    );
+
     test('perintah kerja belum siap, produk belum di katalog, dan kasir tanpa izin berjualan ditolak', () async {
       expect(
         () => u.perintahKerja.MuatKeKeranjang(

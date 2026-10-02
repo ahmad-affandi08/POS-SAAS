@@ -45,6 +45,11 @@ const kolom: KolomTabel<BarisPerintahKerja>[] = [
                 {b.Karyawan ? (
                     <span className="text-keterangan text-teks-sekunder">Mekanik {b.Karyawan.Nama}</span>
                 ) : null}
+                {b.NomorSeri.length > 0 ? (
+                    <span className="font-mono text-keterangan break-words text-teks-sekunder">
+                        No. seri {b.NomorSeri.join(', ')}
+                    </span>
+                ) : null}
                 {b.StokTersedia !== null ? (
                     <span className="text-keterangan text-teks-sekunder">
                         Stok tersedia {FormatJumlahStok(b.StokTersedia, b.SimbolSatuan)}

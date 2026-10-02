@@ -2,6 +2,7 @@ import { Trash2Icon } from 'lucide-react';
 
 import PemilihCariBengkel from '@/Komponen/Bengkel/PemilihCariBengkel';
 import { GalatBidang } from '@/Komponen/Formulir/BagianBidang';
+import BidangTeksPanjang from '@/Komponen/Formulir/BidangTeksPanjang';
 import BidangUang from '@/Komponen/Formulir/BidangUang';
 import PilihanCari from '@/Komponen/Formulir/PilihanCari';
 import BidangJumlah from '@/Komponen/Katalog/BidangJumlah';
@@ -11,7 +12,8 @@ import { TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } 
 import { FormatJumlahStok } from '@/Pustaka/FormatPersediaan';
 import type { HasilCariProdukBengkel, IsianBarisPerintahKerja, JenisBarisBengkel, OpsiUuid } from '@/Tipe/Bengkel';
 
-export type BarisIsianBengkel = IsianBarisPerintahKerja & { Kunci: string };
+/** `TeksNomorSeri` = isi kotak nomor seri apa adanya (satu per baris), dipecah saat dikirim. */
+export type BarisIsianBengkel = IsianBarisPerintahKerja & { Kunci: string; TeksNomorSeri: string };
 
 const kelasSel = 'px-2 py-2 align-top whitespace-normal';
 const kelasKepala = 'px-2 text-label text-teks-sekunder';
@@ -35,6 +37,14 @@ export function BuatUrlCariProdukBengkel(kata: string, jenis: JenisBarisBengkel,
     return `/kelola/bengkel/produk/cari?${parameter.toString()}`;
 }
 
+/** Nomor seri dari kotak isian: dipisah baris baru atau koma, spasi tepi dibuang, yang kosong diabaikan. */
+export function PecahNomorSeri(teks: string): string[] {
+    return teks
+        .split(/[\n,]/)
+        .map((n) => n.trim())
+        .filter((n) => n !== '');
+}
+
 export function BuatBarisDariProdukBengkel(produk: HasilCariProdukBengkel): BarisIsianBengkel {
     return {
         Kunci: BuatKunciBarisBengkel(),
@@ -47,6 +57,9 @@ export function BuatBarisDariProdukBengkel(produk: HasilCariProdukBengkel): Bari
         Diskon: '',
         UuidKaryawan: null,
         Catatan: null,
+        NomorSeri: [],
+        TeksNomorSeri: '',
+        Pelacakan: produk.Pelacakan,
         StokTersedia: produk.StokTersedia,
         Satuan: produk.Satuan,
     };
@@ -55,7 +68,9 @@ export function BuatBarisDariProdukBengkel(produk: HasilCariProdukBengkel): Bari
 /**
  * Tabel isian jasa & sparepart perintah kerja (§9.10). **Tanpa kolom harga**: harga ditentukan server (price engine +
  * tier pelanggan) saat disimpan, lalu tampil di halaman detail sebelum persetujuan diminta. Mekanik hanya untuk baris
- * jasa (komisi saat ditagih); stok tersedia sparepart hanya informasi (perintah kerja tidak memotong stok).
+ * jasa (komisi saat ditagih); stok tersedia sparepart hanya informasi (perintah kerja tidak memotong stok). Sparepart
+ * ber-batch dialokasikan server (kedaluwarsa terdekat) saat ditagih; sparepart bernomor seri boleh dicatat nomornya per
+ * unit di sini (diperiksa tersedia saat disimpan) atau diisi kasir saat menagih.
  */
 export default function IsianBarisBengkel({
     baris,
@@ -99,7 +114,7 @@ export default function IsianBarisBengkel({
             pesanKosong={
                 jenis === 'Jasa'
                     ? 'Belum ada produk berjenis Jasa. Tambahkan dulu di Produk.'
-                    : 'Belum ada produk berstok (tanpa batch/seri). Tambahkan dulu di Produk.'
+                    : 'Belum ada produk berstok. Tambahkan dulu di Produk.'
             }
             disabled={penuh}
         />
@@ -157,6 +172,20 @@ export default function IsianBarisBengkel({
                                             ) : null}
                                             {AmbilGalat('UuidProduk') ? (
                                                 <GalatBidang>{AmbilGalat('UuidProduk')}</GalatBidang>
+                                            ) : null}
+                                            {b.Pelacakan === 'Batch' ? (
+                                                <span className="text-keterangan text-teks-sekunder">
+                                                    Batch dipilih otomatis (kedaluwarsa terdekat) saat ditagih.
+                                                </span>
+                                            ) : null}
+                                            {b.Pelacakan === 'Seri' ? (
+                                                <BidangTeksPanjang
+                                                    label={`Nomor seri ${b.NamaProduk}`}
+                                                    nilai={b.TeksNomorSeri}
+                                                    saatBerubah={(nilai) => Ubah(b.Kunci, { TeksNomorSeri: nilai })}
+                                                    keterangan="Satu nomor per baris, sebanyak jumlah unit. Boleh dikosongkan dan diisi kasir saat menagih."
+                                                    galat={AmbilGalat('NomorSeri')}
+                                                />
                                             ) : null}
                                         </span>
                                     </TableCell>

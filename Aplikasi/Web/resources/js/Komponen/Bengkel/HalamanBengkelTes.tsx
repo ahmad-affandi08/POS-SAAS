@@ -109,6 +109,7 @@ function BuatPerintahKerja(ubah: Partial<PerintahKerja> = {}): PerintahKerja {
                 Subtotal: '50000.00',
                 Karyawan: { Uuid: '01JKARYAWAN000000000000001', Nama: 'Joko Susilo' },
                 Catatan: null,
+                NomorSeri: [],
                 Disetujui: false,
                 StokTersedia: null,
             },
@@ -127,6 +128,7 @@ function BuatPerintahKerja(ubah: Partial<PerintahKerja> = {}): PerintahKerja {
                 Subtotal: '85000.00',
                 Karyawan: null,
                 Catatan: null,
+                NomorSeri: [],
                 Disetujui: false,
                 StokTersedia: '5.0000',
             },
@@ -295,6 +297,8 @@ describe('Bengkel (§9.10)', () => {
                     Diskon: b.Diskon,
                     UuidKaryawan: b.Karyawan?.Uuid ?? null,
                     Catatan: null,
+                    NomorSeri: b.Jenis === 'Sparepart' ? ['NGK-0001'] : [],
+                    Pelacakan: b.Jenis === 'Sparepart' ? ('Seri' as const) : ('Tidak' as const),
                     StokTersedia: b.StokTersedia,
                     Satuan: [{ Uuid: b.UuidProdukSatuan ?? '', Simbol: 'pcs', Konversi: '1.0000' }],
                 })),
@@ -309,6 +313,11 @@ describe('Bengkel (§9.10)', () => {
         expect(screen.queryByRole('textbox', { name: /Harga/ })).toBeNull();
         expect(screen.getByRole('combobox', { name: /Mekanik Servis Ringan/ })).toBeTruthy();
         expect(screen.queryByRole('combobox', { name: /Mekanik Busi/ })).toBeNull();
+        // Sparepart bernomor seri: kotak nomor seri terisi dari perintah kerja; satu nomor per baris (koma juga boleh).
+        const kotakSeri = screen.getByRole('textbox', { name: /Nomor seri Busi Motor Iridium/ });
+        expect((kotakSeri as HTMLTextAreaElement).value).toBe('NGK-0001');
+        expect(screen.queryByRole('textbox', { name: /Nomor seri Servis/ })).toBeNull();
+        fireEvent.change(kotakSeri, { target: { value: 'NGK-0001\n ngk-0002 ,\n' } });
 
         fireEvent.click(screen.getByRole('button', { name: 'Simpan perintah kerja' }));
         expect(tiruanRouter.put).toHaveBeenCalledTimes(1);
@@ -323,6 +332,7 @@ describe('Bengkel (§9.10)', () => {
                 Diskon: null,
                 UuidKaryawan: '01JKARYAWAN000000000000001',
                 Catatan: null,
+                NomorSeri: [],
             },
             {
                 Jenis: 'Sparepart',
@@ -332,6 +342,7 @@ describe('Bengkel (§9.10)', () => {
                 Diskon: null,
                 UuidKaryawan: null,
                 Catatan: null,
+                NomorSeri: ['NGK-0001', 'ngk-0002'],
             },
         ]);
         expect(data.Baris.some((b) => 'HargaSatuan' in b)).toBe(false);

@@ -80,6 +80,8 @@ export type BarisPerintahKerja = {
     Subtotal: string;
     Karyawan: { Uuid: string; Nama: string } | null;
     Catatan: string | null;
+    /** Unit sparepart bernomor seri yang akan dipasang (kosong = diisi kasir saat menagih). */
+    NomorSeri: string[];
     Disetujui: boolean;
     StokTersedia: string | null;
 };
@@ -151,11 +153,15 @@ export type PropsDetailPerintahKerja = {
 
 export type SatuanProdukBengkel = { Uuid: string; Simbol: string; Konversi: string };
 
+/** Pelacakan produk sparepart: batch dialokasikan FEFO saat ditagih, nomor seri dicatat per unit. */
+export type PelacakanBengkel = 'Tidak' | 'Batch' | 'Seri';
+
 export type HasilCariProdukBengkel = {
     Uuid: string;
     Nama: string;
     Sku: string | null;
     Jenis: JenisBarisBengkel;
+    Pelacakan: PelacakanBengkel;
     StokTersedia: string | null;
     Satuan: SatuanProdukBengkel[];
 };
@@ -170,6 +176,8 @@ export type IsianBarisPerintahKerja = {
     Diskon: string;
     UuidKaryawan: string | null;
     Catatan: string | null;
+    NomorSeri: string[];
+    Pelacakan: PelacakanBengkel;
     StokTersedia: string | null;
     Satuan: SatuanProdukBengkel[];
 };

@@ -2,7 +2,11 @@ import { Link, router, usePage } from '@inertiajs/react';
 import { useState, type FormEvent } from 'react';
 
 import DialogKendaraan from '@/Komponen/Bengkel/DialogKendaraan';
-import IsianBarisBengkel, { BuatKunciBarisBengkel, type BarisIsianBengkel } from '@/Komponen/Bengkel/IsianBarisBengkel';
+import IsianBarisBengkel, {
+    BuatKunciBarisBengkel,
+    PecahNomorSeri,
+    type BarisIsianBengkel,
+} from '@/Komponen/Bengkel/IsianBarisBengkel';
 import { AlamatPerintahKerja } from '@/Komponen/Bengkel/KolomPerintahKerja';
 import PemilihCariBengkel from '@/Komponen/Bengkel/PemilihCariBengkel';
 import BidangOutlet from '@/Komponen/Formulir/BidangOutlet';
@@ -55,6 +59,7 @@ export default function HalamanFormPerintahKerja({ Isian, Awal, OpsiOutlet, Opsi
         (Isian?.Baris ?? []).map((b) => ({
             ...b,
             Kunci: BuatKunciBarisBengkel(),
+            TeksNomorSeri: b.NomorSeri.join('\n'),
             Jumlah: b.Jumlah.replace(/\.0+$/, ''),
             Diskon: b.Diskon === '0.00' ? '' : b.Diskon,
         })),
@@ -87,6 +92,7 @@ export default function HalamanFormPerintahKerja({ Isian, Awal, OpsiOutlet, Opsi
                     Diskon: b.Diskon === '' ? null : b.Diskon,
                     UuidKaryawan: b.Jenis === 'Jasa' ? b.UuidKaryawan : null,
                     Catatan: b.Catatan,
+                    NomorSeri: b.Pelacakan === 'Seri' ? PecahNomorSeri(b.TeksNomorSeri) : [],
                 })),
         };
         const pilihan = { onStart: () => AturMemproses(true), onFinish: () => AturMemproses(false) };

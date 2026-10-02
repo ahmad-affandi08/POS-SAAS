@@ -83,6 +83,9 @@ class LayananPerintahKerja {
           jumlah: jumlah,
           diskon: diskon.BernilaiNol() || diskon.BernilaiNegatif() ? null : () => DiskonManual.DariJumlah(diskon),
           staf: b.CekJasa && mekanik != null ? [mekanik] : null,
+          // Nomor seri unit yang dicatat di perintah kerja ikut baris; jumlahnya tetap jumlah WO. Kosong = kasir mengisi
+          // di panel item sebelum bayar (Bayar menolak baris bernomor seri yang belum lengkap).
+          nomorSeri: produk.bernomorSeri && b.nomorSeri.isNotEmpty ? b.nomorSeri : null,
         ),
       );
     }

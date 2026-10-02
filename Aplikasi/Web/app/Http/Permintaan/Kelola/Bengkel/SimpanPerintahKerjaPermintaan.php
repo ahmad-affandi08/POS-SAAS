@@ -42,6 +42,8 @@ final class SimpanPerintahKerjaPermintaan extends FormRequest
             'Baris.*.Diskon' => ['nullable', 'string', AturanGrosir::UANG],
             'Baris.*.UuidKaryawan' => ['nullable', 'string', 'ulid'],
             'Baris.*.Catatan' => ['nullable', 'string', 'max:255'],
+            'Baris.*.NomorSeri' => ['nullable', 'array', 'max:200'],
+            'Baris.*.NomorSeri.*' => ['string', 'max:100'],
         ];
     }
 
@@ -67,6 +69,7 @@ final class SimpanPerintahKerjaPermintaan extends FormRequest
             'EstimasiSelesaiPada' => 'perkiraan selesai',
             'Baris.*.Jumlah' => 'jumlah',
             'Baris.*.Diskon' => 'diskon',
+            'Baris.*.NomorSeri.*' => 'nomor seri',
         ];
     }
 
@@ -93,6 +96,7 @@ final class SimpanPerintahKerjaPermintaan extends FormRequest
                 AturanGrosir::Uang($b['Diskon'] ?? null),
                 isset($b['UuidKaryawan']) && is_string($b['UuidKaryawan']) && $b['UuidKaryawan'] !== '' ? strtoupper($b['UuidKaryawan']) : null,
                 AturanGrosir::Teks($b['Catatan'] ?? null),
+                array_values(array_filter(array_map(fn ($n): string => trim((string) $n), (array) ($b['NomorSeri'] ?? [])), fn (string $n): bool => $n !== '')),
             ), $baris),
         );
     }

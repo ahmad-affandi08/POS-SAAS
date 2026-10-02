@@ -88,6 +88,7 @@ final class PerintahKerjaPos
                 'UuidKaryawan' => $b['Karyawan']['Uuid'] ?? null,
                 'NamaKaryawan' => $b['Karyawan']['Nama'] ?? null,
                 'Catatan' => $b['Catatan'],
+                'NomorSeri' => $b['NomorSeri'],
             ], array_filter($d['Baris'], fn (array $b): bool => $b['Disetujui']))),
         ];
     }

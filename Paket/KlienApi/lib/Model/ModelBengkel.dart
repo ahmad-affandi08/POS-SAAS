@@ -16,6 +16,7 @@ class BarisPerintahKerjaPos {
     required this.uuidKaryawan,
     required this.namaKaryawan,
     required this.catatan,
+    this.nomorSeri = const [],
   });
 
   static const String jenisJasa = 'Jasa';
@@ -35,6 +36,10 @@ class BarisPerintahKerjaPos {
   final String? namaKaryawan;
   final String? catatan;
 
+  /// Nomor seri unit sparepart yang dicatat di perintah kerja (kosong = diisi kasir saat menagih; server lama tidak
+  /// mengirimnya).
+  final List<String> nomorSeri;
+
   bool get CekJasa => jenis == jenisJasa;
 
   static BarisPerintahKerjaPos DariJson(Map<String, Object?> json) => BarisPerintahKerjaPos(
@@ -49,6 +54,7 @@ class BarisPerintahKerjaPos {
     uuidKaryawan: UraiJson.AmbilTeksAtauNull(json['UuidKaryawan']),
     namaKaryawan: UraiJson.AmbilTeksAtauNull(json['NamaKaryawan']),
     catatan: UraiJson.AmbilTeksAtauNull(json['Catatan']),
+    nomorSeri: [...(json['NomorSeri'] as List<Object?>? ?? const []).whereType<String>()],
   );
 }
 
