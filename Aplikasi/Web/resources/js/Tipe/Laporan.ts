@@ -194,8 +194,12 @@ export type BarisMenuLaporan = {
 };
 export type IsiMenu = { Baris: BarisMenuLaporan[]; BatasPorsiQty: string; RataRataMargin: string };
 
+/** X6 (v3.79): langganan insight mingguan lewat email milik pengguna yang sedang masuk. */
+export type InsightEmailLaporan = { BisaEmail: boolean; Aktif: boolean };
+
 export type PropsLaporanPenjualan = {
     Saring: SaringLaporanPenjualan;
+    InsightEmail?: InsightEmailLaporan;
     Peringatan: string | null;
     MaksHari: number;
     OpsiOutlet: OpsiLaporan[];

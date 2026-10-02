@@ -62,6 +62,9 @@ Schedule::command('kasir:tutup-harian-otomatis')->dailyAt('06:15')->timezone('As
 // D-23 D: ringkasan pagi Kotak Tindakan lewat email (setelah otomatisasi pagi di atas).
 Schedule::command('tindakan:kirim-ringkasan-harian')->dailyAt('07:00')->timezone('Asia/Jakarta')->withoutOverlapping();
 
+// X6 (v3.79): insight penjualan minggu lalu ke pemilik tiap Senin pagi (setelah ringkasan Kotak Tindakan).
+Schedule::command('laporan:kirim-insight-mingguan')->weeklyOn(1, '07:15')->timezone('Asia/Jakarta')->withoutOverlapping();
+
 // OWN-03: push kondisi operasional penting; idempoten per pengguna, jenis, dan tanggal bisnis.
 Schedule::command('tindakan:buat-notifikasi-operasional')->hourlyAt(10)->withoutOverlapping();
 

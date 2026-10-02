@@ -9,8 +9,9 @@ use App\Http\Perantara\WajibIzinTenant;
 use Illuminate\Support\Facades\Route;
 
 /*
- * Rute back-office F-14a laporan (PRD §13.6, D-06, "Rincian F-14a"), baca saja. Didaftarkan dari routes/web.php di
- * dalam grup `/kelola`. Data dibatasi tenant aktif (`MilikTenant`) dan outlet akses pelaku.
+ * Rute back-office F-14a laporan (PRD §13.6, D-06, "Rincian F-14a"), baca saja kecuali langganan insight mingguan
+ * milik pelaku sendiri (X6, v3.79). Didaftarkan dari routes/web.php di dalam grup `/kelola`. Data dibatasi tenant aktif
+ * (`MilikTenant`) dan outlet akses pelaku.
  */
 
 $izin = static fn (IzinTenant $izin): string => WajibIzinTenant::class.':'.$izin->value;
@@ -19,6 +20,7 @@ Route::middleware(SiapkanAuditTenant::class)->group(function () use ($izin): voi
     Route::middleware($izin(IzinTenant::LaporanPenjualanLihat))->group(function (): void {
         Route::get('/laporan/penjualan', [LaporanKontroler::class, 'Penjualan'])->name('kelola.laporan.penjualan');
         Route::get('/laporan/penjualan/ekspor', [LaporanKontroler::class, 'EksporPenjualan'])->name('kelola.laporan.penjualan.ekspor');
+        Route::put('/laporan/penjualan/insight-email', [LaporanKontroler::class, 'UbahInsightEmail'])->name('kelola.laporan.penjualan.insight-email');
     });
     Route::middleware($izin(IzinTenant::LaporanKeuanganLihat))->group(function (): void {
         Route::get('/laporan/pajak', [LaporanKontroler::class, 'Pajak'])->name('kelola.laporan.pajak');

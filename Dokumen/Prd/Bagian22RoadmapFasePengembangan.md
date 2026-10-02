@@ -71,7 +71,7 @@ Urutan mengikuti flow:
 
 ### Fase 3 — Melampaui Majoo (Sprint 22–29, ±16 minggu)
 
-- Smart restock & forecast (X6), menu engineering, analisis ABC, insight otomatis mingguan ke owner. *(v3.43: analisis ABC, menu engineering, saran restock moving average selesai; v3.78 faktor musiman Ramadan/Lebaran; insight mingguan menyusul.)*
+- Smart restock & forecast (X6), menu engineering, analisis ABC, insight otomatis mingguan ke owner. *(v3.43: analisis ABC, menu engineering, saran restock moving average selesai; v3.78 faktor musiman Ramadan/Lebaran; v3.79 insight mingguan lewat email.)*
 - Open API v1 + webhook + portal developer (X7).
 - Konsinyasi (X9), landed cost, rekonsiliasi bank, aset tetap & penyusutan.
 - Toko online `/{slugTenant}`, pengiriman & kurir internal.

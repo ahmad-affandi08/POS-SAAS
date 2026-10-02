@@ -5,11 +5,14 @@ declare(strict_types=1);
 namespace App\Http\Kontroler\Kelola\Laporan;
 
 use App\Domain\Bersama\Tabel\Data\DataPermintaanTabel;
+use App\Domain\Laporan\Aksi\UbahLanggananInsightMingguan;
 use App\Domain\Laporan\Data\DataPeriodeLaporan;
+use App\Domain\Laporan\Kueri\LanggananInsight;
 use App\Domain\Laporan\Kueri\LaporanPajak;
 use App\Domain\Laporan\Kueri\LaporanPenjualan;
 use App\Domain\Laporan\Kueri\LaporanStok;
 use App\Domain\Laporan\Layanan\PenulisCsvLaporan;
+use App\Domain\Organisasi\Kueri\AksesPengguna;
 use App\Domain\Organisasi\Kueri\PetaUuidOutlet;
 use App\Domain\Organisasi\Kueri\TanggalBisnisOutlet;
 use App\Domain\Penjualan\Kueri\AgregatPenjualan;
@@ -19,6 +22,7 @@ use App\Http\Kontroler\Kelola\DasarKelolaKontroler;
 use App\Http\Respons\ResponsTabel;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -39,7 +43,7 @@ final class LaporanKontroler extends DasarKelolaKontroler
     /** Batas periode laporan pajak (per bulan). */
     private const MAKS_HARI_PAJAK = 366;
 
-    public function Penjualan(Request $permintaan, LaporanPenjualan $laporan, TanggalBisnisOutlet $tanggal): Response|JsonResponse
+    public function Penjualan(Request $permintaan, LaporanPenjualan $laporan, TanggalBisnisOutlet $tanggal, AksesPengguna $akses, LanggananInsight $langganan): Response|JsonResponse
     {
         $saring = $laporan->BacaSaring($permintaan->query(), $this->IdOutletBoleh(), $tanggal->Hitung(null));
         $tabel = DataPermintaanTabel::Dari($permintaan->query(), AgregatPenjualan::KOLOM_URUT_PRODUK, AgregatPenjualan::URUT_BAWAAN_PRODUK);
@@ -48,7 +52,30 @@ final class LaporanKontroler extends DasarKelolaKontroler
             return response()->json($laporan->AmbilIsiTab($saring['Tab'], $saring['Saring'], $tabel));
         }
 
-        return Inertia::render('Kelola/Laporan/Penjualan', $laporan->AmbilHalaman($saring, $this->IdOutletBoleh(), $tabel));
+        $pelaku = $this->Pelaku();
+        $pemilik = ($akses->Ambil($this->IdTenant(), $pelaku->Id)['Pemilik'] ?? false) === true;
+
+        return Inertia::render('Kelola/Laporan/Penjualan', [
+            ...$laporan->AmbilHalaman($saring, $this->IdOutletBoleh(), $tabel),
+            // X6 (v3.79): langganan insight mingguan lewat email (Owner bawaan berlangganan).
+            'InsightEmail' => [
+                'BisaEmail' => $pelaku->Email !== null,
+                'Aktif' => $pelaku->Email !== null && $langganan->CekAktif($pelaku->Id, $pemilik),
+            ],
+        ]);
+    }
+
+    public function UbahInsightEmail(Request $permintaan, UbahLanggananInsightMingguan $ubah): RedirectResponse
+    {
+        $aktif = (bool) $permintaan->validate(['Aktif' => ['required', 'boolean']], attributes: ['Aktif' => 'insight mingguan'])['Aktif'];
+
+        if ($aktif && $this->Pelaku()->Email === null) {
+            return back()->withErrors(['Aktif' => 'Akun Anda belum punya email. Tambahkan email dulu untuk menerima insight.']);
+        }
+
+        $ubah->Jalankan($this->Pelaku()->Id, $aktif);
+
+        return back()->with('Kilat', $aktif ? 'Insight penjualan dikirim ke email Anda setiap Senin pagi.' : 'Insight mingguan lewat email dimatikan.');
     }
 
     public function EksporPenjualan(Request $permintaan, LaporanPenjualan $laporan, TanggalBisnisOutlet $tanggal): StreamedResponse

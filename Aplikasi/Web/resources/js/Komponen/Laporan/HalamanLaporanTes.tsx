@@ -194,6 +194,19 @@ describe('F-14a laporan penjualan', () => {
         expect(screen.getByRole('table', { name: 'Ringkasan penjualan harian' })).toBeTruthy();
     });
 
+    it('X6: sakelar insight mingguan mengirim pilihan langganan ke server', () => {
+        RenderUji(<HalamanLaporanPenjualan {...PropsPenjualan({ InsightEmail: { BisaEmail: true, Aktif: true } })} />);
+
+        const sakelar = screen.getByRole('switch', { name: 'Kirim insight mingguan ke email saya' });
+        expect(sakelar.getAttribute('aria-checked')).toBe('true');
+        sakelar.click();
+        expect(tiruanRouter.put).toHaveBeenCalledWith(
+            '/kelola/laporan/penjualan/insight-email',
+            { Aktif: false },
+            expect.objectContaining({ preserveScroll: true }),
+        );
+    });
+
     it('saring kanal lewat PilihanCari memuat ulang laporan dengan saring di URL', () => {
         RenderUji(<HalamanLaporanPenjualan {...PropsPenjualan()} />);
 
