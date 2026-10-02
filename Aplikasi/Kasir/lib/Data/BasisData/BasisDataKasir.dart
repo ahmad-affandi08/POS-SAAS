@@ -9,6 +9,7 @@ import 'TabelPascaPenjualan.dart';
 import 'TabelPenjualan.dart';
 import 'TabelPersediaan.dart';
 import 'TabelPreOrder.dart';
+import 'TabelSalesman.dart';
 
 export 'TabelAbsensi.dart';
 export 'TabelDeposit.dart';
@@ -19,6 +20,7 @@ export 'TabelPascaPenjualan.dart';
 export 'TabelPenjualan.dart';
 export 'TabelPersediaan.dart';
 export 'TabelPreOrder.dart';
+export 'TabelSalesman.dart';
 
 part 'BasisDataKasir.g.dart';
 
@@ -192,6 +194,10 @@ class PercobaanPin extends Table {
     BahanTerbuangLokal,
     // Skema 24 (K-12): meja yang perlu dibersihkan.
     MejaPerluDibersihkan,
+    // Skema 26 (Modul Salesman bagian 2): cache pelanggan salesman, kunjungan & pesanan grosir dari perangkat ini.
+    PelangganSalesmanLokal,
+    KunjunganSalesLokal,
+    PesananGrosirLokal,
   ],
 )
 class BasisDataKasir extends _$BasisDataKasir {
@@ -204,9 +210,10 @@ class BasisDataKasir extends _$BasisDataKasir {
   /// (pre-order lokal); 12 = F-16c bagian 3 (data promo pelanggan); 13 = F-16d bagian 1 (isi deposit lokal); 14 = F-16d
   /// bagian 2 (produk paket sesi); 15 = laundry (blok tiket di penjualan); 16 = audit P0 F-01 (perangkat pembuat item
   /// outbox); 17 = F-05f bagian 2 (bahan terbuang lokal); 18 = X8 (kanal metode pembayaran platform ojol);
-  /// 19 = F-17 bagian 3 (ongkir ikut DPP pajak); 24 = K-12 (minta bill & meja perlu dibersihkan).
+  /// 19 = F-17 bagian 3 (ongkir ikut DPP pajak); 24 = K-12 (minta bill & meja perlu dibersihkan); 25 = K-25 (harga
+  /// terbuka); 26 = Modul Salesman bagian 2 (pelanggan salesman, kunjungan, pesanan grosir lokal).
   @override
-  int get schemaVersion => 25;
+  int get schemaVersion => 26;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -448,6 +455,12 @@ class BasisDataKasir extends _$BasisDataKasir {
           await m.addColumn(produk, produk.HargaTerbuka);
         }
         await (delete(pengaturan)..where((p) => p.Kunci.equals('KursorKatalog'))).go();
+      }
+      // Skema 26 (Modul Salesman bagian 2): hanya menambah tabel; outbox & dokumen lama tidak disentuh.
+      if (dari < 26) {
+        await m.createTable(pelangganSalesmanLokal);
+        await m.createTable(kunjunganSalesLokal);
+        await m.createTable(pesananGrosirLokal);
       }
     },
     beforeOpen: (detail) async {

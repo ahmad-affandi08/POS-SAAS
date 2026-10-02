@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../Aplikasi/Penyedia.dart';
+import '../Domain/Salesman/LayananSalesman.dart';
 import 'Dapur/LayarKds.dart';
 import 'LayarAktivasi.dart';
 import 'LayarBukaShift.dart';
@@ -14,7 +15,9 @@ import 'Shift/LayarLaporanZ.dart';
 /// Menentukan layar menurut sesi: aktivasi → pilih kasir & PIN → buka shift → Ruang Kerja Kasir (§17.2.7) selama
 /// shift terbuka, termasuk layar kunci & ganti kasir; setelah tutup shift → Laporan Z → buka shift (F-11). Perangkat
 /// berjenis `Kds` langsung membuka layar dapur setelah aktif (F-10b; tanpa kasir & shift). Perangkat berjenis `Pelayan`
-/// (v2.00) masuk dengan PIN lalu langsung ke Ruang Kerja mode Pelayan tanpa shift.
+/// (v2.00) masuk dengan PIN lalu langsung ke Ruang Kerja mode Pelayan tanpa shift. Perangkat berjenis `Salesman`, dan
+/// pengguna yang izin POS-nya hanya salesman, langsung ke Ruang Kerja mode Salesman tanpa shift (Modul Salesman
+/// bagian 2).
 class GerbangKasir extends ConsumerStatefulWidget {
   const GerbangKasir({super.key});
 
@@ -52,8 +55,11 @@ class _GerbangKasirState extends ConsumerState<GerbangKasir> with WidgetsBinding
     if (tahap == TahapSesi.PilihKasir) {
       return true;
     }
+    final jenis = ref.read(penyediaJenisPerangkat).value;
+    final kasir = ref.read(penyediaSesi).kasir;
     return tahap == TahapSesi.Masuk &&
-        ref.read(penyediaJenisPerangkat).value != 'Pelayan' &&
+        jenis != 'Pelayan' &&
+        !(kasir != null && LayananSalesman.CekModeSalesman(kasir, jenis)) &&
         ref.read(penyediaShiftAktif).value == null;
   }
 
@@ -93,6 +99,12 @@ class _GerbangKasirState extends ConsumerState<GerbangKasir> with WidgetsBinding
       TahapSesi.BelumAktif => LayarAktivasi(pesan: sesi.pesan),
       TahapSesi.PilihKasir => const LayarPilihKasir(),
       TahapSesi.Masuk when jenis == 'Pelayan' => RuangKerja(shift: null, kasir: sesi.kasir!, kunci: sesi.kunci),
+      TahapSesi.Masuk when LayananSalesman.CekModeSalesman(sesi.kasir!, jenis) => RuangKerja(
+        shift: null,
+        kasir: sesi.kasir!,
+        kunci: sesi.kunci,
+        salesman: true,
+      ),
       TahapSesi.Masuk =>
         ref
             .watch(penyediaShiftAktif)

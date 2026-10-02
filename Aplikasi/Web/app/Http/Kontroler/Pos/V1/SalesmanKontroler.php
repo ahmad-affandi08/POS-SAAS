@@ -27,7 +27,7 @@ use Illuminate\Http\Request;
  * mengisi cache offline HP salesman. Pelaku = staf yang masuk dengan PIN di perangkat, dikirim di header `X-Id-Kasir`
  * (Uuid pengguna, §16.2); wajib anggota outlet perangkat dengan izin `salesman.kunjungan` (selain itu 403 `TanpaIzin`).
  *
- * - `GET salesman/pelanggan?kata=&halaman=` pelanggan aktif + posisi kredit (50 per halaman; nomor HP tersamar) dan
+ * - `GET salesman/pelanggan?kata=&halaman=` pelanggan aktif + posisi kredit (50 per halaman; nomor HP penuh + alamat, K30) dan
  *   `TerakhirDikunjungiPada`.
  * - `GET salesman/pelanggan/{uuid}/piutang` piutang terbuka pelanggan (kasir tempo & faktur grosir), urut jatuh tempo.
  * - `GET salesman/stok` jumlah tersedia per produk di lokasi stok Toko outlet perangkat (tanpa nilai/HPP).

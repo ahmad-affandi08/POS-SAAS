@@ -20,6 +20,7 @@ import 'Model/ModelPreOrder.dart';
 import 'Model/ModelPromo.dart';
 import 'Model/ModelReservasi.dart';
 import 'Model/ModelRetur.dart';
+import 'Model/ModelSalesman.dart';
 import 'Model/ModelTokoOnline.dart';
 import 'Model/UraiJson.dart';
 
@@ -413,6 +414,46 @@ class KlienPos {
     ),
   );
 
+  /// Modul Salesman: satu halaman pelanggan aktif (50 per halaman, urut nama) beserta posisi kredit. [kata] kosong =
+  /// semua (unduh awal cache offline halaman demi halaman). Pelaku = [uuidPengguna] di header `X-Id-Kasir`; tanpa izin
+  /// `salesman.kunjungan` → `GalatApi` 403 `TanpaIzin`; offline → `GalatJaringan`.
+  Future<HalamanPelangganSalesman> AmbilPelangganSalesman({
+    required String uuidPengguna,
+    String kata = '',
+    int halaman = 1,
+  }) async {
+    final kueri = ['halaman=$halaman', if (kata.trim().isNotEmpty) 'kata=${Uri.encodeQueryComponent(kata.trim())}'];
+    return HalamanPelangganSalesman.DariJson(
+      await _Kirim('GET', 'salesman/pelanggan?${kueri.join('&')}', null, header: {'X-Id-Kasir': uuidPengguna}),
+    );
+  }
+
+  /// Modul Salesman: piutang terbuka satu pelanggan, jatuh tempo terdekat dulu (wajib online).
+  Future<List<PiutangSalesmanPos>> AmbilPiutangSalesman(String uuidPelanggan, {required String uuidPengguna}) async {
+    final json = await _Kirim(
+      'GET',
+      'salesman/pelanggan/${Uri.encodeComponent(uuidPelanggan)}/piutang',
+      null,
+      header: {'X-Id-Kasir': uuidPengguna},
+    );
+    return [for (final p in UraiJson.AmbilDaftarPeta(json['Piutang'])) PiutangSalesmanPos.DariJson(p)];
+  }
+
+  /// Modul Salesman: stok tersedia per produk di lokasi Toko outlet perangkat (petunjuk, tanpa nilai/HPP).
+  Future<StokSalesmanPos> AmbilStokSalesman({required String uuidPengguna}) async =>
+      StokSalesmanPos.DariJson(await _Kirim('GET', 'salesman/stok', null, header: {'X-Id-Kasir': uuidPengguna}));
+
+  /// Modul Salesman: kunjungan pelaku sendiri pada [tanggal] (`YYYY-MM-DD`; bawaan hari ini zona waktu outlet).
+  Future<DaftarKunjunganSalesman> AmbilKunjunganSalesman({required String uuidPengguna, String? tanggal}) async =>
+      DaftarKunjunganSalesman.DariJson(
+        await _Kirim(
+          'GET',
+          tanggal == null ? 'salesman/kunjungan' : 'salesman/kunjungan?tanggal=${Uri.encodeQueryComponent(tanggal)}',
+          null,
+          header: {'X-Id-Kasir': uuidPengguna},
+        ),
+      );
+
   /// F-17 self-order (v2.02): pesanan QR meja outlet perangkat yang menunggu konfirmasi, terlama dulu.
   Future<List<PesananSendiriPos>> AmbilPesanSendiri() async {
     final json = await _Kirim('GET', 'pesan-sendiri', null);
@@ -571,13 +612,14 @@ class KlienPos {
     Map<String, Object?>? isi, {
     bool pakaiToken = true,
     String? kunciIdempotensi,
+    Map<String, String> header = const {},
   }) async {
     final respons = await _KirimMentah(
       metode,
       jalur,
       isi,
       pakaiToken: pakaiToken,
-      header: {'Idempotency-Key': ?kunciIdempotensi},
+      header: {...header, 'Idempotency-Key': ?kunciIdempotensi},
     );
     final json = _UraiJson(respons.body);
 

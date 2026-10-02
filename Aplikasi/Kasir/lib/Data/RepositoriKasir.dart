@@ -136,6 +136,11 @@ abstract final class KunciPengaturan {
 
   /// v2.01: layar pelanggan perangkat ini (JSON `{Mode, PortVfd}`; tidak ikut data awal).
   static const String layarPelanggan = 'LayarPelanggan';
+
+  /// Modul Salesman bagian 2: waktu unduhan lengkap cache pelanggan salesman terakhir (ISO UTC) dan snapshot stok kantor
+  /// (JSON `{DiambilPada, Stok: {UuidProduk: Jumlah}}`).
+  static const String pelangganSalesmanDiperbaruiPada = 'PelangganSalesmanDiperbaruiPada';
+  static const String stokSalesman = 'StokSalesman';
 }
 
 /// Status shift lokal (sama dengan server).
@@ -624,10 +629,13 @@ class RepositoriKasir {
   Future<void> HapusPercobaanPin(String uuidPengguna) =>
       (db.delete(db.percobaanPin)..where((p) => p.UuidPengguna.equals(uuidPengguna))).go();
 
-  /// Perangkat dicabut (PRD §25.2 no. 3): hapus data PIN & staf. Shift, mutasi, dan outbox yang belum terkirim
-  /// tetap disimpan agar tidak ada transaksi yang hilang.
+  /// Perangkat dicabut (PRD §25.2 no. 3): hapus data PIN & staf, serta cache pelanggan salesman (nomor HP penuh &
+  /// alamat, K30). Shift, mutasi, kunjungan, pesanan, dan outbox yang belum terkirim tetap disimpan agar tidak ada
+  /// transaksi yang hilang.
   Future<void> HapusDataSensitif() => db.transaction(() async {
     await db.delete(db.staf).go();
     await db.delete(db.percobaanPin).go();
+    await db.delete(db.pelangganSalesmanLokal).go();
+    await HapusPengaturan(KunciPengaturan.pelangganSalesmanDiperbaruiPada);
   });
 }

@@ -9,11 +9,13 @@ import 'package:kasir/Tampilan/Jual/UmpanBalikPindai.dart';
 import 'package:kasir/Aplikasi/AplikasiKasir.dart';
 import 'package:kasir/Aplikasi/Lingkungan.dart';
 import 'package:kasir/Aplikasi/Penyedia.dart';
+import 'package:kasir/Aplikasi/PenyediaSalesman.dart';
 import 'package:kasir/Domain/Diagnostik/LogLokal.dart';
 import 'package:kasir/Domain/Perangkat/KameraBukti.dart';
 import 'package:kasir/Domain/Perangkat/KameraSwafoto.dart';
 import 'package:kasir/Domain/Perangkat/LayananLayarPelanggan.dart';
 import 'package:kasir/Domain/Perangkat/PemindaiQr.dart';
+import 'package:kasir/Domain/Perangkat/PenentuLokasi.dart';
 import 'package:kasir/Domain/Perangkat/PenjagaLayarMenyala.dart';
 import 'package:kasir/Domain/Pin/PemverifikasiPinOffline.dart';
 import 'package:klien_api/KlienApi.dart';
@@ -33,6 +35,7 @@ Future<void> PasangAplikasi(
   PemindaiQr? pemindaiQr,
   UmpanBalikPindai? umpanBalikPindai,
   LogLokal? logLokal,
+  PenentuLokasi penentuLokasi = const PenentuLokasiTidakAda(),
 }) async {
   // Ukuran logis juga untuk MediaQuery (tata letak ruang kerja memakai lebar layar), bukan hanya permukaan render.
   tester.view.devicePixelRatio = 1;
@@ -56,6 +59,8 @@ Future<void> PasangAplikasi(
         penyediaPemindaiPrinter.overrideWithValue(u.pemindai),
         penyediaUmpanBalikPindai.overrideWithValue(umpanBalikPindai ?? const UmpanBalikPindai()),
         penyediaLogLokal.overrideWithValue(logLokal),
+        // Modul Salesman bagian 2: lokasi tidak pernah memanggil plugin platform di test.
+        penyediaPenentuLokasi.overrideWithValue(penentuLokasi),
         penyediaPembuatLayarPelanggan.overrideWithValue(
           (p) => p.aktif ? u.layarPelanggan : const LayarPelangganTidakAda(),
         ),

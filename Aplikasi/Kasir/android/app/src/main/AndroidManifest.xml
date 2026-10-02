@@ -6,11 +6,16 @@
     <uses-feature android:name="android.hardware.camera" android:required="false" />
     <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30" />
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" android:maxSdkVersion="30" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
     <uses-permission android:name="android.permission.BLUETOOTH_SCAN" android:usesPermissionFlags="neverForLocation" />
     <uses-feature android:name="android.hardware.bluetooth" android:required="false" />
     <uses-feature android:name="android.hardware.bluetooth_le" android:required="false" />
+    <!-- Lokasi: Modul Salesman bagian 2 (lokasi sekali saat mulai kunjungan, izin "saat aplikasi dipakai" saja, tanpa
+         lokasi latar) dan izin Bluetooth lama Android 11 ke bawah. Satu deklarasi tanpa maxSdkVersion karena
+         Android tidak menerima izin yang sama dua kali. -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-feature android:name="android.hardware.location.gps" android:required="false" />
     <!-- Printer struk USB & printer bawaan all-in-one lewat USB host (PRD v1.96). -->
     <uses-feature android:name="android.hardware.usb.host" android:required="false" />
     <application

@@ -30,6 +30,8 @@ import '../Penjualan/LembarVoid.dart';
 import '../Persediaan/LayarStok.dart';
 import '../Persediaan/LembarBahanTerbuang.dart';
 import '../Persediaan/LembarGudang.dart';
+import '../Salesman/LayarSalesman.dart';
+import '../Salesman/LembarPesananSalesman.dart';
 import '../Shift/KartuLaporanShift.dart';
 import '../Shift/LembarTutupShift.dart';
 import '../Struk/BagianCetakDokumen.dart';
@@ -51,8 +53,17 @@ import 'TemaNavigasiRuangKerja.dart';
 ///
 /// Mode Pelayan (v2.00): [shift] null untuk perangkat berjenis `Pelayan` — rel berisi Meja (beranda), Pesanan,
 /// Sinkron, Pengaturan; tanpa kas, shift, riwayat, dan pembayaran.
+///
+/// Mode Salesman (Modul Salesman bagian 2): [shift] null dan [salesman] true untuk perangkat berjenis `Salesman` atau
+/// pengguna yang hanya berizin salesman — rel berisi Salesman (beranda), Stok (dengan izin), Sinkron, Pengaturan.
 class RuangKerja extends ConsumerStatefulWidget {
-  const RuangKerja({super.key, required this.shift, required this.kasir, this.kunci = KeadaanKunci.Bebas});
+  const RuangKerja({
+    super.key,
+    required this.shift,
+    required this.kasir,
+    this.kunci = KeadaanKunci.Bebas,
+    this.salesman = false,
+  });
 
   /// Lebar minimum untuk rel navigasi kiri; di bawahnya memakai bilah navigasi bawah.
   static const double lebarRel = 600;
@@ -69,10 +80,13 @@ class RuangKerja extends ConsumerStatefulWidget {
   /// diumumkan di layar dan jumlah yang menunggu tampil di bilah status.
   static const Duration selangPesananOnline = Duration(seconds: 10);
 
-  /// Null = mode Pelayan (tanpa shift).
+  /// Null = mode Pelayan atau Salesman (tanpa shift).
   final BarisShift? shift;
   final StafLokal kasir;
   final KeadaanKunci kunci;
+
+  /// Mode Salesman (tanpa shift; [shift] diabaikan).
+  final bool salesman;
 
   @override
   ConsumerState<RuangKerja> createState() => _RuangKerjaState();
@@ -81,12 +95,15 @@ class RuangKerja extends ConsumerStatefulWidget {
 class _RuangKerjaState extends ConsumerState<RuangKerja> {
   late TujuanRuangKerja _tujuan = _beranda;
 
-  bool get _pelayan => widget.shift == null;
+  bool get _pelayan => widget.shift == null && !widget.salesman;
 
-  /// Beranda: Meja untuk pelayan dan untuk outlet bermode kasir Meja (K-8, restoran layan meja) selama mode meja aktif;
-  /// Jual untuk lainnya.
-  TujuanRuangKerja get _beranda =>
-      _pelayan || (ref.read(penyediaModeKasir).value == 'Meja' && ref.read(penyediaModeMeja).value == true)
+  bool get _salesman => widget.salesman;
+
+  /// Beranda: Salesman untuk mode Salesman; Meja untuk pelayan dan untuk outlet bermode kasir Meja (K-8, restoran
+  /// layan meja) selama mode meja aktif; Jual untuk lainnya.
+  TujuanRuangKerja get _beranda => _salesman
+      ? TujuanRuangKerja.Salesman
+      : _pelayan || (ref.read(penyediaModeKasir).value == 'Meja' && ref.read(penyediaModeMeja).value == true)
       ? TujuanRuangKerja.Meja
       : TujuanRuangKerja.Jual;
 
@@ -118,8 +135,16 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
   /// Panel modul Gudang (POS-25) yang sedang terbuka; null = tertutup.
   JenisGudang? _panelGudang;
 
+  /// Modul Salesman: Uuid pelanggan yang panel ambil pesanannya sedang terbuka; null = tertutup.
+  String? _panelPesananSalesman;
+
   bool get _adaPanel =>
-      _jenisKas != null || _panelShift != null || _panelPenjualan != null || _panelTerbuang || _panelGudang != null;
+      _jenisKas != null ||
+      _panelShift != null ||
+      _panelPenjualan != null ||
+      _panelTerbuang ||
+      _panelGudang != null ||
+      _panelPesananSalesman != null;
 
   Timer? _pewaktuSinkron;
   Timer? _pewaktuPesanan;
@@ -188,7 +213,7 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
   /// Tarik pesanan terbuka outlet (mode meja aktif, tidak terkunci, tidak sedang menarik). Galat diabaikan: data lokal
   /// tetap dipakai dan dicoba lagi pada putaran berikutnya.
   Future<void> _TarikPesanan() async {
-    if (!mounted || _menarikPesanan || _terkunci || ref.read(penyediaModeMeja).value != true) {
+    if (!mounted || _menarikPesanan || _terkunci || _salesman || ref.read(penyediaModeMeja).value != true) {
       return;
     }
     _menarikPesanan = true;
@@ -213,6 +238,7 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
     if (!mounted ||
         _menarikPesananOnline ||
         _terkunci ||
+        _salesman ||
         ref.read(penyediaKonteksPenjualan).value?.tokoOnlineAktif != true) {
       return;
     }
@@ -291,12 +317,18 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
     _panelGudang = jenis;
   });
 
+  void _BukaPanelPesananSalesman(String uuidPelanggan) => setState(() {
+    _TutupSemuaPanel();
+    _panelPesananSalesman = uuidPelanggan;
+  });
+
   void _TutupSemuaPanel() {
     _jenisKas = null;
     _panelShift = null;
     _panelPenjualan = null;
     _panelTerbuang = false;
     _panelGudang = null;
+    _panelPesananSalesman = null;
   }
 
   void _TutupPanel() => setState(_TutupSemuaPanel);
@@ -343,6 +375,11 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
           if (LayananGudang.CekBoleh(widget.kasir, j)) j,
       ],
       saatGudang: _BukaPanelGudang,
+    ),
+    TujuanRuangKerja.Salesman => LayarSalesman(
+      staf: widget.kasir,
+      aktif: _tujuan == TujuanRuangKerja.Salesman && !_terkunci,
+      saatAmbilPesanan: _BukaPanelPesananSalesman,
     ),
     TujuanRuangKerja.Kas => LayarKas(shift: widget.shift!, saatCatat: _BukaPanelKas),
     TujuanRuangKerja.Shift => LayarShift(
@@ -412,7 +449,9 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
           nada: NadaStatus.Sukses,
         ),
       },
-      if (widget.shift case final shift?)
+      if (_salesman)
+        const ItemBilahStatus(ikon: Icons.storefront_outlined, teks: 'Mode salesman')
+      else if (widget.shift case final shift?)
         ItemBilahStatus(ikon: Icons.schedule, teks: 'Shift ${FormatWaktu.FormatJam(shift.DibukaPada)}')
       else
         const ItemBilahStatus(ikon: Icons.room_service_outlined, teks: 'Mode pelayan'),
@@ -455,11 +494,21 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
     final panelPenjualan = _panelPenjualan;
     final area = IndexedStack(index: indeks, children: [for (final i in item) _BangunLayar(i.tujuan)]);
     final panelGudang = _panelGudang;
-    if (jenisKas == null && panelShift == null && panelPenjualan == null && !_panelTerbuang && panelGudang == null) {
+    final panelPesananSalesman = _panelPesananSalesman;
+    if (!_adaPanel) {
       return area;
     }
 
     final (judul, formulir) = switch ((jenisKas, panelShift, panelPenjualan)) {
+      _ when panelPesananSalesman != null => (
+        LembarPesananSalesman.judul,
+        LembarPesananSalesman(
+          key: ValueKey('PesananSalesman-$panelPesananSalesman'),
+          staf: widget.kasir,
+          uuidPelanggan: panelPesananSalesman,
+          saatTerkirim: _TutupPanel,
+        ) as Widget,
+      ),
       _ when panelGudang != null => (
         panelGudang.judul,
         LembarGudang(key: ValueKey('Gudang-${panelGudang.name}'), jenis: panelGudang, staf: widget.kasir) as Widget,
@@ -598,7 +647,9 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
     final warna = TokenWarna.AmbilDari(context);
     final lebar = MediaQuery.sizeOf(context).width;
     final pakaiRel = lebar >= RuangKerja.lebarRel;
-    final item = _pelayan
+    final item = _salesman
+        ? ItemNavigasi.Saring(widget.kasir, daftar: ItemNavigasi.salesman)
+        : _pelayan
         ? ItemNavigasi.Saring(widget.kasir, daftar: ItemNavigasi.pelayan)
         : ItemNavigasi.Saring(
             widget.kasir,

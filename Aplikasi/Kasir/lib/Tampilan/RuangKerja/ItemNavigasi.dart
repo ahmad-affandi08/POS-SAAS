@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 
+import '../../Domain/Salesman/LayananSalesman.dart';
 import '../../Domain/Sesi/StafLokal.dart';
 
-/// Tujuan area kerja di rel navigasi (PRD §17.2.7). Urutan enum = urutan tampil.
-enum TujuanRuangKerja { Jual, Meja, Riwayat, Stok, Kas, Shift, StatusSinkron, Pengaturan }
+/// Tujuan area kerja di rel navigasi (PRD §17.2.7). Urutan tampil mengikuti daftar item ([ItemNavigasi.semua],
+/// [ItemNavigasi.pelayan], [ItemNavigasi.salesman]).
+enum TujuanRuangKerja { Jual, Meja, Riwayat, Stok, Salesman, Kas, Shift, StatusSinkron, Pengaturan }
 
 /// Satu item rel navigasi. Item hanya tampil bila [modul] aktif (null = inti, selalu aktif) dan kasir punya salah satu
-/// [izin] (kosong = semua kasir). Maksimal 8 item (§17.2.7).
+/// [izin] (kosong = semua kasir). Maksimal 8 item (§17.2.7); bila lebih, item [bolehDilepas] dilepas lebih dulu
+/// sehingga Sinkron & Pengaturan tidak pernah terpotong.
 @immutable
 class ItemNavigasi {
   const ItemNavigasi({
@@ -16,6 +19,7 @@ class ItemNavigasi {
     required this.ikonAktif,
     this.izin = const [],
     this.modul,
+    this.bolehDilepas = false,
   });
 
   final TujuanRuangKerja tujuan;
@@ -24,6 +28,9 @@ class ItemNavigasi {
   final IconData ikonAktif;
   final List<String> izin;
   final String? modul;
+
+  /// Item tambahan yang dilepas dulu saat rel melebihi [batasItem] (mis. Salesman bagi pemilik restoran bermode meja).
+  final bool bolehDilepas;
 
   static const int batasItem = 8;
 
@@ -66,6 +73,15 @@ class ItemNavigasi {
       ikon: Icons.inventory_2_outlined,
       ikonAktif: Icons.inventory_2,
       izin: izinStok,
+    ),
+    // Modul Salesman bagian 2: kasir yang juga salesman (toko kecil memakai satu HP) membukanya dari rel kasir.
+    ItemNavigasi(
+      tujuan: TujuanRuangKerja.Salesman,
+      label: 'Salesman',
+      ikon: Icons.storefront_outlined,
+      ikonAktif: Icons.storefront,
+      izin: [IzinSalesman.kunjungan],
+      bolehDilepas: true,
     ),
     ItemNavigasi(tujuan: TujuanRuangKerja.Kas, label: 'Kas', ikon: Icons.payments_outlined, ikonAktif: Icons.payments),
     ItemNavigasi(
@@ -124,15 +140,55 @@ class ItemNavigasi {
     ),
   ];
 
-  /// Item yang tampil untuk [kasir] dengan [modulAktif] (kode modul langganan tenant).
+  /// Mode Salesman (Modul Salesman bagian 2; perangkat berjenis `Salesman` atau pengguna yang hanya berizin salesman,
+  /// tanpa shift & kas): Salesman sebagai beranda, Stok (hanya dengan izin), Sinkron, Pengaturan.
+  static const List<ItemNavigasi> salesman = [
+    ItemNavigasi(
+      tujuan: TujuanRuangKerja.Salesman,
+      label: 'Salesman',
+      ikon: Icons.storefront_outlined,
+      ikonAktif: Icons.storefront,
+    ),
+    ItemNavigasi(
+      tujuan: TujuanRuangKerja.Stok,
+      label: 'Stok',
+      ikon: Icons.inventory_2_outlined,
+      ikonAktif: Icons.inventory_2,
+      izin: izinStok,
+    ),
+    ItemNavigasi(
+      tujuan: TujuanRuangKerja.StatusSinkron,
+      label: 'Sinkron',
+      ikon: Icons.cloud_sync_outlined,
+      ikonAktif: Icons.cloud_sync,
+    ),
+    ItemNavigasi(
+      tujuan: TujuanRuangKerja.Pengaturan,
+      label: 'Pengaturan',
+      ikon: Icons.settings_outlined,
+      ikonAktif: Icons.settings,
+    ),
+  ];
+
+  /// Item yang tampil untuk [kasir] dengan [modulAktif] (kode modul langganan tenant). Lebih dari [batasItem]: item
+  /// [bolehDilepas] dilepas dari belakang dulu, baru sisanya dipotong.
   static List<ItemNavigasi> Saring(
     StafLokal kasir, {
     Set<String> modulAktif = const {},
     List<ItemNavigasi> daftar = semua,
-  }) => daftar
-      .where(
-        (i) => (i.modul == null || modulAktif.contains(i.modul)) && (i.izin.isEmpty || i.izin.any(kasir.PunyaIzin)),
-      )
-      .take(batasItem)
-      .toList();
+  }) {
+    final hasil = daftar
+        .where(
+          (i) => (i.modul == null || modulAktif.contains(i.modul)) && (i.izin.isEmpty || i.izin.any(kasir.PunyaIzin)),
+        )
+        .toList();
+    while (hasil.length > batasItem) {
+      final indeks = hasil.lastIndexWhere((i) => i.bolehDilepas);
+      if (indeks < 0) {
+        break;
+      }
+      hasil.removeAt(indeks);
+    }
+    return hasil.take(batasItem).toList();
+  }
 }

@@ -16,6 +16,7 @@ import 'package:kasir/Data/RepositoriDeposit.dart';
 import 'package:kasir/Data/RepositoriPreOrder.dart';
 import 'package:kasir/Data/RepositoriPersediaan.dart';
 import 'package:kasir/Data/RepositoriPesananMeja.dart';
+import 'package:kasir/Data/RepositoriSalesman.dart';
 import 'package:kasir/Domain/Katalog/KatalogLokal.dart';
 import 'package:kasir/Domain/Katalog/LayananKatalog.dart';
 import 'package:kasir/Domain/Meja/LayananPesananMeja.dart';
@@ -30,6 +31,8 @@ import 'package:kasir/Domain/Penjualan/LayananPreOrder.dart';
 import 'package:kasir/Domain/Penjualan/LayananReservasi.dart';
 import 'package:kasir/Domain/Persediaan/LayananBahanTerbuang.dart';
 import 'package:kasir/Domain/Persediaan/LayananGudang.dart';
+import 'package:kasir/Domain/Perangkat/PenentuLokasi.dart';
+import 'package:kasir/Domain/Salesman/LayananSalesman.dart';
 import 'package:kasir/Domain/Sesi/LayananMasuk.dart';
 import 'package:kasir/Domain/Sesi/LayananPerangkat.dart';
 import 'package:kasir/Domain/Sesi/StafLokal.dart';
@@ -401,6 +404,16 @@ class LingkunganUji {
 
   late final LayananGudang gudang = LayananGudang(klien: klien, repositori: repositori);
 
+  /// Modul Salesman bagian 2: lokasi tiruan (bawaan tidak tersedia; test boleh menggantinya sebelum memakai [salesman]).
+  PenentuLokasi lokasi = const PenentuLokasiTidakAda();
+  late final RepositoriSalesman repositoriSalesman = RepositoriSalesman(db, repositori);
+  late final LayananSalesman salesman = LayananSalesman(
+    klien: klien,
+    repositori: repositoriSalesman,
+    penentuLokasi: _LokasiDelegasi(this),
+    jam: () => jam,
+  );
+
   late final RepositoriPelanggan repositoriPelanggan = RepositoriPelanggan(db, repositori);
   late final RepositoriAbsensi repositoriAbsensi = RepositoriAbsensi(db, repositori);
   late final LayananPelanggan pelanggan = LayananPelanggan(
@@ -441,4 +454,14 @@ class LingkunganUji {
       StafLokal.DariBaris((await repositori.AmbilStaf()).firstWhere((s) => s.Nama == nama));
 
   Future<void> Tutup() => db.close();
+}
+
+/// Meneruskan ke [LingkunganUji.lokasi] yang berlaku saat dipanggil (test boleh menggantinya setelah layanan dibuat).
+class _LokasiDelegasi implements PenentuLokasi {
+  const _LokasiDelegasi(this.u);
+
+  final LingkunganUji u;
+
+  @override
+  Future<LokasiPerangkat?> Ambil() => u.lokasi.Ambil();
 }

@@ -6,6 +6,8 @@
 	<string>PAYOU POS memakai Bluetooth untuk mencetak struk ke printer thermal.</string>
 	<key>NSBluetoothPeripheralUsageDescription</key>
 	<string>PAYOU POS memakai Bluetooth untuk mencetak struk ke printer thermal.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Lokasi dipakai sekali saat salesman memulai kunjungan ke toko pelanggan, supaya kantor tahu kunjungan benar-benar dilakukan. Kunjungan tetap bisa dicatat tanpa lokasi.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Kamera dipakai untuk swafoto saat absen masuk dan keluar, dan untuk memindai kode QR aktivasi perangkat.</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
