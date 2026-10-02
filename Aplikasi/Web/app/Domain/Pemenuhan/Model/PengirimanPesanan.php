@@ -28,6 +28,8 @@ use LogicException;
  * @property string|null $PathBukti
  * @property string|null $Alasan
  * @property int|null $DiubahOleh
+ * @property Carbon|null $DibuatPada
+ * @property Carbon|null $DiubahPada
  */
 final class PengirimanPesanan extends ModelDasar
 {

@@ -25,8 +25,13 @@ final class UbahStatusPengirimanPesanan
         private readonly PemberitahuPesananOnline $pemberitahu,
     ) {}
 
-    /** @param array<string, mixed> $data */
-    public function Jalankan(PengirimanPesanan $pengiriman, PesananOnline $pesanan, StatusPengirimanPesanan $status, array $data, int $idPengguna): void
+    /**
+     * `$idPengguna` null = pelaku di luar pengguna PAYOU, yaitu kurir lewat portal kurir (v3.49); siapa kurirnya
+     * tercatat di `IdKurir` pengiriman dan alasan riwayat status. `PathBukti` = foto bukti serah terima (Diterima).
+     *
+     * @param  array<string, mixed>  $data
+     */
+    public function Jalankan(PengirimanPesanan $pengiriman, PesananOnline $pesanan, StatusPengirimanPesanan $status, array $data, ?int $idPengguna): void
     {
         $punyaKurir = is_int($data['IdKurir'] ?? null);
         $punyaPenyedia = is_string($data['NamaPenyedia'] ?? null) && trim($data['NamaPenyedia']) !== '';
@@ -47,7 +52,7 @@ final class UbahStatusPengirimanPesanan
         DB::transaction(function () use ($pengiriman, $pesanan, $status, $data, $idPengguna): void {
             $dari = $pengiriman->Status;
             $pengiriman->UbahStatus($status);
-            $pengiriman->fill(array_intersect_key($data, array_flip(['IdKurir', 'NamaPenyedia', 'NomorResi', 'NamaPenerima', 'Alasan'])));
+            $pengiriman->fill(array_intersect_key($data, array_flip(['IdKurir', 'NamaPenyedia', 'NomorResi', 'NamaPenerima', 'Alasan', 'PathBukti'])));
             $pengiriman->DiubahOleh = $idPengguna;
             if ($status === StatusPengirimanPesanan::Dikemas) {
                 $pengiriman->DikemasPada = now();

@@ -9,11 +9,13 @@ use App\Domain\Organisasi\Enum\IzinTenant;
 use App\Domain\Organisasi\Kueri\AksesPengguna;
 use App\Domain\Organisasi\Kueri\PetaUuidOutlet;
 use App\Domain\Pelanggan\Kueri\IdentitasPelanggan;
+use App\Domain\Pemenuhan\Aksi\AturTautanPortalKurir;
 use App\Domain\Pemenuhan\Aksi\SimpanKurir;
 use App\Domain\Pemenuhan\Aksi\UbahStatusPengirimanPesanan;
 use App\Domain\Pemenuhan\Enum\JenisKurir;
 use App\Domain\Pemenuhan\Enum\StatusKurir;
 use App\Domain\Pemenuhan\Enum\StatusPengirimanPesanan;
+use App\Domain\Pemenuhan\Layanan\PenyimpanBuktiPengiriman;
 use App\Domain\Pemenuhan\Model\Kurir;
 use App\Domain\Pemenuhan\Model\PengirimanPesanan;
 use App\Domain\Penjualan\Aksi\KembalikanUangPesananOnline;
@@ -32,6 +34,7 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 final class TokoOnlineKontroler extends DasarKelolaKontroler
 {
@@ -44,6 +47,7 @@ final class TokoOnlineKontroler extends DasarKelolaKontroler
         $pengiriman = PengirimanPesanan::query()->whereIn('IdOutlet', $idOutlet)->get()->keyBy('IdPesananOnline');
         $uuidOutlet = $peta->Ambil($idOutlet);
         $daftarKurir = Kurir::query()->orderBy('Nama')->get();
+        $slug = $profil->AmbilSlug($this->IdTenant());
         $uuidKurir = $daftarKurir->pluck('Uuid', 'Id');
         $atur = PengaturanTokoOnline::query()->first() ?? new PengaturanTokoOnline;
         $bolehRefund = $akses->CekIzin($this->IdTenant(), $this->Pelaku()->Id, IzinTenant::AkuntansiKelola);
@@ -64,7 +68,11 @@ final class TokoOnlineKontroler extends DasarKelolaKontroler
                 return [...$o, ...$baris->only(['TokoOnlineAktif', 'AmbilSendiriAktif', 'KirimAktif'])];
             }, $outlet),
             'Zona' => ZonaPengiriman::query()->whereIn('IdOutlet', $idOutlet)->orderBy('Urutan')->orderBy('Nama')->get()->map(fn (ZonaPengiriman $z): array => [...$z->only(['Uuid', 'Nama', 'KodePos', 'Ongkir', 'GratisMulai', 'EstimasiHariMin', 'EstimasiHariMaks', 'Urutan', 'Aktif']), 'UuidOutlet' => $uuidOutlet[$z->IdOutlet] ?? null])->all(),
-            'Kurir' => $daftarKurir->map(fn (Kurir $k): array => [...$k->only(['Uuid', 'Nama', 'Jenis', 'NamaPenyedia', 'Status']), 'NoHp' => $k->NoHp])->all(),
+            // v3.49: tautan portal kurir (rahasia) hanya untuk staf berizin pengiriman.kelola yang memang membuka halaman ini.
+            'Kurir' => $daftarKurir->map(fn (Kurir $k): array => [
+                ...$k->only(['Uuid', 'Nama', 'Jenis', 'NamaPenyedia', 'Status']), 'NoHp' => $k->NoHp,
+                'TautanPortal' => $k->TokenPortal === null ? null : url("/{$slug}/kurir/{$k->TokenPortal}"),
+            ])->all(),
             'Pesanan' => $pesanan->map(function (PesananOnline $p) use ($pengiriman, $uuidOutlet, $uuidKurir, $pelanggan): array {
                 $kirim = $pengiriman->get($p->Id);
 
@@ -80,7 +88,11 @@ final class TokoOnlineKontroler extends DasarKelolaKontroler
                     'SisaUangMuka' => $p->AmbilSisaUangMuka()->KeString(),
                     'DikembalikanPada' => $p->DikembalikanPada?->toIso8601String(),
                     'Baris' => $p->Detail->map(fn ($d): array => $d->only(['NamaProduk', 'Jumlah', 'HargaSatuan', 'HargaPilihan', 'Pilihan', 'Catatan', 'TotalBaris']))->all(),
-                    'Pengiriman' => $kirim === null ? null : [...$kirim->only(['Uuid', 'NamaPenyedia', 'NomorResi', 'Status', 'NamaPenerima', 'Alasan']), 'UuidKurir' => $kirim->IdKurir === null ? null : $uuidKurir->get($kirim->IdKurir)],
+                    'Pengiriman' => $kirim === null ? null : [
+                        ...$kirim->only(['Uuid', 'NamaPenyedia', 'NomorResi', 'Status', 'NamaPenerima', 'Alasan']),
+                        'UuidKurir' => $kirim->IdKurir === null ? null : $uuidKurir->get($kirim->IdKurir),
+                        'AdaBukti' => $kirim->PathBukti !== null,
+                    ],
                 ];
             })->all(),
             'OpsiStatusPesanan' => array_map(fn (StatusPesananOnline $s): array => ['Nilai' => $s->value, 'Label' => $s->AmbilLabel()], StatusPesananOnline::PilihanStaf()),
@@ -151,6 +163,28 @@ final class TokoOnlineKontroler extends DasarKelolaKontroler
         $simpan->Jalankan($this->ValidasiKurir($request), $this->Pelaku()->Id, $baris);
 
         return back()->with('Kilat', 'Kurir diperbarui.');
+    }
+
+    public function BuatTautanPortal(string $kurir, AturTautanPortalKurir $atur): RedirectResponse
+    {
+        $atur->Jalankan(Kurir::query()->where('Uuid', strtoupper($kurir))->firstOrFail(), true, $this->Pelaku()->Id);
+
+        return back()->with('Kilat', 'Tautan portal kurir dibuat. Tautan lama tidak berlaku lagi.');
+    }
+
+    public function CabutTautanPortal(string $kurir, AturTautanPortalKurir $atur): RedirectResponse
+    {
+        $atur->Jalankan(Kurir::query()->where('Uuid', strtoupper($kurir))->firstOrFail(), false, $this->Pelaku()->Id);
+
+        return back()->with('Kilat', 'Tautan portal kurir dicabut.');
+    }
+
+    public function UnduhBukti(string $pengiriman, PenyimpanBuktiPengiriman $bukti): StreamedResponse
+    {
+        $k = PengirimanPesanan::query()->where('Uuid', strtoupper($pengiriman))->firstOrFail();
+        $this->PastikanOutlet($k->IdOutlet);
+
+        return $bukti->Unduh($k->PathBukti);
     }
 
     public function UbahStatusPesanan(Request $request, string $pesanan, UbahStatusPesananOnline $ubah): RedirectResponse

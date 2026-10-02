@@ -40,6 +40,8 @@ type Kurir = {
     Jenis: string;
     NamaPenyedia: string | null;
     Status: string;
+    /** v3.49: tautan rahasia portal kurir; null = belum dibuat / dicabut. */
+    TautanPortal: string | null;
 };
 type Pengiriman = {
     Uuid: string;
@@ -49,6 +51,8 @@ type Pengiriman = {
     Status: string;
     NamaPenerima: string | null;
     Alasan: string | null;
+    /** v3.49: foto bukti serah terima dari portal kurir. */
+    AdaBukti: boolean;
 };
 type Pesanan = {
     Uuid: string;
@@ -480,8 +484,68 @@ function UbahStatus({
                     >
                         Ubah pengiriman
                     </Tombol>
+                    {p.Pengiriman.AdaBukti ? (
+                        <a
+                            className="self-center text-label text-brand underline"
+                            href={`/kelola/pengiriman/${p.Pengiriman.Uuid}/bukti`}
+                            target="_blank"
+                            rel="noreferrer"
+                        >
+                            Lihat foto bukti
+                        </a>
+                    ) : null}
                 </>
             ) : null}
+        </div>
+    );
+}
+
+/**
+ * v3.49: tautan portal kurir. Kurir membuka tautan ini di HP tanpa akun; membuat ulang atau mencabut mematikan tautan
+ * lama. Tautan bersifat rahasia — kirim hanya ke kurirnya sendiri.
+ */
+function TautanPortalKurir({ kurir }: { kurir: Kurir }) {
+    const [tersalin, AturTersalin] = useState(false);
+    const alamat = `/kelola/pengiriman/kurir/${kurir.Uuid}/tautan-portal`;
+
+    return (
+        <div className="mt-2 flex flex-col gap-2 border-t border-garis pt-2">
+            <p className="text-keterangan text-teks-sekunder">
+                {kurir.TautanPortal
+                    ? 'Portal kurir aktif. Kirim tautan ini hanya ke kurirnya; siapa pun yang memegangnya bisa melihat alamat pengiriman.'
+                    : 'Kurir bisa menandai berangkat, diterima (dengan foto), atau gagal dari HP lewat tautan portal.'}
+            </p>
+            {kurir.TautanPortal ? (
+                <code className="break-all rounded-md bg-latar p-2 font-mono text-keterangan">
+                    {kurir.TautanPortal}
+                </code>
+            ) : null}
+            <div className="flex flex-wrap gap-2">
+                {kurir.TautanPortal ? (
+                    <>
+                        <Tombol
+                            varian="sekunder"
+                            onClick={() => {
+                                void navigator.clipboard
+                                    .writeText(kurir.TautanPortal ?? '')
+                                    .then(() => AturTersalin(true));
+                            }}
+                        >
+                            {tersalin ? 'Tautan tersalin' : 'Salin tautan'}
+                        </Tombol>
+                        <Tombol varian="sekunder" onClick={() => router.post(alamat, {}, { preserveScroll: true })}>
+                            Buat tautan baru
+                        </Tombol>
+                        <Tombol varian="bahaya" onClick={() => router.delete(alamat, { preserveScroll: true })}>
+                            Cabut tautan
+                        </Tombol>
+                    </>
+                ) : (
+                    <Tombol varian="sekunder" onClick={() => router.post(alamat, {}, { preserveScroll: true })}>
+                        Buat tautan portal
+                    </Tombol>
+                )}
+            </div>
         </div>
     );
 }
@@ -578,6 +642,7 @@ export default function DaftarTokoOnline(props: Props) {
                                             {k.Status === 'Aktif' ? 'Arsipkan kurir' : 'Aktifkan kurir'}
                                         </Tombol>
                                     </div>
+                                    {k.Status === 'Aktif' ? <TautanPortalKurir kurir={k} /> : null}
                                 </li>
                             ))}
                         </ul>

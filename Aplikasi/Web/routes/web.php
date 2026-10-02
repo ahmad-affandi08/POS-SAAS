@@ -25,6 +25,7 @@ use App\Http\Kontroler\Publik\BerhentiLanggananKontroler;
 use App\Http\Kontroler\Publik\DokumenLegalPublikKontroler;
 use App\Http\Kontroler\Publik\KompatibilitasPerangkatKontroler as KompatibilitasPerangkatPublikKontroler;
 use App\Http\Kontroler\Publik\PesanSendiriKontroler;
+use App\Http\Kontroler\Publik\PortalKurirKontroler;
 use App\Http\Kontroler\Publik\ProspekSitusKontroler;
 use App\Http\Kontroler\Publik\ReservasiPublikKontroler;
 use App\Http\Kontroler\Publik\SitusKontroler;
@@ -273,6 +274,16 @@ Route::middleware([TolakDomainPengelola::class, ArahkanDomainAplikasi::class, Ba
                 ->withoutMiddleware(ValidateCsrfToken::class)
                 ->middleware('throttle:pesan-sendiri-20')
                 ->name('publik.pesan-sendiri.pesan');
+        });
+
+    // F-10 (v3.49): portal kurir tanpa akun lewat tautan rahasia dari toko.
+    Route::prefix('/{slugTenant}/kurir/{tokenKurir}')
+        ->where(['slugTenant' => '[a-z0-9]+(?:-[a-z0-9]+)*', 'tokenKurir' => '[A-Za-z0-9]{40}'])
+        ->group(function (): void {
+            Route::get('/', [PortalKurirKontroler::class, 'Tampilkan'])->middleware('throttle:60,1')->name('publik.portal-kurir');
+            Route::post('/pengiriman/{pengiriman}/kirim', [PortalKurirKontroler::class, 'Kirim'])->where('pengiriman', '[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}')->middleware('throttle:30,1')->name('publik.portal-kurir.kirim');
+            Route::post('/pengiriman/{pengiriman}/terima', [PortalKurirKontroler::class, 'Terima'])->where('pengiriman', '[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}')->middleware('throttle:30,1')->name('publik.portal-kurir.terima');
+            Route::post('/pengiriman/{pengiriman}/gagal', [PortalKurirKontroler::class, 'Gagal'])->where('pengiriman', '[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}')->middleware('throttle:30,1')->name('publik.portal-kurir.gagal');
         });
 
     // F-17/F-10c: toko online tenant, checkout bayar saat ambil/COD, dan status pesanan publik.

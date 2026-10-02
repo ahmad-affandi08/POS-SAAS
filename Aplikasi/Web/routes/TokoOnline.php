@@ -27,4 +27,8 @@ Route::middleware([SiapkanAuditTenant::class, WajibIzinTenant::class.':'.IzinTen
     Route::post('/kurir', [TokoOnlineKontroler::class, 'SimpanKurir'])->name('kelola.pengiriman.kurir.simpan');
     Route::put('/kurir/{kurir}', [TokoOnlineKontroler::class, 'PerbaruiKurir'])->where('kurir', $ulid)->name('kelola.pengiriman.kurir.perbarui');
     Route::post('/{pengiriman}/status', [TokoOnlineKontroler::class, 'UbahStatusPengiriman'])->where('pengiriman', $ulid)->name('kelola.pengiriman.status');
+    // F-10 (v3.49): tautan portal kurir & foto bukti serah terima dari kurir.
+    Route::post('/kurir/{kurir}/tautan-portal', [TokoOnlineKontroler::class, 'BuatTautanPortal'])->where('kurir', $ulid)->name('kelola.pengiriman.kurir.tautan-portal');
+    Route::delete('/kurir/{kurir}/tautan-portal', [TokoOnlineKontroler::class, 'CabutTautanPortal'])->where('kurir', $ulid)->name('kelola.pengiriman.kurir.tautan-portal.cabut');
+    Route::get('/{pengiriman}/bukti', [TokoOnlineKontroler::class, 'UnduhBukti'])->where('pengiriman', $ulid)->name('kelola.pengiriman.bukti');
 });
