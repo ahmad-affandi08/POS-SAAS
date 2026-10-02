@@ -36,6 +36,7 @@ import '../Struk/BagianCetakDokumen.dart';
 import 'BilahAtasRuangKerja.dart';
 import 'ItemNavigasi.dart';
 import 'LayarKunci.dart';
+import 'BannerModeLatihan.dart';
 import 'BannerPengumuman.dart';
 import 'PanelWajibPembaruan.dart';
 import 'TemaNavigasiRuangKerja.dart';
@@ -621,6 +622,8 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
             ),
             // P-10 PGL-19: pengumuman & jadwal pemeliharaan dari pengelola platform.
             if (_konfigurasi case final k? when k.pengumuman.isNotEmpty) BannerPengumuman(pengumuman: k.pengumuman),
+            // K-23: mode latihan selalu terlihat.
+            if (ref.watch(penyediaModeLatihan)) const BannerModeLatihan(),
             Expanded(
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.stretch,

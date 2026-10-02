@@ -86,6 +86,17 @@ import 'Lingkungan.dart';
 final penyediaBasisData = Provider<BasisDataKasir>((ref) => throw UnimplementedError('Override penyediaBasisData'));
 final penyediaFolderAplikasi = Provider<Directory?>((ref) => null);
 
+/// K-23 (POS-18): mode latihan per sesi aplikasi (tidak disimpan; kembali mati saat aplikasi dibuka ulang) supaya
+/// transaksi nyata tidak ikut hilang karena lupa mematikannya.
+class ModeLatihan extends Notifier<bool> {
+  @override
+  bool build() => false;
+
+  void Atur(bool aktif) => state = aktif;
+}
+
+final penyediaModeLatihan = NotifierProvider<ModeLatihan, bool>(ModeLatihan.new);
+
 /// K-21: log lokal & laporan galat (null bila folder aplikasi tidak tersedia, misalnya di test widget).
 final penyediaLogLokal = Provider<LogLokal?>((ref) {
   final folder = ref.watch(penyediaFolderAplikasi);

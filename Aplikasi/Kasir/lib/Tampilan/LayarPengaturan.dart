@@ -180,6 +180,22 @@ class _LayarPengaturanState extends ConsumerState<LayarPengaturan> {
           'Galat aplikasi dicatat di perangkat tanpa data pribadi dan dikirim ke tim dukungan saat online.',
           const BagianLogPerangkat(),
         ),
+        Bagian(
+          'Mode latihan',
+          'Untuk melatih kasir baru: transaksi dihitung seperti biasa tetapi tidak disimpan, tidak dikirim ke server, '
+              'tidak mengubah stok & kas, dan tidak dicetak. Mati lagi saat aplikasi dibuka ulang.',
+          Row(
+            children: [
+              Switch(
+                key: const ValueKey('ModeLatihan'),
+                value: ref.watch(penyediaModeLatihan),
+                onChanged: (nilai) => ref.read(penyediaModeLatihan.notifier).Atur(nilai),
+              ),
+              const SizedBox(width: TokenJarak.jarak8),
+              Text(ref.watch(penyediaModeLatihan) ? 'Hidup' : 'Mati'),
+            ],
+          ),
+        ),
       ],
     );
   }

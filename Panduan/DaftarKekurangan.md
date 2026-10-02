@@ -1,6 +1,6 @@
 # Daftar Kekurangan & Pekerjaan Tertunda PAYOU
 
-Status per 2 Oktober 2026 (PRD v3.74; bagian K disisir dari kode 2 Oktober 2026 dan statusnya diperbarui tiap butir selesai sampai K-22; butir A3, A14, dan A15 disisir ulang di v3.25, sisanya belum disisir butir demi butir sejak v2.88, lihat catatan audit di bawah). Dokumen ini mencatat apa yang **belum ada**, **belum diuji di produksi**, atau **menunggu keputusan pemilik produk**, supaya sistem bisa dibuka ke publik lebih dulu dengan risiko yang diketahui. Perbarui setiap kali satu butir selesai.
+Status per 2 Oktober 2026 (PRD v3.75; bagian K disisir dari kode 2 Oktober 2026 dan statusnya diperbarui tiap butir selesai sampai K-23; butir A3, A14, dan A15 disisir ulang di v3.25, sisanya belum disisir butir demi butir sejak v2.88, lihat catatan audit di bawah). Dokumen ini mencatat apa yang **belum ada**, **belum diuji di produksi**, atau **menunggu keputusan pemilik produk**, supaya sistem bisa dibuka ke publik lebih dulu dengan risiko yang diketahui. Perbarui setiap kali satu butir selesai.
 
 Status butir (audit F-26): **TERBUKA** = belum dikerjakan; **SELESAI @ versi** = sudah dikerjakan & ada test regresinya; **DITUNDA** = sengaja ditunda; **MENUNGGU KEPUTUSAN** = butuh pemilik produk. Butir baru ditandai SELESAI hanya bila test regresinya ada.
 
@@ -121,7 +121,7 @@ kode. Urutan pengerjaan = urutan tabel; butir yang selesai diberi **SELESAI @ ve
 
 | # | Celah | Status |
 |---|---|---|
-| K-23 | Mode latihan (POS-18) | TERBUKA |
+| K-23 | Mode latihan (POS-18) | SELESAI @ v3.75 |
 | K-24 | Riwayat lebih dari hari ini & ringkasan akhir hari per outlet di perangkat | TERBUKA |
 | K-25 | Item harga terbuka / item kustom | TERBUKA |
 | K-26 | Sektor **Apotek** (golongan obat, resep, peran Apoteker, racikan, embalase) — belum ada di server maupun kasir | MENUNGGU KEPUTUSAN (K25) |

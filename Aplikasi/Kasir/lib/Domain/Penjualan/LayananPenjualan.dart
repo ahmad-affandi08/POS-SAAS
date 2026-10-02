@@ -105,10 +105,14 @@ class PenjualanTersimpan {
     this.namaPemesan,
     this.nomorReturTukar,
     this.kembalianTukar,
+    this.latihan = false,
   });
 
   final String uuid;
   final String nomor;
+
+  /// K-23 (POS-18): transaksi mode latihan — tidak disimpan, tidak masuk outbox, tidak dicetak.
+  final bool latihan;
 
   /// K-11: retur tukar barang yang dibuat bersama penjualan ini, dan selisih tunai yang dikembalikan ke pelanggan
   /// (barang pengganti lebih murah; null bila bukan tukar barang).
@@ -968,6 +972,7 @@ class LayananPenjualan {
     String? uuidPenyetujuTempo,
     Uang? saldoDeposit,
     KatalogLokal? katalog,
+    bool latihan = false,
   }) async {
     final shift = await repositori.AmbilShiftAktif();
     if (shift == null) {
@@ -1011,6 +1016,9 @@ class LayananPenjualan {
     ValidasiDeposit(keranjang, pembayaran, saldoDeposit);
     ValidasiPaketSesi(keranjang, katalog);
     ValidasiNomorSeri(keranjang, katalog);
+    if (latihan) {
+      return _SelesaikanLatihan(keranjang, pembayaran, hitungan, dibayar);
+    }
 
     final sekarang = _jam().toUtc();
     final t = hitungan.tanggalBisnis;
@@ -1090,6 +1098,53 @@ class LayananPenjualan {
       namaPemesan: dokumen.penjualan.NamaPemesan.value,
       nomorReturTukar: nomorReturTukar,
       kembalianTukar: tukar?.nilai.Kurangi(dipakaiTukar!),
+    );
+  }
+
+  /// Metode bayar yang boleh dipakai di mode latihan: yang tidak menyentuh server, piutang, atau saldo pelanggan.
+  static const Set<String> metodeLatihan = {
+    JenisMetodeBayar.tunai,
+    JenisMetodeBayar.qrisStatis,
+    JenisMetodeBayar.edc,
+    JenisMetodeBayar.transfer,
+    JenisMetodeBayar.ewallet,
+  };
+
+  /// K-23 (POS-18): hasil transaksi latihan setelah semua validasi kasir lolos. Tidak ada yang ditulis ke basis data,
+  /// outbox, kas shift, stok, piutang, poin, atau server; nomor bertanda `LATIHAN`. Dokumen yang terkait server
+  /// (pesanan meja, voucher, reservasi, pre-order, laundry, tukar barang) dan metode tempo/deposit/QRIS dinamis/
+  /// marketplace ditolak agar latihan tidak meninggalkan jejak di data nyata.
+  PenjualanTersimpan _SelesaikanLatihan(
+    Keranjang keranjang,
+    List<PembayaranMasukan> pembayaran,
+    HitunganKeranjang hitungan,
+    Uang dibayar,
+  ) {
+    if (keranjang.pesananMeja != null ||
+        keranjang.voucher != null ||
+        keranjang.reservasi != null ||
+        keranjang.praPesan != null ||
+        keranjang.laundry != null ||
+        keranjang.tukar != null) {
+      throw const GalatKasir(
+        'TidakUntukLatihan',
+        'Mode latihan hanya untuk penjualan biasa. Hapus voucher atau pesanan meja/reservasi/pre-order/laundry/tukar.',
+      );
+    }
+    final metode = pembayaran.where((p) => !metodeLatihan.contains(p.metode.Jenis)).firstOrNull;
+    if (metode != null) {
+      throw GalatKasir('TidakUntukLatihan', 'Metode ${metode.metode.Nama} tidak bisa dipakai di mode latihan.');
+    }
+    final hasil = hitungan.hasil;
+    return PenjualanTersimpan(
+      uuid: BuatUuid(),
+      nomor: 'LATIHAN-${_jam().toLocal().millisecondsSinceEpoch % 100000}',
+      totalAkhir: hasil.totalAkhir,
+      totalDibayar: dibayar,
+      kembalian: hasil.kembalian ?? Uang.Nol(),
+      pembayaran: pembayaran,
+      namaPelanggan: keranjang.pelanggan?.nama,
+      latihan: true,
     );
   }
 

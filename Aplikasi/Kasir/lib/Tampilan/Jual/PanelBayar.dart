@@ -484,11 +484,14 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
                 : null,
             saldoDeposit: _saldoDeposit,
             katalog: ref.read(penyediaKatalog).value,
+            latihan: ref.read(penyediaModeLatihan),
           );
       ref.read(penyediaKeranjang.notifier).Kosongkan();
       final sesi = ref.read(penyediaSesi.notifier);
       widget.saatSelesai(hasil);
-      await sesi.Sinkronkan();
+      if (!hasil.latihan) {
+        await sesi.Sinkronkan();
+      }
     } on GalatKasir catch (galat) {
       if (mounted) {
         setState(() => _galat = galat.pesan);
@@ -992,9 +995,23 @@ class TampilanSelesai extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // Halaman hasil: tanda berhasil dibuat besar & ditengahkan supaya terbaca sekilas dari jarak berdiri.
-          Icon(Icons.check_circle_outline, color: warna.sukses, size: 56),
+          Icon(
+            hasil.latihan ? Icons.school_outlined : Icons.check_circle_outline,
+            color: hasil.latihan ? warna.peringatan : warna.sukses,
+            size: 56,
+          ),
           const SizedBox(height: TokenJarak.jarak8),
-          Text('Pembayaran berhasil', style: teks.headlineSmall, textAlign: TextAlign.center),
+          Text(
+            hasil.latihan ? 'Latihan selesai' : 'Pembayaran berhasil',
+            style: teks.headlineSmall,
+            textAlign: TextAlign.center,
+          ),
+          if (hasil.latihan)
+            Text(
+              'Mode latihan: transaksi ini tidak disimpan, tidak dikirim, dan tidak dicetak.',
+              style: teks.bodyMedium?.copyWith(color: warna.peringatan),
+              textAlign: TextAlign.center,
+            ),
           const SizedBox(height: TokenJarak.jarak4),
           Center(
             child: TeksKode(hasil.nomor, gaya: teks.bodyMedium?.copyWith(color: warna.teksSekunder)),
@@ -1044,12 +1061,14 @@ class TampilanSelesai extends StatelessWidget {
               ],
             ),
           const SizedBox(height: TokenJarak.jarak8),
-          BagianCetakStruk(uuidPenjualan: hasil.uuid, namaPelanggan: hasil.namaPelanggan, labelPoin: hasil.labelPoin),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: TombolKirimStruk(uuidPenjualan: hasil.uuid),
-          ),
-          BagianTiketDapur(uuidPenjualan: hasil.uuid, namaPelanggan: hasil.namaPelanggan),
+          if (!hasil.latihan) ...[
+            BagianCetakStruk(uuidPenjualan: hasil.uuid, namaPelanggan: hasil.namaPelanggan, labelPoin: hasil.labelPoin),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TombolKirimStruk(uuidPenjualan: hasil.uuid),
+            ),
+            BagianTiketDapur(uuidPenjualan: hasil.uuid, namaPelanggan: hasil.namaPelanggan),
+          ],
           const SizedBox(height: TokenJarak.jarak24),
           SizedBox(
             height: 56,
