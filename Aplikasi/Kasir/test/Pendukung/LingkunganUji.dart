@@ -90,6 +90,7 @@ Map<String, Object?> DataAwalUji({
   List<String>? jenisPesanan,
   String? jenisPesananBawaan,
   Map<String, Object?>? barcodeTimbangan,
+  String? modeKasir,
 }) => {
   'Karyawan': ?karyawan,
   // F-16d: deposit pelanggan (fitur paket) hanya bila diminta test.
@@ -131,6 +132,9 @@ Map<String, Object?> DataAwalUji({
     // v3.51: jenis pesanan outlet (FnB) hanya bila diminta test.
     'JenisPesanan': ?jenisPesanan,
     'JenisPesananBawaan': ?jenisPesananBawaan,
+    // K-8: mode kasir template sektor hanya bila diminta test.
+    if (modeKasir != null) 'ModeKasir': [modeKasir],
+    'ModeKasirBawaan': ?modeKasir,
   },
   'Perangkat': {
     'Uuid': '01K5PERANGKAT0000000000001',

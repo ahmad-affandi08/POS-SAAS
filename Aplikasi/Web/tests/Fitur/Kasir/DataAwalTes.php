@@ -106,6 +106,8 @@ describe('F-06 PIN kasir offline & data awal (GET /api/pos/v1/data-awal)', funct
                 'BukaLaciPerluPin' => false,
                 // X4: persetujuan jarak jauh lewat Aplikasi Owner (fitur paket; bawaan mati).
                 'PersetujuanJarakJauh' => false,
+                // v3.55: barcode timbangan EAN-13 (bawaan mati, awalan 27, nilai berat).
+                'BarcodeTimbangan' => ['Aktif' => false, 'Awalan' => ['27'], 'Nilai' => 'Berat'],
             ]);
     });
 

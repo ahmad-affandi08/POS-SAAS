@@ -82,8 +82,24 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
 
   bool get _pelayan => widget.shift == null;
 
-  /// Beranda: Jual untuk kasir, Meja untuk pelayan.
-  TujuanRuangKerja get _beranda => _pelayan ? TujuanRuangKerja.Meja : TujuanRuangKerja.Jual;
+  /// Beranda: Meja untuk pelayan dan untuk outlet bermode kasir Meja (K-8, restoran layan meja) selama mode meja aktif;
+  /// Jual untuk lainnya.
+  TujuanRuangKerja get _beranda =>
+      _pelayan || (ref.read(penyediaModeKasir).value == 'Meja' && ref.read(penyediaModeMeja).value == true)
+      ? TujuanRuangKerja.Meja
+      : TujuanRuangKerja.Jual;
+
+  /// Kasir sudah berpindah tujuan sendiri; beranda yang baru terbaca tidak lagi memindahkannya.
+  bool _tujuanDipilih = false;
+
+  /// Mode kasir & mode meja dibaca dari basis data lokal setelah layar pertama tampil; begitu terbaca, ruang kerja yang
+  /// belum disentuh kasir pindah ke berandanya.
+  void _SesuaikanBeranda() {
+    if (!_tujuanDipilih && mounted && _tujuan != _beranda) {
+      setState(() => _tujuan = _beranda);
+    }
+  }
+
   bool _relDiciutkan = false;
 
   /// Jenis mutasi kas yang formulirnya sedang terbuka di panel tugas (null = tertutup).
@@ -128,6 +144,8 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
     _pewaktuPesananOnline = Timer.periodic(RuangKerja.selangPesananOnline, (_) => unawaited(_TarikPesananOnline()));
     HardwareKeyboard.instance.addHandler(_SaatTombol);
     _MulaiHitungDiam();
+    ref.listenManual(penyediaModeKasir, (_, _) => _SesuaikanBeranda());
+    ref.listenManual(penyediaModeMeja, (_, _) => _SesuaikanBeranda());
   }
 
   @override
@@ -242,7 +260,10 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
     return false;
   }
 
-  void _Buka(TujuanRuangKerja tujuan) => setState(() => _tujuan = tujuan);
+  void _Buka(TujuanRuangKerja tujuan) => setState(() {
+    _tujuanDipilih = true;
+    _tujuan = tujuan;
+  });
 
   void _BukaPanelKas(String jenis) => setState(() {
     _TutupSemuaPanel();

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Tenant\Kueri;
 
+use App\Domain\Penjualan\Enum\ModeKasir;
 use App\Domain\Tenant\Model\Fitur;
 use App\Domain\Tenant\Model\OutletFitur;
 
@@ -57,6 +58,25 @@ final class FiturOutlet
         $mode = $this->AmbilKonfigurasi($idOutlet, OutletFitur::KUNCI_POS)['ModeKasir'] ?? [];
 
         return is_array($mode) ? array_values(array_filter($mode, 'is_string')) : [];
+    }
+
+    /**
+     * K-8: mode kasir yang dikenal (`ModeKasir`) dan bawaannya untuk perangkat kasir. Bawaan = `ModeKasirDefault`
+     * template bila termasuk daftar, selain itu mode pertama; null bila outlet belum punya mode kasir.
+     *
+     * @return array{ModeKasir: list<string>, ModeKasirBawaan: string|null}
+     */
+    public function AmbilModeKasirPos(int $idOutlet): array
+    {
+        $konfigurasi = $this->AmbilKonfigurasi($idOutlet, OutletFitur::KUNCI_POS) ?? [];
+        $dikenal = array_map(fn (ModeKasir $mode) => $mode->value, ModeKasir::cases());
+        $mode = array_values(array_unique(array_intersect($this->AmbilModeKasir($idOutlet), $dikenal)));
+        $bawaan = $konfigurasi['ModeKasirDefault'] ?? null;
+
+        return [
+            'ModeKasir' => $mode,
+            'ModeKasirBawaan' => is_string($bawaan) && in_array($bawaan, $mode, true) ? $bawaan : ($mode[0] ?? null),
+        ];
     }
 
     /** @return array<string, mixed>|null */

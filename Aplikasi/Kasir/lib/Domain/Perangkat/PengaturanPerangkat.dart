@@ -21,6 +21,24 @@ enum PosisiKeranjang {
   final String label;
 }
 
+/// K-8: tampilan katalog layar Jual. `Otomatis` mengikuti mode kasir outlet: Retail & Grosir (pemindai, ribuan
+/// SKU) memakai daftar ringkas, mode lain memakai ubin bergambar.
+enum TampilanKatalog {
+  Otomatis('Otomatis'),
+  Ubin('Ubin'),
+  Daftar('Daftar');
+
+  const TampilanKatalog(this.label);
+
+  final String label;
+
+  /// Tampilan yang dipakai: pilihan perangkat, atau menurut [modeKasir] bila `Otomatis`.
+  TampilanKatalog Tentukan(String? modeKasir) => switch (this) {
+    TampilanKatalog.Otomatis => modeKasir == 'Retail' || modeKasir == 'Grosir' ? Daftar : Ubin,
+    _ => this,
+  };
+}
+
 /// Pengaturan lokal perangkat kasir (D-16, §17.2.7), disimpan di tabel `Pengaturan` (kunci-nilai) sehingga tidak
 /// butuh perubahan skema. Bawaan: Normal, keranjang kanan, kunci otomatis 5 menit.
 class PengaturanPerangkat {
@@ -28,6 +46,7 @@ class PengaturanPerangkat {
     this.ukuran = UkuranTampilan.Normal,
     this.posisiKeranjang = PosisiKeranjang.Kanan,
     this.menitKunciOtomatis = menitKunciBawaan,
+    this.tampilanKatalog = TampilanKatalog.Otomatis,
   });
 
   static const int menitKunciBawaan = 5;
@@ -38,25 +57,33 @@ class PengaturanPerangkat {
   final UkuranTampilan ukuran;
   final PosisiKeranjang posisiKeranjang;
   final int menitKunciOtomatis;
+  final TampilanKatalog tampilanKatalog;
 
   Duration AmbilBatasDiam() => Duration(minutes: menitKunciOtomatis);
 
-  PengaturanPerangkat copyWith({UkuranTampilan? ukuran, PosisiKeranjang? posisiKeranjang, int? menitKunciOtomatis}) =>
-      PengaturanPerangkat(
-        ukuran: ukuran ?? this.ukuran,
-        posisiKeranjang: posisiKeranjang ?? this.posisiKeranjang,
-        menitKunciOtomatis: menitKunciOtomatis ?? this.menitKunciOtomatis,
-      );
+  PengaturanPerangkat copyWith({
+    UkuranTampilan? ukuran,
+    PosisiKeranjang? posisiKeranjang,
+    int? menitKunciOtomatis,
+    TampilanKatalog? tampilanKatalog,
+  }) => PengaturanPerangkat(
+    ukuran: ukuran ?? this.ukuran,
+    posisiKeranjang: posisiKeranjang ?? this.posisiKeranjang,
+    menitKunciOtomatis: menitKunciOtomatis ?? this.menitKunciOtomatis,
+    tampilanKatalog: tampilanKatalog ?? this.tampilanKatalog,
+  );
 
   /// Baca dari tabel `Pengaturan`; nilai kosong/tidak dikenal kembali ke bawaan.
   static Future<PengaturanPerangkat> Muat(RepositoriKasir repositori) async {
     final ukuran = await repositori.AmbilPengaturan(KunciPengaturan.ukuranTampilan);
     final posisi = await repositori.AmbilPengaturan(KunciPengaturan.posisiKeranjang);
     final menit = int.tryParse(await repositori.AmbilPengaturan(KunciPengaturan.menitKunciOtomatis) ?? '');
+    final tampilan = await repositori.AmbilPengaturan(KunciPengaturan.tampilanKatalog);
     return PengaturanPerangkat(
       ukuran: UkuranTampilan.values.where((u) => u.name == ukuran).firstOrNull ?? UkuranTampilan.Normal,
       posisiKeranjang: PosisiKeranjang.values.where((p) => p.name == posisi).firstOrNull ?? PosisiKeranjang.Kanan,
       menitKunciOtomatis: menit != null && menit > 0 ? menit : menitKunciBawaan,
+      tampilanKatalog: TampilanKatalog.values.where((t) => t.name == tampilan).firstOrNull ?? TampilanKatalog.Otomatis,
     );
   }
 
@@ -64,5 +91,6 @@ class PengaturanPerangkat {
     await repositori.SimpanPengaturan(KunciPengaturan.ukuranTampilan, ukuran.name);
     await repositori.SimpanPengaturan(KunciPengaturan.posisiKeranjang, posisiKeranjang.name);
     await repositori.SimpanPengaturan(KunciPengaturan.menitKunciOtomatis, '$menitKunciOtomatis');
+    await repositori.SimpanPengaturan(KunciPengaturan.tampilanKatalog, tampilanKatalog.name);
   }
 }

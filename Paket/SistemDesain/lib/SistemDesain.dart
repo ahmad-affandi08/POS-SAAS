@@ -2,6 +2,7 @@
 library;
 
 export 'Komponen/BarisKeranjang.dart';
+export 'Komponen/BarisProduk.dart';
 export 'Komponen/BilahStatus.dart';
 export 'Komponen/HitungPecahan.dart';
 export 'Komponen/KotakPanel.dart';

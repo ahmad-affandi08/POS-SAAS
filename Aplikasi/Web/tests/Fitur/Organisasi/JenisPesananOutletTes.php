@@ -76,6 +76,26 @@ describe('Jenis pesanan kasir per outlet (v3.51)', function (): void {
         $this->withToken($k['Token'])->getJson('/api/pos/v1/data-awal')->assertJsonPath('Outlet.JenisPesanan', ['MakanDiTempat', 'BawaPulang']);
     });
 
+    it('K-8: data awal membawa mode kasir template & bawaannya (nilai tak dikenal dibuang)', function (): void {
+        $k = BantuanKasir::Siapkan($this);
+        $dataAwal = fn () => $this->withToken($k['Token'])->getJson('/api/pos/v1/data-awal')->assertOk();
+        $dataAwal()->assertJsonPath('Outlet.ModeKasir', [])->assertJsonPath('Outlet.ModeKasirBawaan', null);
+
+        BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+        OutletFitur::query()->create([
+            'IdOutlet' => $k['Outlet']->Id,
+            'KunciFitur' => OutletFitur::KUNCI_POS,
+            'Aktif' => true,
+            'Konfigurasi' => ['ModeKasir' => ['Cepat', 'Meja', 'Kapal'], 'ModeKasirDefault' => 'Meja'],
+        ]);
+        $dataAwal()->assertJsonPath('Outlet.ModeKasir', ['Cepat', 'Meja'])->assertJsonPath('Outlet.ModeKasirBawaan', 'Meja');
+
+        // Bawaan yang tidak ada di daftar jatuh ke mode pertama.
+        OutletFitur::query()->where('IdOutlet', $k['Outlet']->Id)
+            ->update(['Konfigurasi' => json_encode(['ModeKasir' => ['Grosir', 'Retail'], 'ModeKasirDefault' => 'Meja'])]);
+        $dataAwal()->assertJsonPath('Outlet.ModeKasir', ['Grosir', 'Retail'])->assertJsonPath('Outlet.ModeKasirBawaan', 'Grosir');
+    });
+
     it('kasir tanpa izin outlet.kelola ditolak; outlet tenant lain 404', function (): void {
         $k = BantuanKasir::Siapkan($this);
         $kasir = BantuanOrganisasi::TambahAnggota($k['Tenant']->Id, PeranTenantBawaan::Kasir);

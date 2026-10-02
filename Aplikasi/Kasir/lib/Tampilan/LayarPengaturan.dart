@@ -101,6 +101,17 @@ class _LayarPengaturanState extends ConsumerState<LayarPengaturan> {
           ),
         ),
         Bagian(
+          'Tampilan katalog',
+          'Otomatis mengikuti mode kasir outlet: daftar ringkas untuk toko retail & grosir, ubin bergambar untuk lainnya.',
+          SegmentedButton<TampilanKatalog>(
+            key: const ValueKey('TampilanKatalog'),
+            showSelectedIcon: false,
+            segments: [for (final t in TampilanKatalog.values) ButtonSegment(value: t, label: Text(t.label))],
+            selected: {pengaturan.tampilanKatalog},
+            onSelectionChanged: (pilihan) => _Simpan(pengaturan.copyWith(tampilanKatalog: pilihan.single)),
+          ),
+        ),
+        Bagian(
           'Kunci otomatis',
           'Layar terkunci bila perangkat tidak disentuh selama waktu ini. Shift tetap terbuka.',
           SizedBox(

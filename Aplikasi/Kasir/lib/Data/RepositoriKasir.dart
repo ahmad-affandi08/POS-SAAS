@@ -37,6 +37,9 @@ abstract final class KunciPengaturan {
   /// v3.51: jenis pesanan outlet (JSON larik nama kanal) & bawaannya.
   static const String jenisPesanan = 'JenisPesanan';
   static const String jenisPesananBawaan = 'JenisPesananBawaan';
+
+  /// K-8: mode kasir bawaan outlet dari template sektor (`Retail`/`Cepat`/`Meja`/`Layanan`/`Grosir`, kosong = belum).
+  static const String modeKasirBawaan = 'ModeKasirBawaan';
   static const String kodeOutlet = 'KodeOutlet';
   static const String jamTutupBuku = 'JamTutupBuku';
 
@@ -93,6 +96,7 @@ abstract final class KunciPengaturan {
   static const String ukuranTampilan = 'UkuranTampilan';
   static const String posisiKeranjang = 'PosisiKeranjang';
   static const String menitKunciOtomatis = 'MenitKunciOtomatis';
+  static const String tampilanKatalog = 'TampilanKatalog';
 
   // Cetak struk (PRD v1.79): pengaturan & identitas struk dari data awal (JSON `StrukPos`), alamat & telepon outlet,
   // logo 1 bit (JSON `GambarMonokrom`), dan profil printer perangkat ini (JSON `ProfilPrinter`, lokal saja).
@@ -240,6 +244,7 @@ class RepositoriKasir {
       await SimpanPengaturan(KunciPengaturan.jamTutupBuku, outlet.jamTutupBuku ?? '00:00');
       await SimpanPengaturan(KunciPengaturan.jenisPesanan, jsonEncode(outlet.jenisPesanan));
       await SimpanPengaturan(KunciPengaturan.jenisPesananBawaan, outlet.jenisPesananBawaan ?? '');
+      await SimpanPengaturan(KunciPengaturan.modeKasirBawaan, outlet.modeKasirBawaan ?? '');
       final zona = outlet.zonaWaktu?.trim();
       if (zona != null && zona.isNotEmpty) {
         await SimpanPengaturan(KunciPengaturan.zonaWaktu, zona);

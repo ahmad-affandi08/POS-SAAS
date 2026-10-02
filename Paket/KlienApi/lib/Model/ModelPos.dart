@@ -191,6 +191,8 @@ class OutletPos {
     this.zonaWaktu,
     this.jenisPesanan = const [],
     this.jenisPesananBawaan,
+    this.modeKasir = const [],
+    this.modeKasirBawaan,
   });
 
   final String uuid;
@@ -213,6 +215,12 @@ class OutletPos {
   /// Jenis pesanan bawaan transaksi baru; null bila tidak ada pilihan.
   final String? jenisPesananBawaan;
 
+  /// K-8: mode kasir template sektor (`Retail`/`Cepat`/`Meja`/`Layanan`/`Grosir`); kosong = belum ada (server lama).
+  final List<String> modeKasir;
+
+  /// Mode kasir bawaan outlet; null bila outlet belum punya mode kasir.
+  final String? modeKasirBawaan;
+
   static OutletPos? DariJson(Object? json) {
     final peta = UraiJson.AmbilPetaAtauNull(json);
     return peta == null
@@ -227,6 +235,8 @@ class OutletPos {
             zonaWaktu: UraiJson.AmbilTeksAtauNull(peta['ZonaWaktu']),
             jenisPesanan: UraiJson.AmbilDaftarTeks(peta['JenisPesanan']),
             jenisPesananBawaan: UraiJson.AmbilTeksAtauNull(peta['JenisPesananBawaan']),
+            modeKasir: UraiJson.AmbilDaftarTeks(peta['ModeKasir']),
+            modeKasirBawaan: UraiJson.AmbilTeksAtauNull(peta['ModeKasirBawaan']),
           );
   }
 }

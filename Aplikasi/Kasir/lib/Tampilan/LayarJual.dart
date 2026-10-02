@@ -17,6 +17,7 @@ import '../Domain/Penjualan/Keranjang.dart';
 import '../Domain/Penjualan/KonteksPenjualan.dart';
 import '../Domain/Penjualan/LayananPenjualan.dart';
 import '../Domain/Penjualan/LayananPreOrder.dart';
+import '../Domain/Penjualan/PengaliJumlah.dart';
 import '../Domain/Perangkat/LayananLayarPelanggan.dart';
 import '../Domain/Perangkat/PengaturanPerangkat.dart';
 import '../Domain/Sesi/StafLokal.dart';
@@ -309,10 +310,15 @@ class _LayarJualState extends ConsumerState<LayarJual> {
       _TampilPesan('Kode $kode tidak ditemukan di katalog. Perbarui katalog atau cari manual.');
       return;
     }
-    _TambahProduk(hasil.produk, satuan: hasil.satuan);
+    // K-8: `12*` di kolom cari lalu pindai = 12 unit produk hasil pindaian.
+    final pengali = PengaliJumlah.Urai(_cari.text);
+    if (pengali.CekMenunggu) {
+      setState(_cari.clear);
+    }
+    _TambahProduk(hasil.produk, satuan: hasil.satuan, jumlah: pengali.CekMenunggu ? pengali.jumlah : null);
   }
 
-  void _TambahProduk(ProdukJual produk, {SatuanJual? satuan}) {
+  void _TambahProduk(ProdukJual produk, {SatuanJual? satuan, Kuantitas? jumlah}) {
     final alasan = produk.AmbilAlasanTidakBisaDijual();
     if (alasan != null) {
       _TampilPesan(alasan.pesan);
@@ -340,6 +346,7 @@ class _LayarJualState extends ConsumerState<LayarJual> {
         k,
         produk,
         satuan: satuan,
+        jumlah: jumlah,
         kanal: LayananPenjualan.AmbilKanal(ref.read(penyediaKeranjang)),
         tierPelanggan: ref.read(penyediaKeranjang).pelanggan?.kodeTier,
       );
@@ -890,12 +897,54 @@ class _LayarJualState extends ConsumerState<LayarJual> {
     final warna = TokenWarna.AmbilDari(context);
     final tepi = sempit ? TokenJarak.jarak16 : TokenJarak.jarak24;
     final tertahan = ref.watch(penyediaPesananTertahan).value?.length ?? 0;
-    final daftar = katalog?.AmbilTampil(uuidKategori: _uuidKategori, kata: _cari.text) ?? const <ProdukJual>[];
+    final daftar =
+        katalog?.AmbilTampil(uuidKategori: _uuidKategori, kata: PengaliJumlah.Urai(_cari.text).sisa) ??
+        const <ProdukJual>[];
     final layanan = ref.read(penyediaLayananPenjualan);
     final kanal = LayananPenjualan.AmbilKanal(ref.watch(penyediaKeranjang));
     final tier = ref.watch(penyediaKeranjang.select((k) => k.pelanggan?.kodeTier));
     final habis = ref.watch(penyediaProdukHabis);
     final pesan = _pesan;
+    // K-8: Retail & Grosir (atau pilihan perangkat) memakai daftar ringkas, mode lain ubin bergambar.
+    final daftarRingkas =
+        ref
+            .watch(penyediaPengaturanPerangkat.select((p) => p.tampilanKatalog))
+            .Tentukan(ref.watch(penyediaModeKasir).value) ==
+        TampilanKatalog.Daftar;
+
+    /// Harga, keadaan, dan aksi satu produk; sama untuk ubin & baris daftar.
+    ({Uang? harga, bool nonaktif, String? keterangan, VoidCallback saatDiketuk, VoidCallback saatDitahan}) BangunItem(
+      ProdukJual p,
+    ) {
+      final satuan = p.AmbilSatuanBawaan();
+      final alasan = p.AmbilAlasanTidakBisaDijual();
+      final tandaiHabis = habis.contains(p.uuid);
+      return (
+        harga: satuan == null || katalog == null || k == null
+            ? null
+            : layanan.TentukanHarga(
+                katalog,
+                k,
+                p.uuid,
+                satuan.uuid,
+                Kuantitas.DariBulat(1),
+                kanal: kanal,
+                tierPelanggan: tier,
+              ),
+        nonaktif: alasan != null || tandaiHabis,
+        keterangan: alasan != null
+            ? 'Tidak bisa dijual'
+            : tandaiHabis
+            ? 'Habis'
+            : p.kelompokPilihan.isNotEmpty
+            ? 'Ada pilihan'
+            : null,
+        saatDiketuk: tandaiHabis
+            ? () => _TampilPesan('${p.nama} ditandai habis di outlet ini. Tahan untuk menandai tersedia lagi.')
+            : () => _TambahProduk(p),
+        saatDitahan: () => unawaited(_UbahKetersediaan(p, habis: !tandaiHabis)),
+      );
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -913,15 +962,22 @@ class _LayarJualState extends ConsumerState<LayarJual> {
                       focusNode: _fokusCari,
                       textInputAction: TextInputAction.search,
                       onChanged: (_) => setState(() {}),
-                      onSubmitted: (kata) {
+                      onSubmitted: (masukan) {
+                        // K-8: `12*kode` atau `12x nama` = tambah 12 unit; `12*` saja menunggu pindaian berikutnya.
+                        final pengali = PengaliJumlah.Urai(masukan);
+                        if (pengali.CekMenunggu) {
+                          _FokusAkar();
+                          return;
+                        }
+                        final kata = pengali.sisa;
                         final hasil = katalog?.CariKode(kata);
-                        if (hasil == null && _CobaBarcodeTimbangan(kata)) {
+                        if (hasil == null && pengali.jumlah == null && _CobaBarcodeTimbangan(kata)) {
                           setState(_cari.clear);
                         } else if (hasil != null) {
-                          _TambahProduk(hasil.produk, satuan: hasil.satuan);
+                          _TambahProduk(hasil.produk, satuan: hasil.satuan, jumlah: pengali.jumlah);
                           setState(_cari.clear);
                         } else if (daftar.length == 1) {
-                          _TambahProduk(daftar.single);
+                          _TambahProduk(daftar.single, jumlah: pengali.jumlah);
                           setState(_cari.clear);
                         }
                         _FokusAkar();
@@ -1032,6 +1088,25 @@ class _LayarJualState extends ConsumerState<LayarJual> {
                   _cari.text.isEmpty ? 'Belum ada produk di kategori ini.' : 'Tidak ada produk yang cocok.',
                   _cari.text.isEmpty ? 'Pilih kategori lain.' : 'Periksa ejaan atau cari dengan SKU/barcode.',
                 )
+              : daftarRingkas
+              ? ListView.builder(
+                  key: const ValueKey('KatalogDaftar'),
+                  padding: EdgeInsets.fromLTRB(tepi, TokenJarak.jarak8, tepi, tepi),
+                  itemCount: daftar.length,
+                  itemBuilder: (context, i) {
+                    final b = BangunItem(daftar[i]);
+                    return BarisProduk(
+                      key: ValueKey(daftar[i].uuid),
+                      nama: daftar[i].nama,
+                      sku: daftar[i].sku,
+                      harga: b.harga,
+                      nonaktif: b.nonaktif,
+                      keterangan: b.keterangan,
+                      saatDiketuk: b.saatDiketuk,
+                      saatDitahan: b.saatDitahan,
+                    );
+                  },
+                )
               : LayoutBuilder(
                   builder: (context, batas) {
                     // Papan menu: jumlah kolom ditentukan lebar area, ubin membagi habis lebarnya sampai tepi.
@@ -1048,38 +1123,16 @@ class _LayarJualState extends ConsumerState<LayarJual> {
                       itemCount: daftar.length,
                       itemBuilder: (context, i) {
                         final p = daftar[i];
-                        final satuan = p.AmbilSatuanBawaan();
-                        final alasan = p.AmbilAlasanTidakBisaDijual();
-                        final tandaiHabis = habis.contains(p.uuid);
+                        final b = BangunItem(p);
                         return UbinProduk(
                           key: ValueKey(p.uuid),
                           nama: p.nama,
                           gambar: p.urlGambarKecil == null ? null : _GambarProduk(nama: p.nama, url: p.urlGambarKecil!),
-                          harga: satuan == null
-                              ? null
-                              : layanan.TentukanHarga(
-                                  katalog,
-                                  k,
-                                  p.uuid,
-                                  satuan.uuid,
-                                  Kuantitas.DariBulat(1),
-                                  kanal: kanal,
-                                  tierPelanggan: tier,
-                                ),
-                          nonaktif: alasan != null || tandaiHabis,
-                          keterangan: alasan != null
-                              ? 'Tidak bisa dijual'
-                              : tandaiHabis
-                              ? 'Habis'
-                              : p.kelompokPilihan.isNotEmpty
-                              ? 'Ada pilihan'
-                              : null,
-                          saatDiketuk: tandaiHabis
-                              ? () => _TampilPesan(
-                                  '${p.nama} ditandai habis di outlet ini. Tahan ubinnya untuk menandai tersedia lagi.',
-                                )
-                              : () => _TambahProduk(p),
-                          saatDitahan: () => unawaited(_UbahKetersediaan(p, habis: !tandaiHabis)),
+                          harga: b.harga,
+                          nonaktif: b.nonaktif,
+                          keterangan: b.keterangan,
+                          saatDiketuk: b.saatDiketuk,
+                          saatDitahan: b.saatDitahan,
                         );
                       },
                     );

@@ -20,6 +20,7 @@ use App\Domain\Penjualan\Kueri\DaftarMetodePembayaran;
 use App\Domain\Penjualan\Kueri\NomorUrutPenjualanPerangkat;
 use App\Domain\Penjualan\Kueri\StatusTokoOnlineOutlet;
 use App\Domain\Penjualan\Layanan\KodeStrukDigital;
+use App\Domain\Tenant\Kueri\FiturOutlet;
 use App\Domain\Tenant\Kueri\PengaturanBarcodeTimbanganTenant;
 use App\Domain\Tenant\Kueri\PengaturanKasirTenant;
 use App\Domain\Tenant\Kueri\PengaturanStrukTenant;
@@ -42,6 +43,7 @@ use stdClass;
  * `Perangkat.NomorUrutIsiDeposit`. Laundry (§9.9): `Laundry` (`Aktif`, `JamReguler`, `JamExpress`, `Parfum`,
  * `AwalanLacak` = awalan tautan `/s/{kode}` untuk QR label cucian, selalu terisi). v3.51: `Outlet.JenisPesanan` (daftar
  * `MakanDiTempat`/`BawaPulang`/`Antar` yang dipilih kasir) & `Outlet.JenisPesananBawaan` (bawaan transaksi baru).
+ * K-8: `Outlet.ModeKasir` (mode kasir template sektor, enum `ModeKasir`) & `Outlet.ModeKasirBawaan`.
  */
 final class DataAwalKasir
 {
@@ -63,6 +65,7 @@ final class DataAwalKasir
         private readonly StatusTokoOnlineOutlet $statusTokoOnline,
         private readonly JenisPesananOutlet $jenisPesanan,
         private readonly PengaturanBarcodeTimbanganTenant $barcodeTimbangan,
+        private readonly FiturOutlet $fiturOutlet,
     ) {}
 
     /**
@@ -111,6 +114,8 @@ final class DataAwalKasir
                 'JamTutupBuku' => $outlet->jamTutupBuku,
                 // v3.51 (aditif): jenis pesanan yang dipilih kasir per transaksi & bawaannya (kosong = tanpa pilihan).
                 ...array_intersect_key($this->jenisPesanan->AmbilDariId($outlet->idOutlet), ['JenisPesanan' => 1, 'JenisPesananBawaan' => 1]),
+                // K-8 (aditif, §5.1): mode kasir template sektor; kasir memilih beranda & tampilan katalog darinya.
+                ...$this->fiturOutlet->AmbilModeKasirPos($outlet->idOutlet),
             ],
             'Perangkat' => [
                 'Uuid' => $perangkat->Uuid,

@@ -733,6 +733,15 @@ final penyediaModeMeja = StreamProvider<bool>(
   (ref) => ref.watch(penyediaRepositori).PantauPengaturan(KunciPengaturan.modeMejaAktif).map((n) => n == '1'),
 );
 
+/// K-8: mode kasir bawaan outlet (template sektor); null bila belum ada. Menentukan beranda ruang kerja (Meja) dan
+/// tampilan katalog otomatis (Retail/Grosir → daftar).
+final penyediaModeKasir = StreamProvider<String?>(
+  (ref) => ref
+      .watch(penyediaRepositori)
+      .PantauPengaturan(KunciPengaturan.modeKasirBawaan)
+      .map((n) => n == null || n.isEmpty ? null : n),
+);
+
 /// Jenis perangkat dari aktivasi: `Kds` membuka layar dapur, selain itu ruang kerja kasir.
 final penyediaJenisPerangkat = StreamProvider<String>(
   (ref) => ref.watch(penyediaRepositori).PantauPengaturan(KunciPengaturan.jenisPerangkat).map((n) => n ?? 'Kasir'),
