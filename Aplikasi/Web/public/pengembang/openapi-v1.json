@@ -3,7 +3,7 @@
   "info": {
     "title": "PAYOU Open API",
     "version": "1.0.0",
-    "description": "API baca data usaha untuk aplikasi pihak ketiga (akuntansi, marketplace, BI) dan webhook keluar. Key JSON PascalCase Bahasa Indonesia; uang & jumlah dikirim sebagai string desimal; waktu ISO-8601 UTC; pengenal = Uuid (ULID). Token dibuat Owner di Pengaturan › Token API (paket Bisnis/Enterprise). Batas 120 permintaan/menit per token. Perubahan yang tidak kompatibel = versi baru, versi lama didukung ≥ 6 bulan setelah pengumuman."
+    "description": "API baca data usaha untuk aplikasi pihak ketiga (akuntansi, marketplace, BI), endpoint tulis penyesuaian stok (cakupan stok:tulis, idempoten per Uuid), dan webhook keluar. Key JSON PascalCase Bahasa Indonesia; uang & jumlah dikirim sebagai string desimal; waktu ISO-8601 UTC; pengenal = Uuid (ULID). Token dibuat Owner di Pengaturan › Token API (paket Bisnis/Enterprise). Batas 120 permintaan/menit per token. Perubahan yang tidak kompatibel = versi baru, versi lama didukung ≥ 6 bulan setelah pengumuman."
   },
   "servers": [
     {
@@ -14,6 +14,10 @@
     {
       "name": "Data",
       "description": "Endpoint baca berkursor"
+    },
+    {
+      "name": "Tulis",
+      "description": "Endpoint tulis (idempoten per Uuid)"
     },
     {
       "name": "Webhook",
@@ -410,6 +414,173 @@
             "$ref": "#/components/parameters/Kursor"
           }
         ]
+      }
+    },
+    "/stok/penyesuaian": {
+      "post": {
+        "summary": "Buat penyesuaian stok",
+        "description": "Membuat & mengajukan penyesuaian stok seperti di back-office: di bawah batas nilai persetujuan langsung Diposting (mutasi stok & jurnal), di atasnya MenungguPersetujuan sampai disetujui di back-office. Produk bernomor seri belum didukung (PelacakanBelumDidukung). 201 = dokumen baru, 200 = Uuid yang sama dikirim ulang.",
+        "tags": [
+          "Tulis"
+        ],
+        "security": [
+          {
+            "TokenApi": [
+              "stok:tulis"
+            ]
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "Uuid": {
+                    "type": "string",
+                    "description": "ULID buatan pemanggil; kunci idempotensi (kirim ulang = dokumen yang sama)"
+                  },
+                  "UuidGudang": {
+                    "type": "string",
+                    "description": "Uuid lokasi stok (lihat GET /stok)"
+                  },
+                  "Tanggal": {
+                    "type": "string",
+                    "format": "date",
+                    "description": "Tanggal bisnis; tidak boleh di masa depan atau di periode terkunci"
+                  },
+                  "Alasan": {
+                    "type": "string",
+                    "enum": [
+                      "Rusak",
+                      "Hilang",
+                      "Kedaluwarsa",
+                      "Sampel",
+                      "KonsumsiInternal",
+                      "Lainnya"
+                    ],
+                    "description": "Alasan masuk hanya untuk alasan yang mengizinkan stok masuk; Lainnya wajib Keterangan ≥ 5 karakter"
+                  },
+                  "Keterangan": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "maxLength": 255
+                  },
+                  "Baris": {
+                    "type": "array",
+                    "minItems": 1,
+                    "maxItems": 200,
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "UuidProduk": {
+                          "type": "string"
+                        },
+                        "Jumlah": {
+                          "type": "string",
+                          "description": "Satuan dasar, bertanda: \"12\" masuk, \"-3.5\" keluar (maks. 4 desimal)"
+                        },
+                        "HppSatuan": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "description": "Wajib untuk stok masuk (harga modal per satuan dasar); kosong untuk keluar"
+                        },
+                        "NomorBatch": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "description": "Produk ber-batch: masuk = batch baru/ada, keluar = batch yang dikurangi"
+                        },
+                        "TanggalKedaluwarsa": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "format": "date",
+                          "description": "Batch masuk"
+                        }
+                      },
+                      "required": [
+                        "UuidProduk",
+                        "Jumlah"
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "Uuid",
+                  "UuidGudang",
+                  "Tanggal",
+                  "Alasan",
+                  "Baris"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Dokumen penyesuaian",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "Data": {
+                      "$ref": "#/components/schemas/HasilPenyesuaianStok"
+                    }
+                  },
+                  "required": [
+                    "Data"
+                  ]
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Dokumen penyesuaian",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "Data": {
+                      "$ref": "#/components/schemas/HasilPenyesuaianStok"
+                    }
+                  },
+                  "required": [
+                    "Data"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/TokenTidakValid"
+          },
+          "403": {
+            "$ref": "#/components/responses/Ditolak"
+          },
+          "422": {
+            "description": "Validasi gagal (ValidasiGagal) atau aturan bisnis: GudangTidakDikenal, ProdukTidakDikenal, BatchTidakDikenal, PelacakanBelumDidukung, KeteranganWajib, stok/periode, dll.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Galat"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/TerlaluBanyak"
+          }
+        }
       }
     }
   },
@@ -1711,6 +1882,82 @@
           "Tanggal",
           "NomorSuratJalan",
           "TotalNilai",
+          "Baris"
+        ]
+      },
+      "HasilPenyesuaianStok": {
+        "type": "object",
+        "properties": {
+          "Uuid": {
+            "type": "string"
+          },
+          "Nomor": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Null selama menunggu persetujuan"
+          },
+          "Status": {
+            "type": "string",
+            "enum": [
+              "Draf",
+              "MenungguPersetujuan",
+              "Diposting",
+              "Dibatalkan"
+            ]
+          },
+          "UuidGudang": {
+            "type": "string"
+          },
+          "TanggalBisnis": {
+            "type": "string",
+            "format": "date"
+          },
+          "Alasan": {
+            "type": "string"
+          },
+          "Keterangan": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "Baris": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "UuidProduk": {
+                  "type": "string"
+                },
+                "Jumlah": {
+                  "type": "string",
+                  "description": "String desimal bertanda: + masuk, − keluar"
+                },
+                "NomorBatch": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "UuidProduk",
+                "Jumlah",
+                "NomorBatch"
+              ]
+            }
+          }
+        },
+        "required": [
+          "Uuid",
+          "Nomor",
+          "Status",
+          "UuidGudang",
+          "TanggalBisnis",
+          "Alasan",
+          "Keterangan",
           "Baris"
         ]
       }

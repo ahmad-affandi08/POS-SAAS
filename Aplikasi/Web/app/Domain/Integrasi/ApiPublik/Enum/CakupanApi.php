@@ -4,13 +4,14 @@ declare(strict_types=1);
 
 namespace App\Domain\Integrasi\ApiPublik\Enum;
 
-/** X7 cakupan (scope) token API publik v1 (PRD §16.1). Bagian 1 hanya cakupan baca. */
+/** X7 cakupan (scope) token API publik v1 (PRD §16.1): baca (bagian 1) dan tulis `stok:tulis` (bagian 4). */
 enum CakupanApi: string
 {
     case ProdukBaca = 'produk:baca';
     case StokBaca = 'stok:baca';
     case PenjualanBaca = 'penjualan:baca';
     case PelangganBaca = 'pelanggan:baca';
+    case StokTulis = 'stok:tulis';
 
     public function AmbilLabel(): string
     {
@@ -19,6 +20,7 @@ enum CakupanApi: string
             self::StokBaca => 'Baca saldo stok per lokasi',
             self::PenjualanBaca => 'Baca penjualan beserta baris & pembayaran',
             self::PelangganBaca => 'Baca data pelanggan (nama, nomor HP, email)',
+            self::StokTulis => 'Buat penyesuaian stok (masuk/keluar) dari sistem lain; di atas batas nilai menunggu persetujuan',
         };
     }
 

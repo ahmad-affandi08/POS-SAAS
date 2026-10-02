@@ -423,5 +423,10 @@
         "Metode": "GET",
         "Jalur": "api/pos/v1/perintah-kerja/{perintahKerja}",
         "Nama": "pos.perintah-kerja.tampil"
+    },
+    "POST api/v1/stok/penyesuaian": {
+        "Metode": "POST",
+        "Jalur": "api/v1/stok/penyesuaian",
+        "Nama": "api.v1.stok.penyesuaian"
     }
 }
