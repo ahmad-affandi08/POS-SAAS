@@ -89,6 +89,11 @@ class LayananSinkron {
               ),
           ]);
           hasil = jawaban.hasil;
+          await repositori.CatatSinkron(
+            waktu: _jam(),
+            waktuServer: jawaban.waktuServer,
+            perluTinjauan: jawaban.perluTinjauan,
+          );
           if (jawaban.perangkatDicabut && !dicabut) {
             // Masa pemulihan: kirim semua sisa sekarang, termasuk yang sedang menunggu jadwal ulang.
             dicabut = true;

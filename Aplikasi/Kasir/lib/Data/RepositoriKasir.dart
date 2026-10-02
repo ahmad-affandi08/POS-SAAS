@@ -98,6 +98,15 @@ abstract final class KunciPengaturan {
   static const String menitKunciOtomatis = 'MenitKunciOtomatis';
   static const String tampilanKatalog = 'TampilanKatalog';
 
+  /// K-17: waktu putaran sinkron terakhir yang dijawab server (ISO UTC).
+  static const String sinkronTerakhir = 'SinkronTerakhir';
+
+  /// K-17: selisih jam perangkat − jam server dalam detik (positif = jam perangkat lebih cepat).
+  static const String selisihJamDetik = 'SelisihJamDetik';
+
+  /// K-17: JSON daftar Uuid penjualan yang ditandai tinjauan back-office (50 terbaru).
+  static const String penjualanPerluTinjauan = 'PenjualanPerluTinjauan';
+
   /// K-16: kategori katalog terakhir dipilih di layar Jual (Uuid kategori, `Terlaris`, atau kosong = Semua).
   static const String kategoriTerakhirJual = 'KategoriTerakhirJual';
 
@@ -499,6 +508,52 @@ class RepositoriKasir {
         .map((r) => r.read(jumlah) ?? 0)
         .watchSingle();
   }
+
+  /// K-17: waktu dibuat item tertunda tertua (null = outbox kosong).
+  Stream<DateTime?> PantauOutboxTertua() {
+    final tertua = db.outbox.DibuatPada.min();
+    return (db.selectOnly(db.outbox)
+          ..addColumns([tertua])
+          ..where(db.outbox.Status.equals(StatusOutbox.tertunda)))
+        .map((r) => r.read(tertua))
+        .watchSingle();
+  }
+
+  /// K-17: catat hasil satu putaran sinkron yang dijawab server: waktu sinkron, selisih jam perangkat − server (detik),
+  /// dan Uuid penjualan yang ditandai tinjauan (50 terbaru).
+  Future<void> CatatSinkron({required DateTime waktu, DateTime? waktuServer, List<String> perluTinjauan = const []}) =>
+      db.transaction(() async {
+        await SimpanPengaturan(KunciPengaturan.sinkronTerakhir, waktu.toUtc().toIso8601String());
+        if (waktuServer != null) {
+          await SimpanPengaturan(KunciPengaturan.selisihJamDetik, '${waktu.difference(waktuServer).inSeconds}');
+        }
+        if (perluTinjauan.isNotEmpty) {
+          final lama = await AmbilPenjualanPerluTinjauan();
+          final baru = [...perluTinjauan, ...lama.where((u) => !perluTinjauan.contains(u))].take(50).toList();
+          await SimpanPengaturan(KunciPengaturan.penjualanPerluTinjauan, jsonEncode(baru));
+        }
+      });
+
+  Future<List<String>> AmbilPenjualanPerluTinjauan() async {
+    final isi = await AmbilPengaturan(KunciPengaturan.penjualanPerluTinjauan);
+    if (isi == null || isi.isEmpty) {
+      return const [];
+    }
+    final data = jsonDecode(isi);
+    return data is List<Object?> ? data.whereType<String>().toList() : const [];
+  }
+
+  /// K-17: pantau pengaturan sinkron (berubah setiap putaran sinkron tercatat).
+  Stream<Map<String, String>> PantauPengaturanSinkron() =>
+      (db.select(db.pengaturan)..where(
+            (p) => p.Kunci.isIn([
+              KunciPengaturan.sinkronTerakhir,
+              KunciPengaturan.selisihJamDetik,
+              KunciPengaturan.penjualanPerluTinjauan,
+            ]),
+          ))
+          .watch()
+          .map((daftar) => {for (final p in daftar) p.Kunci: p.Nilai});
 
   Stream<List<BarisOutbox>> PantauPerluTindakan() =>
       (db.select(db.outbox)

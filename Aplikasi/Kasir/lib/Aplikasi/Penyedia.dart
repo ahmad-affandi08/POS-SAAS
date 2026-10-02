@@ -834,6 +834,26 @@ final penyediaMutasiShift = StreamProvider.family<List<BarisMutasiKas>, String>(
 
 final penyediaJumlahTertunda = StreamProvider<int>((ref) => ref.watch(penyediaRepositori).PantauJumlahTertunda());
 
+/// K-17: waktu item tertunda tertua (null = tidak ada).
+final penyediaOutboxTertua = StreamProvider<DateTime?>((ref) => ref.watch(penyediaRepositori).PantauOutboxTertua());
+
+/// K-17: pengaturan hasil sinkron (sinkron terakhir, selisih jam, penjualan ditinjau).
+final penyediaPengaturanSinkron = StreamProvider<Map<String, String>>(
+  (ref) => ref.watch(penyediaRepositori).PantauPengaturanSinkron(),
+);
+
+/// K-17: penjualan perangkat ini yang ditandai tinjauan back-office (nomor dokumen; Uuid bila sudah tidak ada lokal).
+final penyediaPenjualanDitinjau = FutureProvider<List<String>>((ref) async {
+  final pengaturan = await ref.watch(penyediaPengaturanSinkron.future);
+  final isi = pengaturan[KunciPengaturan.penjualanPerluTinjauan];
+  if (isi == null || isi.isEmpty) {
+    return const [];
+  }
+  final uuid = await ref.read(penyediaRepositori).AmbilPenjualanPerluTinjauan();
+  final repo = ref.read(penyediaRepositoriPenjualan);
+  return [for (final u in uuid) (await repo.CariPenjualan(u))?.Nomor ?? u];
+});
+
 final penyediaPerluTindakan = StreamProvider<List<BarisOutbox>>(
   (ref) => ref.watch(penyediaRepositori).PantauPerluTindakan(),
 );

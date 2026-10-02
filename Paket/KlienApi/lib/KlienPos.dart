@@ -493,6 +493,8 @@ class KlienPos {
           ? hasil.whereType<Map<String, Object?>>().map(HasilItemSinkron.DariJson).toList()
           : const <HasilItemSinkron>[],
       perangkatDicabut: json['PerangkatDicabut'] == true,
+      waktuServer: DateTime.tryParse(UraiJson.AmbilTeks(json['WaktuServer'])),
+      perluTinjauan: UraiJson.AmbilDaftarTeks(json['PerluTinjauan']),
     );
   }
 

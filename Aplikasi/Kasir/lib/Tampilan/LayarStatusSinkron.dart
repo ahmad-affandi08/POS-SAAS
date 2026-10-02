@@ -3,13 +3,23 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sistem_desain/SistemDesain.dart';
 
 import '../Aplikasi/Penyedia.dart';
+import '../Data/RepositoriKasir.dart';
+import '../Domain/Sinkron/LayananSinkron.dart';
+import 'Komponen/FormatWaktu.dart';
 import 'RuangKerja/IsiAreaKerja.dart';
 
 /// Status sinkron (PRD §18): jumlah data belum terkirim dan daftar "Perlu Tindakan" (ditolak server) beserta
-/// alasannya. Item bisa dikirim ulang setelah penyebabnya diperbaiki di back-office. Tampil di area ruang kerja
+/// alasannya. K-17 (§18.3 butir 7 & 10): waktu sinkron terakhir, peringatan data tertunda > 2 jam, peringatan jam
+/// perangkat berbeda > 10 menit dari server, dan penjualan yang diterima dengan tanda tinjauan back-office. Item bisa dikirim ulang setelah penyebabnya diperbaiki di back-office. Tampil di area ruang kerja
 /// (dibuka dari rel navigasi atau dengan mengetuk bilah status).
 class LayarStatusSinkron extends ConsumerStatefulWidget {
   const LayarStatusSinkron({super.key});
+
+  /// §18.3 butir 10: data tertunda lebih lama dari ini diberi peringatan.
+  static const Duration batasTertunda = Duration(hours: 2);
+
+  /// §18.3 butir 7: selisih jam perangkat − server lebih dari ini diberi peringatan.
+  static const int batasSelisihJamDetik = 600;
 
   /// Label jenis item outbox untuk kasir.
   static String AmbilLabelJenis(String jenis) => switch (jenis) {
@@ -35,7 +45,8 @@ class _LayarStatusSinkronState extends ConsumerState<LayarStatusSinkron> {
       _sibuk = true;
       _pesan = null;
     });
-    final hasil = await ref.read(penyediaSesi.notifier).Sinkronkan();
+    // K-17: "Kirim sekarang" tidak menunggu jadwal coba ulang (mundur eksponensial) item yang tertunda.
+    final hasil = await ref.read(penyediaSesi.notifier).SinkronkanSegera() ?? const RingkasanSinkron();
     if (mounted) {
       setState(() {
         _sibuk = false;
@@ -54,6 +65,20 @@ class _LayarStatusSinkronState extends ConsumerState<LayarStatusSinkron> {
     final perlu = ref.watch(penyediaPerluTindakan).value ?? const [];
 
     final koneksi = ref.watch(penyediaKoneksi);
+    final pengaturan = ref.watch(penyediaPengaturanSinkron).value ?? const <String, String>{};
+    final terakhir = DateTime.tryParse(pengaturan[KunciPengaturan.sinkronTerakhir] ?? '');
+    final selisih = int.tryParse(pengaturan[KunciPengaturan.selisihJamDetik] ?? '');
+    final tertua = ref.watch(penyediaOutboxTertua).value;
+    final sekarang = ref.watch(penyediaJam)();
+    final ditinjau = ref.watch(penyediaPenjualanDitinjau).value ?? const <String>[];
+    final peringatan = <String>[
+      if (tertua != null && sekarang.difference(tertua) > LayarStatusSinkron.batasTertunda)
+        'Ada data belum terkirim sejak ${FormatWaktu.FormatTanggalJam(tertua)} (lebih dari 2 jam). Pastikan perangkat '
+            'tersambung internet, lalu ketuk Kirim sekarang.',
+      if (selisih != null && selisih.abs() > LayarStatusSinkron.batasSelisihJamDetik)
+        'Jam perangkat ${selisih > 0 ? 'lebih cepat' : 'lebih lambat'} ${(selisih.abs() / 60).round()} menit dari '
+            'server. Perbaiki tanggal, jam, dan zona waktu perangkat agar waktu transaksi benar.',
+    ];
 
     return IsiAreaKerja(
       judul: 'Status sinkron',
@@ -65,6 +90,28 @@ class _LayarStatusSinkronState extends ConsumerState<LayarStatusSinkron> {
           StatusKoneksi.Offline => 'Perangkat sedang offline. Data tetap tersimpan dan dikirim otomatis saat online.',
           StatusKoneksi.BelumDiketahui => 'Koneksi ke server belum diperiksa.',
         }, style: teks.bodyMedium?.copyWith(color: warna.teksSekunder)),
+        const SizedBox(height: TokenJarak.jarak4),
+        Text(
+          terakhir == null
+              ? 'Belum pernah sinkron dengan server dari perangkat ini.'
+              : 'Sinkron terakhir: ${FormatWaktu.FormatTanggalJam(terakhir)}.',
+          key: const ValueKey('SinkronTerakhir'),
+          style: teks.bodyMedium?.copyWith(color: warna.teksSekunder),
+        ),
+        for (final p in peringatan)
+          Padding(
+            padding: const EdgeInsets.only(top: TokenJarak.jarak8),
+            child: KotakPanel(
+              anak: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.warning_amber_outlined, size: TokenJarak.ikonSedang, color: warna.peringatan),
+                  const SizedBox(width: TokenJarak.jarak12),
+                  Expanded(child: Text(p)),
+                ],
+              ),
+            ),
+          ),
         const SizedBox(height: TokenJarak.jarak12),
         Align(
           alignment: Alignment.centerLeft,
@@ -115,6 +162,33 @@ class _LayarStatusSinkronState extends ConsumerState<LayarStatusSinkron> {
                 ),
               ),
             ),
+        const SizedBox(height: TokenJarak.jarak24),
+        Text('Diperiksa back-office', style: teks.titleMedium),
+        const SizedBox(height: TokenJarak.jarak8),
+        if (ditinjau.isEmpty)
+          Text(
+            'Tidak ada transaksi yang ditandai untuk diperiksa.',
+            style: teks.bodyMedium?.copyWith(color: warna.teksSekunder),
+          )
+        else ...[
+          Text(
+            'Transaksi ini sudah diterima server, tetapi ditandai untuk diperiksa back-office (misal stok kurang atau '
+            'pesanan sudah dibayar di perangkat lain). Tidak perlu diulang di kasir.',
+            style: teks.bodyMedium?.copyWith(color: warna.teksSekunder),
+          ),
+          const SizedBox(height: TokenJarak.jarak8),
+          for (final nomor in ditinjau)
+            Padding(
+              padding: const EdgeInsets.only(bottom: TokenJarak.jarak4),
+              child: Row(
+                children: [
+                  Icon(Icons.flag_outlined, size: TokenJarak.ikonKecil, color: warna.peringatan),
+                  const SizedBox(width: TokenJarak.jarak8),
+                  Expanded(child: Text(nomor)),
+                ],
+              ),
+            ),
+        ],
       ],
     );
   }

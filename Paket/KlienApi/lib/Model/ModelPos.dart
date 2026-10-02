@@ -752,10 +752,21 @@ class ItemOutbox {
 /// Jawaban `sinkron/kirim`: hasil per item + `PerangkatDicabut` (perangkat pengirim sudah dicabut, masa pemulihan:
 /// kosongkan outbox lalu hapus token).
 class JawabanSinkron {
-  const JawabanSinkron({required this.hasil, this.perangkatDicabut = false});
+  const JawabanSinkron({
+    required this.hasil,
+    this.perangkatDicabut = false,
+    this.waktuServer,
+    this.perluTinjauan = const [],
+  });
 
   final List<HasilItemSinkron> hasil;
   final bool perangkatDicabut;
+
+  /// K-17: jam server saat menjawab (untuk peringatan jam perangkat salah).
+  final DateTime? waktuServer;
+
+  /// K-17: Uuid `Penjualan.Buat` di batch ini yang diterima dengan tanda tinjauan back-office (server lama = kosong).
+  final List<String> perluTinjauan;
 }
 
 enum StatusItemSinkron { Diterima, Duplikat, Ditolak }

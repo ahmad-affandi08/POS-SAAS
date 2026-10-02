@@ -99,3 +99,18 @@ describe('K-12 status layanan meja', function (): void {
             ->and($k['Meja']->refresh()->PerluDibersihkanSejak)->not->toBeNull();
     });
 });
+
+describe('K-17 jawaban sinkron', function (): void {
+    it('PerluTinjauan memuat Uuid penjualan di batch yang diterima dengan tanda tinjauan; WaktuServer ada', function (): void {
+        $k = BantuanPesananTerbuka::SiapkanRestoran($this);
+        $biasa = BantuanPenjualan::Item($k, ['Baris' => [['Produk' => $k['Kopi'], 'Jumlah' => '1', 'Harga' => '25000.00']]]);
+        $tinjau = BantuanPenjualan::Item($k, ['Baris' => [['Produk' => $k['Kopi'], 'Jumlah' => '1', 'Harga' => '25000.00']]], ['UuidPesananTerbuka' => BantuanKasir::Uuid()]);
+
+        $jawaban = BantuanKasir::Kirim($this, $k['Token'], [$biasa, $tinjau])->assertOk();
+        expect($jawaban->json('PerluTinjauan'))->toBe([$tinjau['Uuid']])
+            ->and($jawaban->json('WaktuServer'))->toBeString();
+
+        // Kirim ulang (Duplikat) tetap melaporkan tandanya.
+        expect(BantuanKasir::Kirim($this, $k['Token'], [$tinjau])->assertOk()->json('PerluTinjauan'))->toBe([$tinjau['Uuid']]);
+    });
+});

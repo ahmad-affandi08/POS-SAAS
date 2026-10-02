@@ -56,6 +56,8 @@ void main() {
             'Galat': {'Kode': 'PersetujuanDiperlukan', 'Pesan': 'Wajib disetujui'},
           },
         ],
+        'WaktuServer': '2026-10-02T03:00:00Z',
+        'PerluTinjauan': ['A'],
       }, 200);
     });
 
@@ -74,6 +76,8 @@ void main() {
     expect(hasil.map((h) => h.status), [StatusItemSinkron.Diterima, StatusItemSinkron.Ditolak]);
     expect(hasil[1].kodeGalat, 'PersetujuanDiperlukan');
     expect(jawaban.perangkatDicabut, isFalse);
+    expect(jawaban.waktuServer, DateTime.utc(2026, 10, 2, 3));
+    expect(jawaban.perluTinjauan, ['A']);
     // Audit F-12: mutasi membawa Idempotency-Key berformat yang diterima server.
     expect(dikirim.headers['Idempotency-Key'], matches(RegExp(r'^pos-[0-9A-HJKMNP-TV-Z]{26}$')));
   });
