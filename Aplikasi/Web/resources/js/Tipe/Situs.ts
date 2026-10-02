@@ -163,3 +163,20 @@ export type PropsArtikelSitus = {
     Terkait: RingkasanArtikel[];
     Situs: DataSitus;
 };
+
+/** X7 bagian 3: portal dokumentasi pengembang (`/pengembang`), disusun server dari spesifikasi OpenAPI. */
+export type EndpointApiPublik = {
+    Metode: string;
+    Jalur: string;
+    Ringkasan: string;
+    Cakupan: string;
+    Parameter: { Nama: string; Wajib: boolean }[];
+};
+
+export type PropsHalamanPengembang = {
+    AlamatApi: string;
+    Versi: string;
+    Endpoint: EndpointApiPublik[];
+    Webhook: { Peristiwa: string; Ringkasan: string }[];
+    UnduhSpesifikasi: string;
+};

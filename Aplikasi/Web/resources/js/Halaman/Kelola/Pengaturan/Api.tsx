@@ -83,7 +83,12 @@ export default function HalamanTokenApi({ Token, OpsiCakupan, TokenBaru, AlamatA
                 Token API mengizinkan aplikasi lain membaca data usaha Anda lewat{' '}
                 <span className="font-mono">{AlamatApi}</span> dengan header{' '}
                 <span className="font-mono">Authorization: Bearer &lt;token&gt;</span>. Berikan akses seperlunya saja
-                dan cabut token yang tidak dipakai. Batas 120 permintaan per menit per token.
+                dan cabut token yang tidak dipakai. Batas 120 permintaan per menit per token. Panduan lengkap untuk
+                pengembang ada di{' '}
+                <a className="font-semibold text-brand underline" href="/pengembang">
+                    dokumentasi API
+                </a>
+                .
             </p>
 
             {TokenBaru ? <KartuTokenBaru nama={TokenBaru.Nama} token={TokenBaru.Token} /> : null}

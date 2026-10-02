@@ -24,6 +24,7 @@ use App\Http\Kontroler\Publik\AkunTokoOnlineKontroler;
 use App\Http\Kontroler\Publik\BerhentiLanggananKontroler;
 use App\Http\Kontroler\Publik\DokumenLegalPublikKontroler;
 use App\Http\Kontroler\Publik\KompatibilitasPerangkatKontroler as KompatibilitasPerangkatPublikKontroler;
+use App\Http\Kontroler\Publik\PengembangKontroler;
 use App\Http\Kontroler\Publik\PesanSendiriKontroler;
 use App\Http\Kontroler\Publik\PortalKurirKontroler;
 use App\Http\Kontroler\Publik\ProspekSitusKontroler;
@@ -78,6 +79,8 @@ Route::middleware([TolakDomainPengelola::class, ArahkanDomainAplikasi::class, Ba
     // Bagian B2: blog (artikel terbit dari konsol).
     Route::get('/blog', [SitusKontroler::class, 'Blog'])->name('situs.blog.daftar');
     Route::get('/blog/{slugArtikel}', [SitusKontroler::class, 'Artikel'])->where('slugArtikel', ArtikelSitus::POLA_SLUG)->name('situs.blog.artikel');
+    // X7 bagian 3: portal dokumentasi pengembang (Open API v1 + webhook; spesifikasi di public/pengembang/openapi-v1.json).
+    Route::get('/pengembang', [PengembangKontroler::class, 'Tampilkan'])->name('situs.pengembang');
     // P-06 dokumen legal publik. D-28: ikut shell & bundle situs, jadi ada kepala, kaki, dan jalan kembali.
     Route::get('/legal/{jenis}', [DokumenLegalPublikKontroler::class, 'Tampilkan'])->name('legal.tampil');
 });

@@ -1,0 +1,1216 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "PAYOU Open API",
+    "version": "1.0.0",
+    "description": "API baca data usaha untuk aplikasi pihak ketiga (akuntansi, marketplace, BI) dan webhook keluar. Key JSON PascalCase Bahasa Indonesia; uang & jumlah dikirim sebagai string desimal; waktu ISO-8601 UTC; pengenal = Uuid (ULID). Token dibuat Owner di Pengaturan › Token API (paket Bisnis/Enterprise). Batas 120 permintaan/menit per token. Perubahan yang tidak kompatibel = versi baru, versi lama didukung ≥ 6 bulan setelah pengumuman."
+  },
+  "servers": [
+    {
+      "url": "https://dashboard.payou.id/api/v1"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Data",
+      "description": "Endpoint baca berkursor"
+    },
+    {
+      "name": "Webhook",
+      "description": "Dikirim PAYOU ke alamat HTTPS Anda"
+    }
+  ],
+  "paths": {
+    "/produk": {
+      "get": {
+        "summary": "Daftar produk beserta satuan, barcode & harga dasar",
+        "tags": [
+          "Data"
+        ],
+        "security": [
+          {
+            "TokenApi": [
+              "produk:baca"
+            ]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Berhasil",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "Data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Produk"
+                      }
+                    },
+                    "Kursor": {
+                      "$ref": "#/components/schemas/Kursor"
+                    }
+                  },
+                  "required": [
+                    "Data",
+                    "Kursor"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/TokenTidakValid"
+          },
+          "403": {
+            "$ref": "#/components/responses/Ditolak"
+          },
+          "429": {
+            "$ref": "#/components/responses/TerlaluBanyak"
+          },
+          "422": {
+            "$ref": "#/components/responses/ParameterTidakValid"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Per"
+          },
+          {
+            "$ref": "#/components/parameters/Kursor"
+          }
+        ]
+      }
+    },
+    "/produk/{uuidProduk}": {
+      "get": {
+        "summary": "Satu produk",
+        "tags": [
+          "Data"
+        ],
+        "security": [
+          {
+            "TokenApi": [
+              "produk:baca"
+            ]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Berhasil",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "Data": {
+                      "$ref": "#/components/schemas/Produk"
+                    }
+                  },
+                  "required": [
+                    "Data"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/TokenTidakValid"
+          },
+          "403": {
+            "$ref": "#/components/responses/Ditolak"
+          },
+          "429": {
+            "$ref": "#/components/responses/TerlaluBanyak"
+          },
+          "404": {
+            "$ref": "#/components/responses/TidakDitemukan"
+          }
+        },
+        "parameters": [
+          {
+            "name": "uuidProduk",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+            }
+          }
+        ]
+      }
+    },
+    "/stok": {
+      "get": {
+        "summary": "Saldo stok per produk per lokasi",
+        "tags": [
+          "Data"
+        ],
+        "security": [
+          {
+            "TokenApi": [
+              "stok:baca"
+            ]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Berhasil",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "Data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Stok"
+                      }
+                    },
+                    "Kursor": {
+                      "$ref": "#/components/schemas/Kursor"
+                    }
+                  },
+                  "required": [
+                    "Data",
+                    "Kursor"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/TokenTidakValid"
+          },
+          "403": {
+            "$ref": "#/components/responses/Ditolak"
+          },
+          "429": {
+            "$ref": "#/components/responses/TerlaluBanyak"
+          },
+          "422": {
+            "$ref": "#/components/responses/ParameterTidakValid"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Per"
+          },
+          {
+            "$ref": "#/components/parameters/Kursor"
+          },
+          {
+            "name": "gudang",
+            "in": "query",
+            "required": false,
+            "description": "Uuid lokasi stok (opsional)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/penjualan": {
+      "get": {
+        "summary": "Penjualan per rentang tanggal bisnis (maks. 92 hari)",
+        "tags": [
+          "Data"
+        ],
+        "security": [
+          {
+            "TokenApi": [
+              "penjualan:baca"
+            ]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Berhasil",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "Data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Penjualan"
+                      }
+                    },
+                    "Kursor": {
+                      "$ref": "#/components/schemas/Kursor"
+                    }
+                  },
+                  "required": [
+                    "Data",
+                    "Kursor"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/TokenTidakValid"
+          },
+          "403": {
+            "$ref": "#/components/responses/Ditolak"
+          },
+          "429": {
+            "$ref": "#/components/responses/TerlaluBanyak"
+          },
+          "422": {
+            "$ref": "#/components/responses/ParameterTidakValid"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Per"
+          },
+          {
+            "$ref": "#/components/parameters/Kursor"
+          },
+          {
+            "name": "dari",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "sampai",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ]
+      }
+    },
+    "/penjualan/{uuidPenjualan}": {
+      "get": {
+        "summary": "Satu penjualan",
+        "tags": [
+          "Data"
+        ],
+        "security": [
+          {
+            "TokenApi": [
+              "penjualan:baca"
+            ]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Berhasil",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "Data": {
+                      "$ref": "#/components/schemas/Penjualan"
+                    }
+                  },
+                  "required": [
+                    "Data"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/TokenTidakValid"
+          },
+          "403": {
+            "$ref": "#/components/responses/Ditolak"
+          },
+          "429": {
+            "$ref": "#/components/responses/TerlaluBanyak"
+          },
+          "404": {
+            "$ref": "#/components/responses/TidakDitemukan"
+          }
+        },
+        "parameters": [
+          {
+            "name": "uuidPenjualan",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+            }
+          }
+        ]
+      }
+    },
+    "/pelanggan": {
+      "get": {
+        "summary": "Daftar pelanggan (tanpa NPWP/NIK, alamat, limit kredit)",
+        "tags": [
+          "Data"
+        ],
+        "security": [
+          {
+            "TokenApi": [
+              "pelanggan:baca"
+            ]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Berhasil",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "Data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Pelanggan"
+                      }
+                    },
+                    "Kursor": {
+                      "$ref": "#/components/schemas/Kursor"
+                    }
+                  },
+                  "required": [
+                    "Data",
+                    "Kursor"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/TokenTidakValid"
+          },
+          "403": {
+            "$ref": "#/components/responses/Ditolak"
+          },
+          "429": {
+            "$ref": "#/components/responses/TerlaluBanyak"
+          },
+          "422": {
+            "$ref": "#/components/responses/ParameterTidakValid"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Per"
+          },
+          {
+            "$ref": "#/components/parameters/Kursor"
+          }
+        ]
+      }
+    }
+  },
+  "webhooks": {
+    "penjualan.selesai": {
+      "post": {
+        "summary": "penjualan.selesai",
+        "description": "Penjualan diterima server (dari kasir, termasuk yang dibuat offline). Header: X-Id-Peristiwa (dedup), X-Peristiwa, X-Waktu-Kirim (detik Unix), X-Tanda-Tangan: sha256=<HMAC-SHA256 rahasia atas \"{X-Waktu-Kirim}.{badan}\">. Balas 2xx dalam 10 detik; selain itu dicoba ulang 1m, 5m, 30m, 2j, 12j.",
+        "tags": [
+          "Webhook"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "IdPeristiwa": {
+                    "type": "string"
+                  },
+                  "Peristiwa": {
+                    "type": "string",
+                    "const": "penjualan.selesai"
+                  },
+                  "TerjadiPada": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "Data": {
+                    "$ref": "#/components/schemas/Penjualan"
+                  }
+                },
+                "required": [
+                  "IdPeristiwa",
+                  "Peristiwa",
+                  "TerjadiPada",
+                  "Data"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Diterima penerima"
+          }
+        }
+      }
+    },
+    "penjualan.divoid": {
+      "post": {
+        "summary": "penjualan.divoid",
+        "description": "Penjualan di-void; Data = penjualan dengan Status Void. Header: X-Id-Peristiwa (dedup), X-Peristiwa, X-Waktu-Kirim (detik Unix), X-Tanda-Tangan: sha256=<HMAC-SHA256 rahasia atas \"{X-Waktu-Kirim}.{badan}\">. Balas 2xx dalam 10 detik; selain itu dicoba ulang 1m, 5m, 30m, 2j, 12j.",
+        "tags": [
+          "Webhook"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "IdPeristiwa": {
+                    "type": "string"
+                  },
+                  "Peristiwa": {
+                    "type": "string",
+                    "const": "penjualan.divoid"
+                  },
+                  "TerjadiPada": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "Data": {
+                    "$ref": "#/components/schemas/Penjualan"
+                  }
+                },
+                "required": [
+                  "IdPeristiwa",
+                  "Peristiwa",
+                  "TerjadiPada",
+                  "Data"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Diterima penerima"
+          }
+        }
+      }
+    },
+    "penjualan.diretur": {
+      "post": {
+        "summary": "penjualan.diretur",
+        "description": "Retur penjualan diterima server. Header: X-Id-Peristiwa (dedup), X-Peristiwa, X-Waktu-Kirim (detik Unix), X-Tanda-Tangan: sha256=<HMAC-SHA256 rahasia atas \"{X-Waktu-Kirim}.{badan}\">. Balas 2xx dalam 10 detik; selain itu dicoba ulang 1m, 5m, 30m, 2j, 12j.",
+        "tags": [
+          "Webhook"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "IdPeristiwa": {
+                    "type": "string"
+                  },
+                  "Peristiwa": {
+                    "type": "string",
+                    "const": "penjualan.diretur"
+                  },
+                  "TerjadiPada": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "Data": {
+                    "$ref": "#/components/schemas/ReturPenjualan"
+                  }
+                },
+                "required": [
+                  "IdPeristiwa",
+                  "Peristiwa",
+                  "TerjadiPada",
+                  "Data"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Diterima penerima"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Galat": {
+        "type": "object",
+        "properties": {
+          "Galat": {
+            "type": "object",
+            "properties": {
+              "Kode": {
+                "type": "string"
+              },
+              "Pesan": {
+                "type": "string"
+              },
+              "Detail": {
+                "type": [
+                  "object",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "Kode",
+              "Pesan"
+            ]
+          }
+        },
+        "required": [
+          "Galat"
+        ]
+      },
+      "Kursor": {
+        "type": "object",
+        "properties": {
+          "Berikutnya": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Kirim sebagai ?kursor= untuk halaman berikutnya; null = sudah habis."
+          }
+        },
+        "required": [
+          "Berikutnya"
+        ]
+      },
+      "Produk": {
+        "type": "object",
+        "properties": {
+          "Uuid": {
+            "type": "string"
+          },
+          "Sku": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "Nama": {
+            "type": "string"
+          },
+          "Jenis": {
+            "type": "string"
+          },
+          "Kategori": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "Merek": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "Aktif": {
+            "type": "boolean"
+          },
+          "TampilDiPos": {
+            "type": "boolean"
+          },
+          "TampilOnline": {
+            "type": "boolean"
+          },
+          "HargaTerbuka": {
+            "type": "boolean"
+          },
+          "Satuan": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "Uuid": {
+                  "type": "string"
+                },
+                "Nama": {
+                  "type": "string"
+                },
+                "KonversiKeDasar": {
+                  "type": "string",
+                  "description": "String desimal 4 angka di belakang koma, misal \"2.0000\""
+                },
+                "DefaultJual": {
+                  "type": "boolean"
+                },
+                "Barcode": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "HargaDasar": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "String desimal, misal \"15000.00\""
+                }
+              },
+              "required": [
+                "Uuid",
+                "Nama",
+                "KonversiKeDasar",
+                "DefaultJual",
+                "Barcode",
+                "HargaDasar"
+              ]
+            }
+          },
+          "DiubahPada": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "Uuid",
+          "Sku",
+          "Nama",
+          "Jenis",
+          "Kategori",
+          "Merek",
+          "Aktif",
+          "TampilDiPos",
+          "TampilOnline",
+          "HargaTerbuka",
+          "Satuan",
+          "DiubahPada"
+        ]
+      },
+      "Stok": {
+        "type": "object",
+        "properties": {
+          "UuidProduk": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "Sku": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "NamaProduk": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "UuidGudang": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "NamaGudang": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "JumlahTersedia": {
+            "type": "string",
+            "description": "String desimal 4 angka di belakang koma, misal \"2.0000\""
+          },
+          "JumlahDipesan": {
+            "type": "string",
+            "description": "String desimal 4 angka di belakang koma, misal \"2.0000\""
+          },
+          "DiubahPada": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "UuidProduk",
+          "Sku",
+          "NamaProduk",
+          "UuidGudang",
+          "NamaGudang",
+          "JumlahTersedia",
+          "JumlahDipesan",
+          "DiubahPada"
+        ]
+      },
+      "Penjualan": {
+        "type": "object",
+        "properties": {
+          "Uuid": {
+            "type": "string"
+          },
+          "Nomor": {
+            "type": "string"
+          },
+          "UuidOutlet": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "UuidPelanggan": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "TanggalBisnis": {
+            "type": "string",
+            "format": "date"
+          },
+          "Kanal": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "Status": {
+            "type": "string"
+          },
+          "Subtotal": {
+            "type": "string",
+            "description": "String desimal, misal \"15000.00\""
+          },
+          "TotalDiskon": {
+            "type": "string",
+            "description": "String desimal, misal \"15000.00\""
+          },
+          "BiayaLayanan": {
+            "type": "string",
+            "description": "String desimal, misal \"15000.00\""
+          },
+          "BiayaKirim": {
+            "type": "string",
+            "description": "String desimal, misal \"15000.00\""
+          },
+          "DiskonKirim": {
+            "type": "string",
+            "description": "String desimal, misal \"15000.00\""
+          },
+          "TotalPajak": {
+            "type": "string",
+            "description": "String desimal, misal \"15000.00\""
+          },
+          "Pembulatan": {
+            "type": "string",
+            "description": "String desimal, misal \"15000.00\""
+          },
+          "TotalAkhir": {
+            "type": "string",
+            "description": "String desimal, misal \"15000.00\""
+          },
+          "TotalDibayar": {
+            "type": "string",
+            "description": "String desimal, misal \"15000.00\""
+          },
+          "Kembalian": {
+            "type": "string",
+            "description": "String desimal, misal \"15000.00\""
+          },
+          "DibuatOfflinePada": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "DiterimaPada": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "Baris": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "Uuid": {
+                  "type": "string"
+                },
+                "UuidProduk": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "NamaProduk": {
+                  "type": "string"
+                },
+                "Jumlah": {
+                  "type": "string",
+                  "description": "String desimal 4 angka di belakang koma, misal \"2.0000\""
+                },
+                "HargaSatuan": {
+                  "type": "string",
+                  "description": "String desimal, misal \"15000.00\""
+                },
+                "HargaPilihan": {
+                  "type": "string",
+                  "description": "String desimal, misal \"15000.00\""
+                },
+                "Pilihan": {
+                  "type": [
+                    "array",
+                    "null"
+                  ]
+                },
+                "JumlahDiskon": {
+                  "type": "string",
+                  "description": "String desimal, misal \"15000.00\""
+                },
+                "JumlahPajak": {
+                  "type": "string",
+                  "description": "String desimal, misal \"15000.00\""
+                },
+                "TotalBaris": {
+                  "type": "string",
+                  "description": "String desimal, misal \"15000.00\""
+                },
+                "Catatan": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "Uuid",
+                "UuidProduk",
+                "NamaProduk",
+                "Jumlah",
+                "HargaSatuan",
+                "HargaPilihan",
+                "Pilihan",
+                "JumlahDiskon",
+                "JumlahPajak",
+                "TotalBaris",
+                "Catatan"
+              ]
+            }
+          },
+          "Pembayaran": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "JenisMetode": {
+                  "type": "string"
+                },
+                "NamaMetode": {
+                  "type": "string"
+                },
+                "Jumlah": {
+                  "type": "string",
+                  "description": "String desimal, misal \"15000.00\""
+                },
+                "Status": {
+                  "type": "string"
+                },
+                "DibayarPada": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "date-time"
+                }
+              },
+              "required": [
+                "JenisMetode",
+                "NamaMetode",
+                "Jumlah",
+                "Status",
+                "DibayarPada"
+              ]
+            }
+          }
+        },
+        "required": [
+          "Uuid",
+          "Nomor",
+          "UuidOutlet",
+          "UuidPelanggan",
+          "TanggalBisnis",
+          "Kanal",
+          "Status",
+          "Subtotal",
+          "TotalDiskon",
+          "BiayaLayanan",
+          "BiayaKirim",
+          "DiskonKirim",
+          "TotalPajak",
+          "Pembulatan",
+          "TotalAkhir",
+          "TotalDibayar",
+          "Kembalian",
+          "DibuatOfflinePada",
+          "DiterimaPada",
+          "Baris",
+          "Pembayaran"
+        ]
+      },
+      "ReturPenjualan": {
+        "type": "object",
+        "properties": {
+          "Uuid": {
+            "type": "string"
+          },
+          "Nomor": {
+            "type": "string"
+          },
+          "UuidOutlet": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "UuidPenjualan": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "TanggalBisnis": {
+            "type": "string",
+            "format": "date"
+          },
+          "Status": {
+            "type": "string"
+          },
+          "Alasan": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "MetodeRefund": {
+            "type": "string"
+          },
+          "TotalNilai": {
+            "type": "string",
+            "description": "String desimal, misal \"15000.00\""
+          },
+          "TotalPajak": {
+            "type": "string",
+            "description": "String desimal, misal \"15000.00\""
+          },
+          "TotalRefund": {
+            "type": "string",
+            "description": "String desimal, misal \"15000.00\""
+          },
+          "DiterimaPada": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "Uuid",
+          "Nomor",
+          "UuidOutlet",
+          "UuidPenjualan",
+          "TanggalBisnis",
+          "Status",
+          "Alasan",
+          "MetodeRefund",
+          "TotalNilai",
+          "TotalPajak",
+          "TotalRefund",
+          "DiterimaPada"
+        ]
+      },
+      "Pelanggan": {
+        "type": "object",
+        "properties": {
+          "Uuid": {
+            "type": "string"
+          },
+          "Nama": {
+            "type": "string"
+          },
+          "NoHp": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "Email": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "TanggalLahir": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "Tag": {
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "SetujuPemasaran": {
+            "type": "boolean"
+          },
+          "Status": {
+            "type": "string"
+          },
+          "Tier": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "DibuatPada": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "DiubahPada": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "Uuid",
+          "Nama",
+          "NoHp",
+          "Email",
+          "TanggalLahir",
+          "Tag",
+          "SetujuPemasaran",
+          "Status",
+          "Tier",
+          "DibuatPada",
+          "DiubahPada"
+        ]
+      }
+    },
+    "securitySchemes": {
+      "TokenApi": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Authorization: Bearer payou_{IdTenant}_{rahasia}. Cakupan: produk:baca, stok:baca, penjualan:baca, pelanggan:baca."
+      }
+    },
+    "parameters": {
+      "Per": {
+        "name": "per",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 200,
+          "default": 50
+        }
+      },
+      "Kursor": {
+        "name": "kursor",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "string"
+        },
+        "description": "Nilai Kursor.Berikutnya dari halaman sebelumnya."
+      }
+    },
+    "responses": {
+      "TokenTidakValid": {
+        "description": "Token tidak ada, salah, milik tenant lain, dicabut, atau kedaluwarsa (Kode TokenApiTidakValid).",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Galat"
+            }
+          }
+        }
+      },
+      "Ditolak": {
+        "description": "Paket tanpa fitur API (FiturTidakTersedia) atau token tanpa cakupan (CakupanTidakCukup).",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Galat"
+            }
+          }
+        }
+      },
+      "TerlaluBanyak": {
+        "description": "Melewati batas permintaan; ulangi setelah header Retry-After.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Galat"
+            }
+          }
+        }
+      },
+      "ParameterTidakValid": {
+        "description": "Kursor rusak (KursorTidakValid) atau rentang tanggal tidak valid (RentangTanggalTidakValid).",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Galat"
+            }
+          }
+        }
+      },
+      "TidakDitemukan": {
+        "description": "Data tidak ditemukan (TidakDitemukan).",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Galat"
+            }
+          }
+        }
+      }
+    }
+  }
+}
