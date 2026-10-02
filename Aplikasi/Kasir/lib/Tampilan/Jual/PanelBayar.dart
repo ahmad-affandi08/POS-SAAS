@@ -54,6 +54,23 @@ List<Uang> HitungPecahanCepat(Uang tagihan, {int batas = 4}) {
   return hasil.take(batas).toList();
 }
 
+/// K-14 (BR-08.2): bagi tagihan per orang (rata) atau per nominal. Rata: porsi tiap tamu = total ÷ jumlah orang
+/// dibulatkan ke bawah ke rupiah bulat, tamu terakhir membayar sisanya. Nominal: tiap tamu membayar jumlah yang
+/// diketik. Semua bagian tetap satu penjualan dengan beberapa pembayaran; bagian tunai digabung menjadi satu baris
+/// tunai (server hanya menerima satu pembayaran tunai per penjualan).
+class BagiTagihan {
+  const BagiTagihan.rata(this.jumlahOrang, this.porsi) : perNominal = false;
+  const BagiTagihan.nominal() : jumlahOrang = null, porsi = null, perNominal = true;
+
+  final int? jumlahOrang;
+  final Uang? porsi;
+  final bool perNominal;
+
+  /// Porsi rata: [total] ÷ [orang] dibulatkan ke bawah ke rupiah bulat (sisa pembulatan dibayar tamu terakhir).
+  static Uang HitungPorsi(Uang total, int orang) =>
+      Uang.Dari((total.KeDesimal() / Decimal.fromInt(orang)).floor().toString());
+}
+
 /// Panel Bayar (F-08 fase 1, Rincian F-07c): tunai (pecahan cepat & uang pas), QRIS statis (gambar + konfirmasi
 /// kasir), EDC (bank & nomor approval), transfer & e-wallet (referensi), split pembayaran (BR-08.1). Pembulatan tunai
 /// hanya untuk bagian tunai (BR-08.6). F-12: Tempo (piutang) hanya bila pelanggan dipilih; di luar limit kredit atau
@@ -90,6 +107,13 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
   bool _memuatSaldoDeposit = false;
   String? _pesanSaldoDeposit;
   String? _galat;
+
+  /// K-14: rencana bagi tagihan (null = tidak dibagi) dan tamu yang sedang membayar (mulai 1).
+  BagiTagihan? _bagi;
+  int _tamuKe = 1;
+
+  /// K-14: kembalian tunai tamu sebelumnya (bagian tunai yang uangnya lebih dari porsinya).
+  String? _infoBagi;
 
   @override
   void initState() {
@@ -151,12 +175,36 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
 
   Uang _AmbilDibayar() => _entri.fold(Uang.Nol(), (t, p) => t.Tambah(p.jumlah));
 
+  /// K-14: tamu terakhir pada bagi rata (atau tidak sedang membagi rata) membayar seluruh sisa.
+  bool get _tamuTerakhir => _bagi?.jumlahOrang == null || _tamuKe >= _bagi!.jumlahOrang!;
+
+  /// K-14: tagihan tamu saat ini = porsi rata (paling banyak [sisa]) atau seluruh [sisa].
+  Uang _AmbilTagihanTamu(Uang sisa) {
+    final porsi = _bagi?.porsi;
+    if (porsi == null || _tamuTerakhir || porsi.Bandingkan(sisa) >= 0) {
+      return sisa;
+    }
+    return porsi;
+  }
+
+  /// K-14: bagian tunai digabung menjadi satu baris tunai.
+  static List<PembayaranMasukan> _GabungTunai(List<PembayaranMasukan> pembayaran) {
+    final tunai = pembayaran.where((p) => p.CekTunai()).toList();
+    if (tunai.length < 2) {
+      return pembayaran;
+    }
+    final total = tunai.fold(Uang.Nol(), (t, p) => t.Tambah(p.jumlah));
+    return [...pembayaran.where((p) => !p.CekTunai()), PembayaranMasukan(metode: tunai.first.metode, jumlah: total)];
+  }
+
   /// Sisa tagihan bila sisa dibayar dengan [metode] (tunai memakai pembulatan tunai).
   Uang _HitungSisa(KonteksPenjualan k, BarisMetodePembayaran? metode) {
     final layanan = ref.read(penyediaLayananPenjualan);
     final keranjang = ref.read(penyediaKeranjangEfektif);
     if (metode?.Jenis == JenisMetodeBayar.tunai) {
-      return layanan.HitungTagihanTunai(keranjang, k, _entri);
+      // K-14: bagian tunai tamu sebelumnya sudah mengurangi tagihan tunai.
+      final tunaiSebelum = _entri.where((p) => p.CekTunai()).fold(Uang.Nol(), (t, p) => t.Tambah(p.jumlah));
+      return layanan.HitungTagihanTunai(keranjang, k, _entri).Kurangi(tunaiSebelum);
     }
     final hasil = layanan.Hitung(
       keranjang,
@@ -175,9 +223,13 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
       _referensi.clear();
       _bank.clear();
       final sisa = _HitungSisa(k, metode);
-      _nominal.text = metode.Jenis == JenisMetodeBayar.tunai || sisa.Bandingkan(Uang.Nol()) <= 0
+      final porsiRata = _bagi?.porsi != null && !_tamuTerakhir;
+      _nominal.text =
+          (metode.Jenis == JenisMetodeBayar.tunai && !porsiRata) ||
+              _bagi?.perNominal == true ||
+              sisa.Bandingkan(Uang.Nol()) <= 0
           ? ''
-          : sisa.KeDesimal().ceil().toString();
+          : _AmbilTagihanTamu(sisa).KeDesimal().ceil().toString();
     });
     if (metode.Jenis == JenisMetodeBayar.deposit) {
       unawaited(_MuatSaldoDeposit(k));
@@ -274,11 +326,39 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
       await _BayarQrisDinamis(k, metode, nominal, sisa);
       return;
     }
+    // K-14 bagi rata: tamu (bukan terakhir) membayar porsinya; uang tunai lebih → kembalian tamu itu.
+    if (_bagi?.porsi != null && !_tamuTerakhir) {
+      final porsi = _AmbilTagihanTamu(sisa);
+      if (nominal.Bandingkan(porsi) < 0) {
+        setState(() => _galat = 'Porsi tamu $_tamuKe ${porsi.FormatRupiah()}. Isi paling sedikit sebesar porsinya.');
+        return;
+      }
+      if (metode.Jenis != JenisMetodeBayar.tunai && nominal.Bandingkan(porsi) > 0) {
+        setState(() => _galat = 'Pembayaran ${metode.Nama} tamu $_tamuKe harus ${porsi.FormatRupiah()}.');
+        return;
+      }
+      final kembalian = nominal.Kurangi(porsi);
+      setState(() {
+        _entri.add(PembayaranMasukan(metode: metode, jumlah: porsi, referensi: _SusunReferensi(metode)));
+        _infoBagi = kembalian.BernilaiNol()
+            ? 'Tamu $_tamuKe lunas (${metode.Nama}).'
+            : 'Tamu $_tamuKe lunas. Kembalian ${kembalian.FormatRupiah()}.';
+        _tamuKe++;
+        _metode = null;
+        _nominal.clear();
+        _galat = null;
+      });
+      return;
+    }
     final entri = PembayaranMasukan(metode: metode, jumlah: nominal, referensi: _SusunReferensi(metode));
     if (nominal.Bandingkan(sisa) < 0) {
       // Split (BR-08.1): simpan bagian ini, lanjutkan dengan metode lain.
       setState(() {
         _entri.add(entri);
+        if (_bagi != null) {
+          _infoBagi = 'Tamu $_tamuKe membayar ${nominal.FormatRupiah()} (${metode.Nama}).';
+          _tamuKe++;
+        }
         _metode = null;
         _nominal.clear();
         _galat = null;
@@ -344,6 +424,25 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
     return true;
   }
 
+  /// K-14: pilih cara bagi tagihan (rata per orang atau per nominal).
+  Future<void> _MulaiBagi(Uang total) async {
+    final hasil = await showDialog<BagiTagihan>(
+      context: context,
+      builder: (_) => DialogBagiTagihan(total: total),
+    );
+    if (hasil == null || !mounted) {
+      return;
+    }
+    setState(() {
+      _bagi = hasil;
+      _tamuKe = 1;
+      _infoBagi = null;
+      _metode = null;
+      _nominal.clear();
+      _galat = null;
+    });
+  }
+
   /// F9: bayar sisa tagihan dengan tunai uang pas (pembulatan tunai BR-08.6 ikut dihitung) lalu simpan.
   Future<void> BayarUangPas() async {
     if (_sibuk) {
@@ -377,7 +476,7 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
           .read(penyediaLayananPenjualan)
           .Bayar(
             keranjang: ref.read(penyediaKeranjangEfektif),
-            pembayaran: pembayaran,
+            pembayaran: _GabungTunai(pembayaran),
             kasir: widget.kasir,
             k: k,
             uuidPenyetujuTempo: pembayaran.any((p) => p.metode.Jenis == JenisMetodeBayar.tempo)
@@ -402,7 +501,7 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
   }
 
   Widget _BangunTunai(BuildContext context, KonteksPenjualan k) {
-    final tagihan = _HitungSisa(k, _metode);
+    final tagihan = _AmbilTagihanTamu(_HitungSisa(k, _metode));
     final nominal = _AmbilNominal();
     final kembalian = nominal?.Kurangi(tagihan);
     final teks = Theme.of(context).textTheme;
@@ -421,7 +520,12 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
       children: [
         Row(
           children: [
-            Expanded(child: Text('Tagihan tunai', style: teks.bodyMedium)),
+            Expanded(
+              child: Text(
+                _bagi?.porsi != null && !_tamuTerakhir ? 'Porsi tamu $_tamuKe' : 'Tagihan tunai',
+                style: teks.bodyMedium,
+              ),
+            ),
             TeksUang(tagihan, gaya: teks.titleMedium),
           ],
         ),
@@ -689,6 +793,49 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
               ),
             ),
           ...RingkasanTotal.BangunBaris(context, hitungan, keranjang, tampilPembulatan: true),
+          if (_bagi case final bagi?) ...[
+            const SizedBox(height: TokenJarak.jarak8),
+            Container(
+              key: const ValueKey('InfoBagiTagihan'),
+              padding: const EdgeInsets.all(TokenJarak.jarak12),
+              decoration: BoxDecoration(
+                border: Border.all(color: warna.garis, width: TokenJarak.tebalGaris),
+                borderRadius: BorderRadius.circular(TokenJarak.radiusPanel),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.call_split, size: TokenJarak.ikonKecil),
+                      const SizedBox(width: TokenJarak.jarak8),
+                      Expanded(
+                        child: Text(
+                          bagi.perNominal
+                              ? 'Bagi per nominal · tamu $_tamuKe'
+                              : 'Bagi rata ${bagi.jumlahOrang} orang · tamu $_tamuKe dari ${bagi.jumlahOrang}',
+                          style: teks.titleSmall,
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (!bagi.perNominal) ...[
+                    const SizedBox(height: TokenJarak.jarak4),
+                    Text(
+                      _tamuTerakhir
+                          ? 'Tamu terakhir membayar sisa ${sisa.FormatRupiah()}'
+                          : 'Porsi per orang ${bagi.porsi!.FormatRupiah()}',
+                      style: teks.bodyMedium,
+                    ),
+                  ],
+                  if (_infoBagi != null) ...[
+                    const SizedBox(height: TokenJarak.jarak4),
+                    Semantics(liveRegion: true, child: Text(_infoBagi!, style: teks.bodyMedium)),
+                  ],
+                ],
+              ),
+            ),
+          ],
           for (final p in _entri)
             Row(
               children: [
@@ -733,7 +880,7 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
                   k.metodePembayaran,
                   LayananPenjualan.AmbilKanal(keranjang),
                 ))
-                  if (!(tunaiDipakai && m.Jenis == JenisMetodeBayar.tunai) &&
+                  if (!(tunaiDipakai && _bagi == null && m.Jenis == JenisMetodeBayar.tunai) &&
                       !(m.Jenis == JenisMetodeBayar.tempo && (keranjang.pelanggan == null || tempoDipakai)) &&
                       !(m.Jenis == JenisMetodeBayar.deposit &&
                           (keranjang.pelanggan == null || depositDipakai || !k.deposit.berlaku)))
@@ -771,12 +918,39 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
               child: Text(
                 _sibuk
                     ? 'Menyimpan…'
+                    : _bagi?.porsi != null && !_tamuTerakhir && metode != null
+                    ? 'Bayar porsi tamu $_tamuKe'
                     : melunasi || metode == null
                     ? 'Selesaikan pembayaran'
                     : 'Tambah pembayaran ${metode.Nama}',
               ),
             ),
           ),
+          if (_bagi == null &&
+              _entri.isEmpty &&
+              keranjang.tukar == null &&
+              keranjang.praPesan == null &&
+              hitungan.hasil.totalAkhir.Bandingkan(Uang.DariBulat(1)) > 0) ...[
+            const SizedBox(height: TokenJarak.jarak8),
+            SizedBox(
+              height: TokenJarak.targetSentuh,
+              child: OutlinedButton.icon(
+                onPressed: _sibuk ? null : () => unawaited(_MulaiBagi(hitungan.hasil.totalAkhir)),
+                icon: const Icon(Icons.call_split),
+                label: const Text('Bagi tagihan'),
+              ),
+            ),
+          ],
+          if (_bagi != null && _entri.isEmpty) ...[
+            const SizedBox(height: TokenJarak.jarak8),
+            SizedBox(
+              height: TokenJarak.targetSentuh,
+              child: TextButton(
+                onPressed: _sibuk ? null : () => setState(() => _bagi = null),
+                child: const Text('Batal bagi tagihan'),
+              ),
+            ),
+          ],
           if (widget.saatPreOrder != null &&
               keranjang.pelanggan != null &&
               keranjang.praPesan == null &&
@@ -896,5 +1070,87 @@ abstract final class PelangganTerpilihKredit {
     final limit = p.limitKredit == null ? 'tanpa limit kredit' : 'limit ${Uang.Dari(p.limitKredit!).FormatRupiah()}';
     final lewat = (p.hariLewatJatuhTempo ?? 0) > 0 ? ', lewat jatuh tempo ${p.hariLewatJatuhTempo} hari' : '';
     return '${p.nama}: $limit, piutang ${Uang.Dari(p.sisaPiutang!).FormatRupiah()}$lewat.';
+  }
+}
+
+/// K-14: pilih bagi rata (jumlah orang 2–20, pratinjau porsi) atau per nominal.
+class DialogBagiTagihan extends StatefulWidget {
+  const DialogBagiTagihan({super.key, required this.total});
+
+  static const int orangMinimal = 2;
+  static const int orangMaksimal = 20;
+
+  final Uang total;
+
+  @override
+  State<DialogBagiTagihan> createState() => _DialogBagiTagihanState();
+}
+
+class _DialogBagiTagihanState extends State<DialogBagiTagihan> {
+  bool _rata = true;
+  int _orang = DialogBagiTagihan.orangMinimal;
+
+  @override
+  Widget build(BuildContext context) {
+    final teks = Theme.of(context).textTheme;
+    final porsi = BagiTagihan.HitungPorsi(widget.total, _orang);
+    final terakhir = widget.total.Kurangi(porsi.Kali(Decimal.fromInt(_orang - 1)));
+    return AlertDialog(
+      title: const Text('Bagi tagihan'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text('Total ${widget.total.FormatRupiah()}', style: teks.titleMedium),
+          const SizedBox(height: TokenJarak.jarak12),
+          SegmentedButton<bool>(
+            showSelectedIcon: false,
+            segments: const [
+              ButtonSegment(value: true, label: Text('Rata per orang')),
+              ButtonSegment(value: false, label: Text('Per nominal')),
+            ],
+            selected: {_rata},
+            onSelectionChanged: (pilih) => setState(() => _rata = pilih.first),
+          ),
+          const SizedBox(height: TokenJarak.jarak12),
+          if (_rata) ...[
+            Row(
+              children: [
+                Expanded(child: Text('Jumlah orang', style: teks.bodyMedium)),
+                IconButton(
+                  tooltip: 'Kurangi orang',
+                  onPressed: _orang > DialogBagiTagihan.orangMinimal ? () => setState(() => _orang--) : null,
+                  icon: const Icon(Icons.remove),
+                ),
+                SizedBox(
+                  width: 40,
+                  child: Text('$_orang', textAlign: TextAlign.center, style: teks.titleMedium),
+                ),
+                IconButton(
+                  tooltip: 'Tambah orang',
+                  onPressed: _orang < DialogBagiTagihan.orangMaksimal ? () => setState(() => _orang++) : null,
+                  icon: const Icon(Icons.add),
+                ),
+              ],
+            ),
+            Text(
+              porsi.SamaDengan(terakhir)
+                  ? '$_orang × ${porsi.FormatRupiah()}'
+                  : '${_orang - 1} × ${porsi.FormatRupiah()} + tamu terakhir ${terakhir.FormatRupiah()}',
+              style: teks.bodyMedium,
+            ),
+          ] else
+            Text('Tiap tamu membayar jumlah yang diketik, sampai tagihan lunas.', style: teks.bodyMedium),
+        ],
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Batal')),
+        FilledButton(
+          onPressed: () =>
+              Navigator.of(context).pop(_rata ? BagiTagihan.rata(_orang, porsi) : const BagiTagihan.nominal()),
+          child: const Text('Mulai bagi'),
+        ),
+      ],
+    );
   }
 }
