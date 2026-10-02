@@ -37,6 +37,7 @@ class PanelKeranjang extends StatelessWidget {
     this.saatKursus,
     this.kursusDitahan = const [],
     this.saatKirimKursus,
+    this.uuidSorot,
   });
 
   final Keranjang keranjang;
@@ -92,6 +93,9 @@ class PanelKeranjang extends StatelessWidget {
   /// K-13: kursus yang ditahan di pesanan (urut saji) → tombol "Kirim Utama · 2 item".
   final List<({String kursus, int jumlah})> kursusDitahan;
   final ValueChanged<String>? saatKirimKursus;
+
+  /// K-15: Uuid baris yang baru bertambah lewat pindaian (disorot sebentar).
+  final String? uuidSorot;
 
   /// v3.29: isi ongkir penjualan kanal Antar. Null = tidak ditampilkan (kanal lain, pesanan online, mode Pelayan).
   final VoidCallback? saatOngkir;
@@ -448,6 +452,7 @@ class PanelKeranjang extends StatelessWidget {
                       for (var i = 0; i < keranjang.baris.length; i++)
                         BarisKeranjang(
                           key: ValueKey(keranjang.baris[i].uuid),
+                          disorot: keranjang.baris[i].uuid == uuidSorot,
                           nama: keranjang.baris[i].nama,
                           jumlah: FormatAngka.FormatJumlah(keranjang.baris[i].jumlah),
                           total: hasil == null

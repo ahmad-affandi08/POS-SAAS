@@ -33,6 +33,7 @@ import 'Jual/PanelPreOrder.dart';
 import 'Jual/PanelTertahan.dart';
 import 'Jual/PanelVarian.dart';
 import 'Jual/PengenalPemindai.dart';
+import 'Jual/UmpanBalikPindai.dart';
 import 'Meja/DialogPesananMeja.dart';
 
 enum _JenisPanel {
@@ -94,6 +95,9 @@ class LayarJual extends ConsumerStatefulWidget {
   /// Selang perpanjangan kunci bayar pesanan meja selama panel Bayar terbuka (kunci server berlaku 2 menit).
   static const Duration selangKunciBayar = Duration(seconds: 60);
 
+  /// K-15: lama baris keranjang disorot setelah pindaian (transisinya 150 ms, §17.2.7 prinsip 4).
+  static const Duration lamaSorot = Duration(milliseconds: 900);
+
   /// Lebar maksimum isi halaman penuh (langkah bayar); di layar lebar isinya tetap terbaca, tidak melebar
   /// sampai ujung. Dinamai tanpa kata uang supaya tidak tertangkap penjaga "double untuk uang".
   static const double lebarIsiHalaman = 720;
@@ -115,6 +119,10 @@ class _LayarJualState extends ConsumerState<LayarJual> {
 
   /// Pesanan meja yang kunci bayarnya sedang dipegang perangkat ini.
   String? _uuidKunciBayar;
+
+  /// K-15: baris keranjang yang baru bertambah lewat pindaian (disorot sebentar).
+  String? _uuidSorot;
+  Timer? _pewaktuSorot;
 
   /// K-13: kursus item baru pesanan meja (null = tanpa kursus). Utama/Penutup disimpan & ditahan, bukan dikirim.
   String? _kursusBaru;
@@ -188,6 +196,7 @@ class _LayarJualState extends ConsumerState<LayarJual> {
     _pewaktuKatalog?.cancel();
     _pewaktuProdukHabis?.cancel();
     _pewaktuKunciBayar?.cancel();
+    _pewaktuSorot?.cancel();
     final kunci = _uuidKunciBayar;
     if (kunci != null) {
       unawaited(ref.read(penyediaLayananPesananMeja).LepasKunciBayar(kunci));
@@ -316,12 +325,44 @@ class _LayarJualState extends ConsumerState<LayarJual> {
 
   // Aksi keranjang -----------------------------------------------------------------------------------------------------
 
+  /// K-15 (§17.2.7 prinsip 4): pindaian berhasil = bunyi klik + getar ringan + sorot baris keranjang yang bertambah;
+  /// gagal (kode tidak dikenal, produk tidak bisa dijual) = bunyi peringatan + getar kuat. Bisa dimatikan di Pengaturan.
   void _TanganiKode(String kode) {
     // K-10: pindaian saat panel Cek harga terbuka hanya menampilkan harga, tidak menambah ke keranjang.
     if (_panel == _JenisPanel.CekHarga) {
       _kunciCekHarga.currentState?.Tampilkan(kode);
       return;
     }
+    _JalankanPindai(() => _ProsesKode(kode));
+  }
+
+  /// K-15: jalankan [proses] pindaian lalu beri umpan balik dari perubahan keranjang/panel.
+  void _JalankanPindai(VoidCallback proses) {
+    final sebelum = ref.read(penyediaKeranjang).baris;
+    final panelSebelum = _panel;
+    proses();
+    final sesudah = ref.read(penyediaKeranjang).baris;
+    final berubah = sesudah
+        .where((b) => !sebelum.any((s) => s.uuid == b.uuid && s.jumlah.SamaDengan(b.jumlah)))
+        .map((b) => b.uuid)
+        .firstOrNull;
+    final berhasil = berubah != null || (_panel != panelSebelum && _panel != null);
+    if (ref.read(penyediaPengaturanPerangkat).umpanBalikPindai) {
+      final umpanBalik = ref.read(penyediaUmpanBalikPindai);
+      unawaited(berhasil ? umpanBalik.Berhasil() : umpanBalik.Gagal());
+    }
+    if (berubah != null) {
+      _pewaktuSorot?.cancel();
+      setState(() => _uuidSorot = berubah);
+      _pewaktuSorot = Timer(LayarJual.lamaSorot, () {
+        if (mounted) {
+          setState(() => _uuidSorot = null);
+        }
+      });
+    }
+  }
+
+  void _ProsesKode(String kode) {
     final katalog = ref.read(penyediaKatalog).value;
     final hasil = katalog?.CariKode(kode);
     if (hasil == null && _CobaBarcodeTimbangan(kode)) {
@@ -392,7 +433,7 @@ class _LayarJualState extends ConsumerState<LayarJual> {
 
   /// v3.55 (§9.3): barcode timbangan `AA PPPPP NNNNN C`. Produk dicari dari 7 digit pertama; jumlah = berat (kg) atau
   /// harga label ÷ harga satuan (3 desimal). True = kode ini barcode timbangan (sudah ditangani, termasuk pesan galat).
-  bool _CobaBarcodeTimbangan(String kode) {
+  bool _CobaBarcodeTimbangan(String kode, {bool umpanBalik = false}) {
     final katalog = ref.read(penyediaKatalog).value;
     final k = ref.read(penyediaKonteksPenjualan).value;
     if (katalog == null || k == null) {
@@ -401,6 +442,10 @@ class _LayarJualState extends ConsumerState<LayarJual> {
     final urai = PenguraiBarcodeTimbangan.Urai(kode, k.barcodeTimbangan);
     if (urai == null) {
       return false;
+    }
+    if (umpanBalik) {
+      _JalankanPindai(() => _CobaBarcodeTimbangan(kode));
+      return true;
     }
     final cocok = katalog.CariKode(urai.kodeProduk);
     if (cocok == null) {
@@ -1076,10 +1121,13 @@ class _LayarJualState extends ConsumerState<LayarJual> {
                         }
                         final kata = pengali.sisa;
                         final hasil = katalog?.CariKode(kata);
-                        if (hasil == null && pengali.jumlah == null && _CobaBarcodeTimbangan(kata)) {
+                        // K-15: pemindai yang mengetik ke kolom cari (HP/tablet) juga mendapat umpan balik pindai.
+                        if (hasil == null && pengali.jumlah == null && _CobaBarcodeTimbangan(kata, umpanBalik: true)) {
                           setState(_cari.clear);
                         } else if (hasil != null) {
-                          _TambahProduk(hasil.produk, satuan: hasil.satuan, jumlah: pengali.jumlah);
+                          _JalankanPindai(
+                            () => _TambahProduk(hasil.produk, satuan: hasil.satuan, jumlah: pengali.jumlah),
+                          );
                           setState(_cari.clear);
                         } else if (daftar.length == 1) {
                           _TambahProduk(daftar.single, jumlah: pengali.jumlah);
@@ -1314,6 +1362,7 @@ class _LayarJualState extends ConsumerState<LayarJual> {
       saatKosongkan: () => unawaited(pesanan == null ? _KonfirmasiBatal() : _TutupPesanan()),
       saatBayar: widget.modePelayan ? null : _BukaBayar,
       saatPelanggan: widget.modePelayan ? null : _BukaPelanggan,
+      uuidSorot: _uuidSorot,
       // K-13: kursus item baru & kursus yang ditahan (hanya pesanan meja).
       kursus: pesanan == null ? const [] : KursusPesanan.semua,
       kursusDipilih: _kursusBaru,

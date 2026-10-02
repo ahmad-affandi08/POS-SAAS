@@ -47,6 +47,7 @@ class PengaturanPerangkat {
     this.posisiKeranjang = PosisiKeranjang.Kanan,
     this.menitKunciOtomatis = menitKunciBawaan,
     this.tampilanKatalog = TampilanKatalog.Otomatis,
+    this.umpanBalikPindai = true,
   });
 
   static const int menitKunciBawaan = 5;
@@ -59,6 +60,9 @@ class PengaturanPerangkat {
   final int menitKunciOtomatis;
   final TampilanKatalog tampilanKatalog;
 
+  /// K-15 (§17.2.7 prinsip 4): bunyi pendek + getar saat pindai berhasil/gagal; bisa dimatikan.
+  final bool umpanBalikPindai;
+
   Duration AmbilBatasDiam() => Duration(minutes: menitKunciOtomatis);
 
   PengaturanPerangkat copyWith({
@@ -66,11 +70,13 @@ class PengaturanPerangkat {
     PosisiKeranjang? posisiKeranjang,
     int? menitKunciOtomatis,
     TampilanKatalog? tampilanKatalog,
+    bool? umpanBalikPindai,
   }) => PengaturanPerangkat(
     ukuran: ukuran ?? this.ukuran,
     posisiKeranjang: posisiKeranjang ?? this.posisiKeranjang,
     menitKunciOtomatis: menitKunciOtomatis ?? this.menitKunciOtomatis,
     tampilanKatalog: tampilanKatalog ?? this.tampilanKatalog,
+    umpanBalikPindai: umpanBalikPindai ?? this.umpanBalikPindai,
   );
 
   /// Baca dari tabel `Pengaturan`; nilai kosong/tidak dikenal kembali ke bawaan.
@@ -79,11 +85,13 @@ class PengaturanPerangkat {
     final posisi = await repositori.AmbilPengaturan(KunciPengaturan.posisiKeranjang);
     final menit = int.tryParse(await repositori.AmbilPengaturan(KunciPengaturan.menitKunciOtomatis) ?? '');
     final tampilan = await repositori.AmbilPengaturan(KunciPengaturan.tampilanKatalog);
+    final umpanBalik = await repositori.AmbilPengaturan(KunciPengaturan.umpanBalikPindai);
     return PengaturanPerangkat(
       ukuran: UkuranTampilan.values.where((u) => u.name == ukuran).firstOrNull ?? UkuranTampilan.Normal,
       posisiKeranjang: PosisiKeranjang.values.where((p) => p.name == posisi).firstOrNull ?? PosisiKeranjang.Kanan,
       menitKunciOtomatis: menit != null && menit > 0 ? menit : menitKunciBawaan,
       tampilanKatalog: TampilanKatalog.values.where((t) => t.name == tampilan).firstOrNull ?? TampilanKatalog.Otomatis,
+      umpanBalikPindai: umpanBalik != '0',
     );
   }
 
@@ -92,5 +100,6 @@ class PengaturanPerangkat {
     await repositori.SimpanPengaturan(KunciPengaturan.posisiKeranjang, posisiKeranjang.name);
     await repositori.SimpanPengaturan(KunciPengaturan.menitKunciOtomatis, '$menitKunciOtomatis');
     await repositori.SimpanPengaturan(KunciPengaturan.tampilanKatalog, tampilanKatalog.name);
+    await repositori.SimpanPengaturan(KunciPengaturan.umpanBalikPindai, umpanBalikPindai ? '1' : '0');
   }
 }

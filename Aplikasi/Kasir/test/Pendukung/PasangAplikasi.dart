@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:adaptor_perangkat/AdaptorPerangkat.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:kasir/Tampilan/Jual/UmpanBalikPindai.dart';
 import 'package:kasir/Aplikasi/AplikasiKasir.dart';
 import 'package:kasir/Aplikasi/Lingkungan.dart';
 import 'package:kasir/Aplikasi/Penyedia.dart';
@@ -27,6 +28,7 @@ Future<void> PasangAplikasi(
   PenjagaLayarTiruan? penjagaLayar,
   KameraSwafoto? kamera,
   PemindaiQr? pemindaiQr,
+  UmpanBalikPindai? umpanBalikPindai,
 }) async {
   // Ukuran logis juga untuk MediaQuery (tata letak ruang kerja memakai lebar layar), bukan hanya permukaan render.
   tester.view.devicePixelRatio = 1;
@@ -47,6 +49,7 @@ Future<void> PasangAplikasi(
         penyediaKameraSwafoto.overrideWithValue(kamera ?? KameraSwafotoTiruan(tersedia: false)),
         penyediaPemindaiQr.overrideWithValue(pemindaiQr ?? PemindaiQrTiruan(tersedia: false)),
         penyediaPemindaiPrinter.overrideWithValue(u.pemindai),
+        penyediaUmpanBalikPindai.overrideWithValue(umpanBalikPindai ?? const UmpanBalikPindai()),
         penyediaPembuatLayarPelanggan.overrideWithValue(
           (p) => p.aktif ? u.layarPelanggan : const LayarPelangganTidakAda(),
         ),

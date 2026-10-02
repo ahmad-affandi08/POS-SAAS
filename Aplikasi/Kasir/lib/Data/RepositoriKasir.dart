@@ -98,6 +98,9 @@ abstract final class KunciPengaturan {
   static const String menitKunciOtomatis = 'MenitKunciOtomatis';
   static const String tampilanKatalog = 'TampilanKatalog';
 
+  /// K-15: bunyi & getar saat memindai ('0' = mati; bawaan hidup).
+  static const String umpanBalikPindai = 'UmpanBalikPindai';
+
   // Cetak struk (PRD v1.79): pengaturan & identitas struk dari data awal (JSON `StrukPos`), alamat & telepon outlet,
   // logo 1 bit (JSON `GambarMonokrom`), dan profil printer perangkat ini (JSON `ProfilPrinter`, lokal saja).
   static const String struk = 'Struk';

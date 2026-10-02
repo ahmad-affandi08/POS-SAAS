@@ -112,6 +112,21 @@ class _LayarPengaturanState extends ConsumerState<LayarPengaturan> {
           ),
         ),
         Bagian(
+          'Bunyi & getar saat memindai',
+          'Bunyi pendek dan getar menandai pindaian berhasil atau gagal. Matikan bila mengganggu.',
+          Row(
+            children: [
+              Switch(
+                key: const ValueKey('UmpanBalikPindai'),
+                value: pengaturan.umpanBalikPindai,
+                onChanged: (nilai) => _Simpan(pengaturan.copyWith(umpanBalikPindai: nilai)),
+              ),
+              const SizedBox(width: TokenJarak.jarak8),
+              Text(pengaturan.umpanBalikPindai ? 'Hidup' : 'Mati'),
+            ],
+          ),
+        ),
+        Bagian(
           'Kunci otomatis',
           'Layar terkunci bila perangkat tidak disentuh selama waktu ini. Shift tetap terbuka.',
           SizedBox(
