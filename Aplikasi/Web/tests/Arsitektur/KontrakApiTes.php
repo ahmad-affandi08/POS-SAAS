@@ -6,8 +6,9 @@ use Illuminate\Routing\Route as RuteLaravel;
 use Illuminate\Support\Facades\Route;
 
 /*
- * Audit F-13 (aturan emas #16, §16): gerbang kompatibilitas kontrak API POS & Pemilik. Baseline
- * `Spesifikasi/KontrakApi/RuteApi.json` berisi setiap rute `/api/pos/v1/*` & `/api/pemilik/v1/*` (metode, jalur, nama).
+ * Audit F-13 (aturan emas #16, §16): gerbang kompatibilitas kontrak API POS, Pemilik, dan (sejak v3.82) Open API v1
+ * publik. Baseline `Spesifikasi/KontrakApi/RuteApi.json` berisi setiap rute `/api/pos/v1/*`, `/api/pemilik/v1/*`, dan
+ * `/api/v1/*` (metode, jalur, nama).
  * Menghapus, mengganti jalur/metode, atau mengganti nama rute yang sudah ada = merusak aplikasi lama → test gagal
  * (perubahan kontrak = versi API baru, misal `/v2`). Rute baru boleh; tambahkan ke baseline dengan menjalankan test ini
  * sekali dengan PERBARUI_KONTRAK_API=1 lalu commit berkasnya.
@@ -21,7 +22,7 @@ function AmbilKontrakRuteApi(): array
         /** @var RuteLaravel $rute */
         $jalur = $rute->uri();
 
-        if (! str_starts_with($jalur, 'api/pos/v1/') && ! str_starts_with($jalur, 'api/pemilik/v1/')) {
+        if (! str_starts_with($jalur, 'api/pos/v1/') && ! str_starts_with($jalur, 'api/pemilik/v1/') && ! str_starts_with($jalur, 'api/v1/')) {
             continue;
         }
 

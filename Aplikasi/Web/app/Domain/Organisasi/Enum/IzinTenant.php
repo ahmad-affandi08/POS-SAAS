@@ -31,6 +31,9 @@ enum IzinTenant: string
     // F-08 v2.06: gerbang pembayaran QRIS dinamis milik tenant (akun merchant & kredensial; dana ke rekening tenant).
     case PembayaranGerbangAtur = 'pembayaran.gerbang.atur';
 
+    // X7 Open API v1: membuat & mencabut token API publik (khusus Owner).
+    case IntegrasiApiKelola = 'integrasi.api.kelola';
+
     // Flow berikutnya (§19.1 & §19.2); penegakan dibangun bersama flow-nya.
     case ProdukLihat = 'produk.lihat';
     case ProdukKelola = 'produk.kelola';
@@ -109,6 +112,7 @@ enum IzinTenant: string
             self::PenggunaPinAtur => 'Mengatur ulang PIN kasir anggota',
             self::PanduanAwalKelola => 'Menjalankan panduan awal (profil usaha, template sektor, pajak, produk awal, metode pembayaran)',
             self::PembayaranGerbangAtur => 'Mengatur gerbang pembayaran QRIS dinamis (akun merchant & kredensial)',
+            self::IntegrasiApiKelola => 'Membuat & mencabut token API publik untuk integrasi pihak ketiga',
             self::ProdukLihat => 'Melihat produk',
             self::ProdukKelola => 'Mengelola produk',
             self::ProdukHargaUbah => 'Mengubah harga jual',
@@ -155,7 +159,7 @@ enum IzinTenant: string
     {
         return match ($this) {
             self::OutletLihat, self::OutletKelola, self::PerangkatLihat, self::PerangkatKelola, self::PanduanAwalKelola,
-            self::PembayaranGerbangAtur => 'Organisasi',
+            self::PembayaranGerbangAtur, self::IntegrasiApiKelola => 'Organisasi',
             self::PenggunaLihat, self::PenggunaUndang, self::PenggunaUbah, self::PenggunaNonaktifkan,
             self::PeranKelola, self::AuditLihat, self::PenggunaPinAtur => 'Pengguna & keamanan',
             self::ProdukLihat, self::ProdukKelola, self::ProdukHargaUbah => 'Produk',
@@ -179,7 +183,7 @@ enum IzinTenant: string
      */
     public function CekKhususPemilik(): bool
     {
-        return $this === self::LanggananKelola;
+        return $this === self::LanggananKelola || $this === self::IntegrasiApiKelola;
     }
 
     /**

@@ -32,14 +32,16 @@ describe('Peran bawaan tenant (§19.1)', function (): void {
             ->and($anggota->IdPeran)->toBe(BantuanOrganisasi::Peran($tenant->Id, PeranTenantBawaan::Pemilik)->Id);
     });
 
-    it('Admin memegang semua izin kecuali langganan; Kasir hanya berjualan', function (): void {
+    // v3.82: izin khusus Owner bertambah `integrasi.api.kelola` (token API publik), jadi Admin = semua − 2 izin.
+    it('Admin memegang semua izin kecuali langganan & token API (khusus Owner); Kasir hanya berjualan', function (): void {
         $tenant = BantuanOrganisasi::BuatTenant()['Tenant'];
 
         $izinAdmin = BantuanOrganisasi::Peran($tenant->Id, PeranTenantBawaan::Admin)->AmbilKunciIzin();
         $izinKasir = BantuanOrganisasi::Peran($tenant->Id, PeranTenantBawaan::Kasir)->AmbilKunciIzin();
 
         expect($izinAdmin)->not->toContain(IzinTenant::LanggananKelola->value)
-            ->and(count($izinAdmin))->toBe(count(IzinTenant::cases()) - 1)
+            ->and($izinAdmin)->not->toContain(IzinTenant::IntegrasiApiKelola->value)
+            ->and(count($izinAdmin))->toBe(count(IzinTenant::cases()) - 2)
             ->and($izinKasir)->toBe([IzinTenant::PenjualanBuat->value, IzinTenant::ProdukLihat->value]);
     });
 

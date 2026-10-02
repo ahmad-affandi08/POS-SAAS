@@ -51,6 +51,8 @@ export const IzinTenant = {
     KaryawanKelola: 'karyawan.kelola',
     // F-08 v2.06: gerbang pembayaran QRIS dinamis milik tenant (akun merchant sendiri).
     PembayaranGerbangAtur: 'pembayaran.gerbang.atur',
+    // X7 Open API v1: token API publik (khusus Owner).
+    IntegrasiApiKelola: 'integrasi.api.kelola',
     // Grosir (F-12, §9.7, D-32): kelola pesanan/surat jalan/faktur, dan menembus limit kredit saat konfirmasi SO.
     GrosirKelola: 'grosir.kelola',
     GrosirSetujuiKredit: 'grosir.setujui-kredit',

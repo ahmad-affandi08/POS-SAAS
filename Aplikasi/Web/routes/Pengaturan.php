@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Domain\Organisasi\Enum\IzinTenant;
 use App\Http\Kontroler\Kelola\PengaturanKontroler;
+use App\Http\Kontroler\Kelola\TokenApiKontroler;
 use App\Http\Perantara\SiapkanAuditTenant;
 use App\Http\Perantara\WajibIzinTenant;
 use Illuminate\Support\Facades\Route;
@@ -25,5 +26,12 @@ Route::prefix('pengaturan')->group(function () use ($izin): void {
         Route::get('/profil-usaha', [PengaturanKontroler::class, 'TampilkanProfilUsaha'])->name('kelola.pengaturan.profil-usaha');
         Route::post('/profil-usaha', [PengaturanKontroler::class, 'SimpanProfilUsaha'])->name('kelola.pengaturan.profil-usaha.simpan');
         Route::get('/profil-usaha/logo', [PengaturanKontroler::class, 'UnduhLogo'])->name('kelola.pengaturan.profil-usaha.logo');
+    });
+
+    // X7 Open API v1: token API publik (khusus Owner, paket ber-fitur `api.publik` dicek di Aksi).
+    Route::middleware([SiapkanAuditTenant::class, $izin(IzinTenant::IntegrasiApiKelola)])->group(function (): void {
+        Route::get('/api', [TokenApiKontroler::class, 'Daftar'])->name('kelola.pengaturan.api');
+        Route::post('/api', [TokenApiKontroler::class, 'Buat'])->name('kelola.pengaturan.api.buat');
+        Route::delete('/api/{uuidToken}', [TokenApiKontroler::class, 'Cabut'])->where('uuidToken', '[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}')->name('kelola.pengaturan.api.cabut');
     });
 });

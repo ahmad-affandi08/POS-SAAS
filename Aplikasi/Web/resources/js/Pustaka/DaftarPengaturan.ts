@@ -222,6 +222,13 @@ export const daftarPengaturan: GrupPengaturan[] = [
                 href: '/kelola/log-audit',
                 izin: IzinTenant.AuditLihat,
             },
+            {
+                label: 'Token API',
+                keterangan: 'Token untuk aplikasi lain membaca produk, stok, penjualan, atau pelanggan lewat API.',
+                href: '/kelola/pengaturan/api',
+                izin: IzinTenant.IntegrasiApiKelola,
+                fitur: 'api.publik',
+            },
         ],
     },
 ];

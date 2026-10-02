@@ -132,6 +132,17 @@ final class PenyediaAplikasi extends ServiceProvider
             });
         }
 
+        // X7: Open API v1, 120 permintaan/menit per token (throttle berjalan sebelum autentikasi, jadi kunci dari hash
+        // token Bearer) dan 600/menit per IP, supaya token acak yang berganti-ganti tidak lolos dari batas.
+        RateLimiter::for('api-publik', static function (Request $permintaan): array {
+            $bearer = $permintaan->bearerToken();
+
+            return [
+                Limit::perMinute(120)->by('token:'.hash('sha256', is_string($bearer) ? $bearer : '')),
+                Limit::perMinute(600)->by('ip:'.$permintaan->ip()),
+            ];
+        });
+
         // F-08: webhook gerbang pembayaran, per penyedia per IP (gerbang mengirim dari sedikit IP; ulangan dibatasi).
         RateLimiter::for('webhook', static fn (Request $permintaan): Limit => Limit::perMinute(300)
             ->by((string) $permintaan->route('penyedia').'|'.$permintaan->ip()));

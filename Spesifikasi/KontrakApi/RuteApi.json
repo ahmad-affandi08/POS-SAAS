@@ -363,5 +363,35 @@
         "Metode": "GET",
         "Jalur": "api/pos/v1/ringkasan-harian",
         "Nama": "pos.ringkasan-harian"
+    },
+    "GET api/v1/pelanggan": {
+        "Metode": "GET",
+        "Jalur": "api/v1/pelanggan",
+        "Nama": "api.v1.pelanggan"
+    },
+    "GET api/v1/penjualan": {
+        "Metode": "GET",
+        "Jalur": "api/v1/penjualan",
+        "Nama": "api.v1.penjualan"
+    },
+    "GET api/v1/penjualan/{uuidPenjualan}": {
+        "Metode": "GET",
+        "Jalur": "api/v1/penjualan/{uuidPenjualan}",
+        "Nama": "api.v1.penjualan.satu"
+    },
+    "GET api/v1/produk": {
+        "Metode": "GET",
+        "Jalur": "api/v1/produk",
+        "Nama": "api.v1.produk"
+    },
+    "GET api/v1/produk/{uuidProduk}": {
+        "Metode": "GET",
+        "Jalur": "api/v1/produk/{uuidProduk}",
+        "Nama": "api.v1.produk.satu"
+    },
+    "GET api/v1/stok": {
+        "Metode": "GET",
+        "Jalur": "api/v1/stok",
+        "Nama": "api.v1.stok"
     }
 }
