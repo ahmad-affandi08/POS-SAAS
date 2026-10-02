@@ -1838,7 +1838,7 @@
     "src": "node_modules/@fontsource-variable/atkinson-hyperlegible-next/files/atkinson-hyperlegible-next-latin-wght-normal.woff2"
   },
   "resources/js/Aplikasi.tsx": {
-    "file": "assets/Aplikasi-CRoX28tY.js",
+    "file": "assets/Aplikasi-Bem8VOaC.js",
     "name": "Aplikasi",
     "src": "resources/js/Aplikasi.tsx",
     "isEntry": true,
@@ -3396,7 +3396,7 @@
     ]
   },
   "resources/js/Halaman/Kelola/Kasir/Pengaturan.tsx": {
-    "file": "assets/Pengaturan-CiTTjCYO.js",
+    "file": "assets/Pengaturan-R9PdGkrT.js",
     "name": "Pengaturan",
     "src": "resources/js/Halaman/Kelola/Kasir/Pengaturan.tsx",
     "isDynamicEntry": true,
@@ -3410,7 +3410,8 @@
       "_KotakCentang-DU-uh8c7.js",
       "_BidangUang-qdHit96C.js",
       "_Panel-CUb7ssmQ.js",
-      "_DaftarGalatServer-CdfV5dwl.js"
+      "_DaftarGalatServer-CdfV5dwl.js",
+      "_GrupCentang-CtrPEukE.js"
     ]
   },
   "resources/js/Halaman/Kelola/Kasir/Shift/Daftar.tsx": {

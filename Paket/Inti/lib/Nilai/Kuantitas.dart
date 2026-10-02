@@ -26,6 +26,21 @@ final class Kuantitas implements Comparable<Kuantitas> {
 
   static Kuantitas Nol() => Kuantitas._(Decimal.zero);
 
+  /// [pembilang] ÷ [penyebut] dibulatkan ke [desimal] angka (≤ [skala]) dengan mode eksplisit, misal berat dari label
+  /// harga timbangan (harga ÷ harga per kg, v3.55). [penyebut] tidak boleh nol.
+  static Kuantitas DariPembagian(
+    Decimal pembilang,
+    Decimal penyebut, {
+    int desimal = 3,
+    ModePembulatan mode = ModePembulatan.SetengahMenjauhiNol,
+  }) {
+    if (penyebut == Decimal.zero) {
+      throw ArgumentError.value(penyebut.toString(), 'penyebut', 'Penyebut tidak boleh nol');
+    }
+    final kasar = (pembilang / penyebut).toDecimal(scaleOnInfinitePrecision: skala + 2);
+    return Kuantitas._(BulatkanKeSkala(kasar, desimal.clamp(0, skala), mode));
+  }
+
   Kuantitas Tambah(Kuantitas lain) => Kuantitas._(_nilai + lain._nilai);
 
   Kuantitas Kurangi(Kuantitas lain) => Kuantitas._(_nilai - lain._nilai);

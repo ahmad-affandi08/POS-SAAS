@@ -59,6 +59,7 @@ const propsPengaturan: PropsPengaturanKasir = {
     BatasHariRetur: 7,
     BatasHariLewatJatuhTempo: 0,
     BukaLaciPerluPin: false,
+    BarcodeTimbangan: { Aktif: false, Awalan: ['27'], Nilai: 'Berat' },
 };
 
 const laporanShift: LaporanShift = {
@@ -429,6 +430,20 @@ describe('F-06 halaman kasir back-office', () => {
         expect(tiruanRouter.put).toHaveBeenCalledWith(
             '/kelola/kasir/pengaturan',
             expect.objectContaining({ TutupShiftButa: false, ToleransiSelisihKas: '25000' }),
+            expect.anything(),
+        );
+    });
+
+    it('pengaturan kasir v3.55: barcode timbangan diaktifkan dengan awalan & jenis nilai, disimpan terpisah', () => {
+        tiruanRouter.put.mockClear();
+        RenderUji(<HalamanPengaturanKasir {...propsPengaturan} />);
+        expect(screen.queryByText('Awalan barcode')).toBeNull();
+        fireEvent.click(screen.getByRole('checkbox', { name: 'Kasir membaca barcode timbangan' }));
+        fireEvent.click(screen.getByRole('checkbox', { name: '28' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Simpan barcode timbangan' }));
+        expect(tiruanRouter.put).toHaveBeenCalledWith(
+            '/kelola/kasir/pengaturan/barcode-timbangan',
+            { Aktif: true, Awalan: ['27', '28'], Nilai: 'Berat' },
             expect.anything(),
         );
     });

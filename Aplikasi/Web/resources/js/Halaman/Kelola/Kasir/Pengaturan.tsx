@@ -4,6 +4,7 @@ import { useState, type FormEvent } from 'react';
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import BidangUang from '@/Komponen/Formulir/BidangUang';
+import GrupCentang from '@/Komponen/Formulir/GrupCentang';
 import KotakCentang from '@/Komponen/Formulir/KotakCentang';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import DaftarGalatServer from '@/Komponen/Katalog/DaftarGalatServer';
@@ -11,7 +12,7 @@ import Panel from '@/Komponen/Kelola/Panel';
 import { FormatRupiah } from '@/Pustaka/Format';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
 import type { PropsBersamaAplikasi } from '@/Tipe/Aplikasi';
-import type { PropsPengaturanKasir } from '@/Tipe/Kasir';
+import type { BarcodeTimbangan, PropsPengaturanKasir } from '@/Tipe/Kasir';
 
 const alamat = '/kelola/kasir/pengaturan';
 
@@ -53,6 +54,7 @@ export default function HalamanPengaturanKasir({
     BatasHariRetur,
     BatasHariLewatJatuhTempo,
     BukaLaciPerluPin,
+    BarcodeTimbangan,
 }: PropsPengaturanKasir) {
     const { props } = usePage<PropsBersamaAplikasi>();
     const galat = props.errors;
@@ -280,6 +282,74 @@ export default function HalamanPengaturanKasir({
                     {!berubah ? <span className="text-keterangan text-teks-sekunder">Belum ada perubahan.</span> : null}
                 </div>
             </form>
+            <BagianBarcodeTimbangan awal={BarcodeTimbangan} galat={galat} />
         </TataLetakAplikasi>
+    );
+}
+
+const AWALAN_TIMBANGAN = ['21', '22', '23', '24', '25', '26', '27', '28', '29'];
+
+/**
+ * v3.55 (§9.3): barcode timbangan EAN-13 `AA PPPPP NNNNN C` — awalan, kode produk 5 digit (barcode produk di katalog
+ * = 7 digit pertama, misal 2712345), nilai 5 digit berat gram atau harga Rupiah, digit cek. Disimpan terpisah dari
+ * formulir di atas.
+ */
+function BagianBarcodeTimbangan({ awal, galat }: { awal: BarcodeTimbangan; galat: Record<string, string> }) {
+    const [aktif, AturAktif] = useState(awal.Aktif);
+    const [awalan, AturAwalan] = useState<string[]>(awal.Awalan);
+    const [nilai, AturNilai] = useState<string>(awal.Nilai);
+    const [memproses, AturMemproses] = useState(false);
+
+    const Simpan = (e: FormEvent) => {
+        e.preventDefault();
+        AturMemproses(true);
+        router.put(
+            '/kelola/kasir/pengaturan/barcode-timbangan',
+            { Aktif: aktif, Awalan: awalan, Nilai: nilai },
+            { preserveScroll: true, onFinish: () => AturMemproses(false) },
+        );
+    };
+
+    return (
+        <form noValidate onSubmit={Simpan} className="flex flex-col gap-4">
+            <Panel
+                judul="Barcode timbangan"
+                keterangan="Untuk barang yang ditimbang (buah, daging, kue curah). Timbangan mencetak barcode berawalan 21–29 berisi berat atau harga; kasir cukup memindainya."
+            >
+                <KotakCentang label="Kasir membaca barcode timbangan" nilai={aktif} saatBerubah={AturAktif} />
+                {aktif ? (
+                    <>
+                        <GrupCentang
+                            legenda="Awalan barcode"
+                            opsi={AWALAN_TIMBANGAN.map((a) => ({ nilai: a, label: a }))}
+                            terpilih={awalan}
+                            saatBerubah={AturAwalan}
+                            galat={galat.Awalan ?? galat['Awalan.0']}
+                            required
+                        />
+                        <BidangPilihan
+                            label="Isi 5 digit nilai"
+                            nilai={nilai}
+                            opsi={[
+                                { Nilai: 'Berat', Label: 'Berat dalam gram (12345 = 12,345 kg)' },
+                                { Nilai: 'Harga', Label: 'Harga dalam Rupiah (12500 = Rp 12.500)' },
+                            ]}
+                            saatBerubah={AturNilai}
+                            galat={galat.Nilai}
+                            required
+                        />
+                        <p className="text-keterangan text-teks-sekunder">
+                            Isi barcode produk di katalog dengan 7 digit pertama label timbangan (awalan + kode produk 5
+                            digit), misal 2712345. Satuan produk yang dijual per berat harus boleh desimal.
+                        </p>
+                    </>
+                ) : null}
+            </Panel>
+            <div>
+                <Tombol type="submit" memproses={memproses}>
+                    Simpan barcode timbangan
+                </Tombol>
+            </div>
+        </form>
     );
 }

@@ -6,8 +6,11 @@ namespace App\Http\Kontroler\Kelola\Kasir;
 
 use App\Domain\Kasir\Aksi\UbahPengaturanKasir;
 use App\Domain\Penjualan\Enum\ArahPembulatan;
+use App\Domain\Tenant\Aksi\UbahBarcodeTimbanganTenant;
+use App\Domain\Tenant\Kueri\PengaturanBarcodeTimbanganTenant;
 use App\Domain\Tenant\Kueri\PengaturanKasirTenant;
 use App\Http\Kontroler\Kelola\DasarKelolaKontroler;
+use App\Http\Permintaan\Kelola\Kasir\UbahBarcodeTimbanganPermintaan;
 use App\Http\Permintaan\Kelola\Kasir\UbahPengaturanKasirPermintaan;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
@@ -20,7 +23,7 @@ use Inertia\Response;
  */
 final class PengaturanKasirKontroler extends DasarKelolaKontroler
 {
-    public function Tampilkan(PengaturanKasirTenant $pengaturan): Response
+    public function Tampilkan(PengaturanKasirTenant $pengaturan, PengaturanBarcodeTimbanganTenant $timbangan): Response
     {
         $data = $pengaturan->Ambil();
 
@@ -35,6 +38,8 @@ final class PengaturanKasirKontroler extends DasarKelolaKontroler
             'BatasHariRetur' => $data->batasHariRetur,
             'BatasHariLewatJatuhTempo' => $data->batasHariLewatJatuhTempo,
             'BukaLaciPerluPin' => $data->bukaLaciPerluPin,
+            // v3.55 (§9.3): barcode timbangan berawalan 21–29 (berat/harga di EAN-13).
+            'BarcodeTimbangan' => $timbangan->Ambil(),
             'OpsiArahPembulatan' => array_map(fn (ArahPembulatan $arah): array => ['Nilai' => $arah->value, 'Label' => $arah->AmbilLabel()], ArahPembulatan::cases()),
         ]);
     }
@@ -44,5 +49,12 @@ final class PengaturanKasirKontroler extends DasarKelolaKontroler
         $ubah->Jalankan($permintaan->AmbilData($pengaturan->Ambil()));
 
         return to_route('kelola.kasir.pengaturan')->with('Kilat', 'Pengaturan kasir disimpan.');
+    }
+
+    public function SimpanBarcodeTimbangan(UbahBarcodeTimbanganPermintaan $permintaan, UbahBarcodeTimbanganTenant $ubah): RedirectResponse
+    {
+        $ubah->Jalankan($permintaan->boolean('Aktif'), $permintaan->AmbilAwalan(), (string) $permintaan->validated('Nilai'));
+
+        return to_route('kelola.kasir.pengaturan')->with('Kilat', 'Pengaturan barcode timbangan disimpan.');
     }
 }

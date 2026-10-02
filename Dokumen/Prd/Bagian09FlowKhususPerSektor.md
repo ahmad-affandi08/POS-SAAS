@@ -46,7 +46,7 @@ Fitur khusus:
 
 - Fokus input scanner (keyboard wedge). Kursor selalu di field scan.
 - Shortcut keyboard (F1 cari, F2 pelanggan, F8 bayar, F9 tunai pas, Esc batal item).
-- Barcode timbangan (prefix 20–29: harga/berat terenkode di barcode EAN-13).
+- Barcode timbangan (prefix 21–29: harga/berat terenkode di barcode EAN-13; 20 dipakai barcode internal produk). Diatur di Pengaturan kasir, produk dicari dari 7 digit pertama (v3.55).
 - Multi-satuan otomatis dari barcode (scan barcode dus → satuan dus).
 - Cek harga cepat tanpa menambah ke keranjang.
 - Label harga & barcode cetak massal (fase 2).

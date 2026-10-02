@@ -156,6 +156,29 @@ class PembulatanTunaiPos {
   }
 }
 
+/// Barcode timbangan (§9.3, v3.55): EAN-13 `AA PPPPP NNNNN C` dengan awalan [awalan] (21–29), kode produk 5 digit, dan
+/// nilai 5 digit berupa berat gram ([nilaiHarga] false) atau harga Rupiah ([nilaiHarga] true).
+class BarcodeTimbanganPos {
+  const BarcodeTimbanganPos({this.aktif = false, this.awalan = const [], this.nilaiHarga = false});
+
+  final bool aktif;
+  final List<String> awalan;
+  final bool nilaiHarga;
+
+  static BarcodeTimbanganPos DariJson(Object? json) {
+    final peta = UraiJson.AmbilPetaAtauNull(json);
+    return peta == null
+        ? const BarcodeTimbanganPos()
+        : BarcodeTimbanganPos(
+            aktif: UraiJson.AmbilBenar(peta['Aktif']),
+            awalan: UraiJson.AmbilDaftarTeks(peta['Awalan']),
+            nilaiHarga: peta['Nilai'] == 'Harga',
+          );
+  }
+
+  Map<String, Object?> KeJson() => {'Aktif': aktif, 'Awalan': awalan, 'Nilai': nilaiHarga ? 'Harga' : 'Berat'};
+}
+
 /// Outlet perangkat (F-07b): kode dipakai di nomor penjualan `INV/{KodeOutlet}/...` (BR-07.1).
 class OutletPos {
   const OutletPos({
@@ -410,6 +433,7 @@ class DataAwal {
     this.batasHariLewatJatuhTempo = 0,
     this.bukaLaciPerluPin = false,
     this.persetujuanJarakJauh = false,
+    this.barcodeTimbangan = const BarcodeTimbanganPos(),
     this.karyawan = const [],
     this.struk,
     this.deposit = const DepositPos(),
@@ -468,6 +492,9 @@ class DataAwal {
   /// X4: fitur paket persetujuan jarak jauh aktif (`Pengaturan.PersetujuanJarakJauh`; server lama = false).
   final bool persetujuanJarakJauh;
 
+  /// v3.55 (§9.3): barcode timbangan EAN-13 (`Pengaturan.BarcodeTimbangan`; server lama = tidak aktif).
+  final BarcodeTimbanganPos barcodeTimbangan;
+
   /// F-18: staf yang bisa dipilih sebagai pelayan baris (komisi); server lama = kosong.
   final List<KaryawanPos> karyawan;
 
@@ -511,6 +538,7 @@ class DataAwal {
       batasHariLewatJatuhTempo: UraiJson.AmbilBulat(pengaturan['BatasHariLewatJatuhTempo']),
       bukaLaciPerluPin: UraiJson.AmbilBenar(pengaturan['BukaLaciPerluPin']),
       persetujuanJarakJauh: UraiJson.AmbilBenar(pengaturan['PersetujuanJarakJauh']),
+      barcodeTimbangan: BarcodeTimbanganPos.DariJson(pengaturan['BarcodeTimbangan']),
       karyawan: UraiJson.AmbilDaftarPeta(json['Karyawan']).map(KaryawanPos.DariJson).toList(),
       struk: StrukPos.DariJson(json['Struk']),
       deposit: DepositPos.DariJson(json['Deposit']),

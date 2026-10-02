@@ -180,7 +180,11 @@ export type PropsPengaturanKasir = {
     BatasHariLewatJatuhTempo: number;
     /** Cetak struk bagian 4: buka laci manual wajib PIN penyetuju `kas.keluar.setujui` (bawaan mati). */
     BukaLaciPerluPin: boolean;
+    /** v3.55 (§9.3): barcode timbangan EAN-13 berawalan 21–29, nilai berat (gram) atau harga (Rupiah). */
+    BarcodeTimbangan: BarcodeTimbangan;
 };
+
+export type BarcodeTimbangan = { Aktif: boolean; Awalan: string[]; Nilai: 'Berat' | 'Harga' };
 
 /** Pengaturan struk tenant (PLT-06, PRD v1.79): satu untuk semua outlet. Teks null = bawaan aplikasi. */
 export type PengaturanStruk = {

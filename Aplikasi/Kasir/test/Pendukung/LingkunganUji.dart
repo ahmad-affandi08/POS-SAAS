@@ -89,6 +89,7 @@ Map<String, Object?> DataAwalUji({
   bool ojol = false,
   List<String>? jenisPesanan,
   String? jenisPesananBawaan,
+  Map<String, Object?>? barcodeTimbangan,
 }) => {
   'Karyawan': ?karyawan,
   // F-16d: deposit pelanggan (fitur paket) hanya bila diminta test.
@@ -116,6 +117,8 @@ Map<String, Object?> DataAwalUji({
     'BukaLaciPerluPin': ?bukaLaciPerluPin,
     // X4: tombol minta persetujuan jarak jauh di dialog PIN penyetuju.
     'PersetujuanJarakJauh': persetujuanJarakJauh,
+    // v3.55: barcode timbangan hanya bila diminta test.
+    'BarcodeTimbangan': ?barcodeTimbangan,
   },
   'Outlet': {
     'Uuid': '01K50VT1ET0000000000000001',

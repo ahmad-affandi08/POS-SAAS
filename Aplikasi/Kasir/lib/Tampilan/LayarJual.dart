@@ -9,6 +9,7 @@ import 'package:sistem_desain/SistemDesain.dart';
 import '../Aplikasi/Penyedia.dart';
 import '../Data/PesananMeja.dart';
 import '../Domain/GalatKasir.dart';
+import '../Domain/Katalog/BarcodeTimbangan.dart';
 import '../Domain/Katalog/KatalogLokal.dart';
 import '../Domain/Katalog/LayananKatalog.dart';
 import '../Domain/Meja/KonteksPesananMeja.dart';
@@ -301,6 +302,9 @@ class _LayarJualState extends ConsumerState<LayarJual> {
   void _TanganiKode(String kode) {
     final katalog = ref.read(penyediaKatalog).value;
     final hasil = katalog?.CariKode(kode);
+    if (hasil == null && _CobaBarcodeTimbangan(kode)) {
+      return;
+    }
     if (hasil == null) {
       _TampilPesan('Kode $kode tidak ditemukan di katalog. Perbarui katalog atau cari manual.');
       return;
@@ -346,6 +350,73 @@ class _LayarJualState extends ConsumerState<LayarJual> {
     } on GalatKasir catch (galat) {
       _TampilPesan(galat.pesan);
     }
+  }
+
+  /// v3.55 (§9.3): barcode timbangan `AA PPPPP NNNNN C`. Produk dicari dari 7 digit pertama; jumlah = berat (kg) atau
+  /// harga label ÷ harga satuan (3 desimal). True = kode ini barcode timbangan (sudah ditangani, termasuk pesan galat).
+  bool _CobaBarcodeTimbangan(String kode) {
+    final katalog = ref.read(penyediaKatalog).value;
+    final k = ref.read(penyediaKonteksPenjualan).value;
+    if (katalog == null || k == null) {
+      return false;
+    }
+    final urai = PenguraiBarcodeTimbangan.Urai(kode, k.barcodeTimbangan);
+    if (urai == null) {
+      return false;
+    }
+    final cocok = katalog.CariKode(urai.kodeProduk);
+    if (cocok == null) {
+      _TampilPesan(
+        'Barcode timbangan ${urai.kodeProduk} belum terdaftar. Isi barcode produknya dengan ${urai.kodeProduk} '
+        'di back-office.',
+      );
+      return true;
+    }
+    final produk = cocok.produk;
+    final satuan = cocok.satuan ?? produk.AmbilSatuanBawaan();
+    if (satuan == null || !satuan.bolehDesimal) {
+      _TampilPesan('Satuan ${produk.nama} tidak boleh desimal, jadi tidak bisa dijual per berat timbangan.');
+      return true;
+    }
+    final keranjang = ref.read(penyediaKeranjang);
+    final layanan = ref.read(penyediaLayananPenjualan);
+    Kuantitas jumlah;
+    if (urai.harga) {
+      final harga = layanan.TentukanHarga(
+        katalog,
+        k,
+        produk.uuid,
+        satuan.uuid,
+        Kuantitas.DariBulat(1),
+        kanal: LayananPenjualan.AmbilKanal(keranjang),
+        tierPelanggan: keranjang.pelanggan?.kodeTier,
+      );
+      if (harga == null || harga.BernilaiNol()) {
+        _TampilPesan('Harga ${produk.nama} belum diatur, jadi berat dari label harga tidak bisa dihitung.');
+        return true;
+      }
+      jumlah = Kuantitas.DariPembagian(Uang.Dari(urai.nilai).KeDesimal(), harga.KeDesimal());
+    } else {
+      jumlah = Kuantitas.Dari(urai.nilai);
+    }
+    try {
+      final baris = layanan.BuatBaris(
+        katalog,
+        k,
+        produk,
+        satuan: satuan,
+        jumlah: jumlah,
+        kanal: LayananPenjualan.AmbilKanal(keranjang),
+        tierPelanggan: keranjang.pelanggan?.kodeTier,
+      );
+      ref.read(penyediaKeranjang.notifier).Ganti(layanan.TambahBaris(keranjang, baris, katalog, k));
+      if (_pesan != null) {
+        setState(() => _pesan = null);
+      }
+    } on GalatKasir catch (galat) {
+      _TampilPesan(galat.pesan);
+    }
+    return true;
   }
 
   /// Baris yang sudah tersimpan di pesanan meja (bukan item baru).
@@ -844,7 +915,9 @@ class _LayarJualState extends ConsumerState<LayarJual> {
                       onChanged: (_) => setState(() {}),
                       onSubmitted: (kata) {
                         final hasil = katalog?.CariKode(kata);
-                        if (hasil != null) {
+                        if (hasil == null && _CobaBarcodeTimbangan(kata)) {
+                          setState(_cari.clear);
+                        } else if (hasil != null) {
                           _TambahProduk(hasil.produk, satuan: hasil.satuan);
                           setState(_cari.clear);
                         } else if (daftar.length == 1) {

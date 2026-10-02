@@ -65,6 +65,9 @@ abstract final class KunciPengaturan {
   /// X4: fitur persetujuan jarak jauh aktif ('1'/'0').
   static const String persetujuanJarakJauh = 'PersetujuanJarakJauh';
 
+  /// v3.55: barcode timbangan (JSON `BarcodeTimbanganPos`).
+  static const String barcodeTimbangan = 'BarcodeTimbangan';
+
   /// F-16d bagian 1: pengaturan deposit pelanggan (JSON `{Berlaku, MinimalIsi, MaksimalIsi}`).
   static const String deposit = 'Deposit';
 
@@ -220,6 +223,7 @@ class RepositoriKasir {
     await SimpanPengaturan(KunciPengaturan.batasHariLewatJatuhTempo, '${data.batasHariLewatJatuhTempo}');
     await SimpanPengaturan(KunciPengaturan.bukaLaciPerluPin, data.bukaLaciPerluPin ? '1' : '0');
     await SimpanPengaturan(KunciPengaturan.persetujuanJarakJauh, data.persetujuanJarakJauh ? '1' : '0');
+    await SimpanPengaturan(KunciPengaturan.barcodeTimbangan, jsonEncode(data.barcodeTimbangan.KeJson()));
     await SimpanPengaturan(KunciPengaturan.karyawan, jsonEncode([for (final k in data.karyawan) k.KeJson()]));
     await SimpanPengaturan(KunciPengaturan.deposit, jsonEncode(data.deposit.KeJson()));
     await SimpanPengaturan(KunciPengaturan.laundry, jsonEncode(data.laundry.KeJson()));

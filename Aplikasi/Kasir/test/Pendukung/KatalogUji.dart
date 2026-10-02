@@ -282,3 +282,33 @@ Map<String, Object?> KatalogPonselUji() {
   ];
   return katalog;
 }
+
+const String satuanKg = '01K5SAT0000000000000000KG01';
+const String jerukMedan = '01K5PRD000000000000JERUK001';
+const String psJeruk = '01K5PS0000000000000JERUK001';
+
+/// v3.55: katalog uji + produk timbangan (Jeruk Medan per kg, barcode label 7 digit `2712345`, Rp 32.000/kg).
+Map<String, Object?> KatalogTimbanganUji() {
+  final katalog = KatalogUji();
+  katalog['Satuan'] = [
+    ...(katalog['Satuan']! as List<Object?>),
+    {'Uuid': satuanKg, 'Nama': 'Kilogram', 'Simbol': 'kg', 'BolehDesimal': true},
+  ];
+  katalog['Produk'] = [
+    ...(katalog['Produk']! as List<Object?>),
+    {...ProdukUji(jerukMedan, 'Jeruk Medan', sku: 'JRK-01'), 'UuidSatuanDasar': satuanKg},
+  ];
+  katalog['ProdukSatuan'] = [
+    ...(katalog['ProdukSatuan']! as List<Object?>),
+    SatuanProdukUji(psJeruk, jerukMedan, satuanKg),
+  ];
+  katalog['ProdukBarcode'] = [
+    ...(katalog['ProdukBarcode']! as List<Object?>),
+    {'Uuid': '01K5BC0000000000JERUK00001', 'UuidProduk': jerukMedan, 'UuidProdukSatuan': psJeruk, 'Barcode': '2712345'},
+  ];
+  katalog['ProdukHarga'] = [
+    ...(katalog['ProdukHarga']! as List<Object?>),
+    HargaUji('01K5HRG000000000000JERUK01', jerukMedan, psJeruk, '32000.00'),
+  ];
+  return katalog;
+}

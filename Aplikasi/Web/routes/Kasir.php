@@ -41,6 +41,7 @@ Route::middleware(SiapkanAuditTenant::class)->group(function () use ($izin, $uli
 
     Route::get('/kasir/pengaturan', [PengaturanKasirKontroler::class, 'Tampilkan'])->middleware($outlet)->name('kelola.kasir.pengaturan');
     Route::put('/kasir/pengaturan', [PengaturanKasirKontroler::class, 'Simpan'])->middleware($outlet)->name('kelola.kasir.pengaturan.simpan');
+    Route::put('/kasir/pengaturan/barcode-timbangan', [PengaturanKasirKontroler::class, 'SimpanBarcodeTimbangan'])->middleware($outlet)->name('kelola.kasir.pengaturan.barcode-timbangan');
 
     // PLT-06 / POS-11 (PRD v1.79): pengaturan struk satu untuk semua outlet.
     Route::get('/kasir/struk', [PengaturanStrukKontroler::class, 'Tampilkan'])->middleware($outlet)->name('kelola.kasir.struk');

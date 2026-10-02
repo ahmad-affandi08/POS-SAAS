@@ -20,6 +20,7 @@ use App\Domain\Penjualan\Kueri\DaftarMetodePembayaran;
 use App\Domain\Penjualan\Kueri\NomorUrutPenjualanPerangkat;
 use App\Domain\Penjualan\Kueri\StatusTokoOnlineOutlet;
 use App\Domain\Penjualan\Layanan\KodeStrukDigital;
+use App\Domain\Tenant\Kueri\PengaturanBarcodeTimbanganTenant;
 use App\Domain\Tenant\Kueri\PengaturanKasirTenant;
 use App\Domain\Tenant\Kueri\PengaturanStrukTenant;
 use App\Domain\Tenant\Kueri\ProfilTenant;
@@ -61,6 +62,7 @@ final class DataAwalKasir
         private readonly PengaturanLaundryTenant $laundry,
         private readonly StatusTokoOnlineOutlet $statusTokoOnline,
         private readonly JenisPesananOutlet $jenisPesanan,
+        private readonly PengaturanBarcodeTimbanganTenant $barcodeTimbangan,
     ) {}
 
     /**
@@ -94,6 +96,8 @@ final class DataAwalKasir
                 'BukaLaciPerluPin' => $pengaturan->bukaLaciPerluPin,
                 // X4 (aditif): tombol "Minta persetujuan jarak jauh" di dialog PIN penyetuju hanya bila fitur paket aktif.
                 'PersetujuanJarakJauh' => $this->fitur->CekAktif($perangkat->IdTenant, 'persetujuan.jarak-jauh'),
+                // v3.55 (aditif, §9.3): barcode timbangan EAN-13 `AA PPPPP NNNNN C` (berat gram atau harga Rupiah).
+                'BarcodeTimbangan' => $this->barcodeTimbangan->Ambil(),
             ],
             'Struk' => $this->AmbilStruk($perangkat, $profil->pkp ?? false),
             'Outlet' => $outlet === null ? null : [

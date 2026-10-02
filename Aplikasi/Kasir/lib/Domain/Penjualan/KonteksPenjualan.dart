@@ -132,6 +132,7 @@ class KonteksPenjualan {
     this.laundry = const LaundryPos(),
     this.tokoOnlineAktif = false,
     this.jenisPesanan = const [],
+    this.barcodeTimbangan = const BarcodeTimbanganPos(),
     this.jenisPesananBawaan,
   });
 
@@ -179,6 +180,9 @@ class KonteksPenjualan {
   /// v3.51: jenis pesanan yang dipilih kasir per transaksi (Makan di tempat/Bawa pulang/Antar), dari data awal outlet.
   /// Kosong = tanpa pilihan jenis pesanan (retail).
   final List<KanalPenjualan> jenisPesanan;
+
+  /// v3.55 (§9.3): barcode timbangan tenant (tidak aktif bila server lama).
+  final BarcodeTimbanganPos barcodeTimbangan;
 
   /// Jenis pesanan bawaan transaksi baru; null = Bawa pulang.
   final KanalPenjualan? jenisPesananBawaan;
@@ -266,6 +270,9 @@ class KonteksPenjualan {
           ?AmbilKanal(nama),
       ],
       jenisPesananBawaan: AmbilKanal(await repositori.AmbilPengaturan(KunciPengaturan.jenisPesananBawaan)),
+      barcodeTimbangan: BarcodeTimbanganPos.DariJson(
+        jsonDecode(await repositori.AmbilPengaturan(KunciPengaturan.barcodeTimbangan) ?? 'null'),
+      ),
     );
   }
 

@@ -29,4 +29,11 @@ void main() {
       expect(Kuantitas.Nol().BernilaiNol(), isTrue);
     });
   });
+
+  test('DariPembagian (v3.55): harga ÷ harga per kg, 3 desimal setengah menjauhi nol; penyebut nol ditolak', () {
+    expect(Kuantitas.DariPembagian(Decimal.parse('40000'), Decimal.parse('32000')).KeString(), '1.2500');
+    expect(Kuantitas.DariPembagian(Decimal.parse('10000'), Decimal.parse('30000')).KeString(), '0.3330');
+    expect(Kuantitas.DariPembagian(Decimal.parse('20000'), Decimal.parse('30000')).KeString(), '0.6670');
+    expect(() => Kuantitas.DariPembagian(Decimal.one, Decimal.zero), throwsArgumentError);
+  });
 }
