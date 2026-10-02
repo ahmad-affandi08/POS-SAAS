@@ -14,6 +14,15 @@ abstract final class StatusPesananMeja {
   static const String digabung = 'Digabung';
 }
 
+/// K-13 (§9.1): kursus baris pesanan meja untuk "tahan & kirim" (hold & fire); urutan = urutan saji. Nilai sama dengan
+/// enum server `KursusPesanan`.
+abstract final class KursusPesanan {
+  static const String pembuka = 'Pembuka';
+  static const String utama = 'Utama';
+  static const String penutup = 'Penutup';
+  static const List<String> semua = [pembuka, utama, penutup];
+}
+
 /// Satu baris pesanan terbuka di perangkat (kolom JSON `PesananTerbuka.Baris`). Append-only: baris yang sudah tersimpan
 /// tidak diubah jumlahnya; pembatalan = void item (BR-07.5).
 class BarisPesananMeja {
@@ -31,6 +40,7 @@ class BarisPesananMeja {
     this.dibatalkan = false,
     this.dikirimKeDapur = false,
     this.statusDapur,
+    this.kursus,
   });
 
   final String uuid;
@@ -55,6 +65,9 @@ class BarisPesananMeja {
   /// Antre/Dimasak/Siap/Disajikan dari tiket dapur; null = belum ada tiket.
   final String? statusDapur;
 
+  /// K-13: kursus ([KursusPesanan]); null = tanpa kursus.
+  final String? kursus;
+
   BarisPesananMeja Salin({bool? dibatalkan, bool? dikirimKeDapur, int? ronde}) => BarisPesananMeja(
     uuid: uuid,
     uuidProduk: uuidProduk,
@@ -69,6 +82,7 @@ class BarisPesananMeja {
     dibatalkan: dibatalkan ?? this.dibatalkan,
     dikirimKeDapur: dikirimKeDapur ?? this.dikirimKeDapur,
     statusDapur: statusDapur,
+    kursus: kursus,
   );
 
   Map<String, Object?> KeJson() => {
@@ -85,6 +99,7 @@ class BarisPesananMeja {
     'Dibatalkan': dibatalkan,
     'DikirimKeDapur': dikirimKeDapur,
     'StatusDapur': statusDapur,
+    'Kursus': kursus,
   };
 
   /// Bentuk JSON lokal sama dengan snapshot server, jadi keduanya dibaca dengan pengurai yang sama.
@@ -104,15 +119,16 @@ class BarisPesananMeja {
     dibatalkan: b.dibatalkan,
     dikirimKeDapur: b.dikirimKeDapur,
     statusDapur: b.statusDapur,
+    kursus: b.kursus,
   );
 
-  /// Label status untuk kasir: status tiket dapur, "Belum dikirim", atau "Dibatalkan".
+  /// Label status untuk kasir: status tiket dapur, "Belum dikirim", "Ditahan · Utama" (K-13), atau "Dibatalkan".
   String AmbilLabelStatus() {
     if (dibatalkan) {
       return 'Dibatalkan';
     }
     if (!dikirimKeDapur) {
-      return 'Belum dikirim';
+      return kursus == null ? 'Belum dikirim' : 'Ditahan · $kursus';
     }
     return switch (statusDapur) {
       'Dimasak' => 'Dimasak',

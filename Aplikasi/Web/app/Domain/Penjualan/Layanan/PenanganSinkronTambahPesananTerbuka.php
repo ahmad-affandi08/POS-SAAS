@@ -9,10 +9,13 @@ use App\Domain\Bersama\Sinkron\Enum\StatusItemSinkron;
 use App\Domain\Kasir\Layanan\ValidasiItemSinkron;
 use App\Domain\Penjualan\Aksi\TambahBarisPesananTerbukaPos;
 use App\Domain\Penjualan\Data\DataBarisPesananTerbuka;
+use App\Domain\Penjualan\Enum\KursusPesanan;
+use Illuminate\Validation\Rule;
 
 /**
  * `PesananTerbuka.Tambah {UuidPesanan, Ronde, KirimDapur, UuidPengguna, DikirimPada, Baris [{Uuid, UuidProduk,
- * UuidProdukSatuan|null, Jumlah, HargaSatuan, HargaPilihan, Pilihan [{UuidPilihan, Nama, Harga}], Catatan}]}`.
+ * UuidProdukSatuan|null, Jumlah, HargaSatuan, HargaPilihan, Pilihan [{UuidPilihan, Nama, Harga}], Catatan, Kursus?}]}`.
+ * `Kursus` (K-13): Pembuka/Utama/Penutup atau null.
  */
 final class PenanganSinkronTambahPesananTerbuka extends PenanganSinkronPesananTerbuka
 {
@@ -42,6 +45,7 @@ final class PenanganSinkronTambahPesananTerbuka extends PenanganSinkronPesananTe
             'Baris.*.Pilihan.*.Nama' => ['required', 'string', 'max:100'],
             'Baris.*.Pilihan.*.Harga' => ['required', 'string', $uang],
             'Baris.*.Catatan' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'Baris.*.Kursus' => ['sometimes', 'nullable', 'string', Rule::enum(KursusPesanan::class)],
         ], 'DikirimPada');
 
         return $this->container->make(TambahBarisPesananTerbukaPos::class)->Jalankan(self::Data($valid, (string) $valid['UuidPesanan'], 'DikirimPada', $konteks, [
@@ -56,6 +60,7 @@ final class PenanganSinkronTambahPesananTerbuka extends PenanganSinkronPesananTe
                 is_string($b['HargaPilihan'] ?? null) ? $b['HargaPilihan'] : '0',
                 array_values(array_map(fn (array $p): array => ['UuidPilihan' => strtoupper((string) $p['UuidPilihan']), 'Nama' => (string) $p['Nama'], 'Harga' => (string) $p['Harga']], (array) ($b['Pilihan'] ?? []))),
                 self::Teks($b['Catatan'] ?? null),
+                is_string($b['Kursus'] ?? null) ? KursusPesanan::from($b['Kursus']) : null,
             ), (array) $valid['Baris'])),
         ]));
     }

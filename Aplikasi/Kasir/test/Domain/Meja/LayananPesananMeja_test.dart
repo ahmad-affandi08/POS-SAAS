@@ -541,6 +541,56 @@ void main() {
       expect(await u.repositori.AmbilPengaturan(KunciPengaturan.etagPesananTerbuka), '"k2"');
     });
 
+    test('K-13 kursus: Utama ditahan, kirim Pembuka tidak ikut mengirim Utama, Kirim Utama = ronde baru', () async {
+      await Siapkan();
+      final pesanan = await u.pesananMeja.Buka(kasir: rina, k: k, meja: await Meja(mejaD01));
+      final croissant = u.penjualan.BuatBaris(katalog, k, katalog.CariProduk(UuidUji.croissant)!);
+      final kopi = u.penjualan.BuatBaris(katalog, k, katalog.CariProduk(UuidUji.americano)!);
+
+      await u.pesananMeja.SimpanBaris(
+        uuidPesanan: pesanan.uuid,
+        draf: [croissant],
+        kasir: rina,
+        kirimDapur: false,
+        kursus: KursusPesanan.utama,
+      );
+      var lokal = (await u.repositoriMeja.CariPesanan(pesanan.uuid))!;
+      expect(LayananPesananMeja.AmbilKursusDitahan(lokal.baris), [(kursus: KursusPesanan.utama, jumlah: 1)]);
+      expect(lokal.baris.single.AmbilLabelStatus(), 'Ditahan · Utama');
+      final tambah = (await Outbox()).lastWhere((o) => o.Jenis == 'PesananTerbuka.Tambah');
+      expect(((Data(tambah)['Baris']! as List<Object?>).single! as Map<String, Object?>)['Kursus'], 'Utama');
+
+      // Pembuka dikirim; Utama tetap ditahan.
+      await u.pesananMeja.SimpanBaris(
+        uuidPesanan: pesanan.uuid,
+        draf: [kopi],
+        kasir: rina,
+        kirimDapur: true,
+        kursus: KursusPesanan.pembuka,
+      );
+      expect((await Outbox()).where((o) => o.Jenis == 'PesananTerbuka.KirimDapur'), isEmpty);
+      lokal = (await u.repositoriMeja.CariPesanan(pesanan.uuid))!;
+      expect(lokal.baris.firstWhere((b) => b.uuid == croissant.uuid).dikirimKeDapur, isFalse);
+
+      // Kirim Utama: hanya baris Utama, ronde berikutnya.
+      final hasil = await u.pesananMeja.KirimKursus(
+        uuidPesanan: pesanan.uuid,
+        kursus: KursusPesanan.utama,
+        kasir: rina,
+      );
+      expect(hasil.uuidBaris, [croissant.uuid]);
+      final kirim = (await Outbox()).lastWhere((o) => o.Jenis == 'PesananTerbuka.KirimDapur');
+      expect(Data(kirim)['UuidBaris'], [croissant.uuid]);
+      expect(Data(kirim)['Ronde'], 3);
+      final utama = hasil.pesanan.baris.firstWhere((b) => b.uuid == croissant.uuid);
+      expect((utama.dikirimKeDapur, utama.ronde, utama.kursus), (true, 3, KursusPesanan.utama));
+      expect(LayananPesananMeja.AmbilKursusDitahan(hasil.pesanan.baris), isEmpty);
+      expect(
+        () => u.pesananMeja.KirimKursus(uuidPesanan: pesanan.uuid, kursus: KursusPesanan.utama, kasir: rina),
+        GalatDengan('TidakAdaItemBaru'),
+      );
+    });
+
     test('kunci bayar: 409 PesananSedangDibayar ditolak; offline tetap boleh bayar', () async {
       await Siapkan();
       u.server.penangan = (p) async => http.Response(

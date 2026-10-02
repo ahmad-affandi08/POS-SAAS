@@ -87,6 +87,7 @@ final class TambahBarisPesananTerbukaPos
                     'Pilihan' => $b->pilihan === [] ? null : $b->pilihan,
                     'Catatan' => $b->catatan,
                     'Ronde' => $data->ronde,
+                    'Kursus' => $b->kursus,
                     'Status' => StatusBarisPesanan::Aktif,
                     'DikirimKeDapurPada' => $data->kirimDapur ? $data->waktu : null,
                     'IdPengguna' => $pelaku->id,

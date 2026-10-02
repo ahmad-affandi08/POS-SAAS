@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Domain\Penjualan\Data;
 
+use App\Domain\Penjualan\Enum\KursusPesanan;
+
 /**
- * Satu baris item outbox `PesananTerbuka.Tambah` (Uuid baris dari perangkat). Uang & jumlah string desimal.
+ * Satu baris item outbox `PesananTerbuka.Tambah` (Uuid baris dari perangkat). Uang & jumlah string desimal; `kursus` K-13 (opsional).
  */
 final readonly class DataBarisPesananTerbuka
 {
@@ -21,5 +23,6 @@ final readonly class DataBarisPesananTerbuka
         public string $hargaPilihan,
         public array $pilihan,
         public ?string $catatan,
+        public ?KursusPesanan $kursus = null,
     ) {}
 }

@@ -6,6 +6,7 @@ namespace App\Domain\Penjualan\Model;
 
 use App\Domain\Bersama\Model\ModelDasar;
 use App\Domain\Bersama\Tenant\MilikTenant;
+use App\Domain\Penjualan\Enum\KursusPesanan;
 use App\Domain\Penjualan\Enum\StatusBarisPesanan;
 use Illuminate\Support\Carbon;
 
@@ -27,6 +28,7 @@ use Illuminate\Support\Carbon;
  * @property list<array{UuidPilihan: string, Nama: string, Harga: string}>|null $Pilihan
  * @property string|null $Catatan
  * @property int $Ronde
+ * @property KursusPesanan|null $Kursus
  * @property StatusBarisPesanan $Status
  * @property Carbon|null $DikirimKeDapurPada
  * @property int $IdPengguna
@@ -54,6 +56,7 @@ final class PesananTerbukaDetail extends ModelDasar
             'HargaPilihan' => 'decimal:2',
             'Pilihan' => 'array',
             'Ronde' => 'integer',
+            'Kursus' => KursusPesanan::class,
             'Status' => StatusBarisPesanan::class,
             'DikirimKeDapurPada' => 'datetime',
             'DibatalkanPada' => 'datetime',

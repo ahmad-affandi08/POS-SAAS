@@ -235,6 +235,35 @@ void main() {
     });
   }
 
+  for (final (nama, ukuran) in [('800', ukuranTablet), ('1280', ukuranDesktop)]) {
+    testWidgets('K-13 kursus di $nama dp: tahan Utama, lalu Kirim Utama dari keranjang', (tester) async {
+      final u = await MasukKasir(tester, ukuran);
+      await Ketuk(tester, find.text('Meja'));
+      await Ketuk(tester, find.text('T-01'));
+      await Ketuk(tester, find.widgetWithText(FilledButton, 'Buka pesanan'));
+
+      await Ketuk(
+        tester,
+        find.descendant(of: find.byKey(const ValueKey('KursusPesanan')), matching: find.text('Utama')),
+      );
+      await Ketuk(tester, Ubin('Americano Panas'));
+      await Ketuk(tester, find.widgetWithText(OutlinedButton, 'Tahan Utama'));
+      expect(find.text('Item Utama T-01 disimpan & ditahan.'), findsOneWidget);
+      expect(find.textContaining('Ditahan · Utama'), findsOneWidget);
+      expect(find.text('Kirim Utama · 1 item'), findsOneWidget);
+      expect((await AmbilOutbox(tester, u)).where((o) => o.jenis == 'PesananTerbuka.KirimDapur'), isEmpty);
+      expect(tester.takeException(), isNull);
+
+      await Ketuk(tester, find.text('Kirim Utama · 1 item'));
+      expect(find.text('Utama T-01 dikirim ke dapur.'), findsOneWidget);
+      expect(find.text('Kirim Utama · 1 item'), findsNothing);
+      final kirim = (await AmbilOutbox(tester, u)).lastWhere((o) => o.jenis == 'PesananTerbuka.KirimDapur');
+      expect((kirim.data['UuidBaris']! as List<Object?>), hasLength(1));
+      expect(tester.takeException(), isNull);
+      await Lepas(tester, u);
+    });
+  }
+
   Map<String, Object?> TiketUji(
     String uuid,
     String meja,

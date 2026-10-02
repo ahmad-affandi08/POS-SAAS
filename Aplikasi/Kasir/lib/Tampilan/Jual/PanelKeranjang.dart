@@ -32,6 +32,11 @@ class PanelKeranjang extends StatelessWidget {
     this.jenisPesanan = const [],
     this.saatJenisPesanan,
     this.saatNamaPemesan,
+    this.kursus = const [],
+    this.kursusDipilih,
+    this.saatKursus,
+    this.kursusDitahan = const [],
+    this.saatKirimKursus,
   });
 
   final Keranjang keranjang;
@@ -77,6 +82,16 @@ class PanelKeranjang extends StatelessWidget {
 
   /// v3.52: isi nama pemesan (penjualan bayar-dulu FnB). Null = tidak ditampilkan.
   final VoidCallback? saatNamaPemesan;
+
+  /// K-13 (mode meja): pilihan kursus untuk item baru (Pembuka/Utama/Penutup) sebagai tombol segmen; kosong = tidak
+  /// ditampilkan. [kursusDipilih] null = tanpa kursus (ketuk segmen terpilih lagi untuk melepas).
+  final List<String> kursus;
+  final String? kursusDipilih;
+  final ValueChanged<String?>? saatKursus;
+
+  /// K-13: kursus yang ditahan di pesanan (urut saji) → tombol "Kirim Utama · 2 item".
+  final List<({String kursus, int jumlah})> kursusDitahan;
+  final ValueChanged<String>? saatKirimKursus;
 
   /// v3.29: isi ongkir penjualan kanal Antar. Null = tidak ditampilkan (kanal lain, pesanan online, mode Pelayan).
   final VoidCallback? saatOngkir;
@@ -176,6 +191,50 @@ class PanelKeranjang extends StatelessWidget {
                     }
                   },
                 ),
+              ),
+            ),
+          if (kursus.isNotEmpty && saatKursus != null)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: TokenJarak.jarak16, vertical: TokenJarak.jarak8),
+              decoration: BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(color: warna.garis, width: TokenJarak.tebalGaris),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Semantics(
+                    label: 'Kursus item baru',
+                    container: true,
+                    child: SegmentedButton<String>(
+                      key: const ValueKey('KursusPesanan'),
+                      showSelectedIcon: false,
+                      emptySelectionAllowed: true,
+                      segments: [
+                        for (final k in kursus)
+                          ButtonSegment(
+                            value: k,
+                            label: Text(k, maxLines: 1, overflow: TextOverflow.ellipsis),
+                          ),
+                      ],
+                      selected: {?kursusDipilih},
+                      onSelectionChanged: (pilih) => saatKursus!(pilih.isEmpty ? null : pilih.first),
+                    ),
+                  ),
+                  for (final d in kursusDitahan) ...[
+                    const SizedBox(height: TokenJarak.jarak8),
+                    SizedBox(
+                      height: TokenJarak.targetSentuh,
+                      child: OutlinedButton.icon(
+                        key: ValueKey('KirimKursus-${d.kursus}'),
+                        onPressed: saatKirimKursus == null ? null : () => saatKirimKursus!(d.kursus),
+                        icon: const Icon(Icons.soup_kitchen_outlined),
+                        label: Text('Kirim ${d.kursus} · ${d.jumlah} item'),
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
           if (saatNamaPemesan != null)

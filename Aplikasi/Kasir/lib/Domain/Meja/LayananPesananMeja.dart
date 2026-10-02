@@ -217,12 +217,14 @@ class LayananPesananMeja {
   // Baris ----------------------------------------------------------------------------------------------------------------
 
   /// Simpan baris baru [draf] ke pesanan sebagai satu ronde. [kirimDapur] = kirim ke dapur sekarang, sekaligus baris
-  /// tersimpan yang belum dikirim. Diskon diberikan saat bayar, bukan di baris pesanan.
+  /// tersimpan yang belum dikirim (K-13: kecuali baris kursus lain yang sengaja ditahan). [kursus] = kursus baris baru
+  /// ([KursusPesanan]). Diskon diberikan saat bayar, bukan di baris pesanan.
   Future<PesananMeja> SimpanBaris({
     required String uuidPesanan,
     required List<ItemKeranjang> draf,
     required StafLokal kasir,
     required bool kirimDapur,
+    String? kursus,
   }) async {
     if (!kasir.CekBolehCatatPesanan()) {
       throw GalatKasir('TanpaIzin', '${kasir.nama} tidak punya izin menambah pesanan.');
@@ -235,7 +237,10 @@ class LayananPesananMeja {
     }
     final pesanan = await _CariTerbuka(uuidPesanan);
     final belumDikirim = kirimDapur
-        ? pesanan.AmbilBarisAktif().where((b) => !b.dikirimKeDapur).map((b) => b.uuid).toList()
+        ? pesanan.AmbilBarisAktif()
+              .where((b) => !b.dikirimKeDapur && (b.kursus == null || b.kursus == kursus))
+              .map((b) => b.uuid)
+              .toList()
         : const <String>[];
     if (draf.isEmpty && belumDikirim.isEmpty) {
       throw GalatKasir(
@@ -259,6 +264,7 @@ class LayananPesananMeja {
           catatan: b.catatan,
           ronde: ronde,
           dikirimKeDapur: kirimDapur,
+          kursus: kursus,
         ),
     ];
     final outbox = [
@@ -283,6 +289,7 @@ class LayananPesananMeja {
                   'HargaPilihan': b.hargaPilihan,
                   'Pilihan': b.pilihan,
                   'Catatan': b.catatan,
+                  if (b.kursus != null) 'Kursus': b.kursus,
                 },
             ],
           },
@@ -314,6 +321,62 @@ class LayananPesananMeja {
       outbox,
       sekarang,
     );
+  }
+
+  /// K-13 kursus yang masih ditahan (baris aktif berkursus yang belum dikirim), urut saji, dengan jumlah barisnya.
+  static List<({String kursus, int jumlah})> AmbilKursusDitahan(Iterable<BarisPesananMeja> baris) => [
+    for (final k in KursusPesanan.semua)
+      if (baris.where((b) => !b.dibatalkan && !b.dikirimKeDapur && b.kursus == k).length case final n when n > 0)
+        (kursus: k, jumlah: n),
+  ];
+
+  /// K-13 "kirim" (fire) kursus yang ditahan: semua baris aktif kursus [kursus] yang belum dikirim dikirim ke dapur
+  /// sebagai ronde baru (outbox `PesananTerbuka.KirimDapur`). Mengembalikan pesanan & Uuid baris yang dikirim (untuk
+  /// cetak tiket dapur).
+  Future<({PesananMeja pesanan, List<String> uuidBaris})> KirimKursus({
+    required String uuidPesanan,
+    required String kursus,
+    required StafLokal kasir,
+  }) async {
+    if (!kasir.CekBolehCatatPesanan()) {
+      throw GalatKasir('TanpaIzin', '${kasir.nama} tidak punya izin mengirim pesanan.');
+    }
+    final pesanan = await _CariTerbuka(uuidPesanan);
+    final kirim = pesanan.AmbilBarisAktif()
+        .where((b) => !b.dikirimKeDapur && b.kursus == kursus)
+        .map((b) => b.uuid)
+        .toList();
+    if (kirim.isEmpty) {
+      throw GalatKasir('TidakAdaItemBaru', 'Tidak ada item $kursus yang ditahan.');
+    }
+    final sekarang = _jam().toUtc();
+    final ronde = pesanan.AmbilRondeBerikutnya();
+    final hasil = await _Simpan(
+      uuidPesanan,
+      (p) => PesananTerbukaCompanion(
+        Baris: Value(
+          RepositoriPesananMeja.SusunJsonBaris([
+            for (final b in p.baris) kirim.contains(b.uuid) ? b.Salin(dikirimKeDapur: true, ronde: ronde) : b,
+          ]),
+        ),
+        DiubahPada: Value(sekarang),
+      ),
+      [
+        ItemOutbox(
+          jenis: jenisKirimDapur,
+          uuid: _ulid.Buat(),
+          data: {
+            'UuidPesanan': uuidPesanan,
+            'Ronde': ronde,
+            'UuidBaris': kirim,
+            'UuidPengguna': kasir.uuid,
+            'DikirimPada': sekarang.toIso8601String(),
+          },
+        ),
+      ],
+      sekarang,
+    );
+    return (pesanan: hasil, uuidBaris: kirim);
   }
 
   /// Baris terpilih yang sudah dikirim ke dapur → butuh alasan & penyetuju (BR-07.5).

@@ -13,6 +13,7 @@ import '../Domain/Katalog/BarcodeTimbangan.dart';
 import '../Domain/Katalog/KatalogLokal.dart';
 import '../Domain/Katalog/LayananKatalog.dart';
 import '../Domain/Meja/KonteksPesananMeja.dart';
+import '../Domain/Meja/LayananPesananMeja.dart';
 import '../Domain/Penjualan/Keranjang.dart';
 import '../Domain/Penjualan/KonteksPenjualan.dart';
 import '../Domain/Penjualan/LayananPenjualan.dart';
@@ -114,6 +115,12 @@ class _LayarJualState extends ConsumerState<LayarJual> {
 
   /// Pesanan meja yang kunci bayarnya sedang dipegang perangkat ini.
   String? _uuidKunciBayar;
+
+  /// K-13: kursus item baru pesanan meja (null = tanpa kursus). Utama/Penutup disimpan & ditahan, bukan dikirim.
+  String? _kursusBaru;
+
+  /// K-13: kursus yang ditahan, bukan langsung dikirim ke dapur.
+  bool get _kursusDitahan => _kursusBaru == KursusPesanan.utama || _kursusBaru == KursusPesanan.penutup;
 
   /// Transaksi terakhir menutup pesanan meja (setelah selesai kembali ke layar Meja).
   bool _selesaiPesanan = false;
@@ -524,13 +531,39 @@ class _LayarJualState extends ConsumerState<LayarJual> {
     final pemberitahu = ScaffoldMessenger.maybeOf(context);
     try {
       final sebelum = await ref.read(penyediaRepositoriPesananMeja).CariPesanan(konteks.uuid);
+      final kursus = _kursusBaru;
+      if (_kursusDitahan) {
+        // K-13: kursus Utama/Penutup disimpan & ditahan; dikirim nanti lewat tombol "Kirim Utama".
+        await ref
+            .read(penyediaLayananPesananMeja)
+            .SimpanBaris(
+              uuidPesanan: konteks.uuid,
+              draf: draf.baris,
+              kasir: widget.kasir,
+              kirimDapur: false,
+              kursus: kursus,
+            );
+        ref.read(penyediaKeranjang.notifier).Ganti(draf.Salin(baris: const []));
+        _TampilPesan('Item $kursus ${konteks.AmbilJudul()} disimpan & ditahan.', galat: false);
+        unawaited(ref.read(penyediaSesi.notifier).Sinkronkan());
+        _FokusAkar();
+        return;
+      }
       final dikirim = {
         ...draf.baris.map((b) => b.uuid),
-        ...?sebelum?.AmbilBarisAktif().where((b) => !b.dikirimKeDapur).map((b) => b.uuid),
+        ...?sebelum?.AmbilBarisAktif()
+            .where((b) => !b.dikirimKeDapur && (b.kursus == null || b.kursus == kursus))
+            .map((b) => b.uuid),
       };
       final pesanan = await ref
           .read(penyediaLayananPesananMeja)
-          .SimpanBaris(uuidPesanan: konteks.uuid, draf: draf.baris, kasir: widget.kasir, kirimDapur: true);
+          .SimpanBaris(
+            uuidPesanan: konteks.uuid,
+            draf: draf.baris,
+            kasir: widget.kasir,
+            kirimDapur: true,
+            kursus: kursus,
+          );
       if (widget.modePelayan) {
         // Pelayan: pesanan selesai dicatat, kembali ke denah meja untuk tamu berikutnya (pesan tampil di atas denah).
         ref.read(penyediaKeranjang.notifier).Kosongkan();
@@ -555,6 +588,40 @@ class _LayarJualState extends ConsumerState<LayarJual> {
       if (gagal.isNotEmpty && mounted) {
         _TampilPesan(
           'Pesanan terkirim, tetapi tiket ${gagal.map((t) => t.stasiun.nama).join(', ')} gagal dicetak: '
+          '${gagal.first.galat} Periksa printer dapur di Pengaturan.',
+        );
+      }
+    } on GalatKasir catch (galat) {
+      _TampilPesan(galat.pesan);
+    }
+    _FokusAkar();
+  }
+
+  /// K-13: kirim (fire) kursus yang ditahan ke dapur, lalu cetak tiketnya.
+  Future<void> _KirimKursus(String kursus) async {
+    final konteks = ref.read(penyediaKeranjang).pesananMeja;
+    if (konteks == null) {
+      return;
+    }
+    try {
+      final hasil = await ref
+          .read(penyediaLayananPesananMeja)
+          .KirimKursus(uuidPesanan: konteks.uuid, kursus: kursus, kasir: widget.kasir);
+      _TampilPesan('$kursus ${konteks.AmbilJudul()} dikirim ke dapur.', galat: false);
+      unawaited(ref.read(penyediaSesi.notifier).Sinkronkan());
+      final tiket = await ref
+          .read(penyediaLayananTiketDapur)
+          .Cetak(
+            pesanan: hasil.pesanan,
+            uuidBaris: hasil.uuidBaris,
+            katalog: ref.read(penyediaKatalog).value ?? KatalogLokal.kosong,
+            waktu: ref.read(penyediaJam)(),
+            namaKasir: widget.kasir.nama,
+          );
+      final gagal = tiket.where((t) => t.galat != null).toList();
+      if (gagal.isNotEmpty && mounted) {
+        _TampilPesan(
+          '$kursus terkirim, tetapi tiket ${gagal.map((t) => t.stasiun.nama).join(', ')} gagal dicetak: '
           '${gagal.first.galat} Periksa printer dapur di Pengaturan.',
         );
       }
@@ -1233,6 +1300,7 @@ class _LayarJualState extends ConsumerState<LayarJual> {
       labelTahan: switch ((pesanan, widget.modePelayan)) {
         (null, true) => 'Pilih meja',
         (null, false) => 'Tahan',
+        _ when _kursusDitahan => 'Tahan $_kursusBaru',
         _ => 'Kirim ke dapur',
       },
       labelKosongkan: pesanan == null ? 'Batalkan transaksi' : 'Tutup pesanan (kembali ke Meja)',
@@ -1246,6 +1314,12 @@ class _LayarJualState extends ConsumerState<LayarJual> {
       saatKosongkan: () => unawaited(pesanan == null ? _KonfirmasiBatal() : _TutupPesanan()),
       saatBayar: widget.modePelayan ? null : _BukaBayar,
       saatPelanggan: widget.modePelayan ? null : _BukaPelanggan,
+      // K-13: kursus item baru & kursus yang ditahan (hanya pesanan meja).
+      kursus: pesanan == null ? const [] : KursusPesanan.semua,
+      kursusDipilih: _kursusBaru,
+      saatKursus: (k) => setState(() => _kursusBaru = k),
+      kursusDitahan: pesanan == null ? const [] : LayananPesananMeja.AmbilKursusDitahan(pesanan.baris),
+      saatKirimKursus: (k) => unawaited(_KirimKursus(k)),
       // X8: kanal (GoFood, GrabFood, …) untuk penjualan langsung; pesanan meja selalu makan di tempat.
       // v3.51: jenis pesanan outlet (FnB) sebagai tombol segmen; pesanan meja selalu makan di tempat.
       jenisPesanan: widget.modePelayan || pesanan != null || keranjang.praPesan != null || keranjang.reservasi != null

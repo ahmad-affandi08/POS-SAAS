@@ -102,6 +102,7 @@ class BarisPesananTerbukaPos {
     required this.dibatalkan,
     required this.dikirimKeDapur,
     required this.statusDapur,
+    this.kursus,
   });
 
   final String uuid;
@@ -124,6 +125,9 @@ class BarisPesananTerbukaPos {
   /// Antre/Dimasak/Siap/Disajikan; null = belum ada tiket.
   final String? statusDapur;
 
+  /// K-13: Pembuka/Utama/Penutup; null = tanpa kursus (atau server lama).
+  final String? kursus;
+
   static BarisPesananTerbukaPos DariJson(Map<String, Object?> json) => BarisPesananTerbukaPos(
     uuid: UraiJson.AmbilTeks(json['Uuid']),
     uuidProduk: UraiJson.AmbilTeksAtauNull(json['UuidProduk']),
@@ -138,6 +142,7 @@ class BarisPesananTerbukaPos {
     dibatalkan: UraiJson.AmbilBenar(json['Dibatalkan']),
     dikirimKeDapur: UraiJson.AmbilBenar(json['DikirimKeDapur']),
     statusDapur: UraiJson.AmbilTeksAtauNull(json['StatusDapur']),
+    kursus: UraiJson.AmbilTeksAtauNull(json['Kursus']),
   );
 }
 

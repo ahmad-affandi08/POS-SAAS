@@ -67,6 +67,7 @@ final class PesananTerbukaOutlet
                 'Pilihan' => $b->Pilihan ?? [],
                 'Catatan' => $b->Catatan,
                 'Ronde' => $b->Ronde,
+                'Kursus' => $b->Kursus?->value,
                 'Dibatalkan' => $b->Status === StatusBarisPesanan::Dibatalkan,
                 'DikirimKeDapur' => $b->DikirimKeDapurPada !== null,
                 'StatusDapur' => $statusTiket[$b->Uuid] ?? null,
