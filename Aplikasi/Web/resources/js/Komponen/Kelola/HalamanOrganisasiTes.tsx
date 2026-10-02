@@ -101,6 +101,8 @@ describe('Kelola/Outlet (F-02 langkah 1, TabelData D-16)', () => {
                 Pkp: false,
                 Nitku: '',
                 PungutPbjt: false,
+                Kanvas: false,
+                NomorKendaraan: '',
             },
         });
 
@@ -130,6 +132,8 @@ describe('Kelola/Outlet (F-02 langkah 1, TabelData D-16)', () => {
                     PungutPbjt: false,
                     Status: 'Aktif',
                     KodeTerkunci: true,
+                    Kanvas: false,
+                    NomorKendaraan: null,
                 }}
                 Gudang={[]}
                 Merek={[]}
@@ -174,6 +178,8 @@ describe('Kelola/Outlet (F-02 langkah 1, TabelData D-16)', () => {
                     PungutPbjt: false,
                     Status: 'Aktif',
                     KodeTerkunci: true,
+                    Kanvas: false,
+                    NomorKendaraan: null,
                 }}
                 Gudang={[{ Uuid: 'G-1', Kode: 'UTAMA', Nama: 'Gudang utama', Jenis: 'Jual', Status: 'Aktif' }]}
                 Merek={[]}
@@ -209,6 +215,8 @@ describe('Kelola/Outlet (F-02 langkah 1, TabelData D-16)', () => {
             PungutPbjt: false,
             Status: 'Aktif' as const,
             KodeTerkunci: true,
+            Kanvas: false,
+            NomorKendaraan: null,
         };
         const modeMeja = {
             Aktif: true,

@@ -38,6 +38,8 @@ use Illuminate\Support\Carbon;
  * @property array<string, mixed>|null $ProfilPajak
  * @property array<string, mixed>|null $PengaturanKasir jenis pesanan kasir (v3.51), null = otomatis menurut mode kasir
  * @property StatusOrganisasi $Status
+ * @property bool $Kanvas Modul Salesman bagian 3: outlet ini kendaraan kanvas salesman (lokasi stok Toko = kendaraan)
+ * @property string|null $NomorKendaraan plat nomor kendaraan kanvas, misal "AD 1234 XY"
  * @property bool $PesanSendiriAktif F-17: tamu boleh memesan lewat QR meja (juga butuh fitur `kanal.self-order`)
  * @property bool $TokoOnlineAktif
  * @property bool $AmbilSendiriAktif
@@ -65,6 +67,8 @@ final class Outlet extends ModelDasar
         'ProfilPajak' => null,
         'PengaturanKasir' => null,
         'Status' => 'Aktif',
+        'Kanvas' => false,
+        'NomorKendaraan' => null,
         'PesanSendiriAktif' => false,
         'TokoOnlineAktif' => false,
         'AmbilSendiriAktif' => true,
@@ -98,6 +102,7 @@ final class Outlet extends ModelDasar
             'ProfilPajak' => 'array',
             'PengaturanKasir' => 'array',
             'Status' => StatusOrganisasi::class,
+            'Kanvas' => 'boolean',
             'PesanSendiriAktif' => 'boolean',
             'TokoOnlineAktif' => 'boolean',
             'AmbilSendiriAktif' => 'boolean',

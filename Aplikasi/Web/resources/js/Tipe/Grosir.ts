@@ -547,3 +547,63 @@ export type PropsCetakAmbilBarang = {
     Baris: (BarisCetakTanpaHarga & { JumlahTerkirim: string; SisaKirim: string })[];
     Usaha: UsahaCetak;
 };
+
+// Modul Salesman bagian 3 (§9.7): kanvas = outlet bertanda Kanvas, lokasi stok Toko-nya = bak kendaraan.
+export type KendaraanKanvas = {
+    Uuid: string;
+    Kode: string;
+    Nama: string;
+    NomorKendaraan: string | null;
+    Status: 'Aktif' | 'Diarsipkan';
+    UuidGudang: string | null;
+    NamaGudang: string | null;
+};
+
+/** Satu produk di rekap harian kanvas; semua jumlah string desimal dari buku stok lokasi kendaraan. */
+export type BarisRekapKanvas = {
+    UuidProduk: string;
+    NamaProduk: string;
+    Sku: string | null;
+    Satuan: string;
+    Awal: string;
+    Muat: string;
+    Terjual: string;
+    Retur: string;
+    Bongkar: string;
+    Lain: string;
+    Sisa: string;
+};
+
+export type RekapKanvas = {
+    Tanggal: string;
+    Uang: {
+        PenjualanTunai: string;
+        PenjualanTempo: string;
+        PenjualanLain: string;
+        RefundTunai: string;
+        NilaiRetur: string;
+        Bersih: string;
+        JumlahTransaksi: number;
+        JumlahVoid: number;
+        JumlahRetur: number;
+    };
+    Setoran: {
+        JumlahShiftTertutup: number;
+        JumlahShiftBelumDitutup: number;
+        KasAwal: string;
+        KasSeharusnya: string;
+        KasAktual: string;
+        Selisih: string;
+    };
+    Produk: BarisRekapKanvas[];
+};
+
+export type PropsDaftarKanvas = {
+    Kanvas: KendaraanKanvas[];
+    UuidTerpilih: string | null;
+    Tanggal: string;
+    Rekap: RekapKanvas | null;
+    BatasOutlet: { Batas: number | null; Terpakai: number };
+    Izin: IzinGrosir;
+    IzinKanvas: { TambahKendaraan: boolean; Transfer: boolean };
+};

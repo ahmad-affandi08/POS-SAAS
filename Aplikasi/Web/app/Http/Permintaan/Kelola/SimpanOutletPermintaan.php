@@ -14,6 +14,9 @@ final class SimpanOutletPermintaan extends FormRequest
     /** F-02 langkah 1: kode 3–5 karakter untuk penomoran dokumen, diawali huruf (misal UTAMA, JKT1). */
     public const POLA_KODE = '/^[A-Za-z][A-Za-z0-9]{2,4}$/';
 
+    /** Modul Salesman bagian 3: plat nomor kendaraan kanvas, huruf/angka/spasi/strip, misal "AD 1234 XY". */
+    public const POLA_NOMOR_KENDARAAN = '/^[A-Za-z0-9][A-Za-z0-9 \-]*$/';
+
     /**
      * @return array<string, list<mixed>>
      */
@@ -30,6 +33,8 @@ final class SimpanOutletPermintaan extends FormRequest
             'Pkp' => ['boolean'],
             'Nitku' => ['nullable', 'string', 'digits:22'],
             'PungutPbjt' => ['boolean'],
+            'Kanvas' => ['sometimes', 'boolean'],
+            'NomorKendaraan' => ['nullable', 'string', 'max:20', 'regex:'.self::POLA_NOMOR_KENDARAAN],
         ];
     }
 
@@ -44,6 +49,8 @@ final class SimpanOutletPermintaan extends FormRequest
             'Merek.size' => 'Pilih merek yang tersedia.',
             'JamTutupBuku.date_format' => 'Jam tutup buku memakai format JJ:MM, misal 04:00.',
             'Nitku.digits' => 'NITKU terdiri dari 22 angka.',
+            'NomorKendaraan.regex' => 'Nomor kendaraan hanya huruf, angka, dan spasi. Misal: AD 1234 XY.',
+            'NomorKendaraan.max' => 'Nomor kendaraan paling banyak 20 karakter.',
         ];
     }
 
@@ -60,6 +67,9 @@ final class SimpanOutletPermintaan extends FormRequest
             pkp: $this->boolean('Pkp'),
             nitku: $this->filled('Nitku') ? $this->string('Nitku')->toString() : null,
             pungutPbjt: $this->boolean('PungutPbjt'),
+            // Tanpa kunci `Kanvas` (klien lama) = tanda kanvas tidak diubah.
+            kanvas: $this->has('Kanvas') ? $this->boolean('Kanvas') : null,
+            nomorKendaraan: $this->filled('NomorKendaraan') ? $this->string('NomorKendaraan')->toString() : null,
         );
     }
 }

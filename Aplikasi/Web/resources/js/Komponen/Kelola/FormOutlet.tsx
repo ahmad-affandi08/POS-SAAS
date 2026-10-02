@@ -1,12 +1,13 @@
 import { useForm } from '@inertiajs/react';
-import type { FormEvent } from 'react';
+import { useId, type FormEvent } from 'react';
 
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import KotakCentang from '@/Komponen/Formulir/KotakCentang';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import { Card, CardContent, CardHeader, CardTitle } from '@/Komponen/Ui/card';
-import { FieldDescription, FieldLegend, FieldSet } from '@/Komponen/Ui/field';
+import { Field, FieldDescription, FieldLabel, FieldLegend, FieldSet } from '@/Komponen/Ui/field';
+import { Switch } from '@/Komponen/Ui/switch';
 import type { Kota, Pilihan } from '@/Tipe/Organisasi';
 
 export type IsianOutlet = {
@@ -20,6 +21,9 @@ export type IsianOutlet = {
     Pkp: boolean;
     Nitku: string;
     PungutPbjt: boolean;
+    /** Modul Salesman bagian 3: outlet ini kendaraan kanvas salesman (lokasi stok Toko = bak kendaraan). */
+    Kanvas: boolean;
+    NomorKendaraan: string;
 };
 
 type PropsFormOutlet = {
@@ -41,6 +45,7 @@ const pilihanZonaWaktu: Pilihan[] = [
 /** Isian outlet (F-02 langkah 1): identitas, kota & zona waktu, jam tutup buku, profil pajak dasar. */
 export default function FormOutlet({ awal, uuid, kodeTerkunci = false, merek, kota, saatBatal }: PropsFormOutlet) {
     const formulir = useForm<IsianOutlet>(awal);
+    const idKanvas = useId();
     const pilihanKota = kota.map((baris) => ({
         Nilai: baris.Kode,
         Label: `${baris.Nama}${baris.NamaProvinsi ? `, ${baris.NamaProvinsi}` : ''} (${baris.ZonaWaktu})`,
@@ -173,6 +178,38 @@ export default function FormOutlet({ awal, uuid, kodeTerkunci = false, merek, ko
                             nilai={formulir.data.PungutPbjt}
                             saatBerubah={(nilai) => formulir.setData('PungutPbjt', nilai)}
                         />
+                    </FieldSet>
+                    <FieldSet className="gap-2 border-t border-garis pt-4">
+                        <FieldLegend variant="label" className="mb-0 text-label font-semibold text-teks-utama">
+                            Kanvas
+                        </FieldLegend>
+                        <Field orientation="horizontal" className="min-h-10 items-center">
+                            <Switch
+                                id={idKanvas}
+                                checked={formulir.data.Kanvas}
+                                onCheckedChange={(nilai) => formulir.setData('Kanvas', nilai)}
+                            />
+                            <FieldLabel htmlFor={idKanvas} className="text-isi font-normal text-teks-utama">
+                                Outlet kanvas (kendaraan salesman)
+                            </FieldLabel>
+                        </Field>
+                        <FieldDescription className="m-0 text-keterangan text-teks-sekunder">
+                            Lokasi stok Toko outlet ini adalah bak kendaraan. Muat & bongkar lewat transfer stok, rekap
+                            hariannya di menu Grosir › Kanvas.
+                        </FieldDescription>
+                        {formulir.data.Kanvas ? (
+                            <div className="max-w-sm">
+                                <BidangTeks
+                                    label="Nomor kendaraan (opsional)"
+                                    nilai={formulir.data.NomorKendaraan}
+                                    saatBerubah={(nilai) => formulir.setData('NomorKendaraan', nilai.toUpperCase())}
+                                    galat={formulir.errors.NomorKendaraan}
+                                    keterangan="Plat nomor, misal AD 1234 XY."
+                                    maxLength={20}
+                                    kode
+                                />
+                            </div>
+                        ) : null}
                     </FieldSet>
                     <div className="flex flex-wrap gap-2">
                         <Tombol type="submit" memproses={formulir.processing}>

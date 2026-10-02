@@ -24,11 +24,13 @@ use Illuminate\Support\Facades\DB;
  * - BR-02.2: kode unik per tenant (termasuk outlet arsip) dan tidak bisa diubah setelah `KodeDikunciPada` terisi.
  * - BR-02.4: outlet baru langsung mendapat satu lokasi stok jenis Toko.
  * - Zona waktu mengikuti kota (P-02); tanpa kota, WIB/WITA/WIT dipilih manual.
+ * - Modul Salesman bagian 3: `Kanvas` menandai outlet kendaraan salesman (lokasi stok Toko = kendaraan) beserta plat
+ *   nomornya; nomor kendaraan dikosongkan bila tanda kanvas dimatikan.
  */
 final class SimpanOutlet
 {
     /** Kolom yang dicatat di log audit. */
-    private const KOLOM_AUDIT = ['Nama', 'Kode', 'IdMerek', 'Alamat', 'KodeKota', 'ZonaWaktu', 'JamTutupBuku', 'ProfilPajak'];
+    private const KOLOM_AUDIT = ['Nama', 'Kode', 'IdMerek', 'Alamat', 'KodeKota', 'ZonaWaktu', 'JamTutupBuku', 'ProfilPajak', 'Kanvas', 'NomorKendaraan'];
 
     public function __construct(
         private readonly KonteksTenant $konteks,
@@ -56,6 +58,11 @@ final class SimpanOutlet
                     'PungutPbjt' => $data->pungutPbjt,
                 ],
             ];
+
+            if ($data->kanvas !== null) {
+                $isian['Kanvas'] = $data->kanvas;
+                $isian['NomorKendaraan'] = $data->kanvas ? self::NormalkanNomorKendaraan($data->nomorKendaraan) : null;
+            }
 
             $this->PastikanKodeUnik($kode, $outlet?->Id);
 
@@ -116,6 +123,14 @@ final class SimpanOutlet
         );
 
         return $outlet;
+    }
+
+    /** Plat nomor huruf besar dengan spasi tunggal ("ad  1234 xy" → "AD 1234 XY"); kosong = null. */
+    private static function NormalkanNomorKendaraan(?string $nomor): ?string
+    {
+        $nomor = $nomor === null ? '' : mb_strtoupper(trim((string) preg_replace('/\s+/u', ' ', $nomor)));
+
+        return $nomor === '' ? null : $nomor;
     }
 
     private function PastikanKodeUnik(string $kode, ?int $kecualiId): void

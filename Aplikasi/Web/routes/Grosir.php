@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Domain\Organisasi\Enum\IzinTenant;
 use App\Http\Kontroler\Kelola\Grosir\FakturPenjualanKontroler;
+use App\Http\Kontroler\Kelola\Grosir\KanvasKontroler;
 use App\Http\Kontroler\Kelola\Grosir\KunjunganSalesKontroler;
 use App\Http\Kontroler\Kelola\Grosir\PesananGrosirKontroler;
 use App\Http\Kontroler\Kelola\Grosir\ProdukGrosirKontroler;
@@ -15,7 +16,8 @@ use Illuminate\Support\Facades\Route;
 
 /*
  * Rute back-office grosir (F-12, §9.7, D-32): pesanan grosir (SO), surat jalan, faktur penjualan, retur (BR-12.7),
- * kunjungan salesman (Modul Salesman, hanya baca), dan halaman cetak A4 (daftar ambil barang dicetak dari SO-nya).
+ * kunjungan salesman (Modul Salesman, hanya baca), kanvas (Modul Salesman bagian 3: kendaraan & rekap harian; tambah
+ * kendaraan = tambah outlet sehingga memakai izin `outlet.kelola`), dan halaman cetak A4 (daftar ambil barang dicetak dari SO-nya).
  * Didaftarkan dari routes/web.php di dalam grup `/kelola` (auth + IdentifikasiTenantSesi … BatasiTenantDitangguhkan). Semua rute memakai
  * `SiapkanAuditTenant` dan izin `grosir.kelola`; konfirmasi SO yang melewati limit kredit butuh `grosir.setujui-kredit`
  * (diperiksa di Aksi, BR-12.6, karena yang tahu paparannya hanya Aksi itu).
@@ -63,4 +65,12 @@ Route::middleware([SiapkanAuditTenant::class, $izin(IzinTenant::GrosirKelola)])-
     // Modul Salesman bagian 1: kunjungan dari aplikasi salesman (hanya baca) + ekspor CSV.
     Route::get('/kunjungan', [KunjunganSalesKontroler::class, 'Daftar'])->name('kelola.grosir.kunjungan.daftar');
     Route::get('/kunjungan/ekspor', [KunjunganSalesKontroler::class, 'Ekspor'])->name('kelola.grosir.kunjungan.ekspor');
+
+    // Modul Salesman bagian 3: kendaraan kanvas + rekap harian (muat, terjual, retur, bongkar, sisa, setoran).
+    Route::get('/kanvas', [KanvasKontroler::class, 'Daftar'])->name('kelola.grosir.kanvas.daftar');
+});
+
+// Kendaraan kanvas = outlet baru (batas paket BR-02.1), jadi izinnya sama dengan tambah outlet.
+Route::middleware([SiapkanAuditTenant::class, $izin(IzinTenant::OutletKelola)])->prefix('grosir')->group(function (): void {
+    Route::post('/kanvas', [KanvasKontroler::class, 'Simpan'])->name('kelola.grosir.kanvas.simpan');
 });

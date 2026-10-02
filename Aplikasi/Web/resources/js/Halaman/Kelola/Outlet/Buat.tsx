@@ -24,6 +24,8 @@ export default function HalamanBuatOutlet({ Merek, Kota, BatasOutlet }: PropsBua
         Pkp: false,
         Nitku: '',
         PungutPbjt: false,
+        Kanvas: false,
+        NomorKendaraan: '',
     };
     const isianForm = Object.keys(awal);
 

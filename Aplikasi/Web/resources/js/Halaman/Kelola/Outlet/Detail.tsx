@@ -33,6 +33,8 @@ type Outlet = {
     PungutPbjt: boolean;
     Status: StatusOrganisasi;
     KodeTerkunci: boolean;
+    Kanvas: boolean;
+    NomorKendaraan: string | null;
 };
 
 type Gudang = { Uuid: string; Kode: string; Nama: string; Jenis: string; Status: StatusOrganisasi };
@@ -109,6 +111,8 @@ export default function HalamanDetailOutlet({
                         Pkp: Outlet.Pkp,
                         Nitku: Outlet.Nitku ?? '',
                         PungutPbjt: Outlet.PungutPbjt,
+                        Kanvas: Outlet.Kanvas,
+                        NomorKendaraan: Outlet.NomorKendaraan ?? '',
                     }}
                     merek={Merek}
                     kota={Kota}
@@ -121,6 +125,12 @@ export default function HalamanDetailOutlet({
                             <Rincian label="Kabupaten/kota" nilai={`${namaKota} · ${Outlet.ZonaWaktu}`} />
                             <Rincian label="Jam tutup buku" nilai={Outlet.JamTutupBuku} />
                             <Rincian label="PKP" nilai={Outlet.Pkp ? 'Ya' : 'Tidak'} />
+                            {Outlet.Kanvas ? (
+                                <Rincian
+                                    label="Outlet kanvas"
+                                    nilai={`Ya · ${Outlet.NomorKendaraan ?? 'nomor kendaraan belum diisi'}`}
+                                />
+                            ) : null}
                         </dl>
                     </CardContent>
                 </Card>

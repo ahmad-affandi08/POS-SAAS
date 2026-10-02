@@ -108,6 +108,9 @@ final class OutletKontroler extends DasarKelolaKontroler
                 'PungutPbjt' => (bool) ($baris->ProfilPajak['PungutPbjt'] ?? false),
                 'Status' => $baris->Status->value,
                 'KodeTerkunci' => $baris->KodeDikunciPada !== null,
+                // Modul Salesman bagian 3: outlet kanvas = kendaraan salesman.
+                'Kanvas' => $baris->Kanvas,
+                'NomorKendaraan' => $baris->NomorKendaraan,
             ],
             'Gudang' => Gudang::query()
                 ->where('IdOutlet', $baris->Id)
