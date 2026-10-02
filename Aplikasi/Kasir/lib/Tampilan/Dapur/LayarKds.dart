@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:klien_api/KlienApi.dart';
 import 'package:mesin_kasir/MesinKasir.dart' show Kuantitas;
@@ -8,13 +9,17 @@ import 'package:sistem_desain/SistemDesain.dart';
 
 import '../../Aplikasi/Penyedia.dart';
 import '../../Domain/Dapur/LayananDapur.dart';
+import '../../Domain/Dapur/PenyusunLayarAntrian.dart';
 import '../../Domain/GalatKasir.dart';
 import '../Komponen/FormatAngka.dart';
+import 'PanelPanggilAntrian.dart';
 
 /// Layar dapur / KDS (F-10b fase 1) untuk perangkat berjenis `Kds`: tiket aktif outlet per stasiun sebagai kartu, urut
 /// waktu kirim (terlama dulu). Umur tiket berwarna dan bertulisan (normal < 10 menit, "Lama" 10–20, "Terlambat" > 20;
 /// jam server dipakai agar tidak bergantung jam perangkat). Ketuk tombol utama kartu = maju satu status; "Kembalikan"
 /// = mundur satu langkah untuk salah ketuk. Tiket ditarik ulang tiap [selangTarik] detik (online di fase 1).
+/// K-2 lanjutan (§9.2): tombol "Layar antrian" mengganti tampilan menjadi layar panggil antrian (semua stasiun, diingat
+/// per perangkat); nomor yang baru siap berbunyi dan bertanda "Baru".
 class LayarKds extends ConsumerStatefulWidget {
   const LayarKds({super.key});
 
@@ -37,6 +42,9 @@ class _LayarKdsState extends ConsumerState<LayarKds> {
   bool _menarik = false;
   String? _galat;
   final Set<String> _sibuk = {};
+  bool _antrian = false;
+  Set<String> _siapSebelumnya = const {};
+  Set<String> _siapBaru = const {};
 
   @override
   void initState() {
@@ -55,6 +63,10 @@ class _LayarKdsState extends ConsumerState<LayarKds> {
 
   Future<void> _Mulai() async {
     _terpilih = await _layanan.AmbilStasiunTerpilih();
+    final antrian = await _layanan.CekTampilanAntrian();
+    if (mounted && antrian) {
+      setState(() => _antrian = true);
+    }
     try {
       final stasiun = await _layanan.AmbilStasiun();
       if (mounted) {
@@ -72,12 +84,21 @@ class _LayarKdsState extends ConsumerState<LayarKds> {
     }
     _menarik = true;
     try {
-      final daftar = await _layanan.AmbilTiket(_terpilih);
+      // Layar antrian memakai semua stasiun: pesanan siap bila semua stasiunnya siap.
+      final daftar = await _layanan.AmbilTiket(_antrian ? const [] : _terpilih);
       if (!mounted) {
         return;
       }
       final jam = ref.read(penyediaJam)().toUtc();
+      final siapSekarang = {for (final n in PenyusunLayarAntrian.Susun(daftar.tiket).siap) n.nomorDokumen};
+      final baru = _dimuat ? siapSekarang.difference(_siapSebelumnya) : const <String>{};
+      if (_antrian && baru.isNotEmpty) {
+        unawaited(SystemSound.play(SystemSoundType.alert));
+      }
       setState(() {
+        // "Baru" hanya untuk kelompok nomor terakhir yang dipanggil; hilang saat nomor itu diambil.
+        _siapBaru = baru.isEmpty ? _siapBaru.intersection(siapSekarang) : baru;
+        _siapSebelumnya = siapSekarang;
         _tiket = daftar.tiket;
         _selisihJam = daftar.waktuServer == null ? Duration.zero : daftar.waktuServer!.toUtc().difference(jam);
         _galat = null;
@@ -147,6 +168,16 @@ class _LayarKdsState extends ConsumerState<LayarKds> {
     await _Tarik();
   }
 
+  Future<void> _GantiTampilan() async {
+    final antrian = !_antrian;
+    await _layanan.SimpanTampilanAntrian(antrian);
+    setState(() {
+      _antrian = antrian;
+      _siapBaru = const {};
+    });
+    await _Tarik();
+  }
+
   String _AmbilLabelStasiun() {
     if (_terpilih.isEmpty) {
       return 'Semua stasiun';
@@ -185,7 +216,10 @@ class _LayarKdsState extends ConsumerState<LayarKds> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Semantics(header: true, child: Text('Dapur', style: teks.titleLarge)),
+                          Semantics(
+                            header: true,
+                            child: Text(_antrian ? 'Antrian pesanan' : 'Dapur', style: teks.titleLarge),
+                          ),
                           Text(
                             [
                               if (identitas?.outlet.isNotEmpty ?? false) identitas!.outlet,
@@ -196,16 +230,23 @@ class _LayarKdsState extends ConsumerState<LayarKds> {
                         ],
                       ),
                     ),
-                    Flexible(
-                      child: SizedBox(
-                        height: TokenJarak.targetSentuh,
-                        child: OutlinedButton.icon(
-                          onPressed: () => unawaited(_PilihStasiun()),
-                          icon: const Icon(Icons.filter_list),
-                          label: Text(_AmbilLabelStasiun(), maxLines: 1, overflow: TextOverflow.ellipsis),
+                    IconButton(
+                      key: const ValueKey('GantiTampilanKds'),
+                      tooltip: _antrian ? 'Tampilkan tiket dapur' : 'Tampilkan layar antrian',
+                      onPressed: () => unawaited(_GantiTampilan()),
+                      icon: Icon(_antrian ? Icons.receipt_long : Icons.tv),
+                    ),
+                    if (!_antrian)
+                      Flexible(
+                        child: SizedBox(
+                          height: TokenJarak.targetSentuh,
+                          child: OutlinedButton.icon(
+                            onPressed: () => unawaited(_PilihStasiun()),
+                            icon: const Icon(Icons.filter_list),
+                            label: Text(_AmbilLabelStasiun(), maxLines: 1, overflow: TextOverflow.ellipsis),
+                          ),
                         ),
                       ),
-                    ),
                     IconButton(
                       tooltip: 'Muat ulang tiket',
                       onPressed: _menarik ? null : () => unawaited(_Tarik()),
@@ -238,6 +279,13 @@ class _LayarKdsState extends ConsumerState<LayarKds> {
             Expanded(
               child: !_dimuat
                   ? const Center(child: CircularProgressIndicator())
+                  : _antrian
+                  ? Builder(
+                      builder: (context) {
+                        final antrian = PenyusunLayarAntrian.Susun(_tiket);
+                        return PanelPanggilAntrian(disiapkan: antrian.disiapkan, siap: antrian.siap, baru: _siapBaru);
+                      },
+                    )
                   : _tiket.isEmpty
                   ? Center(
                       child: Padding(

@@ -92,6 +92,9 @@ abstract final class KunciPengaturan {
   /// F-10b: stasiun dapur yang ditampilkan perangkat KDS (Uuid dipisah koma; kosong = semua).
   static const String stasiunKds = 'StasiunKds';
 
+  /// K-2 lanjutan: tampilan perangkat KDS (`Tiket` = layar dapur, `Antrian` = layar panggil antrian).
+  static const String tampilanKds = 'TampilanKds';
+
   // Pengaturan lokal perangkat (D-16, §17.2.7). Tidak ikut diganti data awal dan tidak dihapus saat perangkat dicabut.
   static const String ukuranTampilan = 'UkuranTampilan';
   static const String posisiKeranjang = 'PosisiKeranjang';

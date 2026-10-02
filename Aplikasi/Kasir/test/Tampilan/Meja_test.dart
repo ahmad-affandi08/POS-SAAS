@@ -395,6 +395,45 @@ void main() {
     });
   }
 
+  for (final (nama, ukuran) in [('360', ukuranHp), ('1280', ukuranDesktop)]) {
+    testWidgets('K-2 lanjutan: KDS beralih ke layar panggil antrian di $nama dp; pilihan diingat perangkat', (
+      tester,
+    ) async {
+      final u = LingkunganUji.Buat();
+      await tester.runAsync(() async {
+        await u.SiapkanAktif();
+        await u.repositori.SimpanPengaturan(KunciPengaturan.jenisPerangkat, 'Kds');
+      });
+      Map<String, Object?> Antrian(String uuid, String dokumen, String label, String status) => {
+        ...TiketUji(uuid, '', status, '2026-09-24T01:20:00Z', const []),
+        'NamaMeja': null,
+        'NomorDokumen': dokumen,
+        'Label': label,
+      };
+      u.server.penangan = PenanganServer(
+        tiket: [
+          Antrian('01K5T1KET00000000000000011', 'INV/SLB/260924/POS-001-0041', '#041 Ani', 'Dimasak'),
+          Antrian('01K5T1KET00000000000000012', 'INV/SLB/260924/POS-001-0042', '#042 Budi Santoso', 'Siap'),
+        ],
+      );
+      await PasangAplikasi(tester, u, ukuran: ukuran);
+      await Tunggu(tester, const Duration(milliseconds: 600));
+      expect(find.byType(LayarKds), findsOneWidget);
+
+      await Ketuk(tester, find.byKey(const ValueKey('GantiTampilanKds')));
+      await Tunggu(tester);
+      expect(find.text('Antrian pesanan'), findsOneWidget);
+      expect(find.text('Silakan diambil'), findsOneWidget);
+      expect(find.text('Sedang disiapkan'), findsOneWidget);
+      expect(find.text('042'), findsOneWidget);
+      expect(find.text('Budi Santoso'), findsOneWidget);
+      expect(find.text('041'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      expect(await tester.runAsync(() => u.repositori.AmbilPengaturan(KunciPengaturan.tampilanKds)), 'Antrian');
+      await Lepas(tester, u);
+    });
+  }
+
   for (final (nama, ukuran) in [('360', ukuranHp), ('800', ukuranTablet), ('1280', ukuranDesktop)]) {
     testWidgets('v2.00 perangkat Pelayan di $nama dp: tanpa shift, beranda Meja, kirim ke dapur tanpa Bayar', (
       tester,

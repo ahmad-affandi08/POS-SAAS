@@ -52,6 +52,12 @@ class LayananDapur {
   Future<void> SimpanStasiunTerpilih(List<String> uuid) =>
       repositori.SimpanPengaturan(KunciPengaturan.stasiunKds, uuid.join(','));
 
+  /// K-2 lanjutan: perangkat ini menampilkan layar panggil antrian (bukan tiket dapur).
+  Future<bool> CekTampilanAntrian() async => await repositori.AmbilPengaturan(KunciPengaturan.tampilanKds) == 'Antrian';
+
+  Future<void> SimpanTampilanAntrian(bool antrian) =>
+      repositori.SimpanPengaturan(KunciPengaturan.tampilanKds, antrian ? 'Antrian' : 'Tiket');
+
   Future<List<StasiunDapurPos>> AmbilStasiun() async => _Jalankan(() async => (await klien.AmbilMeja()).stasiunDapur);
 
   Future<DaftarTiketDapur> AmbilTiket(List<String> stasiun) => _Jalankan(() => klien.AmbilTiketDapur(stasiun: stasiun));
