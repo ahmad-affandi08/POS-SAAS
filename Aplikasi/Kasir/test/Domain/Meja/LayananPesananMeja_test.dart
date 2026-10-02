@@ -459,6 +459,88 @@ void main() {
       },
     );
 
+    test('K-12 minta bill & meja kotor: bayar lokal menandai meja, snapshot tidak menghapusnya sebelum penjualan terkirim, '
+        'Meja.Bersih tertunda tidak dikembalikan snapshot', () async {
+      await Siapkan();
+      await u.shift.BukaShift(kasir: rina, kasAwal: Uang.DariBulat(500000));
+      final pesanan = await u.pesananMeja.Buka(kasir: rina, k: k, meja: await Meja(mejaD01));
+
+      // Minta bill: waktu pertama dipertahankan, outbox Ubah hanya membawa MintaBill.
+      await u.pesananMeja.AturMintaBill(uuidPesanan: pesanan.uuid, kasir: rina, minta: true);
+      u.jam = u.jam.add(const Duration(minutes: 2));
+      final lagi = await u.pesananMeja.AturMintaBill(uuidPesanan: pesanan.uuid, kasir: rina, minta: true);
+      expect(lagi.mintaBillPada, DateTime.utc(2026, 9, 24, 1));
+      final ubah = (await Outbox()).lastWhere((o) => o.Jenis == 'PesananTerbuka.Ubah');
+      expect(Data(ubah), {
+        'UuidPesanan': pesanan.uuid,
+        'MintaBill': true,
+        'UuidPengguna': rina.uuid,
+        'DiubahPada': '2026-09-24T01:02:00.000Z',
+      });
+
+      // Bayar di perangkat ini → D-01 perlu dibersihkan.
+      await u.pesananMeja.SimpanBaris(uuidPesanan: pesanan.uuid, draf: DrafContoh(), kasir: rina, kirimDapur: true);
+      final keranjang = LayananPesananMeja.SusunKeranjangEfektif(
+        Keranjang(pesananMeja: KonteksPesananMeja.DariPesanan((await u.repositoriMeja.CariPesanan(pesanan.uuid))!)),
+        await u.repositoriMeja.CariPesanan(pesanan.uuid),
+        katalog,
+      );
+      final tunai = k.metodePembayaran.firstWhere((m) => m.Jenis == 'Tunai');
+      await u.penjualan.Bayar(
+        keranjang: keranjang,
+        pembayaran: [PembayaranMasukan(metode: tunai, jumlah: Uang.DariBulat(100000))],
+        kasir: rina,
+        k: k,
+      );
+      expect((await u.repositoriMeja.PantauMejaPerluDibersihkan().first).keys, [mejaD01]);
+
+      // Snapshot server belum tahu pembayaran itu (penjualan masih tertunda) tetapi tahu T-01 kotor.
+      u.server.penangan = (p) async => http.Response(
+        jsonEncode({
+          'Pesanan': <Object?>[],
+          'Ditutup': <Object?>[],
+          'MejaPerluDibersihkan': [
+            {'UuidMeja': mejaT01, 'Sejak': '2026-09-24T00:30:00Z'},
+          ],
+        }),
+        200,
+        headers: {'content-type': 'application/json', 'etag': '"k1"'},
+      );
+      expect(await u.pesananMeja.Tarik(), isTrue);
+      expect((await u.repositoriMeja.PantauMejaPerluDibersihkan().first).keys, unorderedEquals([mejaD01, mejaT01]));
+
+      // T-01 ditandai bersih di perangkat ini; snapshot yang masih memuatnya tidak mengembalikannya, ETag tidak disimpan.
+      await u.pesananMeja.TandaiMejaBersih(uuidMeja: mejaT01, kasir: rina);
+      final bersih = (await Outbox()).lastWhere((o) => o.Jenis == 'Meja.Bersih');
+      expect(Data(bersih), {
+        'UuidMeja': mejaT01,
+        'UuidPengguna': rina.uuid,
+        'DibersihkanPada': '2026-09-24T01:02:00.000Z',
+      });
+      await u.pesananMeja.Tarik();
+      expect((await u.repositoriMeja.PantauMejaPerluDibersihkan().first).keys, [mejaD01]);
+      expect(await u.repositori.AmbilPengaturan(KunciPengaturan.etagPesananTerbuka), '');
+
+      // Semua terkirim: daftar server menjadi sumber kebenaran.
+      await u.db.delete(u.db.outbox).go();
+      u.server.penangan = (p) async => http.Response(
+        jsonEncode({
+          'Pesanan': <Object?>[],
+          'Ditutup': [
+            {'Uuid': pesanan.uuid, 'Status': 'Dibayar'},
+          ],
+          'MejaPerluDibersihkan': [
+            {'UuidMeja': mejaD01, 'Sejak': '2026-09-24T01:02:00Z'},
+          ],
+        }),
+        200,
+        headers: {'content-type': 'application/json', 'etag': '"k2"'},
+      );
+      await u.pesananMeja.Tarik();
+      expect(await u.repositoriMeja.PantauMejaPerluDibersihkan().first, {mejaD01: DateTime.utc(2026, 9, 24, 1, 2)});
+      expect(await u.repositori.AmbilPengaturan(KunciPengaturan.etagPesananTerbuka), '"k2"');
+    });
+
     test('kunci bayar: 409 PesananSedangDibayar ditolak; offline tetap boleh bayar', () async {
       await Siapkan();
       u.server.penangan = (p) async => http.Response(

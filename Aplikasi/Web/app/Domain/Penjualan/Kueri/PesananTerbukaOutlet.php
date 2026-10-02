@@ -16,7 +16,8 @@ use Carbon\CarbonImmutable;
 /**
  * Snapshot pesanan terbuka satu outlet untuk perangkat kasir/pelayan (F-07 mode meja fase 1, `GET
  * /api/pos/v1/pesanan-terbuka`): semua pesanan `Terbuka` lengkap dengan baris & status tiket dapurnya, ditambah Uuid
- * pesanan yang ditutup (dibayar/dibatalkan) dalam 12 jam terakhir agar perangkat lain menghapusnya dari layar.
+ * pesanan yang ditutup (dibayar/dibatalkan) dalam 12 jam terakhir agar perangkat lain menghapusnya dari layar, dan
+ * meja yang perlu dibersihkan setelah tagihannya dibayar (K-12, v3.63).
  * `Tanda` = hash isi untuk ETag (perangkat menarik tiap 5–10 detik; 304 bila tidak berubah).
  */
 final class PesananTerbukaOutlet
@@ -30,7 +31,7 @@ final class PesananTerbukaOutlet
     ) {}
 
     /**
-     * @return array{Pesanan: list<array<string, mixed>>, Ditutup: list<array{Uuid: string, Status: string}>, Tanda: string}
+     * @return array{Pesanan: list<array<string, mixed>>, Ditutup: list<array{Uuid: string, Status: string}>, MejaPerluDibersihkan: list<array{UuidMeja: string, Sejak: string}>, Tanda: string}
      */
     public function Ambil(int $idOutlet): array
     {
@@ -54,6 +55,7 @@ final class PesananTerbukaOutlet
             'DibukaPada' => $p->DibukaPada->toIso8601ZuluString(),
             'HeaderDiubahPada' => $p->HeaderDiubahPada->toIso8601ZuluString(),
             'DikunciBayar' => $p->KunciBayarSampai !== null && $p->KunciBayarSampai->isFuture(),
+            'MintaBillPada' => $p->MintaBillPada?->toIso8601ZuluString(),
             'Baris' => array_values(collect($baris->get($p->Id, []))->map(fn (PesananTerbukaDetail $b): array => [
                 'Uuid' => $b->Uuid,
                 'UuidProduk' => $b->UuidProduk,
@@ -74,6 +76,7 @@ final class PesananTerbukaOutlet
         $isi = [
             'Pesanan' => $pesanan,
             'Ditutup' => array_values($ditutup->map(fn (PesananTerbuka $p): array => ['Uuid' => $p->Uuid, 'Status' => $p->Status->value])->all()),
+            'MejaPerluDibersihkan' => $this->meja->AmbilPerluDibersihkan($idOutlet),
         ];
 
         return $isi + ['Tanda' => hash('sha256', (string) json_encode($isi))];

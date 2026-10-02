@@ -4,18 +4,23 @@ declare(strict_types=1);
 
 namespace App\Domain\Penjualan\Layanan;
 
+use App\Domain\Organisasi\Aksi\AturKebersihanMeja;
 use App\Domain\Penjualan\Enum\KodeAlasanTinjauan;
 use App\Domain\Penjualan\Enum\StatusPesananTerbuka;
 use App\Domain\Penjualan\Model\Penjualan;
 use App\Domain\Penjualan\Model\PesananTerbuka;
+use Carbon\CarbonImmutable;
 
 /**
  * Penutupan pesanan terbuka oleh pembayarannya (`Penjualan.Buat` + `UuidPesananTerbuka`, F-07 mode meja fase 1).
  * Uang yang sudah diterima tidak pernah ditolak karena pesanan (§18.3): pesanan tidak dikenal → tinjauan
  * `PesananTidakDikenal`; pesanan sudah dibayar/dibatalkan (bayar ganda offline) → tinjauan `PesananDibayarGanda`.
+ * Meja pesanan yang dibayar ditandai "perlu dibersihkan" sejak waktu bayar perangkat (K-12).
  */
 final class PenutupPesananTerbuka
 {
+    public function __construct(private readonly AturKebersihanMeja $kebersihan) {}
+
     /**
      * @return array{0: PesananTerbuka|null, 1: array<string, string>} pesanan (dikunci) dan alasan tinjauan
      */
@@ -51,5 +56,9 @@ final class PenutupPesananTerbuka
             'IdPerangkatKunciBayar' => null,
             'KunciBayarSampai' => null,
         ]);
+
+        if ($pesanan->IdMeja !== null) {
+            $this->kebersihan->TandaiPerluDibersihkan($pesanan->IdMeja, CarbonImmutable::instance($penjualan->DibuatOfflinePada));
+        }
     }
 }

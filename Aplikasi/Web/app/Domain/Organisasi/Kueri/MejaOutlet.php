@@ -65,6 +65,23 @@ final class MejaOutlet
     }
 
     /**
+     * K-12: meja aktif outlet yang menunggu dibersihkan, untuk snapshot pesanan terbuka POS.
+     *
+     * @return list<array{UuidMeja: string, Sejak: string}>
+     */
+    public function AmbilPerluDibersihkan(int $idOutlet): array
+    {
+        return array_values(Meja::query()
+            ->where('IdOutlet', $idOutlet)
+            ->where('Status', StatusOrganisasi::Aktif->value)
+            ->whereNotNull('PerluDibersihkanSejak')
+            ->orderBy('Id')
+            ->get(['Uuid', 'PerluDibersihkanSejak'])
+            ->map(fn (Meja $m): array => ['UuidMeja' => $m->Uuid, 'Sejak' => $m->PerluDibersihkanSejak?->toIso8601ZuluString() ?? ''])
+            ->all());
+    }
+
+    /**
      * Uuid & nama meja per Id (termasuk yang diarsipkan) untuk menampilkan pesanan.
      *
      * @param  list<int>  $id

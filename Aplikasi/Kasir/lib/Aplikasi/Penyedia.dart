@@ -753,6 +753,11 @@ final penyediaAreaMeja = StreamProvider<List<BarisAreaMeja>>(
 
 final penyediaMeja = StreamProvider<List<BarisMeja>>((ref) => ref.watch(penyediaRepositoriPesananMeja).PantauMeja());
 
+/// K-12: meja yang perlu dibersihkan setelah tagihannya dibayar (Uuid meja → sejak).
+final penyediaMejaPerluDibersihkan = StreamProvider<Map<String, DateTime>>(
+  (ref) => ref.watch(penyediaRepositoriPesananMeja).PantauMejaPerluDibersihkan(),
+);
+
 final penyediaPesananTerbuka = StreamProvider<List<PesananMeja>>(
   (ref) => ref.watch(penyediaRepositoriPesananMeja).PantauPesananTerbuka(),
 );

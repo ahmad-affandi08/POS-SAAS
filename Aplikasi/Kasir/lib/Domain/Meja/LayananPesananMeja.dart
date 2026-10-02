@@ -169,6 +169,51 @@ class LayananPesananMeja {
     );
   }
 
+  /// K-12 (§9.1): tandai tamu minta tagihan ([minta] true) atau hapus tandanya. Waktu pertama dipertahankan supaya
+  /// urutan meja yang menunggu bill tidak bergeser.
+  Future<PesananMeja> AturMintaBill({
+    required String uuidPesanan,
+    required StafLokal kasir,
+    required bool minta,
+  }) async {
+    final pesanan = await _CariTerbuka(uuidPesanan);
+    final sekarang = _jam().toUtc();
+    return _Simpan(
+      uuidPesanan,
+      (_) => PesananTerbukaCompanion(
+        MintaBillPada: Value(minta ? (pesanan.mintaBillPada ?? sekarang) : null),
+        DiubahPada: Value(sekarang),
+      ),
+      [
+        ItemOutbox(
+          jenis: jenisUbah,
+          uuid: _ulid.Buat(),
+          data: {
+            'UuidPesanan': uuidPesanan,
+            'MintaBill': minta,
+            'UuidPengguna': kasir.uuid,
+            'DiubahPada': sekarang.toIso8601String(),
+          },
+        ),
+      ],
+      sekarang,
+    );
+  }
+
+  /// K-12: meja yang tagihannya sudah dibayar ditandai bersih dan siap dipakai lagi (outbox `Meja.Bersih`).
+  Future<void> TandaiMejaBersih({required String uuidMeja, required StafLokal kasir}) async {
+    final sekarang = _jam().toUtc();
+    await repositoriMeja.TandaiBersih(
+      uuidMeja,
+      ItemOutbox(
+        jenis: RepositoriPesananMeja.jenisMejaBersih,
+        uuid: _ulid.Buat(),
+        data: {'UuidMeja': uuidMeja, 'UuidPengguna': kasir.uuid, 'DibersihkanPada': sekarang.toIso8601String()},
+      ),
+      sekarang,
+    );
+  }
+
   // Baris ----------------------------------------------------------------------------------------------------------------
 
   /// Simpan baris baru [draf] ke pesanan sebagai satu ronde. [kirimDapur] = kirim ke dapur sekarang, sekaligus baris
@@ -548,9 +593,10 @@ class LayananPesananMeja {
       // Selama ada perubahan tertunda, ETag tidak disimpan: bila item itu ditolak server, snapshot berikutnya tetap
       // diunduh utuh dan salinan lokal kembali sama dengan server.
       final tertunda = await repositoriMeja.AmbilUuidPesananTertunda();
+      final bersihTertunda = await repositoriMeja.AmbilUuidMejaBersihTertunda();
       await repositori.SimpanPengaturan(
         KunciPengaturan.etagPesananTerbuka,
-        tertunda.isEmpty ? snapshot.etag ?? '' : '',
+        tertunda.isEmpty && bersihTertunda.isEmpty ? snapshot.etag ?? '' : '',
       );
       return true;
     } on GalatJaringan {

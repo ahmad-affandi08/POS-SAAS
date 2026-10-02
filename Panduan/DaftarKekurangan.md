@@ -105,7 +105,7 @@ kode. Urutan pengerjaan = urutan tabel; butir yang selesai diberi **SELESAI @ ve
 | K-9 | **Pemilih varian** (ukuran × warna) di kasir tidak ada; produk induk varian ditolak | `KatalogLokal.dart`; §9.4 | SELESAI v3.59 (`PanelVarian`, skema lokal 23) |
 | K-10 | **Cek harga** tanpa menambah ke keranjang | §9.3 | SELESAI v3.60 (`PanelCekHarga`, F4) |
 | K-11 | **Retur tanpa struk & tukar barang** satu layar | `LembarRetur.dart`; §9.3–§9.4 | SELESAI v3.61–v3.62 (tukar barang server + layar kasir; retur tanpa struk menunggu keputusan K28) |
-| K-12 | Status meja **minta bill / perlu dibersihkan** | `LayarMeja.dart`; §9.1 | TERBUKA |
+| K-12 | Status meja **minta bill / perlu dibersihkan** | `LayarMeja.dart`; §9.1 | SELESAI v3.63 (`MintaBill` di `PesananTerbuka.Ubah`, outbox `Meja.Bersih`, skema lokal 24) |
 | K-13 | **Course / tahan & kirim** (hold & fire) per kursus | §9.1 | TERBUKA |
 | K-14 | **Bagi tagihan rata per orang / per nominal** (sekarang hanya per item, khusus meja) | BR-08.2, §9.1 | TERBUKA |
 | K-15 | Umpan balik pindai (suara + getar, sorot baris) | §17.2.7 prinsip 4 | TERBUKA |

@@ -190,6 +190,8 @@ class PercobaanPin extends Table {
     NomorUrutIsiDeposit,
     // Skema 17 (F-05f bagian 2): bahan terbuang yang dicatat perangkat ini.
     BahanTerbuangLokal,
+    // Skema 24 (K-12): meja yang perlu dibersihkan.
+    MejaPerluDibersihkan,
   ],
 )
 class BasisDataKasir extends _$BasisDataKasir {
@@ -202,9 +204,9 @@ class BasisDataKasir extends _$BasisDataKasir {
   /// (pre-order lokal); 12 = F-16c bagian 3 (data promo pelanggan); 13 = F-16d bagian 1 (isi deposit lokal); 14 = F-16d
   /// bagian 2 (produk paket sesi); 15 = laundry (blok tiket di penjualan); 16 = audit P0 F-01 (perangkat pembuat item
   /// outbox); 17 = F-05f bagian 2 (bahan terbuang lokal); 18 = X8 (kanal metode pembayaran platform ojol);
-  /// 19 = F-17 bagian 3 (ongkir ikut DPP pajak).
+  /// 19 = F-17 bagian 3 (ongkir ikut DPP pajak); 24 = K-12 (minta bill & meja perlu dibersihkan).
   @override
-  int get schemaVersion => 23;
+  int get schemaVersion => 24;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -422,6 +424,19 @@ class BasisDataKasir extends _$BasisDataKasir {
           await m.addColumn(produk, produk.AtributVarian);
         }
         await (delete(pengaturan)..where((p) => p.Kunci.equals('KursorKatalog'))).go();
+      }
+      // Skema 24 (K-12): tanda minta bill di pesanan terbuka & tabel meja perlu dibersihkan. Pesanan terbuka dari skema
+      // < 6 sudah berkolom lengkap.
+      if (dari >= 6 && dari < 24) {
+        final kolom = await customSelect(
+          "SELECT COUNT(*) AS Jumlah FROM pragma_table_info('PesananTerbuka') WHERE name = 'MintaBillPada'",
+        ).map((r) => r.read<int>('Jumlah')).getSingle();
+        if (kolom == 0) {
+          await m.addColumn(pesananTerbuka, pesananTerbuka.MintaBillPada);
+        }
+      }
+      if (dari < 24) {
+        await m.createTable(mejaPerluDibersihkan);
       }
     },
     beforeOpen: (detail) async {

@@ -213,6 +213,7 @@ class RepositoriPesananMeja {
               DibukaPada: p.dibukaPada ?? sekarang,
               Status: StatusPesananMeja.terbuka,
               DikunciBayar: Value(p.dikunciBayar),
+              MintaBillPada: Value(p.mintaBillPada),
               Baris: SusunJsonBaris(p.baris.map(BarisPesananMeja.DariServer).toList()),
               DiubahPada: sekarang,
             ),
@@ -243,5 +244,61 @@ class RepositoriPesananMeja {
     if (selesai.isNotEmpty) {
       await (db.delete(db.pesananTerbuka)..where((p) => p.Uuid.isIn(selesai))).go();
     }
+    await _TerapkanMejaPerluDibersihkan(snapshot, tertunda, tutupLokal);
   });
+
+  // Status layanan meja (K-12) ---------------------------------------------------------------------------------------
+
+  static const String jenisMejaBersih = 'Meja.Bersih';
+
+  /// Meja yang perlu dibersihkan per Uuid meja.
+  Stream<Map<String, DateTime>> PantauMejaPerluDibersihkan() =>
+      db.select(db.mejaPerluDibersihkan).watch().map((daftar) => {for (final m in daftar) m.UuidMeja: m.Sejak});
+
+  /// Hapus tanda meja + outbox `Meja.Bersih` dalam satu transaksi.
+  Future<void> TandaiBersih(String uuidMeja, ItemOutbox outbox, DateTime sekarang) => db.transaction(() async {
+    await (db.delete(db.mejaPerluDibersihkan)..where((m) => m.UuidMeja.equals(uuidMeja))).go();
+    await repositoriKasir.TambahOutbox(outbox, sekarang);
+  });
+
+  /// Uuid meja dengan `Meja.Bersih` yang belum terkirim.
+  Future<Set<String>> AmbilUuidMejaBersihTertunda() async {
+    final baris = await (db.select(db.outbox)..where((o) => o.Jenis.equals(jenisMejaBersih))).get();
+    return {
+      for (final b in baris)
+        if (jsonDecode(b.Data) case {'UuidMeja': final String uuid}) uuid,
+    };
+  }
+
+  /// Daftar server menggantikan salinan lokal, kecuali: meja yang `Meja.Bersih`-nya belum terkirim tetap bersih, dan
+  /// meja yang pesanannya baru dibayar di perangkat ini (penjualan belum terkirim) tetap perlu dibersihkan.
+  Future<void> _TerapkanMejaPerluDibersihkan(
+    SnapshotPesananTerbuka snapshot,
+    Set<String> tertunda,
+    List<BarisPesananTerbuka> tutupLokal,
+  ) async {
+    final bersihTertunda = await AmbilUuidMejaBersihTertunda();
+    final dibayarLokal = {
+      for (final p in tutupLokal)
+        if (tertunda.contains(p.Uuid) && p.Status == StatusPesananMeja.dibayar && p.UuidMeja != null) p.UuidMeja!,
+    };
+    final lokal = await db.select(db.mejaPerluDibersihkan).get();
+    final hasil = <String, DateTime>{
+      for (final m in lokal)
+        if (dibayarLokal.contains(m.UuidMeja)) m.UuidMeja: m.Sejak,
+    };
+    for (final m in snapshot.mejaPerluDibersihkan) {
+      final ada = hasil[m.uuidMeja];
+      if (ada == null || ada.isBefore(m.sejak)) {
+        hasil[m.uuidMeja] = m.sejak;
+      }
+    }
+    hasil.removeWhere((uuid, _) => bersihTertunda.contains(uuid));
+    await db.delete(db.mejaPerluDibersihkan).go();
+    await db.batch((b) {
+      b.insertAll(db.mejaPerluDibersihkan, [
+        for (final e in hasil.entries) MejaPerluDibersihkanCompanion.insert(UuidMeja: e.key, Sejak: e.value),
+      ]);
+    });
+  }
 }

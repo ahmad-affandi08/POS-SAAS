@@ -9,7 +9,7 @@ use App\Domain\Bersama\Sinkron\Enum\StatusItemSinkron;
 use App\Domain\Penjualan\Aksi\UbahPesananTerbukaPos;
 
 /**
- * `PesananTerbuka.Ubah {UuidPesanan, UuidMeja?, Label?, JumlahTamu?, UuidPengguna, DiubahPada}`: hanya bidang yang
+ * `PesananTerbuka.Ubah {UuidPesanan, UuidMeja?, Label?, JumlahTamu?, MintaBill?, UuidPengguna, DiubahPada}`: hanya bidang yang
  * dikirim yang diubah (UuidMeja null = lepas dari meja). Last-writer-wins menurut DiubahPada.
  */
 final class PenanganSinkronUbahPesananTerbuka extends PenanganSinkronPesananTerbuka
@@ -28,6 +28,7 @@ final class PenanganSinkronUbahPesananTerbuka extends PenanganSinkronPesananTerb
             'UuidMeja' => ['sometimes', 'nullable', 'string', 'ulid'],
             'Label' => ['sometimes', 'nullable', 'string', 'max:60'],
             'JumlahTamu' => ['sometimes', 'nullable', 'integer', 'min:1', 'max:999'],
+            'MintaBill' => ['sometimes', 'boolean'],
         ], 'DiubahPada');
 
         return $this->container->make(UbahPesananTerbukaPos::class)->Jalankan(self::Data($valid, (string) $valid['UuidPesanan'], 'DiubahPada', $konteks, [
@@ -36,6 +37,7 @@ final class PenanganSinkronUbahPesananTerbuka extends PenanganSinkronPesananTerb
             'ubahLabel' => array_key_exists('Label', $data),
             'label' => self::Teks($valid['Label'] ?? null),
             'jumlahTamu' => is_int($valid['JumlahTamu'] ?? null) ? $valid['JumlahTamu'] : null,
+            'mintaBill' => array_key_exists('MintaBill', $valid) ? (bool) $valid['MintaBill'] : null,
         ]));
     }
 }

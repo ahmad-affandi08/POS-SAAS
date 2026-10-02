@@ -35,6 +35,7 @@ use Illuminate\Support\Carbon;
  * @property int|null $IdPenyetujuBatal
  * @property int|null $IdPerangkatKunciBayar
  * @property Carbon|null $KunciBayarSampai
+ * @property Carbon|null $MintaBillPada tamu meminta tagihan (K-12); null = belum
  * @property Carbon|null $DiubahPada
  */
 final class PesananTerbuka extends ModelDasar
@@ -63,6 +64,7 @@ final class PesananTerbuka extends ModelDasar
             'HeaderDiubahPada' => 'datetime',
             'DitutupPada' => 'datetime',
             'KunciBayarSampai' => 'datetime',
+            'MintaBillPada' => 'datetime',
         ];
     }
 }

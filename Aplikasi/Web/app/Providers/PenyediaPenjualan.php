@@ -9,6 +9,7 @@ use App\Domain\Bersama\Sinkron\Kontrak\PenanganItemSinkron;
 use App\Domain\Penjualan\Kueri\PemakaianAkunDiMetodePembayaran;
 use App\Domain\Penjualan\Layanan\PenanganSinkronBatalkanBarisPesananTerbuka;
 use App\Domain\Penjualan\Layanan\PenanganSinkronBatalPesananTerbuka;
+use App\Domain\Penjualan\Layanan\PenanganSinkronBersihkanMeja;
 use App\Domain\Penjualan\Layanan\PenanganSinkronBuatPenjualan;
 use App\Domain\Penjualan\Layanan\PenanganSinkronBuatPesananPenjualan;
 use App\Domain\Penjualan\Layanan\PenanganSinkronBuatReturPenjualan;
@@ -42,6 +43,8 @@ final class PenyediaPenjualan extends ServiceProvider
             PenanganSinkronPindahBarisPesananTerbuka::class,
             PenanganSinkronUbahPesananTerbuka::class,
             PenanganSinkronBatalPesananTerbuka::class,
+            // K-12: meja ditandai sudah dibersihkan.
+            PenanganSinkronBersihkanMeja::class,
             // F-12 bagian 2: pre-order + uang muka.
             PenanganSinkronBuatPesananPenjualan::class,
             // F-16d bagian 1: isi saldo deposit pelanggan.

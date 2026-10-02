@@ -112,6 +112,13 @@ class RepositoriPenjualan {
       await (db.update(db.pesananTerbuka)..where((p) => p.Uuid.equals(uuidPesanan))).write(
         PesananTerbukaCompanion(Status: const Value(StatusPesananMeja.dibayar), DiubahPada: Value(sekarang)),
       );
+      // K-12: meja yang tagihannya dibayar perlu dibersihkan sebelum dipakai tamu berikutnya.
+      final pesanan = await (db.select(db.pesananTerbuka)..where((p) => p.Uuid.equals(uuidPesanan))).getSingleOrNull();
+      if (pesanan?.UuidMeja case final uuidMeja?) {
+        await db
+            .into(db.mejaPerluDibersihkan)
+            .insertOnConflictUpdate(MejaPerluDibersihkanCompanion.insert(UuidMeja: uuidMeja, Sejak: sekarang));
+      }
     }
     return dokumen;
   });

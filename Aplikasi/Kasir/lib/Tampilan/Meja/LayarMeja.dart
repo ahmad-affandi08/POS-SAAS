@@ -18,13 +18,15 @@ import 'DialogPesananMeja.dart';
 
 /// Denah meja (F-07 mode meja fase 1, PRD §17.2.7): meja per area sebagai ubin (kosong / terisi dengan nomor, jumlah
 /// tamu, item, dan lama duduk), serta pesanan tanpa meja (antre/bawa pulang). Ketuk meja kosong → buka pesanan; ketuk
-/// meja terisi → lanjutkan pesanan di layar Jual. Menu ⋮ pada pesanan: pindah meja/ubah, batalkan pesanan. Data
+/// meja terisi → lanjutkan pesanan di layar Jual. Menu ⋮ pada pesanan: pindah meja/ubah, minta bill, batalkan pesanan.
+/// K-12 (§9.1): ubin menampilkan status "Minta bill" dan "Perlu dibersihkan" (ikon + teks); meja kotor diketuk →
+/// tandai sudah bersih atau tetap buka pesanan. Data
 /// pesanan outlet ditarik berkala oleh bingkai ruang kerja; perubahan perangkat ini langsung tampil (offline-first).
 class LayarMeja extends ConsumerStatefulWidget {
   const LayarMeja({super.key, required this.kasir, required this.saatBukaPesanan});
 
   static const double lebarUbin = 168;
-  static const double tinggiUbin = 112;
+  static const double tinggiUbin = 128;
 
   final StafLokal kasir;
 
@@ -151,6 +153,13 @@ class _LayarMejaState extends ConsumerState<LayarMeja> {
             namaKasir: widget.kasir.nama,
             jumlahTamu: pesanan.jumlahTamu,
           );
+      // K-12: tagihan sementara dicetak = tamu sedang minta bill.
+      if (pesanan.mintaBillPada == null) {
+        await ref
+            .read(penyediaLayananPesananMeja)
+            .AturMintaBill(uuidPesanan: pesanan.uuid, kasir: widget.kasir, minta: true);
+        unawaited(ref.read(penyediaSesi.notifier).Sinkronkan());
+      }
       if (mounted) {
         setState(() => _pesan = 'Tagihan sementara ${pesanan.AmbilJudul()} dicetak.');
       }
@@ -190,9 +199,10 @@ class _LayarMejaState extends ConsumerState<LayarMeja> {
     final pilihan = await showModalBottomSheet<String>(
       context: context,
       showDragHandle: true,
+      isScrollControlled: true,
       builder: (konteks) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+        child: ListView(
+          shrinkWrap: true,
           children: [
             ListTile(title: Text(pesanan.AmbilJudul()), subtitle: Text(pesanan.nomor)),
             ListTile(
@@ -217,6 +227,11 @@ class _LayarMejaState extends ConsumerState<LayarMeja> {
                 title: const Text('Gabung ke pesanan lain'),
                 onTap: () => Navigator.of(konteks).pop('Gabung'),
               ),
+            ListTile(
+              leading: const Icon(Icons.receipt_long_outlined),
+              title: Text(pesanan.mintaBillPada == null ? 'Tandai minta bill' : 'Hapus tanda minta bill'),
+              onTap: () => Navigator.of(konteks).pop('MintaBill'),
+            ),
             if (pesanan.AmbilBarisAktif().isNotEmpty)
               ListTile(
                 leading: const Icon(Icons.receipt_outlined),
@@ -253,6 +268,14 @@ class _LayarMejaState extends ConsumerState<LayarMeja> {
         await _CetakUlangTiket(pesanan);
       case 'CetakTagihan':
         await _CetakTagihanSementara(pesanan);
+      case 'MintaBill':
+        final minta = pesanan.mintaBillPada == null;
+        await _Jalankan(() async {
+          await ref
+              .read(penyediaLayananPesananMeja)
+              .AturMintaBill(uuidPesanan: pesanan.uuid, kasir: widget.kasir, minta: minta);
+          return minta ? '${pesanan.AmbilJudul()} minta bill.' : 'Tanda minta bill ${pesanan.AmbilJudul()} dihapus.';
+        });
       case 'Pisah':
         final pilihan = await PilihItemPisah(context, pesanan);
         if (pilihan != null && mounted) {
@@ -333,6 +356,47 @@ class _LayarMejaState extends ConsumerState<LayarMeja> {
     }
   }
 
+  /// K-12: meja kosong yang perlu dibersihkan: tandai sudah bersih, atau tetap buka pesanan (tamu langsung duduk).
+  Future<void> _BukaMenuMejaKotor(BarisMeja meja) async {
+    final pilihan = await showModalBottomSheet<String>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (konteks) => SafeArea(
+        child: ListView(
+          shrinkWrap: true,
+          children: [
+            ListTile(
+              title: Text(meja.Nama),
+              subtitle: const Text('Perlu dibersihkan setelah tamu sebelumnya membayar'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.cleaning_services_outlined),
+              title: const Text('Tandai sudah bersih'),
+              onTap: () => Navigator.of(konteks).pop('Bersih'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.restaurant_menu),
+              title: const Text('Buka pesanan'),
+              onTap: () => Navigator.of(konteks).pop('Buka'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (!mounted || pilihan == null) {
+      return;
+    }
+    if (pilihan == 'Buka') {
+      await _BukaBaru(meja);
+      return;
+    }
+    await _Jalankan(() async {
+      await ref.read(penyediaLayananPesananMeja).TandaiMejaBersih(uuidMeja: meja.Uuid, kasir: widget.kasir);
+      return 'Meja ${meja.Nama} siap dipakai.';
+    });
+  }
+
   /// Pesanan yang sedang dibuka di keranjang ikut diperbarui setelah pisah/gabung.
   void _SegarkanKeranjang(PesananMeja pesanan) {
     final draf = ref.read(penyediaKeranjang);
@@ -396,6 +460,7 @@ class _LayarMejaState extends ConsumerState<LayarMeja> {
     required VoidCallback saatDiketuk,
     VoidCallback? saatMenu,
     int? kapasitas,
+    bool perluDibersihkan = false,
   }) {
     final warna = TokenWarna.AmbilDari(context);
     final teks = Theme.of(context).textTheme;
@@ -405,15 +470,28 @@ class _LayarMejaState extends ConsumerState<LayarMeja> {
     final keterangan = pesanan == null
         ? 'Kosong${kapasitas == null ? '' : ' · $kapasitas kursi'}'
         : '${pesanan.jumlahTamu} tamu · $item item · ${_FormatLama(sekarang.toUtc().difference(pesanan.dibukaPada.toUtc()))}';
+    // K-12: status layanan; warna selalu disertai ikon & teks.
+    final status = pesanan?.mintaBillPada != null
+        ? (ikon: Icons.receipt_long_outlined, teks: 'Minta bill')
+        : pesanan == null && perluDibersihkan
+        ? (ikon: Icons.cleaning_services_outlined, teks: 'Perlu dibersihkan')
+        : null;
     return Semantics(
       button: true,
-      label: '$judul, $keterangan',
+      label: '$judul, ${status == null ? '' : '${status.teks}, '}$keterangan',
       excludeSemantics: true,
       child: Material(
         color: terisi ? warna.brand.withValues(alpha: 0.08) : warna.permukaan,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(TokenJarak.radiusPanel),
-          side: BorderSide(color: terisi ? warna.brand : warna.garis, width: TokenJarak.tebalGaris),
+          side: BorderSide(
+            color: status != null
+                ? warna.peringatan
+                : terisi
+                ? warna.brand
+                : warna.garis,
+            width: TokenJarak.tebalGaris,
+          ),
         ),
         child: InkWell(
           borderRadius: BorderRadius.circular(TokenJarak.radiusPanel),
@@ -443,6 +521,22 @@ class _LayarMejaState extends ConsumerState<LayarMeja> {
                   ],
                 ),
                 const Spacer(),
+                if (status != null)
+                  Row(
+                    key: ValueKey('StatusMeja-$judul'),
+                    children: [
+                      Icon(status.ikon, size: TokenJarak.ikonKecil, color: warna.peringatan),
+                      const SizedBox(width: TokenJarak.jarak4),
+                      Expanded(
+                        child: Text(
+                          status.teks,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: teks.labelMedium?.copyWith(color: warna.teksUtama),
+                        ),
+                      ),
+                    ],
+                  ),
                 Row(
                   children: [
                     Icon(
@@ -454,7 +548,7 @@ class _LayarMejaState extends ConsumerState<LayarMeja> {
                     Expanded(
                       child: Text(
                         keterangan,
-                        maxLines: 2,
+                        maxLines: status == null ? 2 : 1,
                         overflow: TextOverflow.ellipsis,
                         style: teks.bodySmall?.copyWith(color: warna.teksSekunder),
                       ),
@@ -500,6 +594,9 @@ class _LayarMejaState extends ConsumerState<LayarMeja> {
     };
     final tanpaMeja = pesanan.where((p) => p.uuidMeja == null || !meja.any((m) => m.Uuid == p.uuidMeja)).toList();
     final terisi = perMeja.keys.toSet();
+    final kotor = ref.watch(penyediaMejaPerluDibersihkan).value ?? const <String, DateTime>{};
+    final jumlahKotor = meja.where((m) => kotor.containsKey(m.Uuid) && !terisi.contains(m.Uuid)).length;
+    final jumlahMintaBill = pesanan.where((p) => p.mintaBillPada != null).length;
     final sempit = MediaQuery.sizeOf(context).width < 600;
     final tepi = sempit ? TokenJarak.jarak16 : TokenJarak.jarak24;
 
@@ -513,13 +610,23 @@ class _LayarMejaState extends ConsumerState<LayarMeja> {
 
     Widget BangunUbinMeja(BarisMeja m) {
       final p = perMeja[m.Uuid];
+      final perluDibersihkan = p == null && kotor.containsKey(m.Uuid);
       return _BangunUbin(
         context,
         judul: m.Nama,
         pesanan: p,
         kapasitas: m.Kapasitas,
-        saatDiketuk: () => p == null ? unawaited(_BukaBaru(m)) : _Lanjutkan(p),
-        saatMenu: p == null ? null : () => unawaited(_BukaMenu(p, meja, terisi, pesanan)),
+        perluDibersihkan: perluDibersihkan,
+        saatDiketuk: () => p != null
+            ? _Lanjutkan(p)
+            : perluDibersihkan
+            ? unawaited(_BukaMenuMejaKotor(m))
+            : unawaited(_BukaBaru(m)),
+        saatMenu: p != null
+            ? () => unawaited(_BukaMenu(p, meja, terisi, pesanan))
+            : perluDibersihkan
+            ? () => unawaited(_BukaMenuMejaKotor(m))
+            : null,
       );
     }
 
@@ -543,7 +650,12 @@ class _LayarMejaState extends ConsumerState<LayarMeja> {
         ),
         const SizedBox(height: TokenJarak.jarak8),
         Text(
-          '${pesanan.length} pesanan terbuka · ${meja.length - terisi.length} meja kosong',
+          [
+            '${pesanan.length} pesanan terbuka',
+            '${meja.length - terisi.length} meja kosong',
+            if (jumlahMintaBill > 0) '$jumlahMintaBill minta bill',
+            if (jumlahKotor > 0) '$jumlahKotor perlu dibersihkan',
+          ].join(' · '),
           style: teks.bodyMedium?.copyWith(color: warna.teksSekunder),
         ),
         if (_pesan != null) ...[

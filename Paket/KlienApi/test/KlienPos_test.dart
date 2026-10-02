@@ -193,6 +193,7 @@ void main() {
                 'JumlahTamu': 4,
                 'DibukaPada': '2026-09-25T10:00:00Z',
                 'DikunciBayar': false,
+                'MintaBillPada': '2026-09-25T11:00:00Z',
                 'Baris': [
                   {
                     'Uuid': 'B1',
@@ -212,6 +213,9 @@ void main() {
             ],
             'Ditutup': [
               {'Uuid': 'P0', 'Status': 'Dibayar'},
+            ],
+            'MejaPerluDibersihkan': [
+              {'UuidMeja': 'M9', 'Sejak': '2026-09-25T09:30:00Z'},
             ],
           }),
           200,
@@ -236,6 +240,9 @@ void main() {
     expect(snapshot.pesanan.single.baris.single.uuidProduk, 'PR1');
     expect(snapshot.pesanan.single.baris.single.uuidProdukSatuan, isNull);
     expect(snapshot.ditutup.single.uuid, 'P0');
+    expect(snapshot.pesanan.single.mintaBillPada, DateTime.utc(2026, 9, 25, 11));
+    expect(snapshot.mejaPerluDibersihkan.single.uuidMeja, 'M9');
+    expect(snapshot.mejaPerluDibersihkan.single.sejak, DateTime.utc(2026, 9, 25, 9, 30));
     expect(await klien.AmbilPesananTerbuka(etag: '"abc"'), isNull);
 
     await expectLater(

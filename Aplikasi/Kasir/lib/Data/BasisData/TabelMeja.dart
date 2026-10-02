@@ -43,6 +43,9 @@ class PesananTerbuka extends Table {
   TextColumn get Baris => text()();
   DateTimeColumn get DiubahPada => dateTime()();
 
+  /// Skema 24 (K-12): tamu minta tagihan sejak waktu ini; null = belum.
+  DateTimeColumn get MintaBillPada => dateTime().nullable()();
+
   @override
   Set<Column<Object>> get primaryKey => {Uuid};
 }
@@ -58,4 +61,16 @@ class NomorUrutPesananTerbuka extends Table {
 
   @override
   Set<Column<Object>> get primaryKey => {KodePerangkat, Tanggal};
+}
+
+/// Skema 24 (K-12, §9.1): meja yang perlu dibersihkan setelah tagihannya dibayar. Tabel terpisah dari [Meja] karena
+/// daftar meja diganti utuh tiap tarik `GET /api/pos/v1/meja`. Isinya dari snapshot pesanan terbuka, ditambah tanda
+/// lokal saat pesanan meja dibayar di perangkat ini (bertahan sampai penjualannya terkirim).
+@DataClassName('BarisMejaPerluDibersihkan')
+class MejaPerluDibersihkan extends Table {
+  TextColumn get UuidMeja => text()();
+  DateTimeColumn get Sejak => dateTime()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {UuidMeja};
 }

@@ -153,6 +153,7 @@ class PesananTerbukaPos {
     required this.dibukaPada,
     required this.dikunciBayar,
     required this.baris,
+    this.mintaBillPada,
   });
 
   final String uuid;
@@ -166,6 +167,9 @@ class PesananTerbukaPos {
   final bool dikunciBayar;
   final List<BarisPesananTerbukaPos> baris;
 
+  /// K-12: tamu minta tagihan sejak waktu ini (server v3.63+); null = belum / server lama.
+  final DateTime? mintaBillPada;
+
   static PesananTerbukaPos DariJson(Map<String, Object?> json) => PesananTerbukaPos(
     uuid: UraiJson.AmbilTeks(json['Uuid']),
     nomor: UraiJson.AmbilTeks(json['Nomor']),
@@ -177,18 +181,27 @@ class PesananTerbukaPos {
     dibukaPada: DateTime.tryParse(UraiJson.AmbilTeks(json['DibukaPada'])),
     dikunciBayar: UraiJson.AmbilBenar(json['DikunciBayar']),
     baris: UraiJson.AmbilDaftarPeta(json['Baris']).map(BarisPesananTerbukaPos.DariJson).toList(),
+    mintaBillPada: DateTime.tryParse(UraiJson.AmbilTeksAtauNull(json['MintaBillPada']) ?? ''),
   );
 }
 
 /// Snapshot pesanan terbuka outlet (`GET /api/pos/v1/pesanan-terbuka`) beserta `ETag`.
 class SnapshotPesananTerbuka {
-  const SnapshotPesananTerbuka({required this.pesanan, required this.ditutup, required this.etag});
+  const SnapshotPesananTerbuka({
+    required this.pesanan,
+    required this.ditutup,
+    required this.etag,
+    this.mejaPerluDibersihkan = const [],
+  });
 
   final List<PesananTerbukaPos> pesanan;
 
   /// Uuid pesanan yang ditutup (dibayar/dibatalkan) dalam 12 jam terakhir → hapus dari layar.
   final List<({String uuid, String status})> ditutup;
   final String? etag;
+
+  /// K-12: meja yang perlu dibersihkan setelah tagihannya dibayar (kosong di server lama).
+  final List<({String uuidMeja, DateTime sejak})> mejaPerluDibersihkan;
 
   static SnapshotPesananTerbuka DariJson(Map<String, Object?> json, String? etag) => SnapshotPesananTerbuka(
     pesanan: UraiJson.AmbilDaftarPeta(json['Pesanan']).map(PesananTerbukaPos.DariJson).toList(),
@@ -197,6 +210,11 @@ class SnapshotPesananTerbuka {
         (uuid: UraiJson.AmbilTeks(d['Uuid']), status: UraiJson.AmbilTeks(d['Status'])),
     ],
     etag: etag,
+    mejaPerluDibersihkan: [
+      for (final m in UraiJson.AmbilDaftarPeta(json['MejaPerluDibersihkan']))
+        if (DateTime.tryParse(UraiJson.AmbilTeks(m['Sejak'])) case final sejak?)
+          (uuidMeja: UraiJson.AmbilTeks(m['UuidMeja']), sejak: sejak),
+    ],
   );
 }
 

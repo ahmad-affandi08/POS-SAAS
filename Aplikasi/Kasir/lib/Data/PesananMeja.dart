@@ -138,6 +138,7 @@ class PesananMeja {
     required this.status,
     required this.dikunciBayar,
     required this.baris,
+    this.mintaBillPada,
   });
 
   final String uuid;
@@ -151,6 +152,9 @@ class PesananMeja {
   final String status;
   final bool dikunciBayar;
   final List<BarisPesananMeja> baris;
+
+  /// K-12: tamu minta tagihan sejak waktu ini; null = belum.
+  final DateTime? mintaBillPada;
 
   List<BarisPesananMeja> AmbilBarisAktif() => baris.where((b) => !b.dibatalkan).toList();
 
@@ -176,6 +180,7 @@ class PesananMeja {
       dibukaPada: b.DibukaPada,
       status: b.Status,
       dikunciBayar: b.DikunciBayar,
+      mintaBillPada: b.MintaBillPada,
       baris: [
         if (isi is List<Object?>)
           for (final json in isi.whereType<Map<String, Object?>>()) BarisPesananMeja.DariJson(json),

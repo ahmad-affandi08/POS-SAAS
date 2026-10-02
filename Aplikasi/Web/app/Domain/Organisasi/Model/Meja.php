@@ -27,6 +27,7 @@ use Illuminate\Support\Carbon;
  * @property int|null $PosisiY
  * @property int $Urutan
  * @property string|null $TokenPesanSendiri token QR pesan sendiri (F-17), null sampai QR pertama kali ditampilkan
+ * @property Carbon|null $PerluDibersihkanSejak pesanan terakhir dibayar, meja belum ditandai bersih (K-12)
  * @property StatusOrganisasi $Status
  * @property Carbon|null $DiarsipkanPada
  * @property-read AreaMeja|null $Area
@@ -57,6 +58,7 @@ final class Meja extends ModelDasar
             'Bentuk' => BentukMeja::class,
             'Status' => StatusOrganisasi::class,
             'DiarsipkanPada' => 'datetime',
+            'PerluDibersihkanSejak' => 'datetime',
             'Kapasitas' => 'integer',
             'PosisiX' => 'integer',
             'PosisiY' => 'integer',

@@ -14,7 +14,7 @@ use App\Domain\Penjualan\Layanan\PenjagaPesananTerbuka;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Item outbox `PesananTerbuka.Ubah` (F-07 mode meja fase 1, §18.3): pindah meja, ubah label, dan jumlah tamu.
+ * Item outbox `PesananTerbuka.Ubah` (F-07 mode meja fase 1, §18.3): pindah meja, ubah label, jumlah tamu, dan tanda minta bill (K-12).
  * Last-writer-wins menurut `DiubahPada` perangkat: perubahan yang lebih lama dari `HeaderDiubahPada` diterima tanpa
  * mengubah apa pun (tetap `Diterima` agar outbox perangkat lama tidak macet). Pindah meja dicatat di log audit.
  */
@@ -53,6 +53,11 @@ final class UbahPesananTerbukaPos
 
             if ($data->jumlahTamu !== null) {
                 $isian['JumlahTamu'] = $data->jumlahTamu;
+            }
+
+            if ($data->mintaBill !== null) {
+                // K-12: tamu minta tagihan; waktu pertama dipertahankan supaya urutan antrean bill tidak bergeser.
+                $isian['MintaBillPada'] = $data->mintaBill ? ($pesanan->MintaBillPada ?? $data->waktu) : null;
             }
 
             $mejaLama = $pesanan->IdMeja;

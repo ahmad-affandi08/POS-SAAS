@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:inti/Inti.dart';
+import 'package:kasir/Data/BasisData/BasisDataKasir.dart';
 import 'package:kasir/Data/RepositoriKasir.dart';
 import 'package:kasir/Tampilan/Dapur/LayarKds.dart';
 import 'package:kasir/Tampilan/Meja/LayarMeja.dart';
@@ -171,13 +172,68 @@ void main() {
     expect((jual.data['Ringkasan']! as Map<String, Object?>)['TotalAkhir'], '33000.00');
     expect((jual.data['Baris']! as List<Object?>), hasLength(1));
 
-    // Selesai → kembali ke Meja; T-01 kosong lagi.
+    // Selesai → kembali ke Meja; T-01 kosong lagi tetapi perlu dibersihkan (K-12).
     await Ketuk(tester, find.widgetWithText(FilledButton, 'Transaksi baru'));
     expect(find.byType(LayarMeja).hitTestable(), findsOneWidget);
+    expect(find.text('0 pesanan terbuka · 3 meja kosong · 1 perlu dibersihkan'), findsOneWidget);
+    expect(find.text('Perlu dibersihkan'), findsOneWidget);
+
+    // Ketuk meja kotor → tandai sudah bersih → outbox `Meja.Bersih`, meja siap dipakai.
+    await Ketuk(tester, find.text('T-01'));
+    await Ketuk(tester, find.text('Tandai sudah bersih'));
+    expect(find.text('Meja T-01 siap dipakai.'), findsOneWidget);
     expect(find.text('0 pesanan terbuka · 3 meja kosong'), findsOneWidget);
+    final bersih = (await AmbilOutbox(tester, u)).firstWhere((o) => o.jenis == 'Meja.Bersih');
+    expect(bersih.data['UuidMeja'], '01K5MEJA0000000000000T0101');
+    expect(bersih.data['UuidPengguna'], isNotNull);
     expect(tester.takeException(), isNull);
     await Lepas(tester, u);
   });
+
+  for (final (nama, ukuran) in [('360', ukuranHp), ('800', ukuranTablet), ('1280', ukuranDesktop)]) {
+    testWidgets('K-12 status meja di $nama dp: tandai minta bill dari menu pesanan, meja kotor berlabel', (
+      tester,
+    ) async {
+      final u = await MasukKasir(tester, ukuran);
+      await tester.runAsync(
+        () => u.db
+            .into(u.db.mejaPerluDibersihkan)
+            .insert(
+              MejaPerluDibersihkanCompanion.insert(
+                UuidMeja: '01K5MEJA0000000000000T0101',
+                Sejak: DateTime.utc(2026, 9, 24, 1),
+              ),
+            ),
+      );
+      await Ketuk(tester, find.text('Meja'));
+      await Ketuk(tester, find.text('D-01'));
+      await Ketuk(tester, find.widgetWithText(FilledButton, 'Buka pesanan'));
+      await Ketuk(tester, find.text('Meja'));
+      expect(find.text('Perlu dibersihkan'), findsOneWidget, reason: 'T-01 kotor dari tamu sebelumnya.');
+      expect(find.text('1 pesanan terbuka · 2 meja kosong · 1 perlu dibersihkan'), findsOneWidget);
+
+      await Ketuk(tester, find.byTooltip('Menu pesanan D-01'));
+      await Ketuk(tester, find.text('Tandai minta bill'));
+      expect(find.text('D-01 minta bill.'), findsOneWidget);
+      expect(find.text('Minta bill'), findsOneWidget);
+      expect(find.text('1 pesanan terbuka · 2 meja kosong · 1 minta bill · 1 perlu dibersihkan'), findsOneWidget);
+      final ubah = (await AmbilOutbox(tester, u)).lastWhere((o) => o.jenis == 'PesananTerbuka.Ubah');
+      expect(ubah.data['MintaBill'], true);
+      expect(ubah.data.containsKey('UuidMeja'), isFalse, reason: 'Hanya tanda bill yang diubah.');
+      expect(tester.takeException(), isNull);
+
+      // Hapus tanda.
+      await Ketuk(tester, find.byTooltip('Menu pesanan D-01'));
+      await Ketuk(tester, find.text('Hapus tanda minta bill'));
+      expect(find.text('Minta bill'), findsNothing);
+      expect(
+        (await AmbilOutbox(tester, u)).lastWhere((o) => o.jenis == 'PesananTerbuka.Ubah').data['MintaBill'],
+        false,
+      );
+      expect(tester.takeException(), isNull);
+      await Lepas(tester, u);
+    });
+  }
 
   Map<String, Object?> TiketUji(
     String uuid,
