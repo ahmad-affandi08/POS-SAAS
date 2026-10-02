@@ -338,5 +338,20 @@
         "Metode": "GET",
         "Jalur": "api/pos/v1/produk/{produk}/batch",
         "Nama": "pos.produk.batch"
+    },
+    "GET api/pos/v1/reservasi/kalender": {
+        "Metode": "GET",
+        "Jalur": "api/pos/v1/reservasi/kalender",
+        "Nama": "pos.reservasi.kalender"
+    },
+    "GET api/pos/v1/reservasi/slot": {
+        "Metode": "GET",
+        "Jalur": "api/pos/v1/reservasi/slot",
+        "Nama": "pos.reservasi.slot"
+    },
+    "POST api/pos/v1/reservasi": {
+        "Metode": "POST",
+        "Jalur": "api/pos/v1/reservasi",
+        "Nama": "pos.reservasi.buat"
     }
 }

@@ -787,6 +787,79 @@ void main() {
     expect(jsonDecode(dikirim.last.body), {'UuidPengguna': 'U1', 'Habis': false});
   });
 
+  test('K-20: kalender, slot, dan buat booking dari kasir', () async {
+    final dikirim = <http.Request>[];
+    final reservasi = {
+      'Uuid': 'R1',
+      'Nomor': 'RS/2026/10/0001',
+      'MulaiPada': '2026-10-13T03:00:00Z',
+      'SelesaiPada': '2026-10-13T04:00:00Z',
+      'NamaPelanggan': 'Rina',
+      'NoHp': '0812-3456-7890',
+      'Pelanggan': null,
+      'UuidProduk': 'L1',
+      'NamaLayanan': 'Creambath',
+      'UuidStaf': 'S1',
+      'NamaStaf': 'Maya',
+      'Status': 'Dikonfirmasi',
+      'LabelStatus': 'Dikonfirmasi',
+      'Catatan': null,
+    };
+    final klien = BuatKlien((permintaan) async {
+      dikirim.add(permintaan);
+      if (permintaan.url.path.endsWith('/kalender')) {
+        return Json({
+          'Tanggal': '2026-10-13',
+          'Layanan': [
+            {'Uuid': 'L1', 'Nama': 'Creambath', 'DurasiMenit': 60, 'Harga': '85000.00'},
+          ],
+          'Staf': [
+            {'Uuid': 'S1', 'Nama': 'Maya', 'JamMulai': '09:00', 'JamSelesai': '12:00'},
+          ],
+          'Reservasi': [reservasi],
+        }, 200);
+      }
+      if (permintaan.url.path.endsWith('/slot')) {
+        return Json({
+          'Slot': [
+            {
+              'Jam': '09:00',
+              'Staf': [
+                {'Uuid': 'S1', 'Nama': 'Maya'},
+              ],
+            },
+          ],
+        }, 200);
+      }
+      return Json({'Reservasi': reservasi}, 201);
+    });
+
+    final kalender = await klien.AmbilKalenderReservasi(tanggal: '2026-10-13');
+    expect(dikirim.last.url.query, 'tanggal=2026-10-13');
+    expect(kalender.layanan.single.durasiMenit, 60);
+    expect(kalender.staf.single.jamSelesai, '12:00');
+    expect(kalender.reservasi.single.nomor, 'RS/2026/10/0001');
+
+    final slot = await klien.AmbilSlotReservasi(uuidLayanan: 'L1', tanggal: '2026-10-13', uuidStaf: 'S1');
+    expect(dikirim.last.url.queryParameters, {'UuidLayanan': 'L1', 'Tanggal': '2026-10-13', 'UuidStaf': 'S1'});
+    expect(slot.single.jam, '09:00');
+    expect(slot.single.staf.single.nama, 'Maya');
+
+    final dibuat = await klien.BuatReservasi(
+      uuidPengguna: 'U1',
+      uuidLayanan: 'L1',
+      tanggal: '2026-10-13',
+      jam: '10:00',
+      uuidStaf: 'S1',
+      namaPelanggan: 'Rina',
+      noHp: '081234567890',
+    );
+    expect(dikirim.last.method, 'POST');
+    expect(dikirim.last.url.path, '/api/pos/v1/reservasi');
+    expect((jsonDecode(dikirim.last.body) as Map<String, Object?>)['Jam'], '10:00');
+    expect(dibuat.namaStaf, 'Maya');
+  });
+
   test('K-19: batch produk urut FEFO dengan sisa hari (null = tanpa kedaluwarsa)', () async {
     final dikirim = <http.Request>[];
     final klien = BuatKlien((permintaan) async {

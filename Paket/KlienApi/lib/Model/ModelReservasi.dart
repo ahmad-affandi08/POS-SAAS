@@ -64,3 +64,75 @@ class ReservasiPos {
     catatan: UraiJson.AmbilTeksAtauNull(json['Catatan']),
   );
 }
+
+/// K-20: layanan yang bisa dipesan (produk Jasa ber-durasi).
+class LayananReservasiPos {
+  const LayananReservasiPos({required this.uuid, required this.nama, required this.durasiMenit, required this.harga});
+
+  final String uuid;
+  final String nama;
+  final int durasiMenit;
+  final String? harga;
+
+  static LayananReservasiPos DariJson(Map<String, Object?> json) => LayananReservasiPos(
+    uuid: UraiJson.AmbilTeks(json['Uuid']),
+    nama: UraiJson.AmbilTeks(json['Nama']),
+    durasiMenit: UraiJson.AmbilBulat(json['DurasiMenit']),
+    harga: UraiJson.AmbilDesimalAtauNull(json['Harga']),
+  );
+}
+
+/// K-20: staf yang bekerja pada tanggal kalender beserta jam kerjanya (`HH:MM`, zona waktu outlet).
+class StafReservasiPos {
+  const StafReservasiPos({required this.uuid, required this.nama, required this.jamMulai, required this.jamSelesai});
+
+  final String uuid;
+  final String nama;
+  final String jamMulai;
+  final String jamSelesai;
+
+  static StafReservasiPos DariJson(Map<String, Object?> json) => StafReservasiPos(
+    uuid: UraiJson.AmbilTeks(json['Uuid']),
+    nama: UraiJson.AmbilTeks(json['Nama']),
+    jamMulai: UraiJson.AmbilTeks(json['JamMulai']),
+    jamSelesai: UraiJson.AmbilTeks(json['JamSelesai']),
+  );
+}
+
+/// K-20 (`GET /api/pos/v1/reservasi/kalender?tanggal=`): layanan, staf berjadwal, dan reservasi satu tanggal.
+class KalenderReservasiPos {
+  const KalenderReservasiPos({
+    required this.tanggal,
+    required this.layanan,
+    required this.staf,
+    required this.reservasi,
+  });
+
+  final String tanggal;
+  final List<LayananReservasiPos> layanan;
+  final List<StafReservasiPos> staf;
+  final List<ReservasiPos> reservasi;
+
+  static KalenderReservasiPos DariJson(Map<String, Object?> json) => KalenderReservasiPos(
+    tanggal: UraiJson.AmbilTeks(json['Tanggal']),
+    layanan: [for (final l in UraiJson.AmbilDaftarPeta(json['Layanan'])) LayananReservasiPos.DariJson(l)],
+    staf: [for (final s in UraiJson.AmbilDaftarPeta(json['Staf'])) StafReservasiPos.DariJson(s)],
+    reservasi: [for (final r in UraiJson.AmbilDaftarPeta(json['Reservasi'])) ReservasiPos.DariJson(r)],
+  );
+}
+
+/// K-20 (`GET /api/pos/v1/reservasi/slot`): jam mulai kosong (`HH:MM`) dan staf yang bisa melayaninya.
+class SlotReservasiPos {
+  const SlotReservasiPos({required this.jam, required this.staf});
+
+  final String jam;
+  final List<({String uuid, String nama})> staf;
+
+  static SlotReservasiPos DariJson(Map<String, Object?> json) => SlotReservasiPos(
+    jam: UraiJson.AmbilTeks(json['Jam']),
+    staf: [
+      for (final s in UraiJson.AmbilDaftarPeta(json['Staf']))
+        (uuid: UraiJson.AmbilTeks(s['Uuid']), nama: UraiJson.AmbilTeks(s['Nama'])),
+    ],
+  );
+}

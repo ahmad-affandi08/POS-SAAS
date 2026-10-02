@@ -124,6 +124,10 @@ Route::middleware([AutentikasiPerangkat::class, IdempotensiPos::class])->group(f
         Route::post('/qris/{tagihanQris}/batal', [TagihanQrisKontroler::class, 'Batal'])
             ->middleware('throttle:pos-30')->where('tagihanQris', $ulid)->name('pos.qris.batal');
         // F-07 mode service bagian 2: antrian reservasi outlet & check-in pelanggan (online).
+        // K-20: kalender staf, slot kosong, dan buat booking dari kasir.
+        Route::get('/reservasi/kalender', [ReservasiKontroler::class, 'Kalender'])->middleware('throttle:pos-60')->name('pos.reservasi.kalender');
+        Route::get('/reservasi/slot', [ReservasiKontroler::class, 'Slot'])->middleware('throttle:pos-120')->name('pos.reservasi.slot');
+        Route::post('/reservasi', [ReservasiKontroler::class, 'Buat'])->middleware('throttle:pos-30')->name('pos.reservasi.buat');
         Route::get('/reservasi', [ReservasiKontroler::class, 'Ambil'])->middleware('throttle:pos-30')->name('pos.reservasi');
         Route::post('/reservasi/{reservasi}/hadir', [ReservasiKontroler::class, 'Hadir'])
             ->middleware('throttle:pos-60')->where('reservasi', $ulid)->name('pos.reservasi.hadir');

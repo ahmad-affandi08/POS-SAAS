@@ -233,6 +233,55 @@ class KlienPos {
     ),
   );
 
+  /// K-20: kalender booking [tanggal] (`YYYY-MM-DD`, bawaan hari ini): layanan, staf berjadwal, reservasi.
+  Future<KalenderReservasiPos> AmbilKalenderReservasi({String? tanggal}) async => KalenderReservasiPos.DariJson(
+    await _Kirim(
+      'GET',
+      tanggal == null ? 'reservasi/kalender' : 'reservasi/kalender?tanggal=${Uri.encodeQueryComponent(tanggal)}',
+      null,
+    ),
+  );
+
+  /// K-20: jam mulai kosong untuk [uuidLayanan] pada [tanggal]; [uuidStaf] null = staf mana saja.
+  Future<List<SlotReservasiPos>> AmbilSlotReservasi({
+    required String uuidLayanan,
+    required String tanggal,
+    String? uuidStaf,
+  }) async {
+    final kueri = [
+      'UuidLayanan=${Uri.encodeQueryComponent(uuidLayanan)}',
+      'Tanggal=${Uri.encodeQueryComponent(tanggal)}',
+      if (uuidStaf != null) 'UuidStaf=${Uri.encodeQueryComponent(uuidStaf)}',
+    ].join('&');
+    final json = await _Kirim('GET', 'reservasi/slot?$kueri', null);
+    return [for (final s in UraiJson.AmbilDaftarPeta(json['Slot'])) SlotReservasiPos.DariJson(s)];
+  }
+
+  /// K-20: buat booking dari kasir. Slot sudah terisi → `GalatApi` 409 `SlotTidakTersedia`.
+  Future<ReservasiPos> BuatReservasi({
+    required String uuidPengguna,
+    required String uuidLayanan,
+    required String tanggal,
+    required String jam,
+    String? uuidStaf,
+    required String namaPelanggan,
+    required String noHp,
+    String? catatan,
+  }) async => ReservasiPos.DariJson(
+    UraiJson.AmbilPeta(
+      (await _Kirim('POST', 'reservasi', {
+        'UuidPengguna': uuidPengguna,
+        'UuidLayanan': uuidLayanan,
+        'Tanggal': tanggal,
+        'Jam': jam,
+        'UuidStaf': uuidStaf,
+        'NamaPelanggan': namaPelanggan,
+        'NoHp': noHp,
+        'Catatan': catatan,
+      }))['Reservasi'],
+    ),
+  );
+
   /// Laundry (§9.9): cucian aktif outlet perangkat; [kata] kosong = siap diambil, selain itu cari nomor/nama/HP.
   Future<List<TiketLaundryPos>> CariLaundry({String kata = ''}) async {
     final rapi = kata.trim();

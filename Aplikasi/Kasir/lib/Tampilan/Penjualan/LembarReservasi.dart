@@ -9,9 +9,11 @@ import '../../Aplikasi/Penyedia.dart';
 import '../../Domain/GalatKasir.dart';
 import '../../Domain/Penjualan/KonteksPenjualan.dart';
 import '../../Domain/Sesi/StafLokal.dart';
+import 'PanelKalenderBooking.dart';
 
 /// F-07 mode service bagian 2: antrian reservasi hari ini (perlu online). "Layani" mencatat kedatangan pelanggan lalu
 /// memuat layanan + staf + pelanggan ke keranjang; pembayaran di layar Jual menyelesaikan reservasi di server.
+/// K-20: tab "Kalender & booking" menampilkan kalender per staf dan membuat booking baru dari kasir.
 class LembarReservasi extends ConsumerStatefulWidget {
   const LembarReservasi({super.key, required this.kasir, required this.saatDimuat});
 
@@ -37,6 +39,7 @@ class _LembarReservasiState extends ConsumerState<LembarReservasi> {
   String? _galat;
   bool _sibuk = false;
   String? _uuidDiproses;
+  bool _kalender = false;
 
   @override
   void initState() {
@@ -100,10 +103,37 @@ class _LembarReservasiState extends ConsumerState<LembarReservasi> {
     final warna = TokenWarna.AmbilDari(context);
     final zona = ref.watch(penyediaKonteksPenjualan).value?.zonaWaktu ?? ZonaWaktuOutlet.bawaan;
     final daftar = _daftar ?? const <ReservasiPos>[];
+    final pilihan = SegmentedButton<bool>(
+      key: const ValueKey('TabReservasi'),
+      segments: const [
+        ButtonSegment(value: false, label: Text('Antrian hari ini')),
+        ButtonSegment(value: true, label: Text('Kalender & booking')),
+      ],
+      selected: {_kalender},
+      onSelectionChanged: (nilai) {
+        setState(() => _kalender = nilai.first);
+        if (!_kalender) {
+          unawaited(_Muat());
+        }
+      },
+    );
+    if (_kalender) {
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          pilihan,
+          const SizedBox(height: TokenJarak.jarak12),
+          PanelKalenderBooking(kasir: widget.kasir),
+        ],
+      );
+    }
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        pilihan,
+        const SizedBox(height: TokenJarak.jarak12),
         Row(
           children: [
             Expanded(
