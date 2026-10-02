@@ -128,6 +128,7 @@ erDiagram
 | Tabel | Kolom kunci |
 |---|---|
 | `Shift` | IdTenant, IdOutlet, IdPerangkat, Uuid (dari perangkat), Status, Bersama, DibukaOleh, DibukaPada, TanggalBisnis, KasAwal, PecahanKasAwal JSON, PerluTinjauan, AlasanTinjauan, DiterimaPada, DitutupOleh, DitutupPada, KasSeharusnya, KasAktual, Selisih, PecahanKasAkhir JSON (F-06; kolom tutup diisi F-11) |
+| `BukaUlangShift` | IdTenant, Uuid (dari perangkat), IdShift, IdPerangkat, Urutan (unik per shift), Alasan, DimintaOleh, DisetujuiOleh, DibukaUlangPada, SnapshotTutup JSON, IdJurnalPembalik. Append-only (K-18) |
 | `MutasiKas` | IdTenant, Uuid (dari perangkat), IdShift, Jenis (Masuk/Keluar/Setoran), IdKategoriKas, Jumlah, Catatan, PathLampiran, DicatatOleh, DicatatPada, TanggalBisnis, DisetujuiOleh, IdJurnal, DiterimaPada. Append-only (F-06) |
 | `BukaLaci` | IdTenant, Uuid (dari perangkat), IdShift, IdPerangkat, Alasan, DibukaOleh, DisetujuiOleh, DibukaPada, DiterimaPada, PerluTinjauan, AlasanTinjauan. Log buka laci manual tanpa transaksi, append-only (v1.87, §19.2) |
 | `KategoriKas` | IdTenant, Uuid, Nama, Jenis (Masuk/Keluar), IdAkun, Aktif, Urutan. Unik (IdTenant, Jenis, Nama) (F-06) |

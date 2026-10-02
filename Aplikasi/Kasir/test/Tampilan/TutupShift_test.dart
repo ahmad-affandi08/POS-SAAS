@@ -191,4 +191,42 @@ void main() {
     expect(await tester.runAsync(() => u.repositori.AmbilPengaturan(KunciPengaturan.laporanZTertunda)), isNull);
     await Lepas(tester, u);
   });
+
+  for (final (nama, ukuran) in [('360', ukuranHp), ('800', ukuranTablet), ('1280', ukuranDesktop)]) {
+    testWidgets('lebar $nama dp: K-18 salah tutup → buka ulang dengan alasan + PIN supervisor → kembali berjualan', (
+      tester,
+    ) async {
+      final u = await MasukRuangKerja(tester, ukuran: ukuran);
+      await BukaTutupShift(tester);
+      await tester.enterText(find.widgetWithText(TextField, 'Kas aktual di laci'), '455000');
+      await Tunggu(tester);
+      await Ketuk(tester, find.text('Simpan hitungan'));
+      await Ketuk(tester, find.text('Tutup shift sekarang'));
+      await Tunggu(tester, const Duration(seconds: 1));
+      await Ketuk(tester, find.text('Selesai'));
+      await Tunggu(tester, const Duration(seconds: 1));
+      expect(find.text('Buka shift · Rina Wulandari'), findsOneWidget);
+
+      await Ketuk(tester, find.byKey(const ValueKey('BukaUlangShift')));
+      await tester.enterText(find.byKey(const ValueKey('AlasanBukaUlang')), 'ok');
+      await Ketuk(tester, find.widgetWithText(FilledButton, 'Lanjut'));
+      expect(find.text('Tulis alasan minimal 5 huruf.'), findsOneWidget);
+      await tester.enterText(find.byKey(const ValueKey('AlasanBukaUlang')), 'Salah tekan, pelanggan masih antre');
+      await Ketuk(tester, find.widgetWithText(FilledButton, 'Lanjut'));
+      expect(find.text('Persetujuan supervisor'), findsOneWidget);
+      await tester.tap(find.widgetWithText(OutlinedButton, 'Budi Santoso'));
+      await tester.pump();
+      await KetikPin(tester, KasusPin(1)['Pin']! as String);
+      await Tunggu(tester, const Duration(seconds: 1));
+
+      expect(find.byType(RuangKerja), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      final outbox = (await tester.runAsync(() => u.db.select(u.db.outbox).get()))!;
+      final data = jsonDecode(outbox.singleWhere((o) => o.Jenis == 'Shift.BukaUlang').Data) as Map<String, Object?>;
+      expect(data['Alasan'], 'Salah tekan, pelanggan masih antre');
+      expect(data['UuidPenyetuju'], '01K5STAF000000000000000002');
+      expect((await tester.runAsync(() => u.repositori.AmbilShiftAktif()))?.Uuid, data['UuidShift']);
+      await Lepas(tester, u);
+    });
+  }
 }

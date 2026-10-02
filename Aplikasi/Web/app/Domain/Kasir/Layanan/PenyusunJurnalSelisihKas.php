@@ -21,7 +21,7 @@ use Carbon\CarbonImmutable;
  */
 final class PenyusunJurnalSelisihKas
 {
-    public function Susun(Shift $shift, Uang $selisih, CarbonImmutable $tanggal, int $idPengguna): ?DataJurnal
+    public function Susun(Shift $shift, Uang $selisih, CarbonImmutable $tanggal, int $idPengguna, string $kunciSumber = 'Utama'): ?DataJurnal
     {
         if ($selisih->BernilaiNol()) {
             return null;
@@ -50,6 +50,7 @@ final class PenyusunJurnalSelisihKas
             keterangan: mb_substr(($kurang ? 'Selisih kas kurang' : 'Selisih kas lebih')." tutup shift ({$shift->Uuid})", 0, 255),
             baris: $baris,
             idPengguna: $idPengguna,
+            kunciSumber: $kunciSumber,
         );
     }
 }

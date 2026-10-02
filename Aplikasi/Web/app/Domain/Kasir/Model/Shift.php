@@ -96,9 +96,15 @@ final class Shift extends ModelDasar
             }
 
             $sedangDitutup = $shift->isDirty('Status') && $shift->Status === StatusShift::Tertutup;
+            // K-18: buka ulang mengosongkan data tutup (salinannya disimpan di `BukaUlangShift.SnapshotTutup`).
+            $sedangDibukaUlang = $shift->isDirty('Status') && $shift->Status === StatusShift::DibukaUlang;
 
             foreach (self::KOLOM_TUTUP as $kolom) {
-                if (! $sedangDitutup && $shift->isDirty($kolom)) {
+                if ($sedangDibukaUlang && $shift->isDirty($kolom) && $shift->getAttribute($kolom) !== null) {
+                    throw new LogicException("Buka ulang shift hanya boleh mengosongkan data tutup ({$kolom}).");
+                }
+
+                if (! $sedangDitutup && ! $sedangDibukaUlang && $shift->isDirty($kolom)) {
                     throw new LogicException("Data tutup shift ({$kolom}) hanya diisi saat shift ditutup.");
                 }
             }

@@ -109,6 +109,77 @@ class LayananShift {
     return (await repositori.AmbilShiftAktif())!;
   }
 
+  /// Panjang alasan buka ulang minimal (sama dengan server, K-18).
+  static const int panjangAlasanBukaUlangMinimal = 5;
+
+  /// Shift yang boleh dibuka ulang (K-18): shift perangkat ini yang terakhir ditutup, pada tanggal yang sama (jam
+  /// perangkat), dan tidak ada shift terbuka. Server tetap menolak bila tutup harian tanggal itu sudah dibuat.
+  Future<BarisShift?> AmbilShiftBisaDibukaUlang() async {
+    if (await repositori.AmbilShiftAktif() != null) {
+      return null;
+    }
+    final shift = await repositori.AmbilShiftTertutupTerakhir();
+    final ditutup = shift?.DitutupPada?.toLocal();
+    final hariIni = _jam().toLocal();
+    if (shift == null ||
+        ditutup == null ||
+        ditutup.year != hariIni.year ||
+        ditutup.month != hariIni.month ||
+        ditutup.day != hariIni.day) {
+      return null;
+    }
+    return shift;
+  }
+
+  /// Buka ulang shift yang tertutup karena salah tutup (K-18). Wajib alasan dan persetujuan supervisor berizin
+  /// `shift.selisih.setujui`; server membalik jurnal selisih kas tutup sebelumnya dan menyimpan salinannya.
+  Future<BarisShift> BukaUlangShift({
+    required BarisShift shift,
+    required StafLokal peminta,
+    required StafLokal penyetuju,
+    required String alasan,
+  }) async {
+    if (!peminta.PunyaIzin(IzinKasir.penjualanBuat)) {
+      throw GalatKasir('TanpaIzin', '${peminta.nama} tidak punya izin membuka shift.');
+    }
+    if (!penyetuju.PunyaIzin(IzinKasir.shiftSelisihSetujui)) {
+      throw GalatKasir('PenyetujuTidakBerwenang', '${penyetuju.nama} tidak punya izin membuka ulang shift.');
+    }
+    final alasanRapi = alasan.trim();
+    if (alasanRapi.length < panjangAlasanBukaUlangMinimal) {
+      throw const GalatKasir('AlasanDiperlukan', 'Tulis alasan buka ulang minimal 5 huruf.');
+    }
+    if ((await AmbilShiftBisaDibukaUlang())?.Uuid != shift.Uuid) {
+      throw const GalatKasir(
+        'TidakBisaDibukaUlang',
+        'Hanya shift terakhir yang ditutup hari ini yang bisa dibuka ulang, dan tidak boleh ada shift terbuka.',
+      );
+    }
+
+    final sekarang = _jam().toUtc();
+    try {
+      await repositori.SimpanBukaUlangShift(
+        shift.Uuid,
+        ItemOutbox(
+          jenis: 'Shift.BukaUlang',
+          uuid: _ulid.Buat(),
+          data: {
+            'UuidShift': shift.Uuid,
+            'UuidPengguna': peminta.uuid,
+            'UuidPenyetuju': penyetuju.uuid,
+            'Alasan': alasanRapi,
+            'DibukaUlangPada': sekarang.toIso8601String(),
+          },
+        ),
+        sekarang,
+      );
+    } on StateError {
+      throw const GalatKasir('TidakBisaDibukaUlang', 'Shift ini tidak bisa dibuka ulang.');
+    }
+
+    return (await repositori.AmbilShiftAktif())!;
+  }
+
   /// Apakah kas keluar sebesar `jumlah` butuh persetujuan supervisor (BR-06.4).
   Future<bool> CekButuhPersetujuan(String jenis, Uang jumlah) async =>
       jenis == JenisMutasi.keluar && jumlah.Bandingkan(await AmbilBatasKasKeluar()) > 0;

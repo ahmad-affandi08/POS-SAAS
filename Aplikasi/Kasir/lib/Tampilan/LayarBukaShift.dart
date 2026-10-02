@@ -1,17 +1,23 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:inti/Inti.dart';
 import 'package:sistem_desain/SistemDesain.dart';
 
 import '../Aplikasi/Penyedia.dart';
+import '../Data/BasisData/BasisDataKasir.dart';
 import '../Domain/GalatKasir.dart';
 import '../Domain/Sesi/StafLokal.dart';
 import '../Domain/Shift/LayananShift.dart';
 import 'Komponen/BingkaiMasuk.dart';
+import 'Komponen/FormatWaktu.dart';
 import 'Komponen/MasukanUang.dart';
+import 'LembarMutasiKas.dart';
 
 /// F-06 langkah 2: layar Buka Shift. Modal awal diketik langsung atau dihitung per pecahan (opsional); keduanya
-/// harus sama. Bisa tanpa internet (BR-06.3); data dikirim lewat outbox saat online.
+/// harus sama. Bisa tanpa internet (BR-06.3); data dikirim lewat outbox saat online. K-18: shift terakhir yang ditutup
+/// hari ini bisa dibuka ulang (salah tutup) dengan alasan + PIN supervisor.
 class LayarBukaShift extends ConsumerStatefulWidget {
   const LayarBukaShift({super.key, required this.kasir});
 
@@ -27,6 +33,61 @@ class _LayarBukaShiftState extends ConsumerState<LayarBukaShift> {
   bool _hitungPecahan = false;
   bool _sibuk = false;
   String? _galat;
+  BarisShift? _shiftTerakhir;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_MuatShiftTerakhir());
+  }
+
+  Future<void> _MuatShiftTerakhir() async {
+    final shift = await ref.read(penyediaLayananShift).AmbilShiftBisaDibukaUlang();
+    if (mounted) {
+      setState(() => _shiftTerakhir = shift);
+    }
+  }
+
+  Future<void> _BukaUlang(BarisShift shift) async {
+    final alasan = await showDialog<String>(
+      context: context,
+      builder: (_) => _DialogAlasanBukaUlang(shift: shift),
+    );
+    if (alasan == null || !mounted) {
+      return;
+    }
+    var penyetuju = widget.kasir.PunyaIzin(IzinKasir.shiftSelisihSetujui) ? widget.kasir : null;
+    penyetuju ??= await showDialog<StafLokal>(
+      context: context,
+      builder: (_) => DialogPinSupervisor(
+        izin: IzinKasir.shiftSelisihSetujui,
+        judul: 'Setujui buka ulang shift',
+        pesan: 'Buka ulang shift butuh persetujuan supervisor. Pilih supervisor yang menyetujui.',
+        rincian: [(label: 'Shift', nilai: shift.NamaKasir), (label: 'Alasan', nilai: alasan)],
+      ),
+    );
+    if (penyetuju == null || !mounted) {
+      return;
+    }
+    setState(() {
+      _sibuk = true;
+      _galat = null;
+    });
+    try {
+      await ref
+          .read(penyediaLayananShift)
+          .BukaUlangShift(shift: shift, peminta: widget.kasir, penyetuju: penyetuju, alasan: alasan);
+      await ref.read(penyediaSesi.notifier).Sinkronkan();
+    } on GalatKasir catch (galat) {
+      if (mounted) {
+        setState(() => _galat = galat.pesan);
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _sibuk = false);
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -93,8 +154,87 @@ class _LayarBukaShiftState extends ConsumerState<LayarBukaShift> {
               child: Text(_sibuk ? 'Membuka shift…' : 'Buka shift'),
             ),
           ),
+          if (_shiftTerakhir case final shift?) ...[
+            const SizedBox(height: TokenJarak.jarak16),
+            OutlinedButton.icon(
+              key: const ValueKey('BukaUlangShift'),
+              onPressed: _sibuk ? null : () => _BukaUlang(shift),
+              icon: const Icon(Icons.lock_open_outlined),
+              label: Text(
+                'Buka ulang shift ${shift.NamaKasir} '
+                '(ditutup ${FormatWaktu.FormatJam(shift.DitutupPada!.toLocal())})',
+              ),
+            ),
+          ],
         ],
       ),
+    );
+  }
+}
+
+/// Dialog alasan buka ulang shift (K-18), minimal 5 huruf; mengembalikan alasan yang sudah dirapikan.
+class _DialogAlasanBukaUlang extends StatefulWidget {
+  const _DialogAlasanBukaUlang({required this.shift});
+
+  final BarisShift shift;
+
+  @override
+  State<_DialogAlasanBukaUlang> createState() => _DialogAlasanBukaUlangState();
+}
+
+class _DialogAlasanBukaUlangState extends State<_DialogAlasanBukaUlang> {
+  final _alasan = TextEditingController();
+  String? _galat;
+
+  @override
+  void dispose() {
+    _alasan.dispose();
+    super.dispose();
+  }
+
+  void _Lanjut() {
+    final alasan = _alasan.text.trim();
+    if (alasan.length < LayananShift.panjangAlasanBukaUlangMinimal) {
+      setState(() => _galat = 'Tulis alasan minimal 5 huruf.');
+      return;
+    }
+    Navigator.of(context).pop(alasan);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Buka ulang shift'),
+      content: SizedBox(
+        width: 420,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Shift ${widget.shift.NamaKasir} akan dibuka lagi. Hasil tutup sebelumnya dibatalkan dan dicatat; '
+              'tutup ulang setelah selesai.',
+            ),
+            const SizedBox(height: TokenJarak.jarak16),
+            TextField(
+              key: const ValueKey('AlasanBukaUlang'),
+              controller: _alasan,
+              autofocus: true,
+              maxLength: 255,
+              decoration: InputDecoration(
+                labelText: 'Alasan',
+                hintText: 'Contoh: salah tekan tutup, masih ada pelanggan',
+                errorText: _galat,
+              ),
+              onSubmitted: (_) => _Lanjut(),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Batal')),
+        FilledButton(onPressed: _Lanjut, child: const Text('Lanjut')),
+      ],
     );
   }
 }

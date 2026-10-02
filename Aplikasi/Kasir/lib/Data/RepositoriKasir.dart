@@ -391,6 +391,48 @@ class RepositoriKasir {
         await SimpanPengaturan(KunciPengaturan.laporanZTertunda, uuid);
       });
 
+  /// Shift perangkat ini yang terakhir ditutup (K-18: kandidat buka ulang).
+  Future<BarisShift?> AmbilShiftTertutupTerakhir() =>
+      (db.select(db.shift)
+            ..where((s) => s.Status.equals(StatusShiftLokal.tertutup))
+            ..orderBy([(s) => OrderingTerm.desc(s.DitutupPada)])
+            ..limit(1))
+          .getSingleOrNull();
+
+  /// Buka ulang shift (K-18): status kembali `Terbuka`, data tutup dikosongkan (salinannya disimpan server), entri
+  /// outbox `Shift.BukaUlang`, dan penanda laporan Z shift itu dibersihkan, dalam satu transaksi. Hanya shift yang
+  /// `Tertutup` dan bila perangkat tidak punya shift terbuka lain.
+  Future<void> SimpanBukaUlangShift(String uuid, ItemOutbox item, DateTime sekarang) => db.transaction(() async {
+    if (await AmbilShiftAktif() != null) {
+      throw StateError('Perangkat masih punya shift terbuka.');
+    }
+    final diubah =
+        await (db.update(
+          db.shift,
+        )..where((s) => s.Uuid.equals(uuid) & s.Status.equals(StatusShiftLokal.tertutup))).write(
+          const ShiftCompanion(
+            Status: Value(StatusShiftLokal.terbuka),
+            DitutupOleh: Value(null),
+            NamaPenutup: Value(null),
+            DitutupPada: Value(null),
+            KasSeharusnya: Value(null),
+            KasAktual: Value(null),
+            Selisih: Value(null),
+            PecahanKasAkhir: Value(null),
+            NonTunaiDilaporkan: Value(null),
+            AlasanSelisih: Value(null),
+            UuidPenyetujuSelisih: Value(null),
+          ),
+        );
+    if (diubah != 1) {
+      throw StateError('Shift $uuid tidak tertutup.');
+    }
+    await TambahOutbox(item, sekarang);
+    if (await AmbilPengaturan(KunciPengaturan.laporanZTertunda) == uuid) {
+      await SimpanPengaturan(KunciPengaturan.laporanZTertunda, '');
+    }
+  });
+
   /// Simpan mutasi kas + entri outbox `MutasiKas.Catat` dalam satu transaksi.
   Future<void> SimpanMutasiBaru(MutasiKasCompanion mutasi, ItemOutbox item, DateTime sekarang) =>
       db.transaction(() async {

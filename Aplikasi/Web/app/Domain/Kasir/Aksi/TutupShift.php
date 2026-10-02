@@ -15,6 +15,7 @@ use App\Domain\Kasir\Data\DataTutupShift;
 use App\Domain\Kasir\Enum\StatusShift;
 use App\Domain\Kasir\Kueri\LaporanShift;
 use App\Domain\Kasir\Layanan\PenyusunJurnalSelisihKas;
+use App\Domain\Kasir\Model\BukaUlangShift;
 use App\Domain\Kasir\Model\Shift;
 use App\Domain\Organisasi\Data\DataAnggotaOutlet;
 use App\Domain\Organisasi\Enum\IzinTenant;
@@ -89,6 +90,11 @@ final class TutupShift
             return $this->BandingkanDuplikat($shift, $data, $penutup);
         }
 
+        // K-18: tutup lama yang terkirim ulang setelah shift dibuka ulang = Duplikat (bukan menutup lagi).
+        if ($shift->Status === StatusShift::DibukaUlang && $this->CekTutupSebelumBukaUlang($shift, $data, $penutup)) {
+            return StatusItemSinkron::Duplikat;
+        }
+
         if (! $shift->Status->CekAktif()) {
             throw new PelanggaranAturanBisnis('ShiftTidakAktif', "Shift ini {$shift->Status->AmbilLabel()}; tidak bisa ditutup.", 'UuidShift');
         }
@@ -143,7 +149,9 @@ final class TutupShift
 
         $shift->save();
 
-        $jurnal = $this->penyusun->Susun($shift, $selisih, $this->tanggalBisnis->Hitung($shift->IdOutlet, $data->ditutupPada), $penutup->id);
+        // K-18: tutup setelah buka ulang ke-n memakai kunci sumber jurnal tersendiri.
+        $bukaUlang = BukaUlangShift::query()->where('IdShift', $shift->Id)->count();
+        $jurnal = $this->penyusun->Susun($shift, $selisih, $this->tanggalBisnis->Hitung($shift->IdOutlet, $data->ditutupPada), $penutup->id, $bukaUlang === 0 ? 'Utama' : 'Tutup-'.($bukaUlang + 1));
 
         if ($jurnal !== null) {
             $this->postingJurnal->Jalankan($jurnal);
@@ -177,6 +185,25 @@ final class TutupShift
         if (! $total->SamaDengan($data->kasAktual)) {
             throw new PelanggaranAturanBisnis('PecahanTidakSesuai', "Jumlah hitungan pecahan ({$total->FormatRupiah()}) tidak sama dengan kas aktual ({$data->kasAktual->FormatRupiah()}).", 'PecahanKasAkhir');
         }
+    }
+
+    private function CekTutupSebelumBukaUlang(Shift $shift, DataTutupShift $data, ?DataAnggotaOutlet $penutup): bool
+    {
+        if ($penutup === null) {
+            return false;
+        }
+
+        foreach (BukaUlangShift::query()->where('IdShift', $shift->Id)->get(['SnapshotTutup']) as $log) {
+            $snapshot = $log->SnapshotTutup;
+
+            if ($snapshot['DitutupOleh'] === $penutup->id
+                && $snapshot['DitutupPada'] !== null && CarbonImmutable::parse($snapshot['DitutupPada'])->getTimestamp() === $data->ditutupPada->getTimestamp()
+                && $snapshot['KasAktual'] !== null && Uang::Dari($snapshot['KasAktual'])->SamaDengan($data->kasAktual)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function BandingkanDuplikat(Shift $shift, DataTutupShift $data, ?DataAnggotaOutlet $penutup): StatusItemSinkron
