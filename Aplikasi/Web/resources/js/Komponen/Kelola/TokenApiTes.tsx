@@ -57,7 +57,7 @@ describe('X7 halaman Token API', () => {
         fireEvent.click(screen.getByRole('button', { name: 'Buat token' }));
         fireEvent.change(screen.getByLabelText(/Nama token/), { target: { value: 'Laporan BI' } });
         fireEvent.click(screen.getByLabelText('Baca penjualan beserta baris & pembayaran'));
-        fireEvent.click(screen.getAllByRole('button', { name: 'Buat token' }).at(-1)!);
+        fireEvent.click(screen.getAllByRole('button', { name: 'Buat token' }).at(-1) as HTMLElement);
 
         expect(kirimanForm.at(-1)).toMatchObject({
             metode: 'post',
