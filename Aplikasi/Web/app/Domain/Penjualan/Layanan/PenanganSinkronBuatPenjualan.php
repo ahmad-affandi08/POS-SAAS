@@ -36,8 +36,9 @@ use Illuminate\Validation\Rule;
  * HargaTermasukPajak|null, KodePajak [..]|null, DiskonManual {Persen|Jumlah}|null, Catatan}], DiskonManualPesanan
  * {Persen|Jumlah}|null, UuidPenyetujuDiskon|null, Pembayaran [{Uuid, UuidMetodePembayaran, Jumlah, Referensi|null}],
  * Ringkasan {Subtotal, TotalPajak, Pembulatan, TotalAkhir, Kembalian}, Catatan, NomorAntrian?, NamaPemesan? (v3.52), UuidPesananTerbuka?, KirimDapur?, UuidPelanggan?,
- * TukarPoin {Poin, Nilai}|null, Promo [{UuidPromo, Kode, DiskonBaris [{UuidBaris, Jumlah}], DiskonPesanan}]?, Voucher?, UuidPesananPenjualan?, UuidPesananOnline?, UuidReservasi?, Laundry?, UuidReturTukar?}`. K-11: `UuidReturTukar` = retur tukar
- * barang yang nilainya membayar penjualan ini (wajib bila ada pembayaran metode `Tukar`).
+ * TukarPoin {Poin, Nilai}|null, Promo [{UuidPromo, Kode, DiskonBaris [{UuidBaris, Jumlah}], DiskonPesanan}]?, Voucher?, UuidPesananPenjualan?, UuidPesananOnline?, UuidReservasi?, Laundry?, UuidReturTukar?, UuidPerintahKerja?}`. K-11: `UuidReturTukar` = retur tukar
+ * barang yang nilainya membayar penjualan ini (wajib bila ada pembayaran metode `Tukar`). Bengkel (§9.10):
+ * `UuidPerintahKerja` = perintah kerja yang ditagih lewat penjualan ini (ditandai Ditagih; mekaniknya jadi staf baris).
  * `TukarPoin` (F-16b) wajib bersama `UuidPelanggan`; `Promo` (F-16c) = promo yang diterapkan perangkat;
  * `UuidPenyetujuTempo` (F-12) = penyetuju tempo di atas limit / piutang lewat jatuh tempo (BR-12.1); `Voucher` (F-16c
  * bagian 2) = kode voucher yang dipesan online untuk penjualan ini; `UuidPesananOnline` (F-17 bagian 2) = pesanan toko online berbayar yang ditagihkan; `UuidPesananPenjualan` (F-12 bagian 2) = pre-order yang
@@ -151,6 +152,7 @@ final class PenanganSinkronBuatPenjualan implements PenanganItemSinkron
             'UuidPesananOnline' => ['sometimes', 'nullable', 'string', 'ulid'],
             'UuidReservasi' => ['sometimes', 'nullable', 'string', 'ulid'],
             'UuidReturTukar' => ['sometimes', 'nullable', 'string', 'ulid'],
+            'UuidPerintahKerja' => ['sometimes', 'nullable', 'string', 'ulid'],
             'Laundry' => ['sometimes', 'nullable', 'array'],
             'Laundry.JenisLayanan' => ['required_with:Laundry', 'string', 'in:Reguler,Express'],
             'Laundry.Berat' => ['nullable', 'string', 'regex:/^\d{1,4}(\.\d{1,2})?$/'],
@@ -230,6 +232,7 @@ final class PenanganSinkronBuatPenjualan implements PenanganItemSinkron
             nomorAntrian: self::AmbilTeks($valid['NomorAntrian'] ?? null),
             namaPemesan: self::AmbilTeks($valid['NamaPemesan'] ?? null),
             uuidReturTukar: is_string($valid['UuidReturTukar'] ?? null) ? strtoupper($valid['UuidReturTukar']) : null,
+            uuidPerintahKerja: is_string($valid['UuidPerintahKerja'] ?? null) ? strtoupper($valid['UuidPerintahKerja']) : null,
         ));
     }
 

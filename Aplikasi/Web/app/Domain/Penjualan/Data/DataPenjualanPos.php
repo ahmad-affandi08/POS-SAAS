@@ -73,5 +73,7 @@ final readonly class DataPenjualanPos
         public ?string $namaPemesan = null,
         // K-11: retur tukar barang yang nilainya membayar penjualan ini lewat metode `Tukar`.
         public ?string $uuidReturTukar = null,
+        // Sektor Bengkel (§9.10): perintah kerja yang ditagih lewat penjualan ini (ditandai Ditagih & ditautkan).
+        public ?string $uuidPerintahKerja = null,
     ) {}
 }

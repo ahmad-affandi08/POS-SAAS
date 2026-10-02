@@ -1,3 +1,4 @@
+import type { Kendaraan } from '@/Tipe/Bengkel';
 import type { HasilTabel } from '@/Komponen/TabelData/Tipe';
 
 /** F-16a pelanggan (CRM-01). */
@@ -81,6 +82,8 @@ export type PropsDetailPelanggan = {
     PesananOnline: PesananOnlinePelanggan[];
     /** F-17 bagian 3: nomor HP terbukti milik pelanggan (kode WhatsApp berhasil). */
     NoHpTerverifikasi: boolean;
+    /** Bengkel (§9.10): kendaraan pelanggan; null/absen = pengguna tanpa izin `bengkel.kelola` (bagian disembunyikan). */
+    Kendaraan?: Kendaraan[] | null;
     Izin: IzinPelanggan & { KelolaDeposit: boolean };
 };
 

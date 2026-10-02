@@ -19,6 +19,7 @@ import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import { FormatRupiah } from '@/Pustaka/Format';
 import { FormatTanggal, FormatTanggalWaktu } from '@/Pustaka/FormatWaktu';
 import { BandingkanDesimal } from '@/Pustaka/HitungDesimal';
+import PanelKendaraanPelanggan from '@/Komponen/Bengkel/PanelKendaraanPelanggan';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
 import type { PropsBersamaAplikasi } from '@/Tipe/Aplikasi';
 import type {
@@ -191,6 +192,7 @@ export default function HalamanDetailPelanggan({
     PaketSesi,
     PesananOnline,
     NoHpTerverifikasi,
+    Kendaraan = null,
     Izin,
 }: PropsDetailPelanggan) {
     const { props } = usePage<PropsBersamaAplikasi>();
@@ -493,6 +495,10 @@ export default function HalamanDetailPelanggan({
                         kosong={{ judul: 'Pelanggan ini belum membeli paket sesi.' }}
                     />
                 </Card>
+            ) : null}
+
+            {Kendaraan !== null ? (
+                <PanelKendaraanPelanggan pelanggan={{ Uuid: p.Uuid, Nama: p.Nama }} kendaraan={Kendaraan} />
             ) : null}
 
             {PesananOnline.length > 0 ? (

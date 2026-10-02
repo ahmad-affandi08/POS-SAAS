@@ -65,6 +65,9 @@ enum JenisDokumenBernomor: string
     /** v3.41 (INV-14): biaya tambahan pembelian `BY/{YYMM}/{SEQ4}`. */
     case BiayaTambahanPembelian = 'BiayaTambahanPembelian';
 
+    /** Sektor Bengkel bagian 1 (§9.10): perintah kerja `WO/{OUTLET}/{YYMM}/{SEQ4}` per outlet. */
+    case PerintahKerja = 'PerintahKerja';
+
     public function AmbilAwalan(): string
     {
         return match ($this) {
@@ -93,6 +96,7 @@ enum JenisDokumenBernomor: string
             self::DokumenKonsinyasi => 'KS',
             self::PembayaranKonsinyasi => 'BK',
             self::BiayaTambahanPembelian => 'BY',
+            self::PerintahKerja => 'WO',
         };
     }
 
@@ -102,7 +106,7 @@ enum JenisDokumenBernomor: string
             self::StokAwal, self::TransaksiKasBank, self::TransferStok, self::PenyesuaianStok, self::OrderProduksi => 4,
             self::StokOpname => 3,
             self::Jurnal => 6,
-            self::PesananPembelian, self::PenerimaanBarang, self::FakturPembelian, self::PembayaranHutang, self::ReturPembelian, self::PembayaranPiutang, self::PesananSendiri, self::PesananOnline, self::Reservasi, self::PesananGrosir, self::SuratJalan, self::FakturPenjualan, self::ReturGrosir, self::Pencairan, self::AsetTetap, self::DokumenKonsinyasi, self::PembayaranKonsinyasi, self::BiayaTambahanPembelian => 4,
+            self::PesananPembelian, self::PenerimaanBarang, self::FakturPembelian, self::PembayaranHutang, self::ReturPembelian, self::PembayaranPiutang, self::PesananSendiri, self::PesananOnline, self::Reservasi, self::PesananGrosir, self::SuratJalan, self::FakturPenjualan, self::ReturGrosir, self::Pencairan, self::AsetTetap, self::DokumenKonsinyasi, self::PembayaranKonsinyasi, self::BiayaTambahanPembelian, self::PerintahKerja => 4,
         };
     }
 

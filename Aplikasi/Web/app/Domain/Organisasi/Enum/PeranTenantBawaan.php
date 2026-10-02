@@ -107,6 +107,8 @@ enum PeranTenantBawaan: string
                 IzinTenant::ReservasiKelola,
                 // Laundry: tiket & status proses cucian outlet.
                 IzinTenant::LaundryKelola,
+                // Bengkel (§9.10): perintah kerja & kendaraan pelanggan outlet.
+                IzinTenant::BengkelKelola,
                 // F-05f: bahan terbuang outlet.
                 IzinTenant::PersediaanTerbuangCatat,
                 // Grosir (F-12): SO, surat jalan, dan faktur penjualan outletnya; BR-12.6 penyetuju limit kredit,
@@ -134,6 +136,7 @@ enum PeranTenantBawaan: string
                 IzinTenant::KaryawanLihat,
                 IzinTenant::ReservasiKelola,
                 IzinTenant::LaundryKelola,
+                IzinTenant::BengkelKelola,
                 IzinTenant::PersediaanTerbuangCatat,
                 // Grosir: Supervisor boleh mengelola dokumennya, tetapi persetujuan limit kredit (BR-12.6) TIDAK
                 // diberikan bawaan — itu keputusan atas risiko piutang usaha, bukan kelonggaran satu transaksi seperti

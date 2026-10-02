@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Domain\Akuntansi\Layanan\PenyediaTindakanAkuntansi;
+use App\Domain\Bengkel\Layanan\PenyediaTindakanBengkel;
 use App\Domain\Bersama\Tindakan\Kontrak\PenyediaTindakan as KontrakPenyediaTindakan;
 use App\Domain\Kasir\Layanan\PenyediaTindakanKasir;
 use App\Domain\Laporan\Layanan\PenyediaTindakanStok;
@@ -37,6 +38,7 @@ final class PenyediaTindakan extends ServiceProvider
             PenyediaTindakanPanduanAwal::class,
             PenyediaTindakanReservasi::class,
             PenyediaTindakanLaundry::class,
+            PenyediaTindakanBengkel::class,
             PenyediaTindakanPerangkat::class,
         ], KontrakPenyediaTindakan::TAG);
     }

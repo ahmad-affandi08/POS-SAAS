@@ -30,8 +30,9 @@ final class AturanSlugSitus
             return 'Slug ini dipakai sistem. Pilih slug lain.';
         }
 
-        // F-07 mode service: `/{slugToko}/reservasi` adalah halaman reservasi online toko.
-        if ((explode('/', $slug)[1] ?? null) === 'reservasi') {
+        // F-07 mode service: `/{slugToko}/reservasi` adalah halaman reservasi online toko; bengkel (§9.10):
+        // `/{slugToko}/servis/{token}` adalah halaman persetujuan estimasi servis.
+        if (in_array(explode('/', $slug)[1] ?? null, ['reservasi', 'servis'], true)) {
             return 'Slug ini dipakai sistem. Pilih slug lain.';
         }
 

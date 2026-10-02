@@ -413,5 +413,15 @@
         "Metode": "GET",
         "Jalur": "api/pos/v1/salesman/stok",
         "Nama": "pos.salesman.stok"
+    },
+    "GET api/pos/v1/perintah-kerja": {
+        "Metode": "GET",
+        "Jalur": "api/pos/v1/perintah-kerja",
+        "Nama": "pos.perintah-kerja"
+    },
+    "GET api/pos/v1/perintah-kerja/{perintahKerja}": {
+        "Metode": "GET",
+        "Jalur": "api/pos/v1/perintah-kerja/{perintahKerja}",
+        "Nama": "pos.perintah-kerja.tampil"
     }
 }

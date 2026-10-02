@@ -77,6 +77,9 @@ Schedule::command('pelanggan:kirim-pengingat-piutang')->dailyAt('09:00')->timezo
 // CRM-07: mulai kampanye pesan pelanggan yang jadwalnya sudah tiba (pengiriman bertahap & jam tenang di tugasnya).
 Schedule::command('pelanggan:jalankan-kampanye-terjadwal')->everyFiveMinutes()->withoutOverlapping();
 
+// Bengkel (§9.10): pengingat servis berkala H-3 lewat WhatsApp (jam kerja pagi, sekali per tanggal servis).
+Schedule::command('bengkel:kirim-pengingat-servis')->dailyAt('09:10')->timezone('Asia/Jakarta')->withoutOverlapping();
+
 // F-07 mode service: pengingat reservasi H-1 lewat WhatsApp (jendela 20–28 jam, tiap jam).
 Schedule::command('reservasi:kirim-pengingat')->hourlyAt(5)->withoutOverlapping();
 

@@ -279,5 +279,7 @@ describe('v3.80 template sektor tambahan', function (): void {
         ['SVC-SLN', 'Layanan', 'Perawatan rambut'],
         ['SVC-LDR', 'Layanan', 'Kiloan'],
         ['SVC-GEN', 'Layanan', 'Fotokopi & cetak'],
+        // K25: Bengkel (jasa servis + sparepart).
+        ['SVC-WRK', 'Layanan', 'Jasa Servis'],
     ]);
 });

@@ -46,6 +46,8 @@ export const IzinTenant = {
     TindakanTinjau: 'tindakan.tinjau',
     ReservasiKelola: 'reservasi.kelola',
     LaundryKelola: 'laundry.kelola',
+    // Bengkel (§9.10): perintah kerja, kendaraan pelanggan, persetujuan estimasi, servis berkala.
+    BengkelKelola: 'bengkel.kelola',
     PersediaanTerbuangCatat: 'persediaan.terbuang.catat',
     KaryawanLihat: 'karyawan.lihat',
     KaryawanKelola: 'karyawan.kelola',

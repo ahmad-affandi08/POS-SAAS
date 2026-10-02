@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Kontroler\Kelola\Pelanggan;
 
 use App\Domain\Akuntansi\Kueri\DaftarAkunPilihan;
+use App\Domain\Bengkel\Kueri\DaftarKendaraan;
 use App\Domain\Bersama\Tabel\Data\DataPermintaanTabel;
 use App\Domain\Organisasi\Enum\IzinTenant;
 use App\Domain\Organisasi\Kueri\AksesPengguna;
@@ -72,6 +73,7 @@ final class PelangganKontroler extends DasarKelolaKontroler
         PengaturanSesiTenant $sesi,
         RiwayatBelanjaPembeliOnline $riwayatOnline,
         ProfilTenant $profil,
+        DaftarKendaraan $kendaraan,
     ): Response {
         $data = $this->CariPelanggan($pelanggan);
         $izin = $this->AmbilIzin();
@@ -108,6 +110,10 @@ final class PelangganKontroler extends DasarKelolaKontroler
             // F-17 bagian 3: pesanan toko online pelanggan ini & nomor yang sudah dibuktikan lewat kode WhatsApp.
             'PesananOnline' => $riwayatOnline->Ambil($this->IdTenant(), $data->Id, $profil->AmbilSlug($this->IdTenant()))['Pesanan'],
             'NoHpTerverifikasi' => $data->NoHpTerverifikasiPada !== null,
+            // Bengkel (§9.10): kendaraan pelanggan, hanya untuk pemegang izin `bengkel.kelola` (null = bagian disembunyikan).
+            'Kendaraan' => app(AksesPengguna::class)->CekIzin($this->IdTenant(), $this->Pelaku()->Id, IzinTenant::BengkelKelola)
+                ? $kendaraan->AmbilMilikPelanggan($data->Id)
+                : null,
             'Izin' => $izin,
         ]);
     }
