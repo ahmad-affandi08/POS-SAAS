@@ -27,6 +27,7 @@ class PanelKeranjang extends StatelessWidget {
     this.labelKosongkan = 'Batalkan transaksi',
     this.saatPelanggan,
     this.saatLaundry,
+    this.saatRacikan,
     this.saatKanal,
     this.saatOngkir,
     this.jenisPesanan = const [],
@@ -73,6 +74,9 @@ class PanelKeranjang extends StatelessWidget {
   /// Laundry (§9.9): buka isian tiket laundry. Null = tidak ditampilkan (laundry belum aktif).
   final VoidCallback? saatLaundry;
 
+  /// Apotek bagian 4: buka penyusun racikan. Null = tidak ditampilkan (bukan apotek).
+  final VoidCallback? saatRacikan;
+
   /// X8: pilih kanal (bawa pulang, GoFood, …). Null = tidak ditampilkan (tidak ada kanal platform/harga berkanal, mode
   /// meja, atau mode Pelayan).
   final VoidCallback? saatKanal;
@@ -111,6 +115,7 @@ class PanelKeranjang extends StatelessWidget {
     if (b.diskon != null)
       b.diskon!.persen != null ? b.diskon!.AmbilLabel() : 'Diskon ${b.diskon!.jumlah!.FormatRupiah()}',
     if (b.nomorSeri.isNotEmpty) 'No. seri: ${b.nomorSeri.join(', ')}',
+    if (b.racikan case final r?) 'Racikan ${r.nama} · ${r.Ringkasan}',
     if (b.catatan != null) 'Catatan: ${b.catatan}',
   ];
 
@@ -390,6 +395,37 @@ class PanelKeranjang extends StatelessWidget {
                                   keranjang.pelanggan!.noHpSamar,
                                   if (keranjang.pelanggan!.namaTier != null) keranjang.pelanggan!.namaTier!,
                                 ].join(' · '),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: teks.bodyMedium,
+                        ),
+                      ),
+                      Icon(Icons.chevron_right, color: warna.teksSekunder),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          if (saatRacikan != null)
+            Material(
+              color: warna.permukaan,
+              child: InkWell(
+                onTap: saatRacikan,
+                child: Container(
+                  constraints: const BoxConstraints(minHeight: TokenJarak.targetSentuh),
+                  padding: const EdgeInsets.symmetric(horizontal: TokenJarak.jarak16, vertical: TokenJarak.jarak8),
+                  decoration: BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(color: warna.garis, width: TokenJarak.tebalGaris),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.medication_outlined, size: TokenJarak.ikonSedang, color: warna.teksSekunder),
+                      const SizedBox(width: TokenJarak.jarak8),
+                      Expanded(
+                        child: Text(
+                          'Buat racikan obat · ketuk untuk menyusun',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: teks.bodyMedium,

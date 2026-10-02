@@ -31,6 +31,7 @@ import 'Jual/PanelDiskon.dart';
 import 'Jual/PanelItem.dart';
 import 'Jual/PanelKeranjang.dart';
 import 'Jual/PanelLaundry.dart';
+import 'Jual/PanelRacikan.dart';
 import 'Jual/PanelPelanggan.dart';
 import 'Jual/PanelPreOrder.dart';
 import 'Jual/PanelTertahan.dart';
@@ -52,6 +53,7 @@ enum _JenisPanel {
   PreOrder,
   PreOrderSelesai,
   Laundry,
+  Racikan,
 }
 
 /// Beranda ruang kerja: layar Jual (F-07 mode retail, Rincian F-07c, PRD §17.2.3 & §17.2.7).
@@ -1575,6 +1577,15 @@ class _LayarJualState extends ConsumerState<LayarJual> {
               ref.watch(penyediaKonteksPenjualan).value?.laundry.aktif != true
           ? null
           : () => setState(() => _panel = _JenisPanel.Laundry),
+      // Apotek bagian 4: racikan obat untuk penjualan langsung (bukan pesanan meja/pre-order/perintah kerja).
+      saatRacikan:
+          widget.modePelayan ||
+              pesanan != null ||
+              keranjang.praPesan != null ||
+              keranjang.perintahKerja != null ||
+              !PanelRacikan.CekTersedia(ref.watch(penyediaKatalog).value)
+          ? null
+          : () => setState(() => _panel = _JenisPanel.Racikan),
     );
   }
 
@@ -1761,6 +1772,7 @@ class _LayarJualState extends ConsumerState<LayarJual> {
       ),
       _JenisPanel.Pelanggan => (judul: 'Pelanggan', isi: PanelPelanggan(kasir: widget.kasir, saatSelesai: _TutupPanel)),
       _JenisPanel.Laundry => (judul: 'Tiket laundry', isi: PanelLaundry(saatSelesai: _TutupPanel)),
+      _JenisPanel.Racikan => (judul: 'Racikan obat', isi: PanelRacikan(saatSelesai: _TutupPanel)),
     };
   }
 

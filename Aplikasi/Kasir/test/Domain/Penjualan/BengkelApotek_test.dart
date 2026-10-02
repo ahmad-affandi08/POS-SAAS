@@ -224,7 +224,7 @@ void main() {
         // Server lama (tanpa NomorSeri) & WO tanpa nomor: baris tetap 2 unit, Bayar menolak sampai kasir mengisi.
         final kosong = u.perintahKerja.MuatKeKeranjang(PerintahKerjaPos.DariJson(Wo(null)), katalog, k);
         expect(kosong.baris.last.jumlah, Kuantitas.DariBulat(2));
-      expect(kosong.baris.last.nomorSeri, isEmpty);
+        expect(kosong.baris.last.nomorSeri, isEmpty);
         await expectLater(BayarTunai(kosong), throwsA(isA<GalatKasir>()));
 
         final keranjang = u.perintahKerja.MuatKeKeranjang(

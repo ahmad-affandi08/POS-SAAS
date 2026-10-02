@@ -9,6 +9,7 @@ import '../Penjualan/AturanApotek.dart';
 import '../Penjualan/Keranjang.dart';
 import '../Penjualan/KonteksPenjualan.dart';
 import '../Penjualan/LayananPenjualan.dart';
+import '../Penjualan/Racikan.dart';
 import 'IdentitasStruk.dart';
 
 /// Isi satu penjualan untuk dicetak (dari tabel lokal, jadi bisa offline dan dicetak ulang).
@@ -154,6 +155,12 @@ abstract final class PenyusunStrukPenjualan {
         if (garansi != null) {
           baris.add(BarisTeks('  Garansi sampai ${_TanggalGaransi(jual.TanggalBisnis, garansi)}'));
         }
+      }
+      // Apotek bagian 4: nama racikan, jumlah kemasan, dan aturan pakai (komposisi tidak dicetak; ada di rincian).
+      final racikan = d.Racikan == null ? null : RacikanBaris.DariJson(jsonDecode(d.Racikan!));
+      if (racikan != null) {
+        baris.add(BarisTeks('  Racikan: ${racikan.nama}'));
+        baris.add(BarisTeks('  ${racikan.Ringkasan}'));
       }
       final catatan = d.Catatan?.trim();
       if (catatan != null && catatan.isNotEmpty) {

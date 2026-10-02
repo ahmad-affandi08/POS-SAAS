@@ -183,7 +183,8 @@ abstract final class AturanApotek {
     var alamat = false;
     for (final b in keranjang.baris) {
       final produk = katalog.CariProduk(b.uuidProduk);
-      final obat = produk == null ? null : InfoObat.Dari(produk);
+      // Racikan: golongan terkuat komponennya, tidak pernah OWA (sama dengan server).
+      final obat = b.racikan != null ? b.racikan!.Obat : (produk == null ? null : InfoObat.Dari(produk));
       if (obat == null) {
         continue;
       }

@@ -2,6 +2,7 @@ import 'package:mesin_kasir/MesinKasir.dart';
 
 import '../Katalog/KatalogLokal.dart';
 import '../Meja/KonteksPesananMeja.dart';
+import 'Racikan.dart';
 
 /// Diskon manual baris atau pesanan: tepat satu dari [persen] atau [jumlah] (BR-07.3).
 class DiskonManual {
@@ -68,6 +69,7 @@ class ItemKeranjang {
     this.staf = const [],
     this.nomorSeri = const [],
     this.hargaTerbuka = false,
+    this.racikan,
   });
 
   final String uuid;
@@ -97,6 +99,9 @@ class ItemKeranjang {
   /// K-25: harga diketik kasir; tidak ditentukan ulang saat jumlah/satuan/pelanggan/kanal berubah dan tidak digabung.
   final bool hargaTerbuka;
 
+  /// Apotek bagian 4: racikan yang dibawa baris jasa racik (null = baris biasa).
+  final RacikanBaris? racikan;
+
   Uang AmbilHargaPilihan() => pilihan.fold(Uang.Nol(), (total, p) => total.Tambah(p.harga));
 
   /// Baris yang sama (produk, satuan, pilihan) tanpa catatan & diskon digabung saat produk ditambah lagi.
@@ -113,6 +118,8 @@ class ItemKeranjang {
       lain.nomorSeri.isEmpty &&
       !hargaTerbuka &&
       !lain.hargaTerbuka &&
+      racikan == null &&
+      lain.racikan == null &&
       pilihan.map((p) => p.uuid).toSet().containsAll(lain.pilihan.map((p) => p.uuid)) &&
       pilihan.length == lain.pilihan.length;
 
@@ -127,6 +134,7 @@ class ItemKeranjang {
     DiskonManual? Function()? diskon,
     List<String>? staf,
     List<String>? nomorSeri,
+    RacikanBaris? racikan,
   }) => ItemKeranjang(
     uuid: uuid,
     uuidProduk: uuidProduk,
@@ -144,6 +152,7 @@ class ItemKeranjang {
     staf: staf ?? this.staf,
     nomorSeri: nomorSeri ?? this.nomorSeri,
     hargaTerbuka: hargaTerbuka,
+    racikan: racikan ?? this.racikan,
   );
 
   Map<String, Object?> KeJson() => {
@@ -163,6 +172,7 @@ class ItemKeranjang {
     'Staf': staf,
     'NomorSeri': nomorSeri,
     'HargaTerbuka': hargaTerbuka,
+    'Racikan': racikan?.KeJson(),
   };
 
   static ItemKeranjang DariJson(Map<String, Object?> json) => ItemKeranjang(
@@ -188,6 +198,7 @@ class ItemKeranjang {
     staf: [...(json['Staf'] as List<Object?>? ?? const []).whereType<String>()],
     nomorSeri: [...(json['NomorSeri'] as List<Object?>? ?? const []).whereType<String>()],
     hargaTerbuka: json['HargaTerbuka'] == true,
+    racikan: RacikanBaris.DariJson(json['Racikan']),
   );
 }
 

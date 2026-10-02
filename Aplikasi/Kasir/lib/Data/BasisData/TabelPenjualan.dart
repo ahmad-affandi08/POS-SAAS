@@ -81,6 +81,10 @@ class PenjualanDetail extends Table {
   /// Skema 21 (F-05h): snapshot masa garansi (bulan) saat dijual, untuk "Garansi sampai" di struk cetak ulang.
   IntColumn get MasaGaransiBulan => integer().nullable()();
 
+  /// Skema 28 (Apotek bagian 4): JSON racikan baris jasa racik (`Nama`, `JumlahKemasan`, `AturanPakai`, `Komponen`);
+  /// null = baris biasa. Untuk struk cetak ulang & riwayat.
+  TextColumn get Racikan => text().nullable()();
+
   @override
   Set<Column<Object>> get primaryKey => {Uuid};
 }

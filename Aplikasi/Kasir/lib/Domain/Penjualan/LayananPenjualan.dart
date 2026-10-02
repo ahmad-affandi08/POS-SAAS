@@ -14,6 +14,7 @@ import '../Sesi/StafLokal.dart';
 import 'AturanApotek.dart';
 import 'Keranjang.dart';
 import 'KonteksPenjualan.dart';
+import 'Racikan.dart';
 
 /// Label jenis pajak untuk kasir menurut kategorinya (`Ppn`/`Pbjt`, PRD v1.46); kategori lain memakai kodenya.
 abstract final class KodePajak {
@@ -415,6 +416,69 @@ class LayananPenjualan {
   }
 
   /// Tambah baris; produk + satuan + pilihan yang sama (tanpa catatan & diskon) → jumlah bertambah.
+  /// Apotek bagian 4: produk yang bisa menjadi bahan racikan (berstok, tanpa nomor seri), urut nama.
+  static List<ProdukJual> AmbilBahanRacikan(KatalogLokal katalog) => [
+    for (final p in katalog.produk)
+      if (p.aktif &&
+          !p.bernomorSeri &&
+          (p.jenis == 'Stok' || p.jenis == 'Produksi' || p.jenis == JenisProdukKasir.bahanBaku))
+        p,
+  ]..sort((a, b) => a.nama.toLowerCase().compareTo(b.nama.toLowerCase()));
+
+  /// Produk jasa racik (pembawa baris racikan), urut nama.
+  static List<ProdukJual> AmbilJasaRacik(KatalogLokal katalog) => [
+    for (final p in katalog.produk)
+      if (p.aktif && p.jenis == JenisProdukKasir.jasa) p,
+  ]..sort((a, b) => a.nama.toLowerCase().compareTo(b.nama.toLowerCase()));
+
+  /// Harga saran racikan = harga jasa racik + Σ harga jual komponen × jumlah (harga daftar & tier pelanggan, seperti
+  /// menjual obatnya satuan). Komponen tanpa harga dihitung 0 dan dilaporkan di [tanpaHarga].
+  ({Uang harga, List<String> tanpaHarga}) HitungHargaSaranRacikan(
+    KatalogLokal katalog,
+    KonteksPenjualan k,
+    ProdukJual jasa,
+    List<KomponenRacikan> komponen, {
+    String? tierPelanggan,
+  }) {
+    final satuanJasa = jasa.AmbilSatuanBawaan();
+    var total = satuanJasa == null
+        ? Uang.Nol()
+        : TentukanHarga(katalog, k, jasa.uuid, satuanJasa.uuid, Kuantitas.DariBulat(1), tierPelanggan: tierPelanggan) ??
+              Uang.Nol();
+    final tanpaHarga = <String>[];
+    for (final c in komponen) {
+      final produk = katalog.CariProduk(c.uuidProduk);
+      final satuan =
+          produk?.satuan.where((s) => s.uuid == c.uuidProdukSatuan).firstOrNull ?? produk?.AmbilSatuanBawaan();
+      final harga = produk == null || satuan == null
+          ? null
+          : TentukanHarga(katalog, k, produk.uuid, satuan.uuid, c.jumlah, tierPelanggan: tierPelanggan);
+      if (harga == null) {
+        tanpaHarga.add(c.nama);
+        continue;
+      }
+      total = total.Tambah(harga.Kali(c.jumlah.KeDesimal()));
+    }
+    return (harga: total, tanpaHarga: tanpaHarga);
+  }
+
+  /// Baris jasa racik pembawa [racikan] dengan [harga] racikan yang disepakati (server menerima harga perangkat).
+  ItemKeranjang BuatBarisRacikan(
+    KatalogLokal katalog,
+    KonteksPenjualan k,
+    ProdukJual jasa,
+    RacikanBaris racikan,
+    Uang harga,
+  ) {
+    if (jasa.jenis != JenisProdukKasir.jasa) {
+      throw GalatKasir('RacikanBukanJasa', 'Racikan dicatat pada produk jasa racik; "${jasa.nama}" bukan jasa.');
+    }
+    if (harga.BernilaiNegatif()) {
+      throw const GalatKasir('HargaTidakValid', 'Harga racikan tidak boleh minus.');
+    }
+    return BuatBaris(katalog, k, jasa, hargaDokumen: harga).Salin(racikan: racikan);
+  }
+
   Keranjang TambahBaris(Keranjang keranjang, ItemKeranjang baru, KatalogLokal katalog, KonteksPenjualan k) {
     final indeks = keranjang.baris.indexWhere((b) => b.CekBisaDigabung(baru));
     if (indeks < 0) {
@@ -1366,6 +1430,7 @@ class LayananPenjualan {
             if (keranjang.baris[i].staf.isNotEmpty) 'Staf': keranjang.baris[i].staf,
             if (keranjang.baris[i].nomorSeri.isNotEmpty) 'NomorSeri': keranjang.baris[i].nomorSeri,
             if (denganResep.contains(keranjang.baris[i].uuid)) 'DenganResep': true,
+            if (keranjang.baris[i].racikan != null) 'Racikan': keranjang.baris[i].racikan!.KeMuatan(),
           },
       ],
       'DiskonManualPesanan': keranjang.diskonPesanan?.KeJson(),
@@ -1486,6 +1551,9 @@ class LayananPenjualan {
               keranjang.baris[i].nomorSeri.isEmpty
                   ? null
                   : katalog?.CariProduk(keranjang.baris[i].uuidProduk)?.masaGaransiBulan,
+            ),
+            Racikan: Value(
+              keranjang.baris[i].racikan == null ? null : jsonEncode(keranjang.baris[i].racikan!.KeJson()),
             ),
           ),
       ],

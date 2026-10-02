@@ -214,7 +214,7 @@ class BasisDataKasir extends _$BasisDataKasir {
   /// terbuka); 26 = Modul Salesman bagian 2 (pelanggan salesman, kunjungan, pesanan grosir lokal); 27 = Bengkel & Apotek
   /// bagian 2 (golongan obat produk, perintah kerja & ringkasan resep penjualan).
   @override
-  int get schemaVersion => 27;
+  int get schemaVersion => 28;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -489,6 +489,15 @@ class BasisDataKasir extends _$BasisDataKasir {
           await m.addColumn(penjualan, penjualan.Resep);
         }
         await (delete(pengaturan)..where((p) => p.Kunci.equals('KursorKatalog'))).go();
+      }
+      // Skema 28 (Apotek bagian 4): racikan pada baris penjualan lokal; hanya menambah kolom, outbox utuh.
+      if (dari >= 2 && dari < 28) {
+        final ada = await customSelect(
+          "SELECT COUNT(*) AS Jumlah FROM pragma_table_info('PenjualanDetail') WHERE name = 'Racikan'",
+        ).map((r) => r.read<int>('Jumlah')).getSingle();
+        if (ada == 0) {
+          await m.addColumn(penjualanDetail, penjualanDetail.Racikan);
+        }
       }
     },
     beforeOpen: (detail) async {
