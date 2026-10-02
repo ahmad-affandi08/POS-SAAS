@@ -337,6 +337,12 @@ class KlienPemilik {
     return [for (final p in UraiJson.AmbilDaftarPeta(json['Perangkat'])) PerangkatPemilik.DariJson(p)];
   }
 
+  /// P-10 PGL-19 (v3.47): pengumuman platform yang berlaku untuk tenant aktif di Aplikasi Pemilik.
+  Future<List<PengumumanAplikasi>> AmbilPengumuman() async {
+    final json = await _Kirim('GET', 'pengumuman', null);
+    return [for (final p in UraiJson.AmbilDaftarPeta(json['Pengumuman'])) PengumumanAplikasi.DariJson(p)];
+  }
+
   Future<DaftarNotifikasiPemilik> AmbilNotifikasi() async =>
       DaftarNotifikasiPemilik.DariJson(await _Kirim('GET', 'notifikasi', null));
 

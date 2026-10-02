@@ -7,6 +7,7 @@ use App\Http\Kontroler\Pemilik\V1\AutentikasiKontroler;
 use App\Http\Kontroler\Pemilik\V1\DasborKontroler;
 use App\Http\Kontroler\Pemilik\V1\LaporanKontroler;
 use App\Http\Kontroler\Pemilik\V1\NotifikasiKontroler;
+use App\Http\Kontroler\Pemilik\V1\PengumumanKontroler;
 use App\Http\Kontroler\Pemilik\V1\PerangkatKontroler;
 use App\Http\Kontroler\Pemilik\V1\PersetujuanKontroler;
 use App\Http\Perantara\AutentikasiPemilik;
@@ -51,6 +52,9 @@ Route::middleware(AutentikasiPemilik::class)->group(function () use ($izin): voi
         Route::get('/notifikasi', [NotifikasiKontroler::class, 'Daftar'])->name('pemilik.notifikasi');
         Route::patch('/notifikasi', [NotifikasiKontroler::class, 'TandaiDibaca'])->name('pemilik.notifikasi.dibaca');
         Route::post('/token-notifikasi', [NotifikasiKontroler::class, 'DaftarkanToken'])->name('pemilik.token-notifikasi');
+
+        // P-10 PGL-19 (v3.47): pengumuman & jadwal pemeliharaan platform; tanpa izin khusus.
+        Route::get('/pengumuman', [PengumumanKontroler::class, 'Daftar'])->name('pemilik.pengumuman');
 
         // OWN-08: status perangkat POS.
         Route::get('/perangkat', [PerangkatKontroler::class, 'Daftar'])->middleware($izin(IzinTenant::PerangkatLihat))->name('pemilik.perangkat');

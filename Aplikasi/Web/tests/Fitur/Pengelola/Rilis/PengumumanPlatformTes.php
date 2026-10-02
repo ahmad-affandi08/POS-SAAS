@@ -129,7 +129,7 @@ it('draf → terbit tampil di back-office & kasir sesuai sasaran; cabut menghila
     $this->get(BantuanPengelola::Url('/pengumuman'))->assertOk()->assertInertia(fn (AssertableInertia $h) => $h
         ->component('Pengelola/Rilis/Pengumuman')
         ->has('Pengumuman', 3)
-        ->has('OpsiPlatform', 4));
+        ->has('OpsiPlatform', 5));
     expect(LogAuditPengelola::query()->where('Aksi', 'pengumuman.simpan')->count())->toBe(3)
         ->and(LogAuditPengelola::query()->where('Aksi', 'pengumuman.terbit')->count())->toBe(3)
         ->and(LogAuditPengelola::query()->where('Aksi', 'pengumuman.cabut')->sole()->Alasan)->toBe('Jadwal pemeliharaan diundur');

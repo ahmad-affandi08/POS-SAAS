@@ -5,6 +5,7 @@ import 'package:sistem_desain/SistemDesain.dart';
 import '../Aplikasi/Penyedia.dart';
 import '../Data/KlienPemilik.dart';
 import 'BilahSaringan.dart';
+import 'DaftarPengumuman.dart';
 import 'FormatTampilan.dart';
 import 'KeadaanData.dart';
 
@@ -18,7 +19,10 @@ class LayarBeranda extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final dasbor = ref.watch(penyediaDasbor);
     return RefreshIndicator(
-      onRefresh: () => ref.refresh(penyediaDasbor.future),
+      onRefresh: () {
+        ref.invalidate(penyediaPengumuman);
+        return ref.refresh(penyediaDasbor.future);
+      },
       child: KeadaanData(
         nilai: dasbor,
         saatCobaLagi: () => ref.invalidate(penyediaDasbor),
@@ -83,6 +87,7 @@ class _IsiBeranda extends StatelessWidget {
       padding: const EdgeInsets.all(TokenJarak.jarak16),
       physics: const AlwaysScrollableScrollPhysics(),
       children: [
+        const DaftarPengumuman(),
         BilahSaringan(outlet: d.outlet),
         const SizedBox(height: TokenJarak.jarak16),
         Text('Omzet', style: teks.bodyMedium?.copyWith(color: warna.teksSekunder)),

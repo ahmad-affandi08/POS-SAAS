@@ -328,5 +328,10 @@
         "Metode": "POST",
         "Jalur": "api/pos/v1/pesanan-online/{pesananOnline}/status",
         "Nama": "pos.pesanan-online.status"
+    },
+    "GET api/pemilik/v1/pengumuman": {
+        "Metode": "GET",
+        "Jalur": "api/pemilik/v1/pengumuman",
+        "Nama": "pemilik.pengumuman"
     }
 }
