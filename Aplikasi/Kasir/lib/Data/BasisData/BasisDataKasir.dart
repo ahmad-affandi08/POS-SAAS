@@ -204,7 +204,7 @@ class BasisDataKasir extends _$BasisDataKasir {
   /// outbox); 17 = F-05f bagian 2 (bahan terbuang lokal); 18 = X8 (kanal metode pembayaran platform ojol);
   /// 19 = F-17 bagian 3 (ongkir ikut DPP pajak).
   @override
-  int get schemaVersion => 22;
+  int get schemaVersion => 23;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -411,6 +411,17 @@ class BasisDataKasir extends _$BasisDataKasir {
         if (!await Ada('NamaPemesan')) {
           await m.addColumn(penjualan, penjualan.NamaPemesan);
         }
+      }
+      // Skema 23 (K-9): atribut varian produk untuk pemilih varian kasir. Kursor katalog dihapus supaya sinkron
+      // berikutnya memuat ulang produk beserta atributnya; tanpa itu varian lama tidak terpilih sampai produknya diubah.
+      if (dari >= 2 && dari < 23) {
+        final kolom = await customSelect(
+          "SELECT COUNT(*) AS Jumlah FROM pragma_table_info('Produk') WHERE name = 'AtributVarian'",
+        ).map((r) => r.read<int>('Jumlah')).getSingle();
+        if (kolom == 0) {
+          await m.addColumn(produk, produk.AtributVarian);
+        }
+        await (delete(pengaturan)..where((p) => p.Kunci.equals('KursorKatalog'))).go();
       }
     },
     beforeOpen: (detail) async {

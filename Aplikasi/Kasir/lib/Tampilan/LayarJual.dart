@@ -29,12 +29,14 @@ import 'Jual/PanelLaundry.dart';
 import 'Jual/PanelPelanggan.dart';
 import 'Jual/PanelPreOrder.dart';
 import 'Jual/PanelTertahan.dart';
+import 'Jual/PanelVarian.dart';
 import 'Jual/PengenalPemindai.dart';
 import 'Meja/DialogPesananMeja.dart';
 
 enum _JenisPanel {
   Keranjang,
   Item,
+  Varian,
   DiskonPesanan,
   Bayar,
   Selesai,
@@ -319,6 +321,16 @@ class _LayarJualState extends ConsumerState<LayarJual> {
   }
 
   void _TambahProduk(ProdukJual produk, {SatuanJual? satuan, Kuantitas? jumlah}) {
+    // K-9: induk varian membuka pemilih varian (ukuran × warna); induk tanpa varian aktif tetap ditolak dengan pesan.
+    if (produk.indukVarian && (ref.read(penyediaKatalog).value?.AmbilVarian(produk.uuid).isNotEmpty ?? false)) {
+      setState(() {
+        _pesan = null;
+        _panel = _JenisPanel.Varian;
+        _produkPanel = produk;
+        _uuidBarisPanel = null;
+      });
+      return;
+    }
     final alasan = produk.AmbilAlasanTidakBisaDijual();
     if (alasan != null) {
       _TampilPesan(alasan.pesan);
@@ -917,7 +929,8 @@ class _LayarJualState extends ConsumerState<LayarJual> {
       ProdukJual p,
     ) {
       final satuan = p.AmbilSatuanBawaan();
-      final alasan = p.AmbilAlasanTidakBisaDijual();
+      final adaVarian = p.indukVarian && (katalog?.AmbilVarian(p.uuid).isNotEmpty ?? false);
+      final alasan = adaVarian ? null : p.AmbilAlasanTidakBisaDijual();
       final tandaiHabis = habis.contains(p.uuid);
       return (
         harga: satuan == null || katalog == null || k == null
@@ -936,6 +949,8 @@ class _LayarJualState extends ConsumerState<LayarJual> {
             ? 'Tidak bisa dijual'
             : tandaiHabis
             ? 'Habis'
+            : adaVarian
+            ? 'Pilih varian'
             : p.kelompokPilihan.isNotEmpty
             ? 'Ada pilihan'
             : null,
@@ -1323,6 +1338,42 @@ class _LayarJualState extends ConsumerState<LayarJual> {
           baris: keranjang.baris.where((b) => b.uuid == _uuidBarisPanel).firstOrNull,
           kasir: widget.kasir,
           saatSelesai: _TutupPanel,
+        ),
+      ),
+      _JenisPanel.Varian => (
+        judul: 'Pilih varian · ${_produkPanel?.nama ?? ''}',
+        isi: Builder(
+          builder: (context) {
+            final katalog = ref.read(penyediaKatalog).value;
+            final k = ref.read(penyediaKonteksPenjualan).value;
+            final induk = _produkPanel;
+            if (katalog == null || k == null || induk == null) {
+              return const SizedBox.shrink();
+            }
+            final layanan = ref.read(penyediaLayananPenjualan);
+            final kanal = LayananPenjualan.AmbilKanal(keranjang);
+            return PanelVarian(
+              key: ValueKey('varian-${induk.uuid}'),
+              induk: induk,
+              varian: katalog.AmbilVarian(induk.uuid),
+              hargaDari: (v) => switch (v.AmbilSatuanBawaan()) {
+                final satuan? => layanan.TentukanHarga(
+                  katalog,
+                  k,
+                  v.uuid,
+                  satuan.uuid,
+                  Kuantitas.DariBulat(1),
+                  kanal: kanal,
+                  tierPelanggan: keranjang.pelanggan?.kodeTier,
+                ),
+                null => null,
+              },
+              saatPilih: (v) {
+                _TutupPanel();
+                _TambahProduk(v);
+              },
+            );
+          },
         ),
       ),
       _JenisPanel.DiskonPesanan => (

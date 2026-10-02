@@ -121,12 +121,71 @@ class ProdukJual {
     this.masaGaransiBulan,
     this.aktif = true,
     this.satuanDasar,
+    this.uuidInduk,
+    this.atributVarian = const {},
+    this.definisiVarian = const [],
   });
 
   final String uuid;
   final String? sku;
   final String nama;
   final String jenis;
+
+  /// K-9: induk bila produk ini anak varian.
+  final String? uuidInduk;
+
+  /// K-9 (anak varian): kombinasi atribut, misal `{Ukuran: M, Warna: Hitam}`.
+  final Map<String, String> atributVarian;
+
+  /// K-9 (induk varian): urutan atribut & nilainya untuk pemilih varian, misal Ukuran [S, M, L].
+  final List<({String nama, List<String> nilai})> definisiVarian;
+
+  bool get indukVarian => jenis == JenisProdukKasir.indukVarian;
+
+  /// Urai JSON `Produk.AtributVarian` lokal (bentuk server `PenyusunAnakVarian`): induk = daftar `{Nama, Nilai: [..]}`
+  /// (definisi), anak = daftar `{Nama, Nilai: "M"}` (kombinasi; bentuk peta `{Ukuran: M}` juga diterima). Bentuk lain
+  /// diabaikan.
+  static ({Map<String, String> atribut, List<({String nama, List<String> nilai})> definisi}) UraiAtributVarian(
+    String? json,
+  ) {
+    final kosong = (atribut: const <String, String>{}, definisi: const <({String nama, List<String> nilai})>[]);
+    if (json == null || json.isEmpty) {
+      return kosong;
+    }
+    final Object? isi;
+    try {
+      isi = jsonDecode(json);
+    } on FormatException {
+      return kosong;
+    }
+    if (isi is Map) {
+      return (
+        atribut: {
+          for (final e in isi.entries)
+            if (e.value != null) '${e.key}': '${e.value}',
+        },
+        definisi: const [],
+      );
+    }
+    if (isi is! List) {
+      return kosong;
+    }
+    final atribut = <String, String>{};
+    final definisi = <({String nama, List<String> nilai})>[];
+    for (final a in isi.whereType<Map<Object?, Object?>>()) {
+      final nama = a['Nama'];
+      final nilai = a['Nilai'];
+      if (nama is! String) {
+        continue;
+      }
+      if (nilai is List) {
+        definisi.add((nama: nama, nilai: [for (final n in nilai) '$n']));
+      } else if (nilai != null) {
+        atribut[nama] = '$nilai';
+      }
+    }
+    return (atribut: atribut, definisi: definisi);
+  }
 
   /// F-16d bagian 2: jumlah sesi bila produk paket sesi (wajib pelanggan, jumlah bulat, tidak bisa diretur).
   final int? jumlahSesiPaket;
@@ -195,7 +254,16 @@ class KatalogLokal {
     required this._barcode,
     required this.daftarHarga,
     required this._hargaPerProduk,
-  });
+  }) : _varianPerInduk = {
+         for (final p in produk)
+           if (p.uuidInduk != null && p.tampil) p.uuidInduk!: [],
+       } {
+    for (final p in produk) {
+      if (p.uuidInduk != null && p.tampil) {
+        _varianPerInduk[p.uuidInduk]!.add(p);
+      }
+    }
+  }
 
   static final KatalogLokal kosong = KatalogLokal._(
     produk: const [],
@@ -219,8 +287,12 @@ class KatalogLokal {
   final Map<String, ProdukJual> _petaProduk;
   final Map<String, ({String uuidProduk, String? uuidProdukSatuan})> _barcode;
   final Map<String, List<BarisProdukHarga>> _hargaPerProduk;
+  final Map<String, List<ProdukJual>> _varianPerInduk;
 
   bool get CekKosong => produk.isEmpty;
+
+  /// K-9: anak varian induk ini yang aktif & tampil di POS (urut nama).
+  List<ProdukJual> AmbilVarian(String uuidInduk) => _varianPerInduk[uuidInduk] ?? const [];
 
   ProdukJual? CariProduk(String uuid) => _petaProduk[uuid];
 
@@ -244,7 +316,8 @@ class KatalogLokal {
         return false;
       }
       if (kunci.isEmpty) {
-        return true;
+        // K-9: anak varian dipilih lewat induknya; tanpa kata cari hanya induknya yang tampil.
+        return p.uuidInduk == null || !(_petaProduk[p.uuidInduk]?.tampil ?? false);
       }
       return p.nama.toLowerCase().contains(kunci) ||
           (p.sku?.toLowerCase().contains(kunci) ?? false) ||
@@ -349,6 +422,9 @@ class KatalogLokal {
           jumlahSesiPaket: p.JumlahSesiPaket,
           masaGaransiBulan: p.MasaGaransiBulan,
           aktif: p.Aktif,
+          uuidInduk: p.UuidInduk,
+          atributVarian: ProdukJual.UraiAtributVarian(p.AtributVarian).atribut,
+          definisiVarian: ProdukJual.UraiAtributVarian(p.AtributVarian).definisi,
           satuanDasar: switch (satuan[p.UuidSatuanDasar]) {
             final s? => SatuanJual(
               uuid: s.Uuid,

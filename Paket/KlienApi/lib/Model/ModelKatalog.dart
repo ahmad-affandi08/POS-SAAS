@@ -111,6 +111,7 @@ class ProdukPos {
     required this.dihapus,
     this.jumlahSesiPaket,
     this.masaGaransiBulan,
+    this.atributVarian,
   });
 
   final String uuid;
@@ -124,6 +125,9 @@ class ProdukPos {
 
   /// F-05h: masa garansi standar (bulan) produk bernomor seri; null = tanpa garansi (atau server lama).
   final int? masaGaransiBulan;
+
+  /// K-9: atribut varian apa adanya dari server. Induk: daftar `{Nama, Nilai[]}`; anak: peta atribut → nilai.
+  final Object? atributVarian;
 
   /// `Stok`, `IndukVarian`, `Resep`, `Produksi`, `Paket`, `Jasa`, `NonStok`, `BahanBaku`, `Konsinyasi`.
   final String jenis;
@@ -160,6 +164,7 @@ class ProdukPos {
     dihapus: UraiJson.AmbilBenar(json['Dihapus']),
     jumlahSesiPaket: UraiJson.AmbilBulatAtauNull(UraiJson.AmbilPetaAtauNull(json['PaketSesi'])?['JumlahSesi']),
     masaGaransiBulan: UraiJson.AmbilBulatAtauNull(json['MasaGaransiBulan']),
+    atributVarian: json['AtributVarian'] is Map || json['AtributVarian'] is List ? json['AtributVarian'] : null,
   );
 }
 

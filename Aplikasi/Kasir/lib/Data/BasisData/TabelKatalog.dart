@@ -77,6 +77,10 @@ class Produk extends Table {
   /// Skema 21 (F-05h): masa garansi standar (bulan) produk bernomor seri; null = tanpa garansi.
   IntColumn get MasaGaransiBulan => integer().nullable()();
 
+  /// Skema 23 (K-9): JSON atribut varian. Induk: definisi `[{"Nama":"Ukuran","Nilai":["S","M"]}]`; anak: kombinasinya
+  /// `{"Ukuran":"M","Warna":"Hitam"}`; null = bukan produk varian.
+  TextColumn get AtributVarian => text().nullable()();
+
   @override
   Set<Column<Object>> get primaryKey => {Uuid};
 }
