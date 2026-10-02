@@ -203,6 +203,13 @@
                         "Kontra": false
                     },
                     {
+                        "Kode": "2-1800",
+                        "Nama": "Kliring Tukar Barang",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
                         "Kode": "3-1000",
                         "Nama": "Modal Pemilik",
                         "Tipe": "Ekuitas",
@@ -386,6 +393,7 @@
                     "SusutPersediaan": "5-1200",
                     "UangMukaPelanggan": "2-1400",
                     "PendapatanPengiriman": "4-3100",
+                    "KliringTukarBarang": "2-1800",
                     "AsetTetap": "1-2000",
                     "AkumulasiPenyusutan": "1-2900",
                     "BebanPenyusutan": "6-5000",
@@ -741,6 +749,13 @@
                         "Kontra": false
                     },
                     {
+                        "Kode": "2-1800",
+                        "Nama": "Kliring Tukar Barang",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
                         "Kode": "3-1000",
                         "Nama": "Modal Pemilik",
                         "Tipe": "Ekuitas",
@@ -938,6 +953,7 @@
                     "SusutPersediaan": "5-1200",
                     "UangMukaPelanggan": "2-1400",
                     "PendapatanPengiriman": "4-3100",
+                    "KliringTukarBarang": "2-1800",
                     "AsetTetap": "1-2000",
                     "AkumulasiPenyusutan": "1-2900",
                     "BebanPenyusutan": "6-5000",
@@ -1291,6 +1307,13 @@
                         "Kontra": false
                     },
                     {
+                        "Kode": "2-1800",
+                        "Nama": "Kliring Tukar Barang",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
                         "Kode": "3-1000",
                         "Nama": "Modal Pemilik",
                         "Tipe": "Ekuitas",
@@ -1488,6 +1511,7 @@
                     "SusutPersediaan": "5-1200",
                     "UangMukaPelanggan": "2-1400",
                     "PendapatanPengiriman": "4-3100",
+                    "KliringTukarBarang": "2-1800",
                     "AsetTetap": "1-2000",
                     "AkumulasiPenyusutan": "1-2900",
                     "BebanPenyusutan": "6-5000",

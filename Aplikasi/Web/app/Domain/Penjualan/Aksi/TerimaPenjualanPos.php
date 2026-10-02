@@ -59,6 +59,7 @@ use App\Domain\Penjualan\Kalkulasi\PromoTerpakai;
 use App\Domain\Penjualan\Layanan\PemeriksaDiskonPenjualan;
 use App\Domain\Penjualan\Layanan\PemeriksaPromoPenjualan;
 use App\Domain\Penjualan\Layanan\PemeriksaSnapshotPengaturanPenjualan;
+use App\Domain\Penjualan\Layanan\PemeriksaTukarBarang;
 use App\Domain\Penjualan\Layanan\PenautTagihanQrisPenjualan;
 use App\Domain\Penjualan\Layanan\PenutupPesananPenjualan;
 use App\Domain\Penjualan\Layanan\PenutupPesananTerbuka;
@@ -166,6 +167,7 @@ final class TerimaPenjualanPos
         private readonly KreditPelanggan $kredit,
         private readonly PenutupPesananPenjualan $penutupPraPesan,
         private readonly PenutupUangMukaPesananOnline $penutupUangMukaOnline,
+        private readonly PemeriksaTukarBarang $pemeriksaTukar,
         private readonly SelesaikanReservasiPenjualan $reservasi,
         private readonly PencatatLaundryPenjualan $laundry,
         private readonly PenautTagihanQrisPenjualan $penautQris,
@@ -364,8 +366,20 @@ final class TerimaPenjualanPos
         $pemeriksaanPromo = $this->pemeriksaPromo->Periksa($data, $dasarKalkulasi, $produk, $outlet, $idPelanggan, $tanggalBisnis->toDateString(), $promoPerangkat, $uuidPromoVoucher === null ? [] : [$uuidPromoVoucher]);
         $masalahPromo = $pemeriksaanPromo->masalah;
 
+        // K-11: retur tukar barang yang nilainya membayar penjualan ini. Masalah = diterima + tinjauan.
+        $bayarTukar = self::JumlahkanMetode($data, $metode, JenisMetodePembayaran::Tukar);
+        [$returTukar, $masalahTukar] = $this->pemeriksaTukar->Periksa($data->uuidReturTukar, $bayarTukar, $outlet->idOutlet);
+
+        if ($masalahTukar !== []) {
+            $tinjauan['TukarBermasalah'] = 'TukarBermasalah: '.implode('; ', $masalahTukar);
+        }
+
+        if (! $bayarTukar->BernilaiNol()) {
+            $this->penyediaAkun->Pastikan(PeranAkun::KliringTukarBarang, '2-1800', 'Kliring Tukar Barang');
+        }
+
         // Simpan dokumen, stok, jurnal.
-        $penjualan = $this->SimpanPenjualan($data, $shift->id, $outlet, $kasir, $penyetuju, $tanggalBisnis, $hasil, $totalDibayar, $pesanan?->Id, $idPelanggan, $penyetujuTempo?->id, $praPesan?->Id);
+        $penjualan = $this->SimpanPenjualan($data, $shift->id, $outlet, $kasir, $penyetuju, $tanggalBisnis, $hasil, $totalDibayar, $pesanan?->Id, $idPelanggan, $penyetujuTempo?->id, $praPesan?->Id, $returTukar?->Id);
         $detail = $this->SimpanDetail($data, $penjualan, $produk, $hasil);
         $this->penutupPesanan->Tutup($pesanan, $penjualan);
 
@@ -960,6 +974,16 @@ final class TerimaPenjualanPos
         }
 
         $jumlahTempo = count(array_filter($data->pembayaran, fn ($b): bool => $metode[$b->uuidMetodePembayaran]->Jenis === JenisMetodePembayaran::Tempo));
+        $jumlahTukar = count(array_filter($data->pembayaran, fn ($b): bool => $metode[$b->uuidMetodePembayaran]->Jenis === JenisMetodePembayaran::Tukar));
+
+        // K-11: nilai tukar barang dipakai sekali per penjualan dan wajib merujuk retur asalnya.
+        if ($jumlahTukar > 1) {
+            throw new PelanggaranAturanBisnis('PembayaranTidakValid', 'Satu penjualan hanya boleh memakai nilai tukar barang satu kali.', 'Pembayaran');
+        }
+
+        if ($jumlahTukar === 1 && $data->uuidReturTukar === null) {
+            throw new PelanggaranAturanBisnis('TukarTanpaRetur', 'Pembayaran tukar barang wajib merujuk retur asalnya.', 'UuidReturTukar');
+        }
         $jumlahUangMuka = count(array_filter($data->pembayaran, fn ($b): bool => $metode[$b->uuidMetodePembayaran]->Jenis === JenisMetodePembayaran::UangMuka));
 
         // F-12 bagian 2: DP pre-order hanya dipakai sekali per penjualan dan wajib merujuk pesanannya.
@@ -1039,6 +1063,7 @@ final class TerimaPenjualanPos
         ?int $idPelanggan,
         ?int $idPenyetujuTempo = null,
         ?int $idPesananPenjualan = null,
+        ?int $idReturTukar = null,
     ): Penjualan {
         return Penjualan::query()->create([
             'Uuid' => $data->uuid,
@@ -1077,6 +1102,7 @@ final class TerimaPenjualanPos
             'Catatan' => $data->catatan === null ? null : mb_substr($data->catatan, 0, 500),
             'NomorAntrian' => $data->nomorAntrian === null ? null : mb_substr($data->nomorAntrian, 0, 10),
             'NamaPemesan' => $data->namaPemesan === null ? null : mb_substr($data->namaPemesan, 0, 60),
+            'IdReturTukar' => $idReturTukar,
             'PerluTinjauan' => false,
             'DibuatOfflinePada' => $data->dibuatPada,
             'DiterimaPada' => CarbonImmutable::now(),

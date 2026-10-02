@@ -17,6 +17,8 @@ enum MetodeRefund: string
     case Piutang = 'Piutang';
     // F-16d bagian 1: refund ke saldo deposit pelanggan.
     case Deposit = 'Deposit';
+    // K-11: nilai retur dipakai membayar barang pengganti (tukar barang).
+    case Tukar = 'Tukar';
 
     public function AmbilLabel(): string
     {
@@ -26,6 +28,7 @@ enum MetodeRefund: string
             self::Campuran => 'Tunai & transfer',
             self::Piutang => 'Potong piutang',
             self::Deposit => 'Ke deposit pelanggan',
+            self::Tukar => 'Tukar barang',
         };
     }
 }

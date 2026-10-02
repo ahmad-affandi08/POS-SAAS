@@ -25,6 +25,8 @@ enum JenisMetodePembayaran: string
     case Marketplace = 'Marketplace';
     // F-12 bagian 2: uang muka pre-order yang dipakai saat pesanan penjualan diambil (dibuat sistem).
     case UangMuka = 'UangMuka';
+    // K-11: nilai barang yang diretur dipakai membayar barang pengganti (dibuat sistem, bukan pilihan bayar biasa).
+    case Tukar = 'Tukar';
 
     public function AmbilLabel(): string
     {
@@ -41,6 +43,7 @@ enum JenisMetodePembayaran: string
             self::Voucher => 'Voucher',
             self::Marketplace => 'Platform ojol / marketplace',
             self::UangMuka => 'Uang muka (DP)',
+            self::Tukar => 'Tukar barang',
         };
     }
 
@@ -51,7 +54,8 @@ enum JenisMetodePembayaran: string
         // F-08: QRIS dinamis lewat gerbang pembayaran aktif (tagihan dibuat online, `Referensi` = Uuid `TagihanQris`).
         // F-16d bagian 1: deposit pelanggan (wajib online saat dipakai; aplikasi lama melewati jenis yang tidak dikenalnya).
         // X8 (v2.36): Marketplace = pesanan ojol/marketplace yang dibayar platform (dana lewat pencairan).
-        return in_array($this, [self::Tunai, self::QrisStatis, self::QrisDinamis, self::Edc, self::Transfer, self::Ewallet, self::Tempo, self::UangMuka, self::Deposit, self::Marketplace], true);
+        // K-11: Tukar = nilai retur tukar barang yang membayar barang pengganti (wajib `UuidReturTukar`).
+        return in_array($this, [self::Tunai, self::QrisStatis, self::QrisDinamis, self::Edc, self::Transfer, self::Ewallet, self::Tempo, self::UangMuka, self::Deposit, self::Marketplace, self::Tukar], true);
     }
 
     /** F-16d bagian 1: jenis yang boleh dipakai mengisi saldo deposit di POS (bukan tempo, deposit, atau uang muka). */

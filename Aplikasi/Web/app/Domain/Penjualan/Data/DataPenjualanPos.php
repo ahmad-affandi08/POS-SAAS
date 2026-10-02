@@ -71,5 +71,7 @@ final readonly class DataPenjualanPos
         // v3.52 (§9.2): nomor panggil & nama pemesan penjualan bayar-dulu; opsional (perangkat lama tidak mengirim).
         public ?string $nomorAntrian = null,
         public ?string $namaPemesan = null,
+        // K-11: retur tukar barang yang nilainya membayar penjualan ini lewat metode `Tukar`.
+        public ?string $uuidReturTukar = null,
     ) {}
 }

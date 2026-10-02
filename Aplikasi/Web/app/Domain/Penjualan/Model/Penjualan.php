@@ -58,6 +58,7 @@ use LogicException;
  * @property string|null $Catatan
  * @property string|null $NomorAntrian nomor panggil penjualan bayar-dulu (v3.52)
  * @property string|null $NamaPemesan nama yang dipanggil saat pesanan siap (v3.52)
+ * @property int|null $IdReturTukar retur tukar barang yang nilainya membayar penjualan ini (K-11)
  * @property bool $PerluTinjauan
  * @property string|null $AlasanTinjauan
  * @property int|null $IdJurnal

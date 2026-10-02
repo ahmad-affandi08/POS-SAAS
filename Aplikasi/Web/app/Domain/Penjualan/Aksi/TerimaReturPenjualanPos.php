@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Domain\Penjualan\Aksi;
 
 use App\Domain\Akuntansi\Aksi\PostingJurnal;
+use App\Domain\Akuntansi\Enum\PeranAkun;
 use App\Domain\Akuntansi\Layanan\PenjagaKunciPeriode;
+use App\Domain\Akuntansi\Layanan\PenyediaAkunPeran;
 use App\Domain\Bersama\Audit\Layanan\PencatatAudit;
 use App\Domain\Bersama\Dokumen\Layanan\PencatatRiwayatStatus;
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
@@ -109,6 +111,7 @@ final class TerimaReturPenjualanPos
         private readonly PencatatSesiPenjualan $sesi,
         private readonly InfoBatchStok $infoBatch,
         private readonly InfoNomorSeri $infoSeri,
+        private readonly PenyediaAkunPeran $penyediaAkun,
     ) {}
 
     public function Jalankan(DataReturPenjualanPos $data): StatusItemSinkron
@@ -222,6 +225,11 @@ final class TerimaReturPenjualanPos
 
         foreach ($data->refund as $r) {
             $refundJurnal[] = [$metode[$r->uuidMetodePembayaran], $r->jumlah];
+
+            // K-11: akun kliring tukar barang ditambahkan setelah tenant menerapkan template; dipastikan ada dulu.
+            if ($metode[$r->uuidMetodePembayaran]->Jenis === JenisMetodePembayaran::Tukar) {
+                $this->penyediaAkun->Pastikan(PeranAkun::KliringTukarBarang, '2-1800', 'Kliring Tukar Barang');
+            }
         }
 
         $jurnal = $this->penyusunJurnal->Susun($retur, $total, $biayaLayanan, $this->BagiPajak($penjualan, $detail, $nilai), $refundJurnal, $persediaan);
@@ -417,8 +425,9 @@ final class TerimaReturPenjualanPos
             // F-16d bagian 1: refund ke deposit hanya untuk penjualan berpelanggan.
             $bolehDeposit = $m->Jenis === JenisMetodePembayaran::Deposit && $berpelanggan;
 
-            if (! $bolehDeposit && ! in_array($m->Jenis, [JenisMetodePembayaran::Tunai, JenisMetodePembayaran::Transfer], true)) {
-                throw new PelanggaranAturanBisnis('MetodeBayarBelumDidukung', "Refund lewat {$m->Jenis->AmbilLabel()} belum didukung. Pakai tunai, transfer manual, atau deposit pelanggan.", "Refund.{$indeks}.UuidMetodePembayaran");
+            // K-11: refund `Tukar` = nilai retur dipakai membayar barang pengganti (penjualan merujuk retur ini).
+            if (! $bolehDeposit && ! in_array($m->Jenis, [JenisMetodePembayaran::Tunai, JenisMetodePembayaran::Transfer, JenisMetodePembayaran::Tukar], true)) {
+                throw new PelanggaranAturanBisnis('MetodeBayarBelumDidukung', "Refund lewat {$m->Jenis->AmbilLabel()} belum didukung. Pakai tunai, transfer manual, deposit pelanggan, atau tukar barang.", "Refund.{$indeks}.UuidMetodePembayaran");
             }
 
             $jumlah = $jumlah->Tambah($r->jumlah);
@@ -577,6 +586,7 @@ final class TerimaReturPenjualanPos
             count($jenis) > 1 => MetodeRefund::Campuran,
             isset($jenis[JenisMetodePembayaran::Tempo->value]) => MetodeRefund::Piutang,
             isset($jenis[JenisMetodePembayaran::Deposit->value]) => MetodeRefund::Deposit,
+            isset($jenis[JenisMetodePembayaran::Tukar->value]) => MetodeRefund::Tukar,
             isset($jenis[JenisMetodePembayaran::Transfer->value]) => MetodeRefund::Transfer,
             default => MetodeRefund::Tunai,
         };

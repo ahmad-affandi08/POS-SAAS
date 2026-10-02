@@ -30,6 +30,9 @@ enum PeranAkun: string
     case UangMukaPelanggan = 'UangMukaPelanggan';
     case DepositPelanggan = 'DepositPelanggan';
     case PendapatanDiterimaDimuka = 'PendapatanDiterimaDimuka';
+    // K-11: nilai barang retur yang dipakai membayar barang pengganti (tukar barang). Dikredit saat retur, didebit
+    // saat penjualan pengganti; saldo bersih nol bila keduanya sudah diterima server.
+    case KliringTukarBarang = 'KliringTukarBarang';
     case EkuitasSaldoAwal = 'EkuitasSaldoAwal';
     case LabaDitahan = 'LabaDitahan';
     case Penjualan = 'Penjualan';
@@ -111,7 +114,7 @@ enum PeranAkun: string
             self::PersediaanDalamPerjalanan, self::PpnMasukan, self::AsetTetap, self::AkumulasiPenyusutan, self::GiroDiterima => TipeAkun::Aset,
             self::HutangUsaha, self::HutangBelumDifakturkan, self::HutangKonsinyasi, self::PpnKeluaran,
             self::HutangPbjt, self::UangMukaPelanggan, self::DepositPelanggan,
-            self::PendapatanDiterimaDimuka, self::HutangGiro => TipeAkun::Kewajiban,
+            self::PendapatanDiterimaDimuka, self::HutangGiro, self::KliringTukarBarang => TipeAkun::Kewajiban,
             self::EkuitasSaldoAwal, self::LabaDitahan => TipeAkun::Ekuitas,
             self::Penjualan, self::DiskonPenjualan, self::ReturPenjualan, self::PendapatanJasa,
             self::PendapatanBiayaLayanan, self::PendapatanPengiriman, self::PendapatanLain => TipeAkun::Pendapatan,
@@ -178,6 +181,7 @@ enum PeranAkun: string
             self::UangMukaPelanggan => 'Uang muka pelanggan (DP)',
             self::DepositPelanggan => 'Deposit pelanggan / gift card',
             self::PendapatanDiterimaDimuka => 'Pendapatan diterima dimuka',
+            self::KliringTukarBarang => 'Kliring tukar barang (nilai retur untuk barang pengganti)',
             self::EkuitasSaldoAwal => 'Ekuitas saldo awal',
             self::LabaDitahan => 'Laba ditahan',
             self::Penjualan => 'Penjualan',

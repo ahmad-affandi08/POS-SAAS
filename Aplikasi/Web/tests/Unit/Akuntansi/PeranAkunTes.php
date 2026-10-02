@@ -30,7 +30,10 @@ describe('PeranAkun: istilah kamus & alias kunci lama (P-03, BR-P03.4, DesainF01
             // v3.42 (F-12): giro/cek mundur diterima (aset) dan hutang giro (kewajiban).
             ->and(PeranAkun::GiroDiterima->AmbilTipeAkun())->toBe(TipeAkun::Aset)
             ->and(PeranAkun::HutangGiro->AmbilTipeAkun())->toBe(TipeAkun::Kewajiban)
-            ->and(PeranAkun::cases())->toHaveCount(40);
+            // K-11 (v3.61): kliring tukar barang (kewajiban, bukan kontra).
+            ->and(PeranAkun::KliringTukarBarang->AmbilTipeAkun())->toBe(TipeAkun::Kewajiban)
+            ->and(PeranAkun::KliringTukarBarang->CekWajibKontra())->toBeFalse()
+            ->and(PeranAkun::cases())->toHaveCount(41);
     });
 
     it('DariKunci membaca kunci baru, kunci lama dari versi terbit, dan menolak kunci asing', function (): void {

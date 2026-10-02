@@ -124,6 +124,8 @@ final class PenyusunJurnalPenjualan
             JenisMetodePembayaran::UangMuka => [null, PeranAkun::UangMukaPelanggan],
             // F-16d bagian 1 (J-07.1 & retur): deposit pelanggan → Saldo Deposit Pelanggan (2-1500).
             JenisMetodePembayaran::Deposit => [null, PeranAkun::DepositPelanggan],
+            // K-11: tukar barang → kliring (Cr saat retur, Dr saat penjualan pengganti).
+            JenisMetodePembayaran::Tukar => [null, PeranAkun::KliringTukarBarang],
             default => [$metode->IdAkunKliring, PeranAkun::PiutangPencairan],
         };
     }

@@ -805,8 +805,11 @@ describe('F-07b data-awal', function (): void {
             'BatasHariLewatJatuhTempo' => 0,
             'BukaLaciPerluPin' => false,
             'PersetujuanJarakJauh' => false,
+            // v3.55: barcode timbangan (bawaan mati).
+            'BarcodeTimbangan' => ['Aktif' => false, 'Awalan' => ['27'], 'Nilai' => 'Berat'],
         ])
-            ->and($respons->json('Outlet'))->toBe(['Uuid' => $k['Outlet']->Uuid, 'Kode' => $k['Outlet']->Kode, 'Nama' => $k['Outlet']->Nama, 'Alamat' => 'Jl. Slamet Riyadi 12, Solo', 'Telepon' => null, 'ZonaWaktu' => 'Asia/Jakarta', 'JamTutupBuku' => '04:00'])
+            // v3.51 jenis pesanan & v3.58 mode kasir (aditif; outlet retail tanpa template = kosong).
+            ->and($respons->json('Outlet'))->toBe(['Uuid' => $k['Outlet']->Uuid, 'Kode' => $k['Outlet']->Kode, 'Nama' => $k['Outlet']->Nama, 'Alamat' => 'Jl. Slamet Riyadi 12, Solo', 'Telepon' => null, 'ZonaWaktu' => 'Asia/Jakarta', 'JamTutupBuku' => '04:00', 'JenisPesanan' => [], 'JenisPesananBawaan' => null, 'ModeKasir' => [], 'ModeKasirBawaan' => null])
             ->and($respons->json('Perangkat'))->toBe(['Uuid' => $k['Perangkat']->Uuid, 'Kode' => $k['Perangkat']->Kode, 'NomorUrutPenjualan' => [], 'NomorUrutRetur' => [], 'NomorUrutIsiDeposit' => []])
             // Belum ada penjualan: objek JSON kosong, bukan larik.
             ->and($respons->getContent())->toContain('"NomorUrutPenjualan":{}')
@@ -816,8 +819,8 @@ describe('F-07b data-awal', function (): void {
             ->and(array_keys($respons->json('ProfilPajak')))->toBe(['Pkp', 'PungutPbjt', 'HargaTermasukPajak', 'BiayaLayanan'])
             ->and(array_column($respons->json('TarifPajak'), 'KodeJenisPajak'))->toBe(['PbjtMakananMinuman', 'Ppn'])
             ->and($respons->json('TarifPajak.1.PengaliDppPembilang'))->toBe(11)
-            // F-12: Tempo (piutang) ikut dikirim ke POS.
-            ->and(array_column($respons->json('MetodePembayaran'), 'Jenis'))->toBe(['Tunai', 'QrisStatis', 'Edc', 'Transfer', 'Tempo'])
+            // F-12: Tempo (piutang) ikut dikirim ke POS. K-11: metode sistem Tukar barang dibuat saat data awal diminta.
+            ->and(array_column($respons->json('MetodePembayaran'), 'Jenis'))->toBe(['Tunai', 'QrisStatis', 'Edc', 'Transfer', 'Tempo', 'Tukar'])
             ->and($respons->json('MetodePembayaran.1'))->toHaveKeys(['Uuid', 'Jenis', 'Nama', 'NomorRekening', 'NamaPemilikRekening', 'AdaGambarQris', 'Urutan']);
     });
 
