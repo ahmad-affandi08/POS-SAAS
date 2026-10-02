@@ -1,5 +1,5 @@
 {
-    "_Keterangan": "Template sektor awal MVP (P-03, PRD §5.1, §11.2, §11.3). Dimuat seeder sebagai DRAF versi 1; wajib ditinjau Konten & Legal (isi) dan Keuangan (COA & pemetaan), lolos validasi otomatis, lalu diterbitkan Teknis/Super Admin (BR-P03.3, BR-P03.5). Nilai desimal berupa string.",
+    "_Keterangan": "Template sektor awal (MVP: RTL-GEN, FNB-CAF, FNB-QSR; v3.80: FNB-RST, FNB-BAK, RTL-FSH, RTL-ELC, RTL-BLD, WHS-DST, SVC-SLN, SVC-LDR, SVC-GEN; Apotek & Bengkel menunggu keputusan K25) (P-03, PRD §5.1, §11.2, §11.3). Dimuat seeder sebagai DRAF versi 1; wajib ditinjau Konten & Legal (isi) dan Keuangan (COA & pemetaan), lolos validasi otomatis, lalu diterbitkan Teknis/Super Admin (BR-P03.3, BR-P03.5). Nilai desimal berupa string.",
     "Template": [
         {
             "Kode": "RTL-GEN",
@@ -1657,6 +1657,4787 @@
                         "Harga": "5000",
                         "KodeSatuan": "PCS",
                         "Jenis": "NonStok"
+                    }
+                ]
+            }
+        },
+        {
+            "Kode": "FNB-RST",
+            "Nama": "Restoran / rumah makan",
+            "Keterangan": "Rumah makan, resto keluarga. Denah meja, pesanan terbuka per meja, dapur & bar, service charge, PBJT.",
+            "Isi": {
+                "ModeKasir": [
+                    "Meja",
+                    "Cepat"
+                ],
+                "ModeKasirDefault": "Meja",
+                "KunciFitur": [
+                    "pos.retail",
+                    "pos.mode-meja",
+                    "pos.kds",
+                    "stok.dasar",
+                    "stok.opname",
+                    "pelanggan.dasar",
+                    "laporan.dasar"
+                ],
+                "Akun": [
+                    {
+                        "Kode": "1-1100",
+                        "Nama": "Kas Outlet",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1150",
+                        "Nama": "Kas Brankas",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1200",
+                        "Nama": "Bank",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1300",
+                        "Nama": "Piutang Pencairan (QRIS/EDC/Gateway/Ojol)",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1400",
+                        "Nama": "Piutang Usaha",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1450",
+                        "Nama": "Piutang Karyawan (Kasbon)",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1460",
+                        "Nama": "Piutang Klaim Promosi Pemasok",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1470",
+                        "Nama": "Piutang Belum Difakturkan",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1480",
+                        "Nama": "Giro Mundur Diterima",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1500",
+                        "Nama": "Persediaan Barang Dagang",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1510",
+                        "Nama": "Persediaan Bahan Baku",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1520",
+                        "Nama": "Persediaan Barang Dalam Perjalanan",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1600",
+                        "Nama": "PPN Masukan",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1700",
+                        "Nama": "Uang Muka Pembelian",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-2000",
+                        "Nama": "Aset Tetap",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-2900",
+                        "Nama": "Akumulasi Penyusutan",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": true
+                    },
+                    {
+                        "Kode": "2-1100",
+                        "Nama": "Hutang Usaha",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1150",
+                        "Nama": "Hutang Belum Difakturkan (GRNI)",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1180",
+                        "Nama": "Hutang Giro",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1200",
+                        "Nama": "Hutang Konsinyasi",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1300",
+                        "Nama": "PPN Keluaran",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1310",
+                        "Nama": "Hutang PB1/PBJT",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1400",
+                        "Nama": "Uang Muka Pelanggan (DP)",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1500",
+                        "Nama": "Saldo Deposit Pelanggan / Gift Card",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1600",
+                        "Nama": "Pendapatan Diterima Dimuka",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1700",
+                        "Nama": "Hutang Service Charge",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1800",
+                        "Nama": "Kliring Tukar Barang",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "3-1000",
+                        "Nama": "Modal Pemilik",
+                        "Tipe": "Ekuitas",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "3-2000",
+                        "Nama": "Ekuitas Saldo Awal",
+                        "Tipe": "Ekuitas",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "3-3000",
+                        "Nama": "Laba Ditahan",
+                        "Tipe": "Ekuitas",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "3-4000",
+                        "Nama": "Prive",
+                        "Tipe": "Ekuitas",
+                        "SaldoNormal": "Debit",
+                        "Kontra": true
+                    },
+                    {
+                        "Kode": "4-1000",
+                        "Nama": "Penjualan",
+                        "Tipe": "Pendapatan",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "4-1010",
+                        "Nama": "Penjualan Makanan",
+                        "Tipe": "Pendapatan",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "4-1020",
+                        "Nama": "Penjualan Minuman",
+                        "Tipe": "Pendapatan",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "4-1100",
+                        "Nama": "Diskon Penjualan",
+                        "Tipe": "Pendapatan",
+                        "SaldoNormal": "Debit",
+                        "Kontra": true
+                    },
+                    {
+                        "Kode": "4-1200",
+                        "Nama": "Retur Penjualan",
+                        "Tipe": "Pendapatan",
+                        "SaldoNormal": "Debit",
+                        "Kontra": true
+                    },
+                    {
+                        "Kode": "4-2000",
+                        "Nama": "Pendapatan Jasa",
+                        "Tipe": "Pendapatan",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "4-3000",
+                        "Nama": "Pendapatan Service Charge",
+                        "Tipe": "Pendapatan",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "4-3100",
+                        "Nama": "Pendapatan Pengiriman",
+                        "Tipe": "Pendapatan",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "4-9000",
+                        "Nama": "Pendapatan Lain",
+                        "Tipe": "Pendapatan",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "5-1000",
+                        "Nama": "Harga Pokok Penjualan",
+                        "Tipe": "Hpp",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "5-1100",
+                        "Nama": "Selisih HPP / Penyesuaian Persediaan",
+                        "Tipe": "Hpp",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "5-1200",
+                        "Nama": "Susut & Barang Rusak",
+                        "Tipe": "Hpp",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "5-1300",
+                        "Nama": "Overhead Produksi Dibebankan",
+                        "Tipe": "Hpp",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "6-1000",
+                        "Nama": "Beban Gaji & Komisi",
+                        "Tipe": "Beban",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "6-2000",
+                        "Nama": "Beban Sewa, Listrik, Air, Internet",
+                        "Tipe": "Beban",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "6-3000",
+                        "Nama": "Beban Biaya Pembayaran",
+                        "Tipe": "Beban",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "6-4000",
+                        "Nama": "Beban Promosi",
+                        "Tipe": "Beban",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "6-5000",
+                        "Nama": "Beban Penyusutan",
+                        "Tipe": "Beban",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "6-9000",
+                        "Nama": "Beban Selisih Kas / Lain-lain",
+                        "Tipe": "Beban",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    }
+                ],
+                "PemetaanAkun": {
+                    "Bank": "1-1200",
+                    "BebanBiayaPembayaran": "6-3000",
+                    "BebanSelisihKas": "6-9000",
+                    "DepositPelanggan": "2-1500",
+                    "DiskonPenjualan": "4-1100",
+                    "EkuitasSaldoAwal": "3-2000",
+                    "Hpp": "5-1000",
+                    "HutangBelumDifakturkan": "2-1150",
+                    "HutangKonsinyasi": "2-1200",
+                    "HutangPbjt": "2-1310",
+                    "HutangUsaha": "2-1100",
+                    "KasBrankas": "1-1150",
+                    "KasOutlet": "1-1100",
+                    "LabaDitahan": "3-3000",
+                    "PendapatanBiayaLayanan": "4-3000",
+                    "PendapatanDiterimaDimuka": "2-1600",
+                    "PendapatanJasa": "4-2000",
+                    "PendapatanLain": "4-9000",
+                    "Penjualan": "4-1000",
+                    "PersediaanBahanBaku": "1-1510",
+                    "PersediaanBarangDagang": "1-1500",
+                    "PersediaanDalamPerjalanan": "1-1520",
+                    "PiutangBelumDifakturkan": "1-1470",
+                    "PiutangKaryawan": "1-1450",
+                    "PiutangKlaimPemasok": "1-1460",
+                    "PiutangPencairan": "1-1300",
+                    "PiutangUsaha": "1-1400",
+                    "PpnKeluaran": "2-1300",
+                    "PpnMasukan": "1-1600",
+                    "ReturPenjualan": "4-1200",
+                    "SelisihHpp": "5-1100",
+                    "OverheadProduksiDibebankan": "5-1300",
+                    "SusutPersediaan": "5-1200",
+                    "UangMukaPelanggan": "2-1400",
+                    "PendapatanPengiriman": "4-3100",
+                    "KliringTukarBarang": "2-1800",
+                    "AsetTetap": "1-2000",
+                    "AkumulasiPenyusutan": "1-2900",
+                    "BebanPenyusutan": "6-5000",
+                    "GiroDiterima": "1-1480",
+                    "HutangGiro": "2-1180"
+                },
+                "Kategori": [
+                    "Makanan utama",
+                    "Lauk",
+                    "Sayur",
+                    "Minuman",
+                    "Pencuci mulut"
+                ],
+                "KodeSatuan": [
+                    "PCS",
+                    "PORSI",
+                    "BOTOL",
+                    "G",
+                    "KG",
+                    "L",
+                    "ML"
+                ],
+                "KelompokPajak": [
+                    {
+                        "Nama": "Makan & minum",
+                        "Detail": [
+                            {
+                                "KodeJenisPajak": "PbjtMakananMinuman",
+                                "DasarPengenaan": "SubtotalPlusLayanan",
+                                "Urutan": 1
+                            }
+                        ]
+                    }
+                ],
+                "Pengaturan": {
+                    "PembulatanTunai": {
+                        "Kelipatan": 100,
+                        "Arah": "Bawah"
+                    },
+                    "PersenBiayaLayanan": "5",
+                    "BiayaLayananMasukDpp": true,
+                    "StokBolehMinus": true,
+                    "MetodeHpp": "RataRata",
+                    "HargaTermasukPajak": false
+                },
+                "StasiunDapur": [
+                    "Dapur",
+                    "Bar"
+                ],
+                "AlasanVoid": [
+                    "Salah input",
+                    "Pelanggan batal",
+                    "Pesanan terlalu lama",
+                    "Menu habis"
+                ],
+                "AlasanPenyesuaian": [
+                    "Bahan rusak",
+                    "Kedaluwarsa",
+                    "Tumpah atau terbuang",
+                    "Selisih opname"
+                ],
+                "LaporanUnggulan": [
+                    "PenjualanPerJam",
+                    "PenjualanPerProduk",
+                    "PenjualanPerKategori",
+                    "LaporanShift"
+                ],
+                "ProdukContoh": [
+                    {
+                        "Nama": "Nasi Goreng Kampung Telur Ceplok",
+                        "Kategori": "Makanan utama",
+                        "Harga": "28000",
+                        "KodeSatuan": "PORSI",
+                        "Jenis": "NonStok"
+                    },
+                    {
+                        "Nama": "Nasi Putih",
+                        "Kategori": "Makanan utama",
+                        "Harga": "6000",
+                        "KodeSatuan": "PORSI",
+                        "Jenis": "NonStok"
+                    },
+                    {
+                        "Nama": "Ayam Bakar Madu Paha Atas",
+                        "Kategori": "Lauk",
+                        "Harga": "27000",
+                        "KodeSatuan": "PORSI",
+                        "Jenis": "NonStok"
+                    },
+                    {
+                        "Nama": "Ikan Gurame Goreng Sambal Dabu-dabu",
+                        "Kategori": "Lauk",
+                        "Harga": "85000",
+                        "KodeSatuan": "PORSI",
+                        "Jenis": "NonStok"
+                    },
+                    {
+                        "Nama": "Sayur Asem Jakarta",
+                        "Kategori": "Sayur",
+                        "Harga": "15000",
+                        "KodeSatuan": "PORSI",
+                        "Jenis": "NonStok"
+                    },
+                    {
+                        "Nama": "Cah Kangkung Terasi",
+                        "Kategori": "Sayur",
+                        "Harga": "18000",
+                        "KodeSatuan": "PORSI",
+                        "Jenis": "NonStok"
+                    },
+                    {
+                        "Nama": "Es Teh Manis",
+                        "Kategori": "Minuman",
+                        "Harga": "7000",
+                        "KodeSatuan": "PCS",
+                        "Jenis": "NonStok"
+                    },
+                    {
+                        "Nama": "Es Jeruk Peras",
+                        "Kategori": "Minuman",
+                        "Harga": "12000",
+                        "KodeSatuan": "PCS",
+                        "Jenis": "NonStok"
+                    },
+                    {
+                        "Nama": "Air Mineral Botol 600 ml",
+                        "Kategori": "Minuman",
+                        "Harga": "6000",
+                        "KodeSatuan": "BOTOL",
+                        "Jenis": "Stok"
+                    },
+                    {
+                        "Nama": "Es Campur Spesial",
+                        "Kategori": "Pencuci mulut",
+                        "Harga": "20000",
+                        "KodeSatuan": "PORSI",
+                        "Jenis": "NonStok"
+                    }
+                ]
+            }
+        },
+        {
+            "Kode": "FNB-BAK",
+            "Nama": "Bakery & kue",
+            "Keterangan": "Toko roti, katering kue. Produksi harian, pre-order kue dengan uang muka, kedaluwarsa harian.",
+            "Isi": {
+                "ModeKasir": [
+                    "Retail",
+                    "Cepat"
+                ],
+                "ModeKasirDefault": "Retail",
+                "KunciFitur": [
+                    "pos.retail",
+                    "stok.dasar",
+                    "stok.opname",
+                    "pembelian.po",
+                    "pelanggan.dasar",
+                    "laporan.dasar"
+                ],
+                "Akun": [
+                    {
+                        "Kode": "1-1100",
+                        "Nama": "Kas Outlet",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1150",
+                        "Nama": "Kas Brankas",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1200",
+                        "Nama": "Bank",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1300",
+                        "Nama": "Piutang Pencairan (QRIS/EDC/Gateway/Ojol)",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1400",
+                        "Nama": "Piutang Usaha",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1450",
+                        "Nama": "Piutang Karyawan (Kasbon)",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1460",
+                        "Nama": "Piutang Klaim Promosi Pemasok",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1470",
+                        "Nama": "Piutang Belum Difakturkan",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1480",
+                        "Nama": "Giro Mundur Diterima",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1500",
+                        "Nama": "Persediaan Barang Dagang",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1510",
+                        "Nama": "Persediaan Bahan Baku",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1520",
+                        "Nama": "Persediaan Barang Dalam Perjalanan",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1600",
+                        "Nama": "PPN Masukan",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1700",
+                        "Nama": "Uang Muka Pembelian",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-2000",
+                        "Nama": "Aset Tetap",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-2900",
+                        "Nama": "Akumulasi Penyusutan",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": true
+                    },
+                    {
+                        "Kode": "2-1100",
+                        "Nama": "Hutang Usaha",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1150",
+                        "Nama": "Hutang Belum Difakturkan (GRNI)",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1180",
+                        "Nama": "Hutang Giro",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1200",
+                        "Nama": "Hutang Konsinyasi",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1300",
+                        "Nama": "PPN Keluaran",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1310",
+                        "Nama": "Hutang PB1/PBJT",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1400",
+                        "Nama": "Uang Muka Pelanggan (DP)",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1500",
+                        "Nama": "Saldo Deposit Pelanggan / Gift Card",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1600",
+                        "Nama": "Pendapatan Diterima Dimuka",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1700",
+                        "Nama": "Hutang Service Charge",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1800",
+                        "Nama": "Kliring Tukar Barang",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "3-1000",
+                        "Nama": "Modal Pemilik",
+                        "Tipe": "Ekuitas",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "3-2000",
+                        "Nama": "Ekuitas Saldo Awal",
+                        "Tipe": "Ekuitas",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "3-3000",
+                        "Nama": "Laba Ditahan",
+                        "Tipe": "Ekuitas",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "3-4000",
+                        "Nama": "Prive",
+                        "Tipe": "Ekuitas",
+                        "SaldoNormal": "Debit",
+                        "Kontra": true
+                    },
+                    {
+                        "Kode": "4-1000",
+                        "Nama": "Penjualan",
+                        "Tipe": "Pendapatan",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "4-1010",
+                        "Nama": "Penjualan Makanan",
+                        "Tipe": "Pendapatan",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "4-1020",
+                        "Nama": "Penjualan Minuman",
+                        "Tipe": "Pendapatan",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "4-1100",
+                        "Nama": "Diskon Penjualan",
+                        "Tipe": "Pendapatan",
+                        "SaldoNormal": "Debit",
+                        "Kontra": true
+                    },
+                    {
+                        "Kode": "4-1200",
+                        "Nama": "Retur Penjualan",
+                        "Tipe": "Pendapatan",
+                        "SaldoNormal": "Debit",
+                        "Kontra": true
+                    },
+                    {
+                        "Kode": "4-2000",
+                        "Nama": "Pendapatan Jasa",
+                        "Tipe": "Pendapatan",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "4-3000",
+                        "Nama": "Pendapatan Service Charge",
+                        "Tipe": "Pendapatan",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "4-3100",
+                        "Nama": "Pendapatan Pengiriman",
+                        "Tipe": "Pendapatan",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "4-9000",
+                        "Nama": "Pendapatan Lain",
+                        "Tipe": "Pendapatan",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "5-1000",
+                        "Nama": "Harga Pokok Penjualan",
+                        "Tipe": "Hpp",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "5-1100",
+                        "Nama": "Selisih HPP / Penyesuaian Persediaan",
+                        "Tipe": "Hpp",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "5-1200",
+                        "Nama": "Susut & Barang Rusak",
+                        "Tipe": "Hpp",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "5-1300",
+                        "Nama": "Overhead Produksi Dibebankan",
+                        "Tipe": "Hpp",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "6-1000",
+                        "Nama": "Beban Gaji & Komisi",
+                        "Tipe": "Beban",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "6-2000",
+                        "Nama": "Beban Sewa, Listrik, Air, Internet",
+                        "Tipe": "Beban",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "6-3000",
+                        "Nama": "Beban Biaya Pembayaran",
+                        "Tipe": "Beban",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "6-4000",
+                        "Nama": "Beban Promosi",
+                        "Tipe": "Beban",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "6-5000",
+                        "Nama": "Beban Penyusutan",
+                        "Tipe": "Beban",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "6-9000",
+                        "Nama": "Beban Selisih Kas / Lain-lain",
+                        "Tipe": "Beban",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    }
+                ],
+                "PemetaanAkun": {
+                    "Bank": "1-1200",
+                    "BebanBiayaPembayaran": "6-3000",
+                    "BebanSelisihKas": "6-9000",
+                    "DepositPelanggan": "2-1500",
+                    "DiskonPenjualan": "4-1100",
+                    "EkuitasSaldoAwal": "3-2000",
+                    "Hpp": "5-1000",
+                    "HutangBelumDifakturkan": "2-1150",
+                    "HutangKonsinyasi": "2-1200",
+                    "HutangPbjt": "2-1310",
+                    "HutangUsaha": "2-1100",
+                    "KasBrankas": "1-1150",
+                    "KasOutlet": "1-1100",
+                    "LabaDitahan": "3-3000",
+                    "PendapatanBiayaLayanan": "4-3000",
+                    "PendapatanDiterimaDimuka": "2-1600",
+                    "PendapatanJasa": "4-2000",
+                    "PendapatanLain": "4-9000",
+                    "Penjualan": "4-1000",
+                    "PersediaanBahanBaku": "1-1510",
+                    "PersediaanBarangDagang": "1-1500",
+                    "PersediaanDalamPerjalanan": "1-1520",
+                    "PiutangBelumDifakturkan": "1-1470",
+                    "PiutangKaryawan": "1-1450",
+                    "PiutangKlaimPemasok": "1-1460",
+                    "PiutangPencairan": "1-1300",
+                    "PiutangUsaha": "1-1400",
+                    "PpnKeluaran": "2-1300",
+                    "PpnMasukan": "1-1600",
+                    "ReturPenjualan": "4-1200",
+                    "SelisihHpp": "5-1100",
+                    "OverheadProduksiDibebankan": "5-1300",
+                    "SusutPersediaan": "5-1200",
+                    "UangMukaPelanggan": "2-1400",
+                    "PendapatanPengiriman": "4-3100",
+                    "KliringTukarBarang": "2-1800",
+                    "AsetTetap": "1-2000",
+                    "AkumulasiPenyusutan": "1-2900",
+                    "BebanPenyusutan": "6-5000",
+                    "GiroDiterima": "1-1480",
+                    "HutangGiro": "2-1180"
+                },
+                "Kategori": [
+                    "Roti manis",
+                    "Roti tawar",
+                    "Kue basah",
+                    "Kue kering",
+                    "Kue ulang tahun",
+                    "Minuman"
+                ],
+                "KodeSatuan": [
+                    "PCS",
+                    "BUAH",
+                    "PAK",
+                    "DUS",
+                    "KG",
+                    "G",
+                    "BOTOL"
+                ],
+                "KelompokPajak": [
+                    {
+                        "Nama": "Makan & minum",
+                        "Detail": [
+                            {
+                                "KodeJenisPajak": "PbjtMakananMinuman",
+                                "DasarPengenaan": "Subtotal",
+                                "Urutan": 1
+                            }
+                        ]
+                    }
+                ],
+                "Pengaturan": {
+                    "PembulatanTunai": {
+                        "Kelipatan": 100,
+                        "Arah": "Bawah"
+                    },
+                    "PersenBiayaLayanan": "0",
+                    "BiayaLayananMasukDpp": false,
+                    "StokBolehMinus": false,
+                    "MetodeHpp": "RataRata",
+                    "HargaTermasukPajak": true
+                },
+                "StasiunDapur": [],
+                "AlasanVoid": [
+                    "Salah input",
+                    "Pelanggan batal",
+                    "Barang rusak"
+                ],
+                "AlasanPenyesuaian": [
+                    "Kedaluwarsa",
+                    "Rusak saat produksi",
+                    "Sisa tidak terjual",
+                    "Selisih opname"
+                ],
+                "LaporanUnggulan": [
+                    "PenjualanPerProduk",
+                    "PenjualanPerJam",
+                    "StokMenipis"
+                ],
+                "ProdukContoh": [
+                    {
+                        "Nama": "Roti Sobek Cokelat Keju Isi 6",
+                        "Kategori": "Roti manis",
+                        "Harga": "28000",
+                        "KodeSatuan": "PAK",
+                        "Jenis": "Stok"
+                    },
+                    {
+                        "Nama": "Roti Abon Sapi Pedas",
+                        "Kategori": "Roti manis",
+                        "Harga": "12000",
+                        "KodeSatuan": "PCS",
+                        "Jenis": "Stok"
+                    },
+                    {
+                        "Nama": "Roti Tawar Kupas Gandum 12 Lembar",
+                        "Kategori": "Roti tawar",
+                        "Harga": "22000",
+                        "KodeSatuan": "PAK",
+                        "Jenis": "Stok"
+                    },
+                    {
+                        "Nama": "Bolu Pandan Kukus",
+                        "Kategori": "Kue basah",
+                        "Harga": "6000",
+                        "KodeSatuan": "BUAH",
+                        "Jenis": "Stok"
+                    },
+                    {
+                        "Nama": "Kue Lapis Legit Potong",
+                        "Kategori": "Kue basah",
+                        "Harga": "15000",
+                        "KodeSatuan": "BUAH",
+                        "Jenis": "Stok"
+                    },
+                    {
+                        "Nama": "Nastar Nanas Toples 500 g",
+                        "Kategori": "Kue kering",
+                        "Harga": "95000",
+                        "KodeSatuan": "PCS",
+                        "Jenis": "Stok"
+                    },
+                    {
+                        "Nama": "Kastengel Keju Edam Toples 500 g",
+                        "Kategori": "Kue kering",
+                        "Harga": "110000",
+                        "KodeSatuan": "PCS",
+                        "Jenis": "Stok"
+                    },
+                    {
+                        "Nama": "Kue Ulang Tahun Black Forest Diameter 20 cm",
+                        "Kategori": "Kue ulang tahun",
+                        "Harga": "275000",
+                        "KodeSatuan": "BUAH",
+                        "Jenis": "Stok"
+                    },
+                    {
+                        "Nama": "Tulisan & Hiasan Nama di Kue",
+                        "Kategori": "Kue ulang tahun",
+                        "Harga": "15000",
+                        "KodeSatuan": "PCS",
+                        "Jenis": "Jasa"
+                    },
+                    {
+                        "Nama": "Kopi Susu Botol 250 ml",
+                        "Kategori": "Minuman",
+                        "Harga": "18000",
+                        "KodeSatuan": "BOTOL",
+                        "Jenis": "Stok"
+                    }
+                ]
+            }
+        },
+        {
+            "Kode": "RTL-FSH",
+            "Nama": "Fashion & aksesoris",
+            "Keterangan": "Butik, distro. Varian ukuran × warna, tukar barang, loyalti pelanggan.",
+            "Isi": {
+                "ModeKasir": [
+                    "Retail"
+                ],
+                "ModeKasirDefault": "Retail",
+                "KunciFitur": [
+                    "pos.retail",
+                    "stok.dasar",
+                    "stok.opname",
+                    "stok.transfer",
+                    "pembelian.po",
+                    "pelanggan.dasar",
+                    "pelanggan.loyalti",
+                    "laporan.dasar"
+                ],
+                "Akun": [
+                    {
+                        "Kode": "1-1100",
+                        "Nama": "Kas Outlet",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1150",
+                        "Nama": "Kas Brankas",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1200",
+                        "Nama": "Bank",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1300",
+                        "Nama": "Piutang Pencairan (QRIS/EDC/Gateway/Ojol)",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1400",
+                        "Nama": "Piutang Usaha",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1450",
+                        "Nama": "Piutang Karyawan (Kasbon)",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1460",
+                        "Nama": "Piutang Klaim Promosi Pemasok",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1470",
+                        "Nama": "Piutang Belum Difakturkan",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1480",
+                        "Nama": "Giro Mundur Diterima",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1500",
+                        "Nama": "Persediaan Barang Dagang",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1510",
+                        "Nama": "Persediaan Bahan Baku",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1520",
+                        "Nama": "Persediaan Barang Dalam Perjalanan",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1600",
+                        "Nama": "PPN Masukan",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1700",
+                        "Nama": "Uang Muka Pembelian",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-2000",
+                        "Nama": "Aset Tetap",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-2900",
+                        "Nama": "Akumulasi Penyusutan",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": true
+                    },
+                    {
+                        "Kode": "2-1100",
+                        "Nama": "Hutang Usaha",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1150",
+                        "Nama": "Hutang Belum Difakturkan (GRNI)",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1180",
+                        "Nama": "Hutang Giro",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1200",
+                        "Nama": "Hutang Konsinyasi",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1300",
+                        "Nama": "PPN Keluaran",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1310",
+                        "Nama": "Hutang PB1/PBJT",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1400",
+                        "Nama": "Uang Muka Pelanggan (DP)",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1500",
+                        "Nama": "Saldo Deposit Pelanggan / Gift Card",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1600",
+                        "Nama": "Pendapatan Diterima Dimuka",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1700",
+                        "Nama": "Hutang Service Charge",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1800",
+                        "Nama": "Kliring Tukar Barang",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "3-1000",
+                        "Nama": "Modal Pemilik",
+                        "Tipe": "Ekuitas",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "3-2000",
+                        "Nama": "Ekuitas Saldo Awal",
+                        "Tipe": "Ekuitas",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "3-3000",
+                        "Nama": "Laba Ditahan",
+                        "Tipe": "Ekuitas",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "3-4000",
+                        "Nama": "Prive",
+                        "Tipe": "Ekuitas",
+                        "SaldoNormal": "Debit",
+                        "Kontra": true
+                    },
+                    {
+                        "Kode": "4-1000",
+                        "Nama": "Penjualan",
+                        "Tipe": "Pendapatan",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "4-1100",
+                        "Nama": "Diskon Penjualan",
+                        "Tipe": "Pendapatan",
+                        "SaldoNormal": "Debit",
+                        "Kontra": true
+                    },
+                    {
+                        "Kode": "4-1200",
+                        "Nama": "Retur Penjualan",
+                        "Tipe": "Pendapatan",
+                        "SaldoNormal": "Debit",
+                        "Kontra": true
+                    },
+                    {
+                        "Kode": "4-2000",
+                        "Nama": "Pendapatan Jasa",
+                        "Tipe": "Pendapatan",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "4-3000",
+                        "Nama": "Pendapatan Service Charge",
+                        "Tipe": "Pendapatan",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "4-3100",
+                        "Nama": "Pendapatan Pengiriman",
+                        "Tipe": "Pendapatan",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "4-9000",
+                        "Nama": "Pendapatan Lain",
+                        "Tipe": "Pendapatan",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "5-1000",
+                        "Nama": "Harga Pokok Penjualan",
+                        "Tipe": "Hpp",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "5-1100",
+                        "Nama": "Selisih HPP / Penyesuaian Persediaan",
+                        "Tipe": "Hpp",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "5-1200",
+                        "Nama": "Susut & Barang Rusak",
+                        "Tipe": "Hpp",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "5-1300",
+                        "Nama": "Overhead Produksi Dibebankan",
+                        "Tipe": "Hpp",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "6-1000",
+                        "Nama": "Beban Gaji & Komisi",
+                        "Tipe": "Beban",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "6-2000",
+                        "Nama": "Beban Sewa, Listrik, Air, Internet",
+                        "Tipe": "Beban",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "6-3000",
+                        "Nama": "Beban Biaya Pembayaran",
+                        "Tipe": "Beban",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "6-4000",
+                        "Nama": "Beban Promosi",
+                        "Tipe": "Beban",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "6-5000",
+                        "Nama": "Beban Penyusutan",
+                        "Tipe": "Beban",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "6-9000",
+                        "Nama": "Beban Selisih Kas / Lain-lain",
+                        "Tipe": "Beban",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    }
+                ],
+                "PemetaanAkun": {
+                    "Bank": "1-1200",
+                    "BebanBiayaPembayaran": "6-3000",
+                    "BebanSelisihKas": "6-9000",
+                    "DepositPelanggan": "2-1500",
+                    "DiskonPenjualan": "4-1100",
+                    "EkuitasSaldoAwal": "3-2000",
+                    "Hpp": "5-1000",
+                    "HutangBelumDifakturkan": "2-1150",
+                    "HutangKonsinyasi": "2-1200",
+                    "HutangPbjt": "2-1310",
+                    "HutangUsaha": "2-1100",
+                    "KasBrankas": "1-1150",
+                    "KasOutlet": "1-1100",
+                    "LabaDitahan": "3-3000",
+                    "PendapatanBiayaLayanan": "4-3000",
+                    "PendapatanDiterimaDimuka": "2-1600",
+                    "PendapatanJasa": "4-2000",
+                    "PendapatanLain": "4-9000",
+                    "Penjualan": "4-1000",
+                    "PersediaanBahanBaku": "1-1510",
+                    "PersediaanBarangDagang": "1-1500",
+                    "PersediaanDalamPerjalanan": "1-1520",
+                    "PiutangBelumDifakturkan": "1-1470",
+                    "PiutangKaryawan": "1-1450",
+                    "PiutangKlaimPemasok": "1-1460",
+                    "PiutangPencairan": "1-1300",
+                    "PiutangUsaha": "1-1400",
+                    "PpnKeluaran": "2-1300",
+                    "PpnMasukan": "1-1600",
+                    "ReturPenjualan": "4-1200",
+                    "SelisihHpp": "5-1100",
+                    "OverheadProduksiDibebankan": "5-1300",
+                    "SusutPersediaan": "5-1200",
+                    "UangMukaPelanggan": "2-1400",
+                    "PendapatanPengiriman": "4-3100",
+                    "KliringTukarBarang": "2-1800",
+                    "AsetTetap": "1-2000",
+                    "AkumulasiPenyusutan": "1-2900",
+                    "BebanPenyusutan": "6-5000",
+                    "GiroDiterima": "1-1480",
+                    "HutangGiro": "2-1180"
+                },
+                "Kategori": [
+                    "Atasan",
+                    "Bawahan",
+                    "Dress & gamis",
+                    "Hijab & kerudung",
+                    "Aksesoris",
+                    "Sepatu & sandal"
+                ],
+                "KodeSatuan": [
+                    "PCS",
+                    "BUAH",
+                    "LUSIN",
+                    "PAK"
+                ],
+                "KelompokPajak": [
+                    {
+                        "Nama": "Barang kena PPN",
+                        "Detail": [
+                            {
+                                "KodeJenisPajak": "Ppn",
+                                "DasarPengenaan": "Subtotal",
+                                "Urutan": 1
+                            }
+                        ]
+                    }
+                ],
+                "Pengaturan": {
+                    "PembulatanTunai": {
+                        "Kelipatan": 100,
+                        "Arah": "Bawah"
+                    },
+                    "PersenBiayaLayanan": "0",
+                    "BiayaLayananMasukDpp": false,
+                    "StokBolehMinus": false,
+                    "MetodeHpp": "RataRata",
+                    "HargaTermasukPajak": true
+                },
+                "StasiunDapur": [],
+                "AlasanVoid": [
+                    "Salah input",
+                    "Pelanggan batal",
+                    "Salah ukuran"
+                ],
+                "AlasanPenyesuaian": [
+                    "Barang cacat",
+                    "Hilang",
+                    "Selisih opname"
+                ],
+                "LaporanUnggulan": [
+                    "PenjualanPerProduk",
+                    "PenjualanPerKategori",
+                    "StokMenipis"
+                ],
+                "ProdukContoh": [
+                    {
+                        "Nama": "Kemeja Flanel Kotak Lengan Panjang",
+                        "Kategori": "Atasan",
+                        "Harga": "165000",
+                        "KodeSatuan": "PCS",
+                        "Jenis": "Stok"
+                    },
+                    {
+                        "Nama": "Kaos Polos Katun Combed 30s",
+                        "Kategori": "Atasan",
+                        "Harga": "65000",
+                        "KodeSatuan": "PCS",
+                        "Jenis": "Stok"
+                    },
+                    {
+                        "Nama": "Celana Chino Slim Fit",
+                        "Kategori": "Bawahan",
+                        "Harga": "189000",
+                        "KodeSatuan": "PCS",
+                        "Jenis": "Stok"
+                    },
+                    {
+                        "Nama": "Rok Plisket Panjang",
+                        "Kategori": "Bawahan",
+                        "Harga": "125000",
+                        "KodeSatuan": "PCS",
+                        "Jenis": "Stok"
+                    },
+                    {
+                        "Nama": "Gamis Katun Rayon Motif Bunga",
+                        "Kategori": "Dress & gamis",
+                        "Harga": "215000",
+                        "KodeSatuan": "PCS",
+                        "Jenis": "Stok"
+                    },
+                    {
+                        "Nama": "Pashmina Ceruti Babydoll",
+                        "Kategori": "Hijab & kerudung",
+                        "Harga": "45000",
+                        "KodeSatuan": "PCS",
+                        "Jenis": "Stok"
+                    },
+                    {
+                        "Nama": "Kerudung Segi Empat Voal Motif",
+                        "Kategori": "Hijab & kerudung",
+                        "Harga": "55000",
+                        "KodeSatuan": "PCS",
+                        "Jenis": "Stok"
+                    },
+                    {
+                        "Nama": "Tas Selempang Kanvas",
+                        "Kategori": "Aksesoris",
+                        "Harga": "99000",
+                        "KodeSatuan": "PCS",
+                        "Jenis": "Stok"
+                    },
+                    {
+                        "Nama": "Sandal Jepit Karet Pria",
+                        "Kategori": "Sepatu & sandal",
+                        "Harga": "35000",
+                        "KodeSatuan": "PCS",
+                        "Jenis": "Stok"
+                    },
+                    {
+                        "Nama": "Sneakers Kanvas Putih",
+                        "Kategori": "Sepatu & sandal",
+                        "Harga": "259000",
+                        "KodeSatuan": "PCS",
+                        "Jenis": "Stok"
+                    }
+                ]
+            }
+        },
+        {
+            "Kode": "RTL-ELC",
+            "Nama": "Elektronik & gadget",
+            "Keterangan": "Toko HP, komputer. Nomor seri/IMEI, garansi di struk, jasa servis.",
+            "Isi": {
+                "ModeKasir": [
+                    "Retail"
+                ],
+                "ModeKasirDefault": "Retail",
+                "KunciFitur": [
+                    "pos.retail",
+                    "stok.dasar",
+                    "stok.opname",
+                    "pembelian.po",
+                    "pelanggan.dasar",
+                    "laporan.dasar"
+                ],
+                "Akun": [
+                    {
+                        "Kode": "1-1100",
+                        "Nama": "Kas Outlet",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1150",
+                        "Nama": "Kas Brankas",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1200",
+                        "Nama": "Bank",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1300",
+                        "Nama": "Piutang Pencairan (QRIS/EDC/Gateway/Ojol)",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1400",
+                        "Nama": "Piutang Usaha",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1450",
+                        "Nama": "Piutang Karyawan (Kasbon)",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1460",
+                        "Nama": "Piutang Klaim Promosi Pemasok",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1470",
+                        "Nama": "Piutang Belum Difakturkan",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1480",
+                        "Nama": "Giro Mundur Diterima",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1500",
+                        "Nama": "Persediaan Barang Dagang",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1510",
+                        "Nama": "Persediaan Bahan Baku",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1520",
+                        "Nama": "Persediaan Barang Dalam Perjalanan",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1600",
+                        "Nama": "PPN Masukan",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1700",
+                        "Nama": "Uang Muka Pembelian",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-2000",
+                        "Nama": "Aset Tetap",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-2900",
+                        "Nama": "Akumulasi Penyusutan",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": true
+                    },
+                    {
+                        "Kode": "2-1100",
+                        "Nama": "Hutang Usaha",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1150",
+                        "Nama": "Hutang Belum Difakturkan (GRNI)",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1180",
+                        "Nama": "Hutang Giro",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1200",
+                        "Nama": "Hutang Konsinyasi",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1300",
+                        "Nama": "PPN Keluaran",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1310",
+                        "Nama": "Hutang PB1/PBJT",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1400",
+                        "Nama": "Uang Muka Pelanggan (DP)",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1500",
+                        "Nama": "Saldo Deposit Pelanggan / Gift Card",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1600",
+                        "Nama": "Pendapatan Diterima Dimuka",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1700",
+                        "Nama": "Hutang Service Charge",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1800",
+                        "Nama": "Kliring Tukar Barang",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "3-1000",
+                        "Nama": "Modal Pemilik",
+                        "Tipe": "Ekuitas",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "3-2000",
+                        "Nama": "Ekuitas Saldo Awal",
+                        "Tipe": "Ekuitas",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "3-3000",
+                        "Nama": "Laba Ditahan",
+                        "Tipe": "Ekuitas",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "3-4000",
+                        "Nama": "Prive",
+                        "Tipe": "Ekuitas",
+                        "SaldoNormal": "Debit",
+                        "Kontra": true
+                    },
+                    {
+                        "Kode": "4-1000",
+                        "Nama": "Penjualan",
+                        "Tipe": "Pendapatan",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "4-1100",
+                        "Nama": "Diskon Penjualan",
+                        "Tipe": "Pendapatan",
+                        "SaldoNormal": "Debit",
+                        "Kontra": true
+                    },
+                    {
+                        "Kode": "4-1200",
+                        "Nama": "Retur Penjualan",
+                        "Tipe": "Pendapatan",
+                        "SaldoNormal": "Debit",
+                        "Kontra": true
+                    },
+                    {
+                        "Kode": "4-2000",
+                        "Nama": "Pendapatan Jasa",
+                        "Tipe": "Pendapatan",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "4-3000",
+                        "Nama": "Pendapatan Service Charge",
+                        "Tipe": "Pendapatan",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "4-3100",
+                        "Nama": "Pendapatan Pengiriman",
+                        "Tipe": "Pendapatan",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "4-9000",
+                        "Nama": "Pendapatan Lain",
+                        "Tipe": "Pendapatan",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "5-1000",
+                        "Nama": "Harga Pokok Penjualan",
+                        "Tipe": "Hpp",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "5-1100",
+                        "Nama": "Selisih HPP / Penyesuaian Persediaan",
+                        "Tipe": "Hpp",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "5-1200",
+                        "Nama": "Susut & Barang Rusak",
+                        "Tipe": "Hpp",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "5-1300",
+                        "Nama": "Overhead Produksi Dibebankan",
+                        "Tipe": "Hpp",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "6-1000",
+                        "Nama": "Beban Gaji & Komisi",
+                        "Tipe": "Beban",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "6-2000",
+                        "Nama": "Beban Sewa, Listrik, Air, Internet",
+                        "Tipe": "Beban",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "6-3000",
+                        "Nama": "Beban Biaya Pembayaran",
+                        "Tipe": "Beban",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "6-4000",
+                        "Nama": "Beban Promosi",
+                        "Tipe": "Beban",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "6-5000",
+                        "Nama": "Beban Penyusutan",
+                        "Tipe": "Beban",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "6-9000",
+                        "Nama": "Beban Selisih Kas / Lain-lain",
+                        "Tipe": "Beban",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    }
+                ],
+                "PemetaanAkun": {
+                    "Bank": "1-1200",
+                    "BebanBiayaPembayaran": "6-3000",
+                    "BebanSelisihKas": "6-9000",
+                    "DepositPelanggan": "2-1500",
+                    "DiskonPenjualan": "4-1100",
+                    "EkuitasSaldoAwal": "3-2000",
+                    "Hpp": "5-1000",
+                    "HutangBelumDifakturkan": "2-1150",
+                    "HutangKonsinyasi": "2-1200",
+                    "HutangPbjt": "2-1310",
+                    "HutangUsaha": "2-1100",
+                    "KasBrankas": "1-1150",
+                    "KasOutlet": "1-1100",
+                    "LabaDitahan": "3-3000",
+                    "PendapatanBiayaLayanan": "4-3000",
+                    "PendapatanDiterimaDimuka": "2-1600",
+                    "PendapatanJasa": "4-2000",
+                    "PendapatanLain": "4-9000",
+                    "Penjualan": "4-1000",
+                    "PersediaanBahanBaku": "1-1510",
+                    "PersediaanBarangDagang": "1-1500",
+                    "PersediaanDalamPerjalanan": "1-1520",
+                    "PiutangBelumDifakturkan": "1-1470",
+                    "PiutangKaryawan": "1-1450",
+                    "PiutangKlaimPemasok": "1-1460",
+                    "PiutangPencairan": "1-1300",
+                    "PiutangUsaha": "1-1400",
+                    "PpnKeluaran": "2-1300",
+                    "PpnMasukan": "1-1600",
+                    "ReturPenjualan": "4-1200",
+                    "SelisihHpp": "5-1100",
+                    "OverheadProduksiDibebankan": "5-1300",
+                    "SusutPersediaan": "5-1200",
+                    "UangMukaPelanggan": "2-1400",
+                    "PendapatanPengiriman": "4-3100",
+                    "KliringTukarBarang": "2-1800",
+                    "AsetTetap": "1-2000",
+                    "AkumulasiPenyusutan": "1-2900",
+                    "BebanPenyusutan": "6-5000",
+                    "GiroDiterima": "1-1480",
+                    "HutangGiro": "2-1180"
+                },
+                "Kategori": [
+                    "Ponsel",
+                    "Aksesoris ponsel",
+                    "Laptop & komputer",
+                    "Audio",
+                    "Peralatan rumah tangga",
+                    "Jasa servis"
+                ],
+                "KodeSatuan": [
+                    "PCS",
+                    "BUAH",
+                    "M"
+                ],
+                "KelompokPajak": [
+                    {
+                        "Nama": "Barang kena PPN",
+                        "Detail": [
+                            {
+                                "KodeJenisPajak": "Ppn",
+                                "DasarPengenaan": "Subtotal",
+                                "Urutan": 1
+                            }
+                        ]
+                    }
+                ],
+                "Pengaturan": {
+                    "PembulatanTunai": {
+                        "Kelipatan": 100,
+                        "Arah": "Bawah"
+                    },
+                    "PersenBiayaLayanan": "0",
+                    "BiayaLayananMasukDpp": false,
+                    "StokBolehMinus": false,
+                    "MetodeHpp": "RataRata",
+                    "HargaTermasukPajak": true
+                },
+                "StasiunDapur": [],
+                "AlasanVoid": [
+                    "Salah input",
+                    "Pelanggan batal",
+                    "Unit cacat"
+                ],
+                "AlasanPenyesuaian": [
+                    "Unit cacat",
+                    "Hilang",
+                    "Selisih opname"
+                ],
+                "LaporanUnggulan": [
+                    "PenjualanPerProduk",
+                    "LabaRugiSederhana",
+                    "StokMenipis"
+                ],
+                "ProdukContoh": [
+                    {
+                        "Nama": "Ponsel Android 8/256 GB Hitam",
+                        "Kategori": "Ponsel",
+                        "Harga": "3299000",
+                        "KodeSatuan": "PCS",
+                        "Jenis": "Stok"
+                    },
+                    {
+                        "Nama": "Ponsel Android 6/128 GB Biru",
+                        "Kategori": "Ponsel",
+                        "Harga": "2499000",
+                        "KodeSatuan": "PCS",
+                        "Jenis": "Stok"
+                    },
+                    {
+                        "Nama": "Kabel Data USB-C 1 m",
+                        "Kategori": "Aksesoris ponsel",
+                        "Harga": "45000",
+                        "KodeSatuan": "PCS",
+                        "Jenis": "Stok"
+                    },
+                    {
+                        "Nama": "Kepala Charger 33 W",
+                        "Kategori": "Aksesoris ponsel",
+                        "Harga": "149000",
+                        "KodeSatuan": "PCS",
+                        "Jenis": "Stok"
+                    },
+                    {
+                        "Nama": "Pelindung Layar Kaca Tempered",
+                        "Kategori": "Aksesoris ponsel",
+                        "Harga": "35000",
+                        "KodeSatuan": "PCS",
+                        "Jenis": "Stok"
+                    },
+                    {
+                        "Nama": "Laptop 14 inci Core i5 RAM 16 GB",
+                        "Kategori": "Laptop & komputer",
+                        "Harga": "9499000",
+                        "KodeSatuan": "PCS",
+                        "Jenis": "Stok"
+                    },
+                    {
+                        "Nama": "Mouse Nirkabel",
+                        "Kategori": "Laptop & komputer",
+                        "Harga": "85000",
+                        "KodeSatuan": "PCS",
+                        "Jenis": "Stok"
+                    },
+                    {
+                        "Nama": "Earphone Bluetooth TWS",
+                        "Kategori": "Audio",
+                        "Harga": "299000",
+                        "KodeSatuan": "PCS",
+                        "Jenis": "Stok"
+                    },
+                    {
+                        "Nama": "Rice Cooker Digital 1,8 Liter",
+                        "Kategori": "Peralatan rumah tangga",
+                        "Harga": "549000",
+                        "KodeSatuan": "PCS",
+                        "Jenis": "Stok"
+                    },
+                    {
+                        "Nama": "Jasa Ganti LCD Ponsel (tanpa suku cadang)",
+                        "Kategori": "Jasa servis",
+                        "Harga": "150000",
+                        "KodeSatuan": "PCS",
+                        "Jenis": "Jasa"
+                    }
+                ]
+            }
+        },
+        {
+            "Kode": "RTL-BLD",
+            "Nama": "Bahan bangunan",
+            "Keterangan": "Toko besi & material. Satuan desimal (meter, kg), harga sering berubah, penjualan tempo ke kontraktor, pengiriman.",
+            "Isi": {
+                "ModeKasir": [
+                    "Retail",
+                    "Grosir"
+                ],
+                "ModeKasirDefault": "Retail",
+                "KunciFitur": [
+                    "pos.retail",
+                    "stok.dasar",
+                    "stok.opname",
+                    "pembelian.po",
+                    "pelanggan.dasar",
+                    "piutang.grosir",
+                    "harga.daftar-harga",
+                    "laporan.dasar"
+                ],
+                "Akun": [
+                    {
+                        "Kode": "1-1100",
+                        "Nama": "Kas Outlet",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1150",
+                        "Nama": "Kas Brankas",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1200",
+                        "Nama": "Bank",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1300",
+                        "Nama": "Piutang Pencairan (QRIS/EDC/Gateway/Ojol)",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1400",
+                        "Nama": "Piutang Usaha",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1450",
+                        "Nama": "Piutang Karyawan (Kasbon)",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1460",
+                        "Nama": "Piutang Klaim Promosi Pemasok",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1470",
+                        "Nama": "Piutang Belum Difakturkan",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1480",
+                        "Nama": "Giro Mundur Diterima",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1500",
+                        "Nama": "Persediaan Barang Dagang",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1510",
+                        "Nama": "Persediaan Bahan Baku",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1520",
+                        "Nama": "Persediaan Barang Dalam Perjalanan",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1600",
+                        "Nama": "PPN Masukan",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1700",
+                        "Nama": "Uang Muka Pembelian",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-2000",
+                        "Nama": "Aset Tetap",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-2900",
+                        "Nama": "Akumulasi Penyusutan",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": true
+                    },
+                    {
+                        "Kode": "2-1100",
+                        "Nama": "Hutang Usaha",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1150",
+                        "Nama": "Hutang Belum Difakturkan (GRNI)",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1180",
+                        "Nama": "Hutang Giro",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1200",
+                        "Nama": "Hutang Konsinyasi",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1300",
+                        "Nama": "PPN Keluaran",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1310",
+                        "Nama": "Hutang PB1/PBJT",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1400",
+                        "Nama": "Uang Muka Pelanggan (DP)",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1500",
+                        "Nama": "Saldo Deposit Pelanggan / Gift Card",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1600",
+                        "Nama": "Pendapatan Diterima Dimuka",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1700",
+                        "Nama": "Hutang Service Charge",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1800",
+                        "Nama": "Kliring Tukar Barang",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "3-1000",
+                        "Nama": "Modal Pemilik",
+                        "Tipe": "Ekuitas",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "3-2000",
+                        "Nama": "Ekuitas Saldo Awal",
+                        "Tipe": "Ekuitas",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "3-3000",
+                        "Nama": "Laba Ditahan",
+                        "Tipe": "Ekuitas",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "3-4000",
+                        "Nama": "Prive",
+                        "Tipe": "Ekuitas",
+                        "SaldoNormal": "Debit",
+                        "Kontra": true
+                    },
+                    {
+                        "Kode": "4-1000",
+                        "Nama": "Penjualan",
+                        "Tipe": "Pendapatan",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "4-1100",
+                        "Nama": "Diskon Penjualan",
+                        "Tipe": "Pendapatan",
+                        "SaldoNormal": "Debit",
+                        "Kontra": true
+                    },
+                    {
+                        "Kode": "4-1200",
+                        "Nama": "Retur Penjualan",
+                        "Tipe": "Pendapatan",
+                        "SaldoNormal": "Debit",
+                        "Kontra": true
+                    },
+                    {
+                        "Kode": "4-2000",
+                        "Nama": "Pendapatan Jasa",
+                        "Tipe": "Pendapatan",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "4-3000",
+                        "Nama": "Pendapatan Service Charge",
+                        "Tipe": "Pendapatan",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "4-3100",
+                        "Nama": "Pendapatan Pengiriman",
+                        "Tipe": "Pendapatan",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "4-9000",
+                        "Nama": "Pendapatan Lain",
+                        "Tipe": "Pendapatan",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "5-1000",
+                        "Nama": "Harga Pokok Penjualan",
+                        "Tipe": "Hpp",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "5-1100",
+                        "Nama": "Selisih HPP / Penyesuaian Persediaan",
+                        "Tipe": "Hpp",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "5-1200",
+                        "Nama": "Susut & Barang Rusak",
+                        "Tipe": "Hpp",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "5-1300",
+                        "Nama": "Overhead Produksi Dibebankan",
+                        "Tipe": "Hpp",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "6-1000",
+                        "Nama": "Beban Gaji & Komisi",
+                        "Tipe": "Beban",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "6-2000",
+                        "Nama": "Beban Sewa, Listrik, Air, Internet",
+                        "Tipe": "Beban",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "6-3000",
+                        "Nama": "Beban Biaya Pembayaran",
+                        "Tipe": "Beban",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "6-4000",
+                        "Nama": "Beban Promosi",
+                        "Tipe": "Beban",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "6-5000",
+                        "Nama": "Beban Penyusutan",
+                        "Tipe": "Beban",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "6-9000",
+                        "Nama": "Beban Selisih Kas / Lain-lain",
+                        "Tipe": "Beban",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    }
+                ],
+                "PemetaanAkun": {
+                    "Bank": "1-1200",
+                    "BebanBiayaPembayaran": "6-3000",
+                    "BebanSelisihKas": "6-9000",
+                    "DepositPelanggan": "2-1500",
+                    "DiskonPenjualan": "4-1100",
+                    "EkuitasSaldoAwal": "3-2000",
+                    "Hpp": "5-1000",
+                    "HutangBelumDifakturkan": "2-1150",
+                    "HutangKonsinyasi": "2-1200",
+                    "HutangPbjt": "2-1310",
+                    "HutangUsaha": "2-1100",
+                    "KasBrankas": "1-1150",
+                    "KasOutlet": "1-1100",
+                    "LabaDitahan": "3-3000",
+                    "PendapatanBiayaLayanan": "4-3000",
+                    "PendapatanDiterimaDimuka": "2-1600",
+                    "PendapatanJasa": "4-2000",
+                    "PendapatanLain": "4-9000",
+                    "Penjualan": "4-1000",
+                    "PersediaanBahanBaku": "1-1510",
+                    "PersediaanBarangDagang": "1-1500",
+                    "PersediaanDalamPerjalanan": "1-1520",
+                    "PiutangBelumDifakturkan": "1-1470",
+                    "PiutangKaryawan": "1-1450",
+                    "PiutangKlaimPemasok": "1-1460",
+                    "PiutangPencairan": "1-1300",
+                    "PiutangUsaha": "1-1400",
+                    "PpnKeluaran": "2-1300",
+                    "PpnMasukan": "1-1600",
+                    "ReturPenjualan": "4-1200",
+                    "SelisihHpp": "5-1100",
+                    "OverheadProduksiDibebankan": "5-1300",
+                    "SusutPersediaan": "5-1200",
+                    "UangMukaPelanggan": "2-1400",
+                    "PendapatanPengiriman": "4-3100",
+                    "KliringTukarBarang": "2-1800",
+                    "AsetTetap": "1-2000",
+                    "AkumulasiPenyusutan": "1-2900",
+                    "BebanPenyusutan": "6-5000",
+                    "GiroDiterima": "1-1480",
+                    "HutangGiro": "2-1180"
+                },
+                "Kategori": [
+                    "Semen & pasir",
+                    "Besi & baja",
+                    "Cat",
+                    "Pipa & sanitasi",
+                    "Kayu & triplek",
+                    "Listrik",
+                    "Perkakas"
+                ],
+                "KodeSatuan": [
+                    "PCS",
+                    "BUAH",
+                    "KG",
+                    "M",
+                    "CM",
+                    "LEMBAR",
+                    "DUS",
+                    "L"
+                ],
+                "KelompokPajak": [
+                    {
+                        "Nama": "Barang kena PPN",
+                        "Detail": [
+                            {
+                                "KodeJenisPajak": "Ppn",
+                                "DasarPengenaan": "Subtotal",
+                                "Urutan": 1
+                            }
+                        ]
+                    }
+                ],
+                "Pengaturan": {
+                    "PembulatanTunai": {
+                        "Kelipatan": 100,
+                        "Arah": "Bawah"
+                    },
+                    "PersenBiayaLayanan": "0",
+                    "BiayaLayananMasukDpp": false,
+                    "StokBolehMinus": false,
+                    "MetodeHpp": "RataRata",
+                    "HargaTermasukPajak": true
+                },
+                "StasiunDapur": [],
+                "AlasanVoid": [
+                    "Salah input",
+                    "Pelanggan batal",
+                    "Salah ukur"
+                ],
+                "AlasanPenyesuaian": [
+                    "Barang rusak",
+                    "Susut potong",
+                    "Hilang",
+                    "Selisih opname"
+                ],
+                "LaporanUnggulan": [
+                    "PenjualanPerProduk",
+                    "PenjualanPerKategori",
+                    "StokMenipis",
+                    "LabaRugiSederhana"
+                ],
+                "ProdukContoh": [
+                    {
+                        "Nama": "Semen Portland Sak 50 kg",
+                        "Kategori": "Semen & pasir",
+                        "Harga": "68000",
+                        "KodeSatuan": "PCS",
+                        "Jenis": "Stok"
+                    },
+                    {
+                        "Nama": "Pasir Beton per Kilogram",
+                        "Kategori": "Semen & pasir",
+                        "Harga": "350",
+                        "KodeSatuan": "KG",
+                        "Jenis": "Stok"
+                    },
+                    {
+                        "Nama": "Besi Beton Polos 10 mm Batang 12 m",
+                        "Kategori": "Besi & baja",
+                        "Harga": "92000",
+                        "KodeSatuan": "PCS",
+                        "Jenis": "Stok"
+                    },
+                    {
+                        "Nama": "Kawat Bendrat per Kilogram",
+                        "Kategori": "Besi & baja",
+                        "Harga": "24000",
+                        "KodeSatuan": "KG",
+                        "Jenis": "Stok"
+                    },
+                    {
+                        "Nama": "Cat Tembok Interior Putih 5 kg",
+                        "Kategori": "Cat",
+                        "Harga": "185000",
+                        "KodeSatuan": "PCS",
+                        "Jenis": "Stok"
+                    },
+                    {
+                        "Nama": "Pipa PVC 3/4 inci per Meter",
+                        "Kategori": "Pipa & sanitasi",
+                        "Harga": "9500",
+                        "KodeSatuan": "M",
+                        "Jenis": "Stok"
+                    },
+                    {
+                        "Nama": "Triplek 9 mm 122 × 244 cm",
+                        "Kategori": "Kayu & triplek",
+                        "Harga": "135000",
+                        "KodeSatuan": "LEMBAR",
+                        "Jenis": "Stok"
+                    },
+                    {
+                        "Nama": "Kabel Listrik NYM 2 × 1,5 mm per Meter",
+                        "Kategori": "Listrik",
+                        "Harga": "8500",
+                        "KodeSatuan": "M",
+                        "Jenis": "Stok"
+                    },
+                    {
+                        "Nama": "Paku Kayu 5 cm per Kilogram",
+                        "Kategori": "Perkakas",
+                        "Harga": "22000",
+                        "KodeSatuan": "KG",
+                        "Jenis": "Stok"
+                    },
+                    {
+                        "Nama": "Jasa Antar Material Dalam Kota",
+                        "Kategori": "Perkakas",
+                        "Harga": "50000",
+                        "KodeSatuan": "PCS",
+                        "Jenis": "Jasa"
+                    }
+                ]
+            }
+        },
+        {
+            "Kode": "WHS-DST",
+            "Nama": "Grosir & distributor",
+            "Keterangan": "Grosir sembako, distributor. Pesanan grosir, surat jalan, faktur, harga per level pelanggan, piutang & tempo.",
+            "Isi": {
+                "ModeKasir": [
+                    "Grosir",
+                    "Retail"
+                ],
+                "ModeKasirDefault": "Grosir",
+                "KunciFitur": [
+                    "pos.retail",
+                    "stok.dasar",
+                    "stok.opname",
+                    "stok.multi-gudang",
+                    "stok.transfer",
+                    "pembelian.po",
+                    "pelanggan.dasar",
+                    "piutang.grosir",
+                    "harga.daftar-harga",
+                    "laporan.dasar"
+                ],
+                "Akun": [
+                    {
+                        "Kode": "1-1100",
+                        "Nama": "Kas Outlet",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1150",
+                        "Nama": "Kas Brankas",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1200",
+                        "Nama": "Bank",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1300",
+                        "Nama": "Piutang Pencairan (QRIS/EDC/Gateway/Ojol)",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1400",
+                        "Nama": "Piutang Usaha",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1450",
+                        "Nama": "Piutang Karyawan (Kasbon)",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1460",
+                        "Nama": "Piutang Klaim Promosi Pemasok",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1470",
+                        "Nama": "Piutang Belum Difakturkan",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1480",
+                        "Nama": "Giro Mundur Diterima",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1500",
+                        "Nama": "Persediaan Barang Dagang",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1510",
+                        "Nama": "Persediaan Bahan Baku",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1520",
+                        "Nama": "Persediaan Barang Dalam Perjalanan",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1600",
+                        "Nama": "PPN Masukan",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1700",
+                        "Nama": "Uang Muka Pembelian",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-2000",
+                        "Nama": "Aset Tetap",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-2900",
+                        "Nama": "Akumulasi Penyusutan",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": true
+                    },
+                    {
+                        "Kode": "2-1100",
+                        "Nama": "Hutang Usaha",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1150",
+                        "Nama": "Hutang Belum Difakturkan (GRNI)",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1180",
+                        "Nama": "Hutang Giro",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1200",
+                        "Nama": "Hutang Konsinyasi",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1300",
+                        "Nama": "PPN Keluaran",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1310",
+                        "Nama": "Hutang PB1/PBJT",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1400",
+                        "Nama": "Uang Muka Pelanggan (DP)",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1500",
+                        "Nama": "Saldo Deposit Pelanggan / Gift Card",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1600",
+                        "Nama": "Pendapatan Diterima Dimuka",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1700",
+                        "Nama": "Hutang Service Charge",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1800",
+                        "Nama": "Kliring Tukar Barang",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "3-1000",
+                        "Nama": "Modal Pemilik",
+                        "Tipe": "Ekuitas",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "3-2000",
+                        "Nama": "Ekuitas Saldo Awal",
+                        "Tipe": "Ekuitas",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "3-3000",
+                        "Nama": "Laba Ditahan",
+                        "Tipe": "Ekuitas",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "3-4000",
+                        "Nama": "Prive",
+                        "Tipe": "Ekuitas",
+                        "SaldoNormal": "Debit",
+                        "Kontra": true
+                    },
+                    {
+                        "Kode": "4-1000",
+                        "Nama": "Penjualan",
+                        "Tipe": "Pendapatan",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "4-1100",
+                        "Nama": "Diskon Penjualan",
+                        "Tipe": "Pendapatan",
+                        "SaldoNormal": "Debit",
+                        "Kontra": true
+                    },
+                    {
+                        "Kode": "4-1200",
+                        "Nama": "Retur Penjualan",
+                        "Tipe": "Pendapatan",
+                        "SaldoNormal": "Debit",
+                        "Kontra": true
+                    },
+                    {
+                        "Kode": "4-2000",
+                        "Nama": "Pendapatan Jasa",
+                        "Tipe": "Pendapatan",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "4-3000",
+                        "Nama": "Pendapatan Service Charge",
+                        "Tipe": "Pendapatan",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "4-3100",
+                        "Nama": "Pendapatan Pengiriman",
+                        "Tipe": "Pendapatan",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "4-9000",
+                        "Nama": "Pendapatan Lain",
+                        "Tipe": "Pendapatan",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "5-1000",
+                        "Nama": "Harga Pokok Penjualan",
+                        "Tipe": "Hpp",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "5-1100",
+                        "Nama": "Selisih HPP / Penyesuaian Persediaan",
+                        "Tipe": "Hpp",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "5-1200",
+                        "Nama": "Susut & Barang Rusak",
+                        "Tipe": "Hpp",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "5-1300",
+                        "Nama": "Overhead Produksi Dibebankan",
+                        "Tipe": "Hpp",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "6-1000",
+                        "Nama": "Beban Gaji & Komisi",
+                        "Tipe": "Beban",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "6-2000",
+                        "Nama": "Beban Sewa, Listrik, Air, Internet",
+                        "Tipe": "Beban",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "6-3000",
+                        "Nama": "Beban Biaya Pembayaran",
+                        "Tipe": "Beban",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "6-4000",
+                        "Nama": "Beban Promosi",
+                        "Tipe": "Beban",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "6-5000",
+                        "Nama": "Beban Penyusutan",
+                        "Tipe": "Beban",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "6-9000",
+                        "Nama": "Beban Selisih Kas / Lain-lain",
+                        "Tipe": "Beban",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    }
+                ],
+                "PemetaanAkun": {
+                    "Bank": "1-1200",
+                    "BebanBiayaPembayaran": "6-3000",
+                    "BebanSelisihKas": "6-9000",
+                    "DepositPelanggan": "2-1500",
+                    "DiskonPenjualan": "4-1100",
+                    "EkuitasSaldoAwal": "3-2000",
+                    "Hpp": "5-1000",
+                    "HutangBelumDifakturkan": "2-1150",
+                    "HutangKonsinyasi": "2-1200",
+                    "HutangPbjt": "2-1310",
+                    "HutangUsaha": "2-1100",
+                    "KasBrankas": "1-1150",
+                    "KasOutlet": "1-1100",
+                    "LabaDitahan": "3-3000",
+                    "PendapatanBiayaLayanan": "4-3000",
+                    "PendapatanDiterimaDimuka": "2-1600",
+                    "PendapatanJasa": "4-2000",
+                    "PendapatanLain": "4-9000",
+                    "Penjualan": "4-1000",
+                    "PersediaanBahanBaku": "1-1510",
+                    "PersediaanBarangDagang": "1-1500",
+                    "PersediaanDalamPerjalanan": "1-1520",
+                    "PiutangBelumDifakturkan": "1-1470",
+                    "PiutangKaryawan": "1-1450",
+                    "PiutangKlaimPemasok": "1-1460",
+                    "PiutangPencairan": "1-1300",
+                    "PiutangUsaha": "1-1400",
+                    "PpnKeluaran": "2-1300",
+                    "PpnMasukan": "1-1600",
+                    "ReturPenjualan": "4-1200",
+                    "SelisihHpp": "5-1100",
+                    "OverheadProduksiDibebankan": "5-1300",
+                    "SusutPersediaan": "5-1200",
+                    "UangMukaPelanggan": "2-1400",
+                    "PendapatanPengiriman": "4-3100",
+                    "KliringTukarBarang": "2-1800",
+                    "AsetTetap": "1-2000",
+                    "AkumulasiPenyusutan": "1-2900",
+                    "BebanPenyusutan": "6-5000",
+                    "GiroDiterima": "1-1480",
+                    "HutangGiro": "2-1180"
+                },
+                "Kategori": [
+                    "Sembako",
+                    "Minuman",
+                    "Makanan ringan",
+                    "Kebutuhan rumah tangga",
+                    "Perlengkapan mandi"
+                ],
+                "KodeSatuan": [
+                    "PCS",
+                    "PAK",
+                    "DUS",
+                    "LUSIN",
+                    "KG",
+                    "BOTOL"
+                ],
+                "KelompokPajak": [
+                    {
+                        "Nama": "Barang kena PPN",
+                        "Detail": [
+                            {
+                                "KodeJenisPajak": "Ppn",
+                                "DasarPengenaan": "Subtotal",
+                                "Urutan": 1
+                            }
+                        ]
+                    }
+                ],
+                "Pengaturan": {
+                    "PembulatanTunai": {
+                        "Kelipatan": 100,
+                        "Arah": "Bawah"
+                    },
+                    "PersenBiayaLayanan": "0",
+                    "BiayaLayananMasukDpp": false,
+                    "StokBolehMinus": false,
+                    "MetodeHpp": "RataRata",
+                    "HargaTermasukPajak": false
+                },
+                "StasiunDapur": [],
+                "AlasanVoid": [
+                    "Salah input",
+                    "Pelanggan batal",
+                    "Barang rusak"
+                ],
+                "AlasanPenyesuaian": [
+                    "Barang rusak",
+                    "Kedaluwarsa",
+                    "Hilang",
+                    "Selisih opname"
+                ],
+                "LaporanUnggulan": [
+                    "PenjualanPerProduk",
+                    "PenjualanPerKasir",
+                    "StokMenipis",
+                    "LabaRugiSederhana"
+                ],
+                "ProdukContoh": [
+                    {
+                        "Nama": "Beras Medium Karung 25 kg",
+                        "Kategori": "Sembako",
+                        "Harga": "310000",
+                        "KodeSatuan": "PCS",
+                        "Jenis": "Stok"
+                    },
+                    {
+                        "Nama": "Gula Pasir Kristal Karung 50 kg",
+                        "Kategori": "Sembako",
+                        "Harga": "860000",
+                        "KodeSatuan": "PCS",
+                        "Jenis": "Stok"
+                    },
+                    {
+                        "Nama": "Minyak Goreng Sawit Dus Isi 12 × 1 Liter",
+                        "Kategori": "Sembako",
+                        "Harga": "205000",
+                        "KodeSatuan": "DUS",
+                        "Jenis": "Stok"
+                    },
+                    {
+                        "Nama": "Tepung Terigu Protein Sedang Karung 25 kg",
+                        "Kategori": "Sembako",
+                        "Harga": "215000",
+                        "KodeSatuan": "PCS",
+                        "Jenis": "Stok"
+                    },
+                    {
+                        "Nama": "Mi Instan Goreng Dus Isi 40",
+                        "Kategori": "Sembako",
+                        "Harga": "118000",
+                        "KodeSatuan": "DUS",
+                        "Jenis": "Stok"
+                    },
+                    {
+                        "Nama": "Air Mineral Botol 600 ml Dus Isi 24",
+                        "Kategori": "Minuman",
+                        "Harga": "52000",
+                        "KodeSatuan": "DUS",
+                        "Jenis": "Stok"
+                    },
+                    {
+                        "Nama": "Teh Celup Melati Pak Isi 25",
+                        "Kategori": "Minuman",
+                        "Harga": "6500",
+                        "KodeSatuan": "PAK",
+                        "Jenis": "Stok"
+                    },
+                    {
+                        "Nama": "Kerupuk Udang Mentah per Kilogram",
+                        "Kategori": "Makanan ringan",
+                        "Harga": "42000",
+                        "KodeSatuan": "KG",
+                        "Jenis": "Stok"
+                    },
+                    {
+                        "Nama": "Sabun Cuci Piring Cair Dus Isi 12 × 780 ml",
+                        "Kategori": "Kebutuhan rumah tangga",
+                        "Harga": "168000",
+                        "KodeSatuan": "DUS",
+                        "Jenis": "Stok"
+                    },
+                    {
+                        "Nama": "Sabun Mandi Batang Lusin",
+                        "Kategori": "Perlengkapan mandi",
+                        "Harga": "42000",
+                        "KodeSatuan": "LUSIN",
+                        "Jenis": "Stok"
+                    }
+                ]
+            }
+        },
+        {
+            "Kode": "SVC-SLN",
+            "Nama": "Salon, barbershop & spa",
+            "Keterangan": "Salon, barbershop, spa. Reservasi per staf, komisi, paket sesi & membership.",
+            "Isi": {
+                "ModeKasir": [
+                    "Layanan",
+                    "Retail"
+                ],
+                "ModeKasirDefault": "Layanan",
+                "KunciFitur": [
+                    "pos.retail",
+                    "pelanggan.dasar",
+                    "pelanggan.paket-sesi",
+                    "karyawan.komisi",
+                    "stok.dasar",
+                    "laporan.dasar"
+                ],
+                "Akun": [
+                    {
+                        "Kode": "1-1100",
+                        "Nama": "Kas Outlet",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1150",
+                        "Nama": "Kas Brankas",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1200",
+                        "Nama": "Bank",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1300",
+                        "Nama": "Piutang Pencairan (QRIS/EDC/Gateway/Ojol)",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1400",
+                        "Nama": "Piutang Usaha",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1450",
+                        "Nama": "Piutang Karyawan (Kasbon)",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1460",
+                        "Nama": "Piutang Klaim Promosi Pemasok",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1470",
+                        "Nama": "Piutang Belum Difakturkan",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1480",
+                        "Nama": "Giro Mundur Diterima",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1500",
+                        "Nama": "Persediaan Barang Dagang",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1510",
+                        "Nama": "Persediaan Bahan Baku",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1520",
+                        "Nama": "Persediaan Barang Dalam Perjalanan",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1600",
+                        "Nama": "PPN Masukan",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1700",
+                        "Nama": "Uang Muka Pembelian",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-2000",
+                        "Nama": "Aset Tetap",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-2900",
+                        "Nama": "Akumulasi Penyusutan",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": true
+                    },
+                    {
+                        "Kode": "2-1100",
+                        "Nama": "Hutang Usaha",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1150",
+                        "Nama": "Hutang Belum Difakturkan (GRNI)",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1180",
+                        "Nama": "Hutang Giro",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1200",
+                        "Nama": "Hutang Konsinyasi",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1300",
+                        "Nama": "PPN Keluaran",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1310",
+                        "Nama": "Hutang PB1/PBJT",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1400",
+                        "Nama": "Uang Muka Pelanggan (DP)",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1500",
+                        "Nama": "Saldo Deposit Pelanggan / Gift Card",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1600",
+                        "Nama": "Pendapatan Diterima Dimuka",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1700",
+                        "Nama": "Hutang Service Charge",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1800",
+                        "Nama": "Kliring Tukar Barang",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "3-1000",
+                        "Nama": "Modal Pemilik",
+                        "Tipe": "Ekuitas",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "3-2000",
+                        "Nama": "Ekuitas Saldo Awal",
+                        "Tipe": "Ekuitas",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "3-3000",
+                        "Nama": "Laba Ditahan",
+                        "Tipe": "Ekuitas",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "3-4000",
+                        "Nama": "Prive",
+                        "Tipe": "Ekuitas",
+                        "SaldoNormal": "Debit",
+                        "Kontra": true
+                    },
+                    {
+                        "Kode": "4-1000",
+                        "Nama": "Penjualan",
+                        "Tipe": "Pendapatan",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "4-1100",
+                        "Nama": "Diskon Penjualan",
+                        "Tipe": "Pendapatan",
+                        "SaldoNormal": "Debit",
+                        "Kontra": true
+                    },
+                    {
+                        "Kode": "4-1200",
+                        "Nama": "Retur Penjualan",
+                        "Tipe": "Pendapatan",
+                        "SaldoNormal": "Debit",
+                        "Kontra": true
+                    },
+                    {
+                        "Kode": "4-2000",
+                        "Nama": "Pendapatan Jasa",
+                        "Tipe": "Pendapatan",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "4-3000",
+                        "Nama": "Pendapatan Service Charge",
+                        "Tipe": "Pendapatan",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "4-3100",
+                        "Nama": "Pendapatan Pengiriman",
+                        "Tipe": "Pendapatan",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "4-9000",
+                        "Nama": "Pendapatan Lain",
+                        "Tipe": "Pendapatan",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "5-1000",
+                        "Nama": "Harga Pokok Penjualan",
+                        "Tipe": "Hpp",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "5-1100",
+                        "Nama": "Selisih HPP / Penyesuaian Persediaan",
+                        "Tipe": "Hpp",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "5-1200",
+                        "Nama": "Susut & Barang Rusak",
+                        "Tipe": "Hpp",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "5-1300",
+                        "Nama": "Overhead Produksi Dibebankan",
+                        "Tipe": "Hpp",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "6-1000",
+                        "Nama": "Beban Gaji & Komisi",
+                        "Tipe": "Beban",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "6-2000",
+                        "Nama": "Beban Sewa, Listrik, Air, Internet",
+                        "Tipe": "Beban",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "6-3000",
+                        "Nama": "Beban Biaya Pembayaran",
+                        "Tipe": "Beban",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "6-4000",
+                        "Nama": "Beban Promosi",
+                        "Tipe": "Beban",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "6-5000",
+                        "Nama": "Beban Penyusutan",
+                        "Tipe": "Beban",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "6-9000",
+                        "Nama": "Beban Selisih Kas / Lain-lain",
+                        "Tipe": "Beban",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    }
+                ],
+                "PemetaanAkun": {
+                    "Bank": "1-1200",
+                    "BebanBiayaPembayaran": "6-3000",
+                    "BebanSelisihKas": "6-9000",
+                    "DepositPelanggan": "2-1500",
+                    "DiskonPenjualan": "4-1100",
+                    "EkuitasSaldoAwal": "3-2000",
+                    "Hpp": "5-1000",
+                    "HutangBelumDifakturkan": "2-1150",
+                    "HutangKonsinyasi": "2-1200",
+                    "HutangPbjt": "2-1310",
+                    "HutangUsaha": "2-1100",
+                    "KasBrankas": "1-1150",
+                    "KasOutlet": "1-1100",
+                    "LabaDitahan": "3-3000",
+                    "PendapatanBiayaLayanan": "4-3000",
+                    "PendapatanDiterimaDimuka": "2-1600",
+                    "PendapatanJasa": "4-2000",
+                    "PendapatanLain": "4-9000",
+                    "Penjualan": "4-1000",
+                    "PersediaanBahanBaku": "1-1510",
+                    "PersediaanBarangDagang": "1-1500",
+                    "PersediaanDalamPerjalanan": "1-1520",
+                    "PiutangBelumDifakturkan": "1-1470",
+                    "PiutangKaryawan": "1-1450",
+                    "PiutangKlaimPemasok": "1-1460",
+                    "PiutangPencairan": "1-1300",
+                    "PiutangUsaha": "1-1400",
+                    "PpnKeluaran": "2-1300",
+                    "PpnMasukan": "1-1600",
+                    "ReturPenjualan": "4-1200",
+                    "SelisihHpp": "5-1100",
+                    "OverheadProduksiDibebankan": "5-1300",
+                    "SusutPersediaan": "5-1200",
+                    "UangMukaPelanggan": "2-1400",
+                    "PendapatanPengiriman": "4-3100",
+                    "KliringTukarBarang": "2-1800",
+                    "AsetTetap": "1-2000",
+                    "AkumulasiPenyusutan": "1-2900",
+                    "BebanPenyusutan": "6-5000",
+                    "GiroDiterima": "1-1480",
+                    "HutangGiro": "2-1180"
+                },
+                "Kategori": [
+                    "Potong rambut",
+                    "Perawatan rambut",
+                    "Perawatan wajah",
+                    "Pijat & refleksi",
+                    "Produk perawatan"
+                ],
+                "KodeSatuan": [
+                    "PCS",
+                    "BOTOL",
+                    "JAM"
+                ],
+                "KelompokPajak": [
+                    {
+                        "Nama": "Barang kena PPN",
+                        "Detail": [
+                            {
+                                "KodeJenisPajak": "Ppn",
+                                "DasarPengenaan": "Subtotal",
+                                "Urutan": 1
+                            }
+                        ]
+                    }
+                ],
+                "Pengaturan": {
+                    "PembulatanTunai": {
+                        "Kelipatan": 100,
+                        "Arah": "Bawah"
+                    },
+                    "PersenBiayaLayanan": "0",
+                    "BiayaLayananMasukDpp": false,
+                    "StokBolehMinus": false,
+                    "MetodeHpp": "RataRata",
+                    "HargaTermasukPajak": true
+                },
+                "StasiunDapur": [],
+                "AlasanVoid": [
+                    "Salah input",
+                    "Pelanggan batal",
+                    "Staf berhalangan"
+                ],
+                "AlasanPenyesuaian": [
+                    "Produk rusak",
+                    "Pemakaian layanan",
+                    "Selisih opname"
+                ],
+                "LaporanUnggulan": [
+                    "PenjualanPerKasir",
+                    "PenjualanPerProduk",
+                    "LaporanShift"
+                ],
+                "ProdukContoh": [
+                    {
+                        "Nama": "Potong Rambut Pria + Keramas",
+                        "Kategori": "Potong rambut",
+                        "Harga": "45000",
+                        "KodeSatuan": "PCS",
+                        "Jenis": "Jasa"
+                    },
+                    {
+                        "Nama": "Potong Rambut Wanita + Blow",
+                        "Kategori": "Potong rambut",
+                        "Harga": "85000",
+                        "KodeSatuan": "PCS",
+                        "Jenis": "Jasa"
+                    },
+                    {
+                        "Nama": "Creambath Ginseng",
+                        "Kategori": "Perawatan rambut",
+                        "Harga": "95000",
+                        "KodeSatuan": "PCS",
+                        "Jenis": "Jasa"
+                    },
+                    {
+                        "Nama": "Hair Coloring Panjang Sedang",
+                        "Kategori": "Perawatan rambut",
+                        "Harga": "350000",
+                        "KodeSatuan": "PCS",
+                        "Jenis": "Jasa"
+                    },
+                    {
+                        "Nama": "Smoothing Rambut Sebahu",
+                        "Kategori": "Perawatan rambut",
+                        "Harga": "450000",
+                        "KodeSatuan": "PCS",
+                        "Jenis": "Jasa"
+                    },
+                    {
+                        "Nama": "Facial Acne Treatment",
+                        "Kategori": "Perawatan wajah",
+                        "Harga": "150000",
+                        "KodeSatuan": "PCS",
+                        "Jenis": "Jasa"
+                    },
+                    {
+                        "Nama": "Pijat Refleksi Kaki 60 Menit",
+                        "Kategori": "Pijat & refleksi",
+                        "Harga": "90000",
+                        "KodeSatuan": "JAM",
+                        "Jenis": "Jasa"
+                    },
+                    {
+                        "Nama": "Totok Wajah 30 Menit",
+                        "Kategori": "Perawatan wajah",
+                        "Harga": "60000",
+                        "KodeSatuan": "PCS",
+                        "Jenis": "Jasa"
+                    },
+                    {
+                        "Nama": "Pomade Water Based 100 g",
+                        "Kategori": "Produk perawatan",
+                        "Harga": "85000",
+                        "KodeSatuan": "PCS",
+                        "Jenis": "Stok"
+                    },
+                    {
+                        "Nama": "Hair Tonic Ginseng Botol 200 ml",
+                        "Kategori": "Produk perawatan",
+                        "Harga": "65000",
+                        "KodeSatuan": "BOTOL",
+                        "Jenis": "Stok"
+                    }
+                ]
+            }
+        },
+        {
+            "Kode": "SVC-LDR",
+            "Nama": "Laundry",
+            "Keterangan": "Laundry kiloan & satuan. Tiket laundry, status proses, estimasi selesai, WhatsApp siap diambil, deposit pelanggan.",
+            "Isi": {
+                "ModeKasir": [
+                    "Layanan",
+                    "Retail"
+                ],
+                "ModeKasirDefault": "Layanan",
+                "KunciFitur": [
+                    "pos.retail",
+                    "pelanggan.dasar",
+                    "pelanggan.deposit",
+                    "laporan.dasar"
+                ],
+                "Akun": [
+                    {
+                        "Kode": "1-1100",
+                        "Nama": "Kas Outlet",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1150",
+                        "Nama": "Kas Brankas",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1200",
+                        "Nama": "Bank",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1300",
+                        "Nama": "Piutang Pencairan (QRIS/EDC/Gateway/Ojol)",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1400",
+                        "Nama": "Piutang Usaha",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1450",
+                        "Nama": "Piutang Karyawan (Kasbon)",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1460",
+                        "Nama": "Piutang Klaim Promosi Pemasok",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1470",
+                        "Nama": "Piutang Belum Difakturkan",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1480",
+                        "Nama": "Giro Mundur Diterima",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1500",
+                        "Nama": "Persediaan Barang Dagang",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1510",
+                        "Nama": "Persediaan Bahan Baku",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1520",
+                        "Nama": "Persediaan Barang Dalam Perjalanan",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1600",
+                        "Nama": "PPN Masukan",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1700",
+                        "Nama": "Uang Muka Pembelian",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-2000",
+                        "Nama": "Aset Tetap",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-2900",
+                        "Nama": "Akumulasi Penyusutan",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": true
+                    },
+                    {
+                        "Kode": "2-1100",
+                        "Nama": "Hutang Usaha",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1150",
+                        "Nama": "Hutang Belum Difakturkan (GRNI)",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1180",
+                        "Nama": "Hutang Giro",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1200",
+                        "Nama": "Hutang Konsinyasi",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1300",
+                        "Nama": "PPN Keluaran",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1310",
+                        "Nama": "Hutang PB1/PBJT",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1400",
+                        "Nama": "Uang Muka Pelanggan (DP)",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1500",
+                        "Nama": "Saldo Deposit Pelanggan / Gift Card",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1600",
+                        "Nama": "Pendapatan Diterima Dimuka",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1700",
+                        "Nama": "Hutang Service Charge",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1800",
+                        "Nama": "Kliring Tukar Barang",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "3-1000",
+                        "Nama": "Modal Pemilik",
+                        "Tipe": "Ekuitas",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "3-2000",
+                        "Nama": "Ekuitas Saldo Awal",
+                        "Tipe": "Ekuitas",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "3-3000",
+                        "Nama": "Laba Ditahan",
+                        "Tipe": "Ekuitas",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "3-4000",
+                        "Nama": "Prive",
+                        "Tipe": "Ekuitas",
+                        "SaldoNormal": "Debit",
+                        "Kontra": true
+                    },
+                    {
+                        "Kode": "4-1000",
+                        "Nama": "Penjualan",
+                        "Tipe": "Pendapatan",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "4-1100",
+                        "Nama": "Diskon Penjualan",
+                        "Tipe": "Pendapatan",
+                        "SaldoNormal": "Debit",
+                        "Kontra": true
+                    },
+                    {
+                        "Kode": "4-1200",
+                        "Nama": "Retur Penjualan",
+                        "Tipe": "Pendapatan",
+                        "SaldoNormal": "Debit",
+                        "Kontra": true
+                    },
+                    {
+                        "Kode": "4-2000",
+                        "Nama": "Pendapatan Jasa",
+                        "Tipe": "Pendapatan",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "4-3000",
+                        "Nama": "Pendapatan Service Charge",
+                        "Tipe": "Pendapatan",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "4-3100",
+                        "Nama": "Pendapatan Pengiriman",
+                        "Tipe": "Pendapatan",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "4-9000",
+                        "Nama": "Pendapatan Lain",
+                        "Tipe": "Pendapatan",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "5-1000",
+                        "Nama": "Harga Pokok Penjualan",
+                        "Tipe": "Hpp",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "5-1100",
+                        "Nama": "Selisih HPP / Penyesuaian Persediaan",
+                        "Tipe": "Hpp",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "5-1200",
+                        "Nama": "Susut & Barang Rusak",
+                        "Tipe": "Hpp",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "5-1300",
+                        "Nama": "Overhead Produksi Dibebankan",
+                        "Tipe": "Hpp",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "6-1000",
+                        "Nama": "Beban Gaji & Komisi",
+                        "Tipe": "Beban",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "6-2000",
+                        "Nama": "Beban Sewa, Listrik, Air, Internet",
+                        "Tipe": "Beban",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "6-3000",
+                        "Nama": "Beban Biaya Pembayaran",
+                        "Tipe": "Beban",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "6-4000",
+                        "Nama": "Beban Promosi",
+                        "Tipe": "Beban",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "6-5000",
+                        "Nama": "Beban Penyusutan",
+                        "Tipe": "Beban",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "6-9000",
+                        "Nama": "Beban Selisih Kas / Lain-lain",
+                        "Tipe": "Beban",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    }
+                ],
+                "PemetaanAkun": {
+                    "Bank": "1-1200",
+                    "BebanBiayaPembayaran": "6-3000",
+                    "BebanSelisihKas": "6-9000",
+                    "DepositPelanggan": "2-1500",
+                    "DiskonPenjualan": "4-1100",
+                    "EkuitasSaldoAwal": "3-2000",
+                    "Hpp": "5-1000",
+                    "HutangBelumDifakturkan": "2-1150",
+                    "HutangKonsinyasi": "2-1200",
+                    "HutangPbjt": "2-1310",
+                    "HutangUsaha": "2-1100",
+                    "KasBrankas": "1-1150",
+                    "KasOutlet": "1-1100",
+                    "LabaDitahan": "3-3000",
+                    "PendapatanBiayaLayanan": "4-3000",
+                    "PendapatanDiterimaDimuka": "2-1600",
+                    "PendapatanJasa": "4-2000",
+                    "PendapatanLain": "4-9000",
+                    "Penjualan": "4-1000",
+                    "PersediaanBahanBaku": "1-1510",
+                    "PersediaanBarangDagang": "1-1500",
+                    "PersediaanDalamPerjalanan": "1-1520",
+                    "PiutangBelumDifakturkan": "1-1470",
+                    "PiutangKaryawan": "1-1450",
+                    "PiutangKlaimPemasok": "1-1460",
+                    "PiutangPencairan": "1-1300",
+                    "PiutangUsaha": "1-1400",
+                    "PpnKeluaran": "2-1300",
+                    "PpnMasukan": "1-1600",
+                    "ReturPenjualan": "4-1200",
+                    "SelisihHpp": "5-1100",
+                    "OverheadProduksiDibebankan": "5-1300",
+                    "SusutPersediaan": "5-1200",
+                    "UangMukaPelanggan": "2-1400",
+                    "PendapatanPengiriman": "4-3100",
+                    "KliringTukarBarang": "2-1800",
+                    "AsetTetap": "1-2000",
+                    "AkumulasiPenyusutan": "1-2900",
+                    "BebanPenyusutan": "6-5000",
+                    "GiroDiterima": "1-1480",
+                    "HutangGiro": "2-1180"
+                },
+                "Kategori": [
+                    "Kiloan",
+                    "Satuan",
+                    "Sepatu & tas",
+                    "Karpet & bed cover",
+                    "Perlengkapan"
+                ],
+                "KodeSatuan": [
+                    "KG",
+                    "PCS",
+                    "BUAH",
+                    "LEMBAR"
+                ],
+                "KelompokPajak": [
+                    {
+                        "Nama": "Barang kena PPN",
+                        "Detail": [
+                            {
+                                "KodeJenisPajak": "Ppn",
+                                "DasarPengenaan": "Subtotal",
+                                "Urutan": 1
+                            }
+                        ]
+                    }
+                ],
+                "Pengaturan": {
+                    "PembulatanTunai": {
+                        "Kelipatan": 100,
+                        "Arah": "Bawah"
+                    },
+                    "PersenBiayaLayanan": "0",
+                    "BiayaLayananMasukDpp": false,
+                    "StokBolehMinus": true,
+                    "MetodeHpp": "RataRata",
+                    "HargaTermasukPajak": true
+                },
+                "StasiunDapur": [],
+                "AlasanVoid": [
+                    "Salah input",
+                    "Pelanggan batal",
+                    "Salah timbang"
+                ],
+                "AlasanPenyesuaian": [
+                    "Barang rusak",
+                    "Pemakaian proses",
+                    "Selisih opname"
+                ],
+                "LaporanUnggulan": [
+                    "PenjualanPerProduk",
+                    "PenjualanPerKasir",
+                    "LaporanShift"
+                ],
+                "ProdukContoh": [
+                    {
+                        "Nama": "Cuci Kering Setrika Reguler 3 Hari",
+                        "Kategori": "Kiloan",
+                        "Harga": "7000",
+                        "KodeSatuan": "KG",
+                        "Jenis": "Jasa"
+                    },
+                    {
+                        "Nama": "Cuci Kering Setrika Kilat 1 Hari",
+                        "Kategori": "Kiloan",
+                        "Harga": "12000",
+                        "KodeSatuan": "KG",
+                        "Jenis": "Jasa"
+                    },
+                    {
+                        "Nama": "Setrika Saja",
+                        "Kategori": "Kiloan",
+                        "Harga": "5000",
+                        "KodeSatuan": "KG",
+                        "Jenis": "Jasa"
+                    },
+                    {
+                        "Nama": "Jas / Blazer",
+                        "Kategori": "Satuan",
+                        "Harga": "35000",
+                        "KodeSatuan": "PCS",
+                        "Jenis": "Jasa"
+                    },
+                    {
+                        "Nama": "Kebaya / Gaun Pesta",
+                        "Kategori": "Satuan",
+                        "Harga": "50000",
+                        "KodeSatuan": "PCS",
+                        "Jenis": "Jasa"
+                    },
+                    {
+                        "Nama": "Cuci Sepatu Kanvas",
+                        "Kategori": "Sepatu & tas",
+                        "Harga": "35000",
+                        "KodeSatuan": "PCS",
+                        "Jenis": "Jasa"
+                    },
+                    {
+                        "Nama": "Cuci Tas Ransel",
+                        "Kategori": "Sepatu & tas",
+                        "Harga": "40000",
+                        "KodeSatuan": "PCS",
+                        "Jenis": "Jasa"
+                    },
+                    {
+                        "Nama": "Bed Cover Ukuran King",
+                        "Kategori": "Karpet & bed cover",
+                        "Harga": "45000",
+                        "KodeSatuan": "LEMBAR",
+                        "Jenis": "Jasa"
+                    },
+                    {
+                        "Nama": "Karpet Ukuran Sedang 2 × 3 m",
+                        "Kategori": "Karpet & bed cover",
+                        "Harga": "15000",
+                        "KodeSatuan": "PCS",
+                        "Jenis": "Jasa"
+                    },
+                    {
+                        "Nama": "Plastik Laundry Besar",
+                        "Kategori": "Perlengkapan",
+                        "Harga": "2000",
+                        "KodeSatuan": "PCS",
+                        "Jenis": "Stok"
+                    }
+                ]
+            }
+        },
+        {
+            "Kode": "SVC-GEN",
+            "Nama": "Jasa umum",
+            "Keterangan": "Fotokopi, percetakan, rental. Pesanan kustom dengan uang muka dan status pengerjaan, harga terbuka untuk pesanan khusus.",
+            "Isi": {
+                "ModeKasir": [
+                    "Layanan",
+                    "Retail"
+                ],
+                "ModeKasirDefault": "Layanan",
+                "KunciFitur": [
+                    "pos.retail",
+                    "pelanggan.dasar",
+                    "laporan.dasar"
+                ],
+                "Akun": [
+                    {
+                        "Kode": "1-1100",
+                        "Nama": "Kas Outlet",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1150",
+                        "Nama": "Kas Brankas",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1200",
+                        "Nama": "Bank",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1300",
+                        "Nama": "Piutang Pencairan (QRIS/EDC/Gateway/Ojol)",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1400",
+                        "Nama": "Piutang Usaha",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1450",
+                        "Nama": "Piutang Karyawan (Kasbon)",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1460",
+                        "Nama": "Piutang Klaim Promosi Pemasok",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1470",
+                        "Nama": "Piutang Belum Difakturkan",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1480",
+                        "Nama": "Giro Mundur Diterima",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1500",
+                        "Nama": "Persediaan Barang Dagang",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1510",
+                        "Nama": "Persediaan Bahan Baku",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1520",
+                        "Nama": "Persediaan Barang Dalam Perjalanan",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1600",
+                        "Nama": "PPN Masukan",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-1700",
+                        "Nama": "Uang Muka Pembelian",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-2000",
+                        "Nama": "Aset Tetap",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "1-2900",
+                        "Nama": "Akumulasi Penyusutan",
+                        "Tipe": "Aset",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": true
+                    },
+                    {
+                        "Kode": "2-1100",
+                        "Nama": "Hutang Usaha",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1150",
+                        "Nama": "Hutang Belum Difakturkan (GRNI)",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1180",
+                        "Nama": "Hutang Giro",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1200",
+                        "Nama": "Hutang Konsinyasi",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1300",
+                        "Nama": "PPN Keluaran",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1310",
+                        "Nama": "Hutang PB1/PBJT",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1400",
+                        "Nama": "Uang Muka Pelanggan (DP)",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1500",
+                        "Nama": "Saldo Deposit Pelanggan / Gift Card",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1600",
+                        "Nama": "Pendapatan Diterima Dimuka",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1700",
+                        "Nama": "Hutang Service Charge",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "2-1800",
+                        "Nama": "Kliring Tukar Barang",
+                        "Tipe": "Kewajiban",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "3-1000",
+                        "Nama": "Modal Pemilik",
+                        "Tipe": "Ekuitas",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "3-2000",
+                        "Nama": "Ekuitas Saldo Awal",
+                        "Tipe": "Ekuitas",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "3-3000",
+                        "Nama": "Laba Ditahan",
+                        "Tipe": "Ekuitas",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "3-4000",
+                        "Nama": "Prive",
+                        "Tipe": "Ekuitas",
+                        "SaldoNormal": "Debit",
+                        "Kontra": true
+                    },
+                    {
+                        "Kode": "4-1000",
+                        "Nama": "Penjualan",
+                        "Tipe": "Pendapatan",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "4-1100",
+                        "Nama": "Diskon Penjualan",
+                        "Tipe": "Pendapatan",
+                        "SaldoNormal": "Debit",
+                        "Kontra": true
+                    },
+                    {
+                        "Kode": "4-1200",
+                        "Nama": "Retur Penjualan",
+                        "Tipe": "Pendapatan",
+                        "SaldoNormal": "Debit",
+                        "Kontra": true
+                    },
+                    {
+                        "Kode": "4-2000",
+                        "Nama": "Pendapatan Jasa",
+                        "Tipe": "Pendapatan",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "4-3000",
+                        "Nama": "Pendapatan Service Charge",
+                        "Tipe": "Pendapatan",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "4-3100",
+                        "Nama": "Pendapatan Pengiriman",
+                        "Tipe": "Pendapatan",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "4-9000",
+                        "Nama": "Pendapatan Lain",
+                        "Tipe": "Pendapatan",
+                        "SaldoNormal": "Kredit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "5-1000",
+                        "Nama": "Harga Pokok Penjualan",
+                        "Tipe": "Hpp",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "5-1100",
+                        "Nama": "Selisih HPP / Penyesuaian Persediaan",
+                        "Tipe": "Hpp",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "5-1200",
+                        "Nama": "Susut & Barang Rusak",
+                        "Tipe": "Hpp",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "5-1300",
+                        "Nama": "Overhead Produksi Dibebankan",
+                        "Tipe": "Hpp",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "6-1000",
+                        "Nama": "Beban Gaji & Komisi",
+                        "Tipe": "Beban",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "6-2000",
+                        "Nama": "Beban Sewa, Listrik, Air, Internet",
+                        "Tipe": "Beban",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "6-3000",
+                        "Nama": "Beban Biaya Pembayaran",
+                        "Tipe": "Beban",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "6-4000",
+                        "Nama": "Beban Promosi",
+                        "Tipe": "Beban",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "6-5000",
+                        "Nama": "Beban Penyusutan",
+                        "Tipe": "Beban",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    },
+                    {
+                        "Kode": "6-9000",
+                        "Nama": "Beban Selisih Kas / Lain-lain",
+                        "Tipe": "Beban",
+                        "SaldoNormal": "Debit",
+                        "Kontra": false
+                    }
+                ],
+                "PemetaanAkun": {
+                    "Bank": "1-1200",
+                    "BebanBiayaPembayaran": "6-3000",
+                    "BebanSelisihKas": "6-9000",
+                    "DepositPelanggan": "2-1500",
+                    "DiskonPenjualan": "4-1100",
+                    "EkuitasSaldoAwal": "3-2000",
+                    "Hpp": "5-1000",
+                    "HutangBelumDifakturkan": "2-1150",
+                    "HutangKonsinyasi": "2-1200",
+                    "HutangPbjt": "2-1310",
+                    "HutangUsaha": "2-1100",
+                    "KasBrankas": "1-1150",
+                    "KasOutlet": "1-1100",
+                    "LabaDitahan": "3-3000",
+                    "PendapatanBiayaLayanan": "4-3000",
+                    "PendapatanDiterimaDimuka": "2-1600",
+                    "PendapatanJasa": "4-2000",
+                    "PendapatanLain": "4-9000",
+                    "Penjualan": "4-1000",
+                    "PersediaanBahanBaku": "1-1510",
+                    "PersediaanBarangDagang": "1-1500",
+                    "PersediaanDalamPerjalanan": "1-1520",
+                    "PiutangBelumDifakturkan": "1-1470",
+                    "PiutangKaryawan": "1-1450",
+                    "PiutangKlaimPemasok": "1-1460",
+                    "PiutangPencairan": "1-1300",
+                    "PiutangUsaha": "1-1400",
+                    "PpnKeluaran": "2-1300",
+                    "PpnMasukan": "1-1600",
+                    "ReturPenjualan": "4-1200",
+                    "SelisihHpp": "5-1100",
+                    "OverheadProduksiDibebankan": "5-1300",
+                    "SusutPersediaan": "5-1200",
+                    "UangMukaPelanggan": "2-1400",
+                    "PendapatanPengiriman": "4-3100",
+                    "KliringTukarBarang": "2-1800",
+                    "AsetTetap": "1-2000",
+                    "AkumulasiPenyusutan": "1-2900",
+                    "BebanPenyusutan": "6-5000",
+                    "GiroDiterima": "1-1480",
+                    "HutangGiro": "2-1180"
+                },
+                "Kategori": [
+                    "Fotokopi & cetak",
+                    "Jilid & laminasi",
+                    "Desain",
+                    "Alat tulis"
+                ],
+                "KodeSatuan": [
+                    "LEMBAR",
+                    "PCS",
+                    "BUAH",
+                    "JAM",
+                    "PAK"
+                ],
+                "KelompokPajak": [
+                    {
+                        "Nama": "Barang kena PPN",
+                        "Detail": [
+                            {
+                                "KodeJenisPajak": "Ppn",
+                                "DasarPengenaan": "Subtotal",
+                                "Urutan": 1
+                            }
+                        ]
+                    }
+                ],
+                "Pengaturan": {
+                    "PembulatanTunai": {
+                        "Kelipatan": 100,
+                        "Arah": "Bawah"
+                    },
+                    "PersenBiayaLayanan": "0",
+                    "BiayaLayananMasukDpp": false,
+                    "StokBolehMinus": false,
+                    "MetodeHpp": "RataRata",
+                    "HargaTermasukPajak": true
+                },
+                "StasiunDapur": [],
+                "AlasanVoid": [
+                    "Salah input",
+                    "Pelanggan batal",
+                    "Hasil cetak rusak"
+                ],
+                "AlasanPenyesuaian": [
+                    "Kertas rusak",
+                    "Tinta habis terpakai",
+                    "Selisih opname"
+                ],
+                "LaporanUnggulan": [
+                    "PenjualanPerProduk",
+                    "PenjualanPerJam",
+                    "LaporanShift"
+                ],
+                "ProdukContoh": [
+                    {
+                        "Nama": "Fotokopi Hitam Putih A4",
+                        "Kategori": "Fotokopi & cetak",
+                        "Harga": "300",
+                        "KodeSatuan": "LEMBAR",
+                        "Jenis": "Jasa"
+                    },
+                    {
+                        "Nama": "Cetak Warna A4",
+                        "Kategori": "Fotokopi & cetak",
+                        "Harga": "2000",
+                        "KodeSatuan": "LEMBAR",
+                        "Jenis": "Jasa"
+                    },
+                    {
+                        "Nama": "Cetak Foto 4R",
+                        "Kategori": "Fotokopi & cetak",
+                        "Harga": "3000",
+                        "KodeSatuan": "LEMBAR",
+                        "Jenis": "Jasa"
+                    },
+                    {
+                        "Nama": "Jilid Spiral A4",
+                        "Kategori": "Jilid & laminasi",
+                        "Harga": "7000",
+                        "KodeSatuan": "PCS",
+                        "Jenis": "Jasa"
+                    },
+                    {
+                        "Nama": "Jilid Lakban Hard Cover Skripsi",
+                        "Kategori": "Jilid & laminasi",
+                        "Harga": "35000",
+                        "KodeSatuan": "PCS",
+                        "Jenis": "Jasa"
+                    },
+                    {
+                        "Nama": "Laminasi KTP",
+                        "Kategori": "Jilid & laminasi",
+                        "Harga": "3000",
+                        "KodeSatuan": "PCS",
+                        "Jenis": "Jasa"
+                    },
+                    {
+                        "Nama": "Desain Spanduk Sederhana",
+                        "Kategori": "Desain",
+                        "Harga": "50000",
+                        "KodeSatuan": "PCS",
+                        "Jenis": "Jasa"
+                    },
+                    {
+                        "Nama": "Rental Komputer & Internet per Jam",
+                        "Kategori": "Desain",
+                        "Harga": "5000",
+                        "KodeSatuan": "JAM",
+                        "Jenis": "Jasa"
+                    },
+                    {
+                        "Nama": "Kertas HVS A4 70 g Rim",
+                        "Kategori": "Alat tulis",
+                        "Harga": "52000",
+                        "KodeSatuan": "PAK",
+                        "Jenis": "Stok"
+                    },
+                    {
+                        "Nama": "Map Plastik Kancing",
+                        "Kategori": "Alat tulis",
+                        "Harga": "3000",
+                        "KodeSatuan": "PCS",
+                        "Jenis": "Stok"
                     }
                 ]
             }

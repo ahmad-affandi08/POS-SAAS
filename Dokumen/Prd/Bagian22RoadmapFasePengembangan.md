@@ -75,7 +75,7 @@ Urutan mengikuti flow:
 - Open API v1 + webhook + portal developer (X7).
 - Konsinyasi (X9), landed cost, rekonsiliasi bank, aset tetap & penyusutan.
 - Toko online `/{slugTenant}`, pengiriman & kurir internal.
-- Work order bengkel, template sektor lengkap (apotek, elektronik, bahan bangunan, bakery).
+- Work order bengkel, template sektor lengkap (apotek, elektronik, bahan bangunan, bakery). *(v3.80: template resto, bakery, fashion, elektronik, bahan bangunan, grosir, salon, laundry, jasa umum; apotek & bengkel menunggu K25.)*
 - Export e-Faktur/Coretax, laporan PPN.
 - Modul Salesman di aplikasi Flutter (kanvas & kunjungan, offline).
 - **Mode LAN Lokal / Outlet Hub** (X17).

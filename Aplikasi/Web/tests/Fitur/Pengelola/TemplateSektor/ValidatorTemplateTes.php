@@ -59,19 +59,22 @@ beforeEach(function (): void {
     app(SiapkanTemplateSektorBawaan::class)->Jalankan();
 });
 
+const KODE_TEMPLATE_AWAL = ['FNB-BAK', 'FNB-CAF', 'FNB-QSR', 'FNB-RST', 'RTL-BLD', 'RTL-ELC', 'RTL-FSH', 'RTL-GEN', 'SVC-GEN', 'SVC-LDR', 'SVC-SLN', 'WHS-DST'];
+
 describe('Data awal template sektor (P-03)', function (): void {
-    it('memuat 3 template MVP sebagai draf versi 1 secara idempoten', function (): void {
+    // v3.80: 3 template MVP + 9 sektor lain (Apotek RTL-PHR & Bengkel SVC-WRK menunggu keputusan K25).
+    it('memuat 12 template sektor sebagai draf versi 1 secara idempoten (tanpa Apotek & Bengkel)', function (): void {
         app(SiapkanTemplateSektorBawaan::class)->Jalankan();
 
-        expect(TemplateSektor::query()->orderBy('Kode')->pluck('Kode')->all())->toBe(['FNB-CAF', 'FNB-QSR', 'RTL-GEN'])
-            ->and(TemplateSektorVersi::query()->count())->toBe(3)
-            ->and(TemplateSektorVersi::query()->where('Status', StatusTemplateSektor::Draf->value)->where('Versi', 1)->count())->toBe(3);
+        expect(TemplateSektor::query()->orderBy('Kode')->pluck('Kode')->all())->toBe(KODE_TEMPLATE_AWAL)
+            ->and(TemplateSektorVersi::query()->count())->toBe(12)
+            ->and(TemplateSektorVersi::query()->where('Status', StatusTemplateSektor::Draf->value)->where('Versi', 1)->count())->toBe(12);
     });
 
-    it('ketiga template lolos validasi setelah tarif PPN terbit (BR-P03.3)', function (): void {
+    it('semua template awal lolos validasi setelah tarif PPN terbit (BR-P03.3)', function (): void {
         TerbitkanPpnUji();
 
-        foreach (['RTL-GEN', 'FNB-CAF', 'FNB-QSR'] as $kode) {
+        foreach (KODE_TEMPLATE_AWAL as $kode) {
             expect(AmbilPesanValidasi(AmbilIsiTemplateAwal($kode)))->toBe([]);
         }
     });
@@ -232,8 +235,8 @@ describe('Versi template tidak berubah setelah terbit (BR-P03.4)', function (): 
 });
 
 describe('Produk contoh template (F-01 langkah 4a, DesainF01 C3)', function (): void {
-    it('ketiga template awal membawa 8–12 produk contoh berharga string desimal Rupiah', function (): void {
-        foreach (['RTL-GEN', 'FNB-CAF', 'FNB-QSR'] as $kode) {
+    it('semua template awal membawa 8–12 produk contoh berharga string desimal Rupiah', function (): void {
+        foreach (KODE_TEMPLATE_AWAL as $kode) {
             $isi = AmbilIsiTemplateAwal($kode);
 
             expect(count($isi['ProdukContoh']))->toBeGreaterThanOrEqual(8)->toBeLessThanOrEqual(12)

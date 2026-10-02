@@ -70,7 +70,7 @@ describe('Izin template sektor (BR-P03.5)', function (): void {
     it('semua peran bisa melihat, tetapi hanya pemilik bagian yang bisa mengubahnya', function (): void {
         MasukSebagaiTemplate($this, BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::Analis));
         $this->get(BantuanPengelola::Url('/template-sektor'))
-            ->assertInertia(fn (AssertableInertia $halaman) => $halaman->component('Pengelola/TemplateSektor/Daftar')->has('Template', 3));
+            ->assertInertia(fn (AssertableInertia $halaman) => $halaman->component('Pengelola/TemplateSektor/Daftar')->has('Template', 12));
         $this->get(UrlVersi('FNB-CAF', 1))
             ->assertInertia(fn (AssertableInertia $halaman) => $halaman
                 ->component('Pengelola/TemplateSektor/Editor')
@@ -330,10 +330,10 @@ describe('Buat template baru (P-03 langkah 1)', function (): void {
         MasukSebagaiTemplate($this, BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::KontenLegal));
 
         $this->post(BantuanPengelola::Url('/template-sektor'), [
-            'Kode' => 'FNB-RST', 'Nama' => 'Restoran', 'Keterangan' => 'Rumah makan, resto keluarga', 'KodeTemplateDasar' => 'FNB-CAF',
-        ])->assertRedirect(UrlVersi('FNB-RST', 1));
+            'Kode' => 'FNB-KTR', 'Nama' => 'Katering', 'Keterangan' => 'Jasa boga, katering harian', 'KodeTemplateDasar' => 'FNB-CAF',
+        ])->assertRedirect(UrlVersi('FNB-KTR', 1));
 
-        $versi = AmbilVersiUji('FNB-RST', 1);
+        $versi = AmbilVersiUji('FNB-KTR', 1);
         expect($versi->Status)->toBe(StatusTemplateSektor::Draf)
             ->and($versi->Isi)->toBe(AmbilVersiUji('FNB-CAF', 1)->Isi)
             ->and($versi->HasilValidasi)->not->toBeNull()
@@ -343,17 +343,17 @@ describe('Buat template baru (P-03 langkah 1)', function (): void {
     it('template tanpa dasar dimulai kosong dan belum lolos validasi', function (): void {
         MasukSebagaiTemplate($this, BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::KontenLegal));
 
-        $this->post(BantuanPengelola::Url('/template-sektor'), ['Kode' => 'SVC-LDR', 'Nama' => 'Laundry'])->assertSessionHasNoErrors();
+        $this->post(BantuanPengelola::Url('/template-sektor'), ['Kode' => 'SVC-RNT', 'Nama' => 'Rental alat'])->assertSessionHasNoErrors();
 
-        expect(AmbilVersiUji('SVC-LDR', 1)->CekLolosValidasi())->toBeFalse();
+        expect(AmbilVersiUji('SVC-RNT', 1)->CekLolosValidasi())->toBeFalse();
     });
 
     it('menolak kode tidak valid, kode yang sudah ada, dan pembuat tanpa izin', function (): void {
         MasukSebagaiTemplate($this, BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::KontenLegal));
-        $this->post(BantuanPengelola::Url('/template-sektor'), ['Kode' => 'fnb-rst', 'Nama' => 'Restoran'])->assertSessionHasErrors('Kode');
+        $this->post(BantuanPengelola::Url('/template-sektor'), ['Kode' => 'fnb-ktr', 'Nama' => 'Katering'])->assertSessionHasErrors('Kode');
         $this->post(BantuanPengelola::Url('/template-sektor'), ['Kode' => 'FNB-CAF', 'Nama' => 'Kafe'])->assertSessionHasErrors('Kode');
 
         MasukSebagaiTemplate($this, BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::Keuangan));
-        $this->post(BantuanPengelola::Url('/template-sektor'), ['Kode' => 'FNB-RST', 'Nama' => 'Restoran'])->assertForbidden();
+        $this->post(BantuanPengelola::Url('/template-sektor'), ['Kode' => 'FNB-KTR', 'Nama' => 'Katering'])->assertForbidden();
     });
 });

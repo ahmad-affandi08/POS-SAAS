@@ -252,3 +252,32 @@ describe('F-01 langkah 2: terapkan template sektor', function (): void {
             ->and(count($kunci))->toBe(count(PeranAkun::cases()));
     });
 });
+
+describe('v3.80 template sektor tambahan', function (): void {
+    it('setiap template baru bisa diterapkan: mode kasir, kategori, satuan, dan semua peran akun terpetakan', function (string $kode, string $modeBawaan, string $kategori): void {
+        BantuanPanduanAwal::TerbitkanTemplate($kode);
+        ['Outlet' => $outlet] = BantuanPanduanAwal::BuatTenant("Usaha Uji {$kode}");
+
+        BantuanPanduanAwal::Terapkan($outlet, $kode);
+
+        $pos = OutletFitur::query()->where('IdOutlet', $outlet->Id)->where('KunciFitur', 'pos.retail')->sole();
+        expect($pos->Konfigurasi['ModeKasirDefault'] ?? null)->toBe($modeBawaan)
+            ->and(Kategori::query()->where('Nama', $kategori)->exists())->toBeTrue()
+            ->and(Satuan::query()->count())->toBe(count(BantuanPanduanAwal::IsiTemplateAwal($kode)['KodeSatuan']));
+
+        $pemetaan = PemetaanAkun::query()->whereNull('IdOutlet')->pluck('Kunci')->all();
+        foreach (PeranAkun::cases() as $peran) {
+            expect($pemetaan)->toContain($peran->value);
+        }
+    })->with([
+        ['FNB-RST', 'Meja', 'Makanan utama'],
+        ['FNB-BAK', 'Retail', 'Kue ulang tahun'],
+        ['RTL-FSH', 'Retail', 'Hijab & kerudung'],
+        ['RTL-ELC', 'Retail', 'Jasa servis'],
+        ['RTL-BLD', 'Retail', 'Besi & baja'],
+        ['WHS-DST', 'Grosir', 'Sembako'],
+        ['SVC-SLN', 'Layanan', 'Perawatan rambut'],
+        ['SVC-LDR', 'Layanan', 'Kiloan'],
+        ['SVC-GEN', 'Layanan', 'Fotokopi & cetak'],
+    ]);
+});
