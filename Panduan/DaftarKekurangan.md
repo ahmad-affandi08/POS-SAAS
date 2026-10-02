@@ -95,7 +95,7 @@ kode. Urutan pengerjaan = urutan tabel; butir yang selesai diberi **SELESAI @ ve
 | K-4 | **Keranjang hilang bila aplikasi tertutup** (hanya di memori; PRD minta tersimpan di SQLite) | `Penyedia.dart` `PengaturKeranjang`; §17.2.7 | SELESAI @ v3.54 |
 | K-5 | **Barcode timbangan** (awalan 20–29, harga/berat di EAN-13) tidak dikenali | `KatalogLokal.CariKode`; §9.3, F-03 | SELESAI @ v3.55 |
 | K-6 | **Pemicu sinkron belum lengkap**: hanya timer 30 detik di ruang kerja; tidak saat aplikasi kembali ke depan, koneksi kembali, atau di layar kunci/pilih kasir | `RuangKerja.dart`, `GerbangKasir.dart`; §18.3 | SELESAI v3.56 (`SinkronkanSegera`: kembali ke depan, koneksi pulih, layar pilih kasir & buka shift) |
-| K-7 | **Basis data lokal tidak terenkripsi** (SQLCipher) | `Persiapan.dart`; §17.2.6 | TERBUKA |
+| K-7 | **Basis data lokal tidak terenkripsi** (SQLCipher) | `Persiapan.dart`; §17.2.6 | SELESAI v3.57 (SQLite3 Multiple Ciphers, semua perangkat, berkas lama dienkripsi di tempat) |
 
 ### K-b. Penting
 

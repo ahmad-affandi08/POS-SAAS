@@ -184,7 +184,7 @@ Implementasi (adaptor):
 #### 17.2.6 Keamanan Aplikasi
 
 - Device token disimpan di **secure storage** (Android Keystore, iOS Keychain, Windows DPAPI).
-- Database lokal dapat dienkripsi (**SQLCipher**) dengan kunci acak di secure storage. **Wajib aktif** untuk HP pribadi (mode absensi/salesman) & tenant paket Bisnis.
+- Database lokal dienkripsi (**SQLite3 Multiple Ciphers**, kompatibel konsep SQLCipher, lisensi MIT) dengan kunci acak 256 bit di secure storage. Sejak v3.57 **aktif untuk semua perangkat** (lebih ketat dari syarat awal "wajib untuk HP pribadi & paket Bisnis"): satu jalur kode, tanpa sakelar yang bisa lupa dinyalakan. Basis data lama yang polos dienkripsi di tempat saat pertama dibuka; kunci tidak ikut terhapus saat perangkat dicabut karena outbox yang belum terkirim tetap harus terbaca. Aplikasi menolak membuka basis data bila pustaka SQLite yang termuat tidak mendukung enkripsi.
 - Hash PIN kasir & supervisor yang tersinkron ke perangkat memakai algoritme lambat (bcrypt/argon2) dan hanya berada di DB terenkripsi. Salah PIN 5 kali mengunci 5 menit.
 - Kasir otomatis terkunci (kembali ke layar PIN) setelah tidak aktif N menit.
 - Revoke perangkat dari back-office: token ditolak, lalu aplikasi menghapus data lokal **setelah** outbox berhasil terkirim.
