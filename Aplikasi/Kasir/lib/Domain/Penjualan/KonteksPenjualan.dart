@@ -45,6 +45,9 @@ abstract final class JenisMetodeBayar {
   /// F-12 bagian 2: uang muka pre-order yang dipakai saat diambil (metode sistem; tidak tampil sebagai pilihan bayar).
   static const String uangMuka = 'UangMuka';
 
+  /// K-11: nilai barang retur yang membayar barang pengganti (metode sistem; tidak tampil sebagai pilihan bayar).
+  static const String tukar = 'Tukar';
+
   /// Jenis yang boleh membayar uang muka pre-order (tanpa tempo).
   static const List<String> bolehUangMuka = [tunai, qrisStatis, edc, transfer, ewallet];
 
@@ -134,6 +137,7 @@ class KonteksPenjualan {
     this.jenisPesanan = const [],
     this.barcodeTimbangan = const BarcodeTimbanganPos(),
     this.jenisPesananBawaan,
+    this.metodeTukar,
   });
 
   final String? uuidOutlet;
@@ -186,6 +190,9 @@ class KonteksPenjualan {
 
   /// Jenis pesanan bawaan transaksi baru; null = Bawa pulang.
   final KanalPenjualan? jenisPesananBawaan;
+
+  /// K-11: metode sistem "Tukar barang" dari data awal; null = server lama (tukar barang tidak ditawarkan).
+  final BarisMetodePembayaran? metodeTukar;
 
   Decimal AmbilPersenBiayaLayanan() =>
       profilPajak.biayaLayananAktif ? Decimal.tryParse(profilPajak.persenBiayaLayanan) ?? Decimal.zero : Decimal.zero;
@@ -270,6 +277,7 @@ class KonteksPenjualan {
           ?AmbilKanal(nama),
       ],
       jenisPesananBawaan: AmbilKanal(await repositori.AmbilPengaturan(KunciPengaturan.jenisPesananBawaan)),
+      metodeTukar: (await katalog.AmbilMetodePembayaran()).where((m) => m.Jenis == JenisMetodeBayar.tukar).firstOrNull,
       barcodeTimbangan: BarcodeTimbanganPos.DariJson(
         jsonDecode(await repositori.AmbilPengaturan(KunciPengaturan.barcodeTimbangan) ?? 'null'),
       ),

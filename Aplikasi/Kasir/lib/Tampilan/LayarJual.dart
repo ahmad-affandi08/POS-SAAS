@@ -1222,7 +1222,13 @@ class _LayarJualState extends ConsumerState<LayarJual> {
       keranjang: keranjang,
       hitungan: hitungan,
       tampilKepala: tampilKepala,
-      judul: pesanan?.AmbilJudul(),
+      // K-11: tukar barang menandai keranjang; "Batalkan transaksi" membatalkan tukarnya (returnya belum tersimpan).
+      judul:
+          pesanan?.AmbilJudul() ??
+          switch (keranjang.tukar) {
+            final tukar? => 'Tukar barang · ${tukar.nilai.FormatRupiah()}',
+            null => null,
+          },
       statusBaris: {for (final b in pesanan?.baris ?? const <BarisPesananMeja>[]) b.uuid: b.AmbilLabelStatus()},
       labelTahan: switch ((pesanan, widget.modePelayan)) {
         (null, true) => 'Pilih meja',
@@ -1290,7 +1296,7 @@ class _LayarJualState extends ConsumerState<LayarJual> {
     final teks = Theme.of(context).textTheme;
     final warna = TokenWarna.AmbilDari(context);
     final keranjang = ref.watch(penyediaKeranjangEfektif);
-    final judul = keranjang.pesananMeja?.AmbilJudul() ?? 'Keranjang';
+    final judul = keranjang.pesananMeja?.AmbilJudul() ?? (keranjang.tukar == null ? 'Keranjang' : 'Tukar barang');
     return Material(
       color: warna.permukaan,
       child: Container(

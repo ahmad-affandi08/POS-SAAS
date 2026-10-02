@@ -91,6 +91,7 @@ Map<String, Object?> DataAwalUji({
   String? jenisPesananBawaan,
   Map<String, Object?>? barcodeTimbangan,
   String? modeKasir,
+  bool tukar = false,
 }) => {
   'Karyawan': ?karyawan,
   // F-16d: deposit pelanggan (fitur paket) hanya bila diminta test.
@@ -189,6 +190,15 @@ Map<String, Object?> DataAwalUji({
     // F-12: metode Tempo (piutang) hanya bila diminta test.
     if (tempo)
       {'Uuid': '01K5MTD0000000000000000007', 'Jenis': 'Tempo', 'Nama': 'Tempo', 'AdaGambarQris': false, 'Urutan': 7},
+    // K-11: metode sistem Tukar barang hanya bila diminta test.
+    if (tukar)
+      {
+        'Uuid': '01K5MTD000000000000T0KAR01',
+        'Jenis': 'Tukar',
+        'Nama': 'Tukar barang',
+        'AdaGambarQris': false,
+        'Urutan': 99,
+      },
     // F-16d: metode Deposit pelanggan hanya bila diminta test.
     if (deposit)
       {

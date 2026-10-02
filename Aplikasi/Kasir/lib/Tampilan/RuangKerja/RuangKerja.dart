@@ -511,7 +511,16 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
       ),
       (_, _, _PanelPenjualan()) => (
         LembarRetur.judul,
-        LembarRetur(key: const ValueKey('Retur'), kasir: widget.kasir, saatSelesai: _TutupPanel),
+        LembarRetur(
+          key: const ValueKey('Retur'),
+          kasir: widget.kasir,
+          saatSelesai: _TutupPanel,
+          // K-11: tukar barang dilanjutkan di layar Jual dengan nilai retur sebagai pembayaran.
+          saatTukar: () {
+            _TutupPanel();
+            _Buka(TujuanRuangKerja.Jual);
+          },
+        ),
       ),
       (LembarBukaLaci.kunciPanel, _, _) => (
         LembarBukaLaci.judul,

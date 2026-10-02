@@ -643,7 +643,7 @@ class PengaturKeranjang extends Notifier<Keranjang> {
     final k = state;
     final repositori = ref.read(penyediaRepositori);
     try {
-      if (k.CekKosong || k.pesananMeja != null) {
+      if (k.CekKosong || k.pesananMeja != null || k.tukar != null) {
         await repositori.HapusPengaturan(kunciDraf);
       } else {
         await repositori.SimpanPengaturan(kunciDraf, jsonEncode(k.KeJson()));

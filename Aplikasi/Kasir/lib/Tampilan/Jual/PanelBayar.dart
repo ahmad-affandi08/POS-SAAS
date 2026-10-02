@@ -106,6 +106,27 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
         _entri.add(PembayaranMasukan(metode: LayananPreOrder.MetodeUangMuka(praPesan), jumlah: dipakai));
       }
     }
+    // K-11: tukar barang → nilai barang yang diretur langsung membayar barang pengganti (paling banyak total belanja;
+    // kelebihannya dikembalikan tunai lewat refund retur).
+    final tukar = keranjang.tukar;
+    if (tukar != null && k != null && !keranjang.CekKosong) {
+      final total = ref.read(penyediaLayananPenjualan).Hitung(keranjang, k).hasil.totalAkhir;
+      final dipakai = tukar.HitungDipakai(total);
+      if (dipakai.Bandingkan(Uang.Nol()) > 0) {
+        _entri.add(
+          PembayaranMasukan(
+            metode: BarisMetodePembayaran(
+              Uuid: tukar.uuidMetode,
+              Jenis: JenisMetodeBayar.tukar,
+              Nama: tukar.namaMetode,
+              AdaGambarQris: false,
+              Urutan: 0,
+            ),
+            jumlah: dipakai,
+          ),
+        );
+      }
+    }
     // X8: pesanan platform (GoFood, …) langsung memilih metode platform yang sama; kasir tinggal menyelesaikan.
     final kanal = LayananPenjualan.AmbilKanal(keranjang);
     final platform = k == null || !LayananPenjualan.kanalPlatform.contains(kanal)
@@ -658,13 +679,24 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
               padding: const EdgeInsets.only(bottom: TokenJarak.jarak8),
               child: Text('Melayani reservasi ${reservasi.nomor}', style: teks.bodySmall),
             ),
+          if (keranjang.tukar case final tukar?)
+            Padding(
+              padding: const EdgeInsets.only(bottom: TokenJarak.jarak8),
+              child: Text(
+                'Tukar barang dari ${tukar.nomorPenjualanAsal} · nilai retur ${tukar.nilai.FormatRupiah()}'
+                '${tukar.nilai.Bandingkan(hitungan.hasil.totalAkhir) > 0 ? ' · kembalikan ${tukar.nilai.Kurangi(hitungan.hasil.totalAkhir).FormatRupiah()} tunai' : ''}',
+                style: teks.bodySmall,
+              ),
+            ),
           ...RingkasanTotal.BangunBaris(context, hitungan, keranjang, tampilPembulatan: true),
           for (final p in _entri)
             Row(
               children: [
                 Expanded(child: Text('${p.metode.Nama}${p.referensi == null ? '' : ' · ${p.referensi}'}')),
                 TeksUang(p.jumlah),
-                if (p.metode.Jenis == JenisMetodeBayar.uangMuka || p.metode.Jenis == JenisMetodeBayar.qrisDinamis)
+                if (p.metode.Jenis == JenisMetodeBayar.uangMuka ||
+                    p.metode.Jenis == JenisMetodeBayar.qrisDinamis ||
+                    p.metode.Jenis == JenisMetodeBayar.tukar)
                   const SizedBox(width: TokenJarak.targetSentuh)
                 else
                   IconButton(
@@ -815,6 +847,14 @@ class TampilanSelesai extends StatelessWidget {
             alignment: Alignment.centerLeft,
             child: TeksUang(hasil.kembalian, rataKanan: false, gaya: teks.displaySmall),
           ),
+          // K-11: selisih tukar barang (barang pengganti lebih murah) dikembalikan tunai lewat refund retur.
+          if (hasil.kembalianTukar case final selisih? when !selisih.BernilaiNol()) ...[
+            const SizedBox(height: TokenJarak.jarak8),
+            Text('Kembalikan selisih tukar', style: teks.titleMedium),
+            TeksUang(selisih, rataKanan: false, gaya: teks.headlineSmall),
+          ],
+          if (hasil.nomorReturTukar case final nomorRetur?)
+            Text('Retur tukar barang $nomorRetur', style: teks.bodySmall),
           const SizedBox(height: TokenJarak.jarak16),
           Row(
             children: [

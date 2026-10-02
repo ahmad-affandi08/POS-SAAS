@@ -399,6 +399,37 @@ class PraPesananKeranjang {
       : null;
 }
 
+/// K-11 tukar barang: barang yang diretur menjadi pembayaran barang pengganti. Retur **belum** disimpan selama kasir
+/// memilih barang pengganti; [simpanRetur] dipanggil saat pembayaran diselesaikan, di transaksi lokal yang sama dengan
+/// penjualan pengganti, dengan pembagian refund `Tukar` (sebesar yang dipakai membayar) dan `Tunai` (selisih yang
+/// dikembalikan ke pelanggan bila barang pengganti lebih murah). Tidak ikut draf keranjang tersimpan (K-4): retur
+/// tertunda hanya hidup selama aplikasi terbuka, jadi tidak pernah ada retur setengah jadi.
+class TukarKeranjang {
+  const TukarKeranjang({
+    required this.uuidRetur,
+    required this.nomorPenjualanAsal,
+    required this.nilai,
+    required this.uuidMetode,
+    required this.namaMetode,
+    required this.simpanRetur,
+  });
+
+  /// Uuid retur yang akan dibuat (dirujuk `UuidReturTukar` penjualan pengganti).
+  final String uuidRetur;
+  final String nomorPenjualanAsal;
+
+  /// Nilai barang yang diretur (setelah potong piutang bila penjualan asal tempo).
+  final Uang nilai;
+  final String uuidMetode;
+  final String namaMetode;
+
+  /// Simpan retur dengan refund `Tukar` [tukar] dan `Tunai` [tunai] (Σ = [nilai]); hasil = nomor retur.
+  final Future<String> Function({required Uang tukar, required Uang tunai}) simpanRetur;
+
+  /// Nilai tukar yang dipakai membayar penjualan senilai [total]: tidak pernah melebihi total belanja.
+  Uang HitungDipakai(Uang total) => nilai.Bandingkan(total) > 0 ? total : nilai;
+}
+
 /// Reservasi layanan yang sedang dilayani (F-07 mode service bagian 2): `Penjualan.Buat` merujuk [uuid] supaya server
 /// menyelesaikan dan menautkan reservasinya.
 class ReservasiKeranjang {
@@ -505,6 +536,7 @@ class Keranjang {
     this.laundry,
     this.kanal,
     this.namaPemesan,
+    this.tukar,
     Uang? biayaKirim,
     Uang? diskonKirim,
   }) : biayaKirim = biayaKirim ?? Uang.Nol(),
@@ -543,6 +575,9 @@ class Keranjang {
   /// v3.52 (§9.2): nama yang dipanggil saat pesanan bayar-dulu siap; bukan data pelanggan, tidak wajib.
   final String? namaPemesan;
 
+  /// K-11: tukar barang yang sedang berlangsung (null = penjualan biasa).
+  final TukarKeranjang? tukar;
+
   /// F-17 bagian 3: ongkir yang ditagih ke pembeli (nol = tanpa ongkir) dan diskonnya (mis. gratis ongkir). Dipisah
   /// supaya struk tetap bisa menulis ongkirnya beserta potongannya, bukan ongkir yang hilang.
   final Uang biayaKirim;
@@ -569,6 +604,7 @@ class Keranjang {
     LaundryKeranjang? Function()? laundry,
     KanalPenjualan? Function()? kanal,
     String? Function()? namaPemesan,
+    TukarKeranjang? Function()? tukar,
     Uang? biayaKirim,
     Uang? diskonKirim,
   }) => Keranjang(
@@ -585,6 +621,7 @@ class Keranjang {
     laundry: laundry == null ? this.laundry : laundry(),
     kanal: kanal == null ? this.kanal : kanal(),
     namaPemesan: namaPemesan == null ? this.namaPemesan : namaPemesan(),
+    tukar: tukar == null ? this.tukar : tukar(),
     biayaKirim: biayaKirim ?? this.biayaKirim,
     diskonKirim: diskonKirim ?? this.diskonKirim,
   );

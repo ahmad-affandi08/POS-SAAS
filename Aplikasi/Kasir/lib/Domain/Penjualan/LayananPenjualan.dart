@@ -103,10 +103,17 @@ class PenjualanTersimpan {
     this.labelPoin,
     this.nomorAntrian,
     this.namaPemesan,
+    this.nomorReturTukar,
+    this.kembalianTukar,
   });
 
   final String uuid;
   final String nomor;
+
+  /// K-11: retur tukar barang yang dibuat bersama penjualan ini, dan selisih tunai yang dikembalikan ke pelanggan
+  /// (barang pengganti lebih murah; null bila bukan tukar barang).
+  final String? nomorReturTukar;
+  final Uang? kembalianTukar;
 
   /// v3.52: nomor panggil (null = tidak bernomor antrian) & nama pemesan, ditampilkan besar setelah bayar.
   final String? nomorAntrian;
@@ -1013,29 +1020,51 @@ class LayananPenjualan {
     final uuidPembayaran = [for (final _ in pembayaran) BuatUuid()];
     final kembalian = hasil.kembalian ?? Uang.Nol();
 
-    final dokumen = await repositoriPenjualan.SimpanPenjualan(
-      kodePerangkat: kodePerangkat,
-      tanggal: yymmdd,
-      sekarang: sekarang,
-      susun: (urut) {
-        final nomor = 'INV/$kodeOutlet/$yymmdd/$kodePerangkat-${urut.toString().padLeft(4, '0')}';
-        return SusunDokumen(
-          uuid: uuid,
-          nomor: nomor,
-          shift: shift,
-          kasir: kasir,
-          keranjang: keranjang,
-          hitungan: hitungan,
-          pembayaran: pembayaran,
-          uuidPembayaran: uuidPembayaran,
-          penyetuju: penyetuju,
-          k: k,
-          sekarang: sekarang,
-          uuidPenyetujuTempo: uuidPenyetujuTempo,
-          katalog: katalog,
+    // K-11: tukar barang = retur & penjualan pengganti tersimpan atomik, retur lebih dulu (urutan outbox = urutan
+    // diterima server, sehingga penjualan pengganti selalu menemukan returnya).
+    final tukar = keranjang.tukar;
+    final dipakaiTukar = tukar?.HitungDipakai(hasil.totalAkhir);
+    if (tukar != null) {
+      final bayarTukar = pembayaran.where((p) => p.metode.Jenis == JenisMetodeBayar.tukar).toList();
+      if (bayarTukar.length != 1 || !bayarTukar.single.jumlah.SamaDengan(dipakaiTukar!)) {
+        throw GalatKasir(
+          'TukarTidakSesuai',
+          'Nilai tukar barang yang dipakai harus ${dipakaiTukar!.FormatRupiah()}. Buka ulang pembayaran.',
         );
-      },
-    );
+      }
+    } else if (pembayaran.any((p) => p.metode.Jenis == JenisMetodeBayar.tukar)) {
+      throw const GalatKasir('TukarTanpaRetur', 'Pembayaran tukar barang hanya dari layar retur.');
+    }
+    late final DokumenPenjualan dokumen;
+    String? nomorReturTukar;
+    await repositoriPenjualan.db.transaction(() async {
+      if (tukar != null) {
+        nomorReturTukar = await tukar.simpanRetur(tukar: dipakaiTukar!, tunai: tukar.nilai.Kurangi(dipakaiTukar));
+      }
+      dokumen = await repositoriPenjualan.SimpanPenjualan(
+        kodePerangkat: kodePerangkat,
+        tanggal: yymmdd,
+        sekarang: sekarang,
+        susun: (urut) {
+          final nomor = 'INV/$kodeOutlet/$yymmdd/$kodePerangkat-${urut.toString().padLeft(4, '0')}';
+          return SusunDokumen(
+            uuid: uuid,
+            nomor: nomor,
+            shift: shift,
+            kasir: kasir,
+            keranjang: keranjang,
+            hitungan: hitungan,
+            pembayaran: pembayaran,
+            uuidPembayaran: uuidPembayaran,
+            penyetuju: penyetuju,
+            k: k,
+            sekarang: sekarang,
+            uuidPenyetujuTempo: uuidPenyetujuTempo,
+            katalog: katalog,
+          );
+        },
+      );
+    });
     final tempo = pembayaran.where((p) => p.metode.Jenis == JenisMetodeBayar.tempo).firstOrNull;
     final uuidPelanggan = keranjang.pelanggan?.uuid;
     if (tempo != null && uuidPelanggan != null) {
@@ -1059,6 +1088,8 @@ class LayananPenjualan {
       labelPoin: hitungan.AmbilLabelPoinBerlipat(),
       nomorAntrian: dokumen.penjualan.NomorAntrian.value,
       namaPemesan: dokumen.penjualan.NamaPemesan.value,
+      nomorReturTukar: nomorReturTukar,
+      kembalianTukar: tukar?.nilai.Kurangi(dipakaiTukar!),
     );
   }
 
@@ -1090,7 +1121,9 @@ class LayananPenjualan {
       throw const GalatKasir('TunaiGanda', 'Pembayaran tunai hanya boleh satu kali per transaksi.');
     }
     for (final p in pembayaran) {
-      if (!JenisMetodeBayar.fase1.contains(p.metode.Jenis) && p.metode.Jenis != JenisMetodeBayar.uangMuka) {
+      if (!JenisMetodeBayar.fase1.contains(p.metode.Jenis) &&
+          p.metode.Jenis != JenisMetodeBayar.uangMuka &&
+          p.metode.Jenis != JenisMetodeBayar.tukar) {
         throw GalatKasir('MetodeBayarBelumDidukung', 'Metode ${p.metode.Nama} belum didukung aplikasi kasir.');
       }
       if (p.jumlah.Bandingkan(Uang.Nol()) <= 0) {
@@ -1217,6 +1250,8 @@ class LayananPenjualan {
       'Voucher': ?keranjang.voucher?.kode,
       if (keranjang.praPesan case final praPesan?) praPesan.sumber.KunciOutbox: praPesan.uuid,
       'UuidReservasi': ?keranjang.reservasi?.uuid,
+      // K-11: retur tukar barang yang nilainya membayar penjualan ini.
+      'UuidReturTukar': ?keranjang.tukar?.uuidRetur,
       'Laundry': ?keranjang.laundry?.KeJson(),
       // Cetak struk bagian 4c: penjualan langsung di outlet berstasiun dapur dikirim ke dapur (mode cepat, bayar dulu).
       if (k.kirimDapurLangsung && pesananMeja == null && keranjang.praPesan == null) 'KirimDapur': true,

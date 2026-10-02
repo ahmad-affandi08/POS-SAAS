@@ -11,6 +11,8 @@ import '../Struk/BagianCetakDokumen.dart';
 import '../../Aplikasi/Penyedia.dart';
 import '../../Data/BasisData/BasisDataKasir.dart';
 import '../../Domain/GalatKasir.dart';
+import '../../Domain/Katalog/KatalogLokal.dart';
+import '../../Domain/Penjualan/Keranjang.dart';
 import '../../Domain/Penjualan/KonteksPenjualan.dart';
 import '../../Domain/Penjualan/LayananReturPenjualan.dart';
 import '../../Domain/Penjualan/PenghitungNilaiRetur.dart';
@@ -20,18 +22,23 @@ import '../Komponen/MasukanUang.dart';
 import '../LembarMutasiKas.dart';
 
 /// Cara refund retur fase 1: tunai dari laci shift aktif, transfer manual, atau keduanya.
-enum CaraRefund { Tunai, Transfer, Campuran }
+/// Cara refund retur. `Tukar` (K-11): nilai barang yang diretur membayar barang pengganti di layar Jual.
+enum CaraRefund { Tunai, Transfer, Campuran, Tukar }
 
 /// Formulir retur dari struk (Rincian F-09 fase 1) di dalam `PanelTugas` ruang kerja: masukkan/pindai nomor struk →
 /// cari online → pilih barang, jumlah, & kondisi → alasan & cara refund → PIN penyetuju ber-izin `penjualan.void` →
 /// simpan lokal + outbox. Pemindai barcode (keyboard wedge) mengetik nomor lalu Enter langsung mencari.
 class LembarRetur extends ConsumerStatefulWidget {
-  const LembarRetur({super.key, required this.kasir, required this.saatSelesai});
+  const LembarRetur({super.key, required this.kasir, required this.saatSelesai, this.saatTukar});
 
   static const String judul = 'Retur dari struk';
 
   final StafLokal kasir;
   final VoidCallback saatSelesai;
+
+  /// K-11: tukar barang disiapkan di keranjang; pemanggil menutup lembar dan membuka layar Jual. Null = opsi tukar
+  /// barang tidak ditawarkan.
+  final VoidCallback? saatTukar;
 
   @override
   ConsumerState<LembarRetur> createState() => _LembarReturState();
@@ -177,6 +184,7 @@ class _LembarReturState extends ConsumerState<LembarRetur> {
       CaraRefund.Tunai => dibayarKembali,
       CaraRefund.Transfer => Uang.Nol(),
       CaraRefund.Campuran => MasukanUang.AmbilNilai(_tunai) ?? Uang.Nol(),
+      CaraRefund.Tukar => Uang.Nol(),
     };
   }
 
@@ -226,6 +234,12 @@ class _LembarReturState extends ConsumerState<LembarRetur> {
       }
     }
 
+    // K-11: tukar barang — retur belum disimpan; disimpan bersama penjualan pengganti saat pembayaran selesai.
+    if (_cara == CaraRefund.Tukar) {
+      _MulaiTukar(k, hasil, pilihan, total.Kurangi(_HitungPotongPiutang(total)), penyetuju, katalog);
+      return;
+    }
+
     setState(() {
       _sibuk = true;
       _galat = null;
@@ -255,6 +269,57 @@ class _LembarReturState extends ConsumerState<LembarRetur> {
         setState(() => _sibuk = false);
       }
     }
+  }
+
+  void _MulaiTukar(
+    KonteksPenjualan k,
+    HasilCariPenjualan hasil,
+    List<PilihanReturBaris> pilihan,
+    Uang nilai,
+    StafLokal? penyetuju,
+    KatalogLokal? katalog,
+  ) {
+    final metode = k.metodeTukar;
+    final saatTukar = widget.saatTukar;
+    if (metode == null || saatTukar == null) {
+      setState(() => _galat = 'Tukar barang belum tersedia. Perbarui data kasir.');
+      return;
+    }
+    if (!ref.read(penyediaKeranjang).CekKosong) {
+      setState(() => _galat = 'Keranjang masih berisi. Selesaikan atau tahan transaksi itu dulu sebelum tukar barang.');
+      return;
+    }
+    final alasan = _alasan.text;
+    final kasir = widget.kasir;
+    final layanan = _layanan;
+    final uuidRetur = ref.read(penyediaLayananPenjualan).BuatUuid();
+    ref
+        .read(penyediaKeranjang.notifier)
+        .Ganti(
+          Keranjang.kosong.Salin(
+            tukar: () => TukarKeranjang(
+              uuidRetur: uuidRetur,
+              nomorPenjualanAsal: hasil.penjualan.nomor,
+              nilai: nilai,
+              uuidMetode: metode.Uuid,
+              namaMetode: metode.Nama,
+              simpanRetur: ({required tukar, required tunai}) async => (await layanan.Simpan(
+                hasil: hasil,
+                pilihan: pilihan,
+                alasan: alasan,
+                refundTunai: tunai,
+                refundTukar: tukar,
+                metodeTukar: metode,
+                uuidRetur: uuidRetur,
+                kasir: kasir,
+                k: k,
+                penyetuju: penyetuju,
+                katalog: katalog,
+              )).nomor,
+            ),
+          ),
+        );
+    saatTukar();
   }
 
   @override
@@ -455,6 +520,8 @@ class _LembarReturState extends ConsumerState<LembarRetur> {
               enabled: transfer.isNotEmpty,
             ),
             ButtonSegment(value: CaraRefund.Campuran, label: const Text('Keduanya'), enabled: transfer.isNotEmpty),
+            if (k?.metodeTukar != null && widget.saatTukar != null)
+              const ButtonSegment(value: CaraRefund.Tukar, label: Text('Tukar barang')),
           ],
           selected: {_cara},
           onSelectionChanged: (pilih) => setState(() => _cara = pilih.first),
@@ -467,7 +534,7 @@ class _LembarReturState extends ConsumerState<LembarRetur> {
               style: teks.bodySmall?.copyWith(color: warna.teksSekunder),
             ),
           ),
-        if (_cara != CaraRefund.Tunai && transfer.length > 1)
+        if ((_cara == CaraRefund.Transfer || _cara == CaraRefund.Campuran) && transfer.length > 1)
           Padding(
             padding: const EdgeInsets.only(top: TokenJarak.jarak8),
             child: DropdownButtonFormField<String>(
@@ -514,7 +581,13 @@ class _LembarReturState extends ConsumerState<LembarRetur> {
           height: 56,
           child: FilledButton(
             onPressed: _sibuk || k == null ? null : () => unawaited(_Simpan(k, transfer)),
-            child: Text(_sibuk ? 'Menyimpan…' : 'Simpan retur'),
+            child: Text(
+              _sibuk
+                  ? 'Menyimpan…'
+                  : _cara == CaraRefund.Tukar
+                  ? 'Pilih barang pengganti'
+                  : 'Simpan retur',
+            ),
           ),
         ),
         const SizedBox(height: TokenJarak.jarak8),

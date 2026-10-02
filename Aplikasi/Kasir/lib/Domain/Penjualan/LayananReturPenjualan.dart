@@ -29,6 +29,9 @@ abstract final class MetodeRefundRetur {
 
   /// F-16d: refund masuk saldo deposit pelanggan (penjualan berpelanggan).
   static const String deposit = 'Deposit';
+
+  /// K-11: nilai retur dipakai membayar barang pengganti.
+  static const String tukar = 'Tukar';
 }
 
 /// Satu baris penjualan asal yang dipilih untuk diretur.
@@ -268,6 +271,9 @@ class LayananReturPenjualan {
     BarisMetodePembayaran? metodeTransfer,
     StafLokal? penyetuju,
     KatalogLokal? katalog,
+    Uang? refundTukar,
+    BarisMetodePembayaran? metodeTukar,
+    String? uuidRetur,
   }) async {
     final shift = await repositori.AmbilShiftAktif();
     if (shift == null) {
@@ -296,7 +302,21 @@ class LayananReturPenjualan {
     if (refundTunai.BernilaiNegatif() || refundTunai.Bandingkan(dibayarKembali) > 0) {
       throw GalatKasir('RefundTidakSesuai', 'Refund tunai harus antara Rp 0 dan ${dibayarKembali.FormatRupiah()}.');
     }
-    final refundTransfer = dibayarKembali.Kurangi(refundTunai);
+    // K-11: bagian refund yang dipakai membayar barang pengganti (bukan uang keluar).
+    final tukar = refundTukar ?? Uang.Nol();
+    if (tukar.BernilaiNegatif() || refundTunai.Tambah(tukar).Bandingkan(dibayarKembali) > 0) {
+      throw GalatKasir(
+        'RefundTidakSesuai',
+        'Nilai tukar barang melebihi nilai retur ${dibayarKembali.FormatRupiah()}.',
+      );
+    }
+    if (!tukar.BernilaiNol() && metodeTukar == null) {
+      throw const GalatKasir(
+        'MetodeBayarTidakDikenal',
+        'Metode tukar barang belum ada di perangkat ini. Perbarui data kasir.',
+      );
+    }
+    final refundTransfer = dibayarKembali.Kurangi(refundTunai).Kurangi(tukar);
     final bayarTempo = hasil.pembayaran.where((b) => b.jenisMetode == JenisMetodeBayar.tempo).firstOrNull;
     if (!potongPiutang.BernilaiNol() && bayarTempo?.uuidMetodePembayaran == null) {
       throw const GalatKasir('MetodeBayarTidakDikenal', 'Metode Tempo penjualan ini tidak ditemukan. Coba cari ulang.');
@@ -333,7 +353,7 @@ class LayananReturPenjualan {
     final sekarang = _jam().toUtc();
     final tanggalBisnis = k.HitungTanggalBisnis(sekarang);
     final yymmdd = '${tanggalBisnis.substring(2, 4)}${tanggalBisnis.substring(5, 7)}${tanggalBisnis.substring(8, 10)}';
-    final uuid = _ulid.Buat();
+    final uuid = uuidRetur ?? _ulid.Buat();
     final baris = [
       for (final p in terisi) (uuid: _ulid.Buat(), pilihan: p, nilai: PenghitungNilaiRetur.Hitung(p.baris, p.jumlah)),
     ];
@@ -345,6 +365,14 @@ class LayananReturPenjualan {
           jenis: JenisMetodeBayar.tempo,
           nama: bayarTempo.namaMetode,
           jumlah: potongPiutang,
+        ),
+      if (!tukar.BernilaiNol())
+        (
+          uuid: _ulid.Buat(),
+          uuidMetode: metodeTukar!.Uuid,
+          jenis: metodeTukar.Jenis,
+          nama: metodeTukar.Nama,
+          jumlah: tukar,
         ),
       if (!refundTunai.BernilaiNol())
         (
@@ -371,6 +399,8 @@ class LayananReturPenjualan {
         ? MetodeRefundRetur.transfer
         : refund.isNotEmpty && refund.first.jenis == JenisMetodeBayar.deposit
         ? MetodeRefundRetur.deposit
+        : refund.isNotEmpty && refund.first.jenis == JenisMetodeBayar.tukar
+        ? MetodeRefundRetur.tukar
         : MetodeRefundRetur.tunai;
 
     // Status penjualan asal bila ada di perangkat ini: Diretur bila semua sisa baris habis oleh retur ini.

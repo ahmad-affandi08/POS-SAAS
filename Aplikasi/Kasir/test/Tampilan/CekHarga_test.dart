@@ -62,7 +62,11 @@ void main() {
       expect(find.descendant(of: rincian, matching: find.text('Rp 12.000')), findsOneWidget);
       expect(find.descendant(of: rincian, matching: find.text('Mulai 10 Pcs')), findsOneWidget);
       expect(find.descendant(of: rincian, matching: find.text('Rp 11.000')), findsOneWidget);
-      expect(find.descendant(of: rincian, matching: find.text('Rp 130.000')), findsOneWidget, reason: 'Per Lusin.');
+      expect(
+        find.descendant(of: rincian, matching: find.text('Rp 130.000')),
+        findsOneWidget,
+        reason: 'Per Lusin.',
+      );
       expect(tester.takeException(), isNull);
 
       // Tutup panel: keranjang tidak berubah.
