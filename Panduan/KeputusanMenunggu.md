@@ -43,6 +43,7 @@ Format tiap butir: pertanyaan, pilihan yang tersedia, usulan agent, dan apa yang
 | K21 | Naikkan CSP dari Report-Only ke penegak; nyalakan `TENANT_TOLAK_ID_BERBEDA=true` | Setelah log bersih beberapa minggu |
 | K22 | Validasi ekspor XML Coretax ke aplikasi resmi (impor satu faktur) | Butuh akun Coretax pemilik usaha |
 | K23 | **Kampanye pesan CRM-07 (v3.44)**: daftarkan templat pemasaran WhatsApp ke Meta (4 variabel: toko, nama, isi, tautan berhenti) lalu isi `NamaTemplatPromosi` di konsol Integrasi; tinjau batas agent (maks. 5.000 penerima/kampanye, 25 pesan/menit, jam tenang 08.00–21.00, fitur tanpa kunci paket khusus) | Batas & kunci paket bisa diubah bila pemilik menghendaki kampanye jadi fitur berbayar |
+| K24 | **Mitra & referral P-12 (v3.50)**: (a) besaran komisi bawaan mitra reseller & referral, (b) perlakuan pajak komisi — PPh 21 bukan pegawai (mitra perorangan) / PPh 23 (mitra badan), tarif & bukti potong, dan apakah PAYOU menanggung atau memotong, (c) bentuk imbalan referral (kredit langganan vs uang tunai) | Agent: persen komisi diisi per mitra di konsol (bawaan 0), potongan pajak dicatat manual per pencairan oleh Keuangan sampai pemilik & konsultan pajak memutuskan; referral sementara dibayar sebagai komisi uang |
 
 ## Sudah diputuskan
 
