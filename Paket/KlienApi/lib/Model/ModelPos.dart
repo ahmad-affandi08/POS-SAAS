@@ -800,3 +800,60 @@ class HasilItemSinkron {
     );
   }
 }
+
+/// K-24 (`GET /api/pos/v1/ringkasan-harian`): ringkasan akhir hari outlet (semua perangkat). Uang string desimal.
+class RingkasanHarianPos {
+  const RingkasanHarianPos({
+    required this.tanggal,
+    required this.jumlahTransaksi,
+    required this.jumlahVoid,
+    required this.jumlahRetur,
+    required this.kotor,
+    required this.diskon,
+    required this.retur,
+    required this.bersih,
+    required this.pajak,
+    required this.perMetodeBayar,
+    required this.perKasir,
+  });
+
+  final String tanggal;
+  final int jumlahTransaksi;
+  final int jumlahVoid;
+  final int jumlahRetur;
+  final String kotor;
+  final String diskon;
+  final String retur;
+  final String bersih;
+  final String pajak;
+  final List<({String jenis, String nama, String jumlah})> perMetodeBayar;
+  final List<({String nama, int jumlahTransaksi, String bersih})> perKasir;
+
+  static RingkasanHarianPos DariJson(Map<String, Object?> json) => RingkasanHarianPos(
+    tanggal: UraiJson.AmbilTeks(json['Tanggal']),
+    jumlahTransaksi: UraiJson.AmbilBulat(json['JumlahTransaksi']),
+    jumlahVoid: UraiJson.AmbilBulat(json['JumlahVoid']),
+    jumlahRetur: UraiJson.AmbilBulat(json['JumlahRetur']),
+    kotor: UraiJson.AmbilDesimal(json['Kotor']),
+    diskon: UraiJson.AmbilDesimal(json['Diskon']),
+    retur: UraiJson.AmbilDesimal(json['Retur']),
+    bersih: UraiJson.AmbilDesimal(json['Bersih']),
+    pajak: UraiJson.AmbilDesimal(json['Pajak']),
+    perMetodeBayar: [
+      for (final m in UraiJson.AmbilDaftarPeta(json['PerMetodeBayar']))
+        (
+          jenis: UraiJson.AmbilTeks(m['Jenis']),
+          nama: UraiJson.AmbilTeks(m['Nama']),
+          jumlah: UraiJson.AmbilDesimal(m['Jumlah']),
+        ),
+    ],
+    perKasir: [
+      for (final k in UraiJson.AmbilDaftarPeta(json['PerKasir']))
+        (
+          nama: UraiJson.AmbilTeks(k['Nama']),
+          jumlahTransaksi: UraiJson.AmbilBulat(k['JumlahTransaksi']),
+          bersih: UraiJson.AmbilDesimal(k['Bersih']),
+        ),
+    ],
+  );
+}

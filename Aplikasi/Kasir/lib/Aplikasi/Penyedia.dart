@@ -47,6 +47,7 @@ import '../Domain/Meja/LayananPesananMeja.dart';
 import '../Domain/Pelanggan/LayananDeposit.dart';
 import '../Domain/Pelanggan/LayananSesi.dart';
 import '../Domain/Pelanggan/LayananPelanggan.dart';
+import '../Domain/Penjualan/LayananRingkasanHarian.dart';
 import '../Domain/Penjualan/Keranjang.dart';
 import '../Domain/Penjualan/KonteksPenjualan.dart';
 import '../Domain/Penjualan/LayananPenjualan.dart';
@@ -545,9 +546,26 @@ final penyediaPesananTertahan = StreamProvider<List<BarisPesananTertahan>>(
 );
 
 /// Riwayat penjualan perangkat pada tanggal bisnis hari ini beserta status sinkron.
+/// K-24: tanggal bisnis yang dilihat di Riwayat (`YYYY-MM-DD`); null = hari ini.
+class TanggalRiwayat extends Notifier<String?> {
+  @override
+  String? build() => null;
+
+  void Atur(String? tanggal) => state = tanggal;
+}
+
+final penyediaTanggalRiwayat = NotifierProvider<TanggalRiwayat, String?>(TanggalRiwayat.new);
+
+/// K-24: ringkasan akhir hari outlet dari server (online).
+final penyediaLayananRingkasanHarian = Provider<LayananRingkasanHarian>(
+  (ref) => LayananRingkasanHarian(klien: ref.watch(penyediaKlienPos)),
+);
+
+/// Riwayat penjualan perangkat ini pada tanggal Riwayat yang dipilih (bawaan hari ini).
 final penyediaRiwayatHariIni = StreamProvider<List<RiwayatPenjualan>>((ref) async* {
   final konteks = await ref.watch(penyediaKonteksPenjualan.future);
-  yield* ref.watch(penyediaRepositoriPenjualan).PantauRiwayat(konteks.HitungTanggalBisnis(ref.read(penyediaJam)()));
+  final tanggal = ref.watch(penyediaTanggalRiwayat) ?? konteks.HitungTanggalBisnis(ref.read(penyediaJam)());
+  yield* ref.watch(penyediaRepositoriPenjualan).PantauRiwayat(tanggal);
 });
 
 /// Penjualan tunai bersih (uang tunai diterima − kembalian) sebuah shift, untuk perkiraan kas di laci.
@@ -570,7 +588,7 @@ final penyediaReturHariIni = StreamProvider<List<RiwayatRetur>>((ref) async* {
   final konteks = await ref.watch(penyediaKonteksPenjualan.future);
   yield* ref
       .watch(penyediaRepositoriPenjualan)
-      .PantauReturTanggal(konteks.HitungTanggalBisnis(ref.read(penyediaJam)()));
+      .PantauReturTanggal(ref.watch(penyediaTanggalRiwayat) ?? konteks.HitungTanggalBisnis(ref.read(penyediaJam)()));
 });
 
 /// Laporan shift X/Z (F-11) dari data perangkat; dihitung ulang saat penjualan, kas, void, atau retur shift berubah.

@@ -787,6 +787,37 @@ void main() {
     expect(jsonDecode(dikirim.last.body), {'UuidPengguna': 'U1', 'Habis': false});
   });
 
+  test('K-24: ringkasan akhir hari outlet', () async {
+    final dikirim = <http.Request>[];
+    final klien = BuatKlien((permintaan) async {
+      dikirim.add(permintaan);
+      return Json({
+        'Tanggal': '2026-10-02',
+        'JumlahTransaksi': 2,
+        'JumlahVoid': 1,
+        'JumlahRetur': 1,
+        'Kotor': '154000.00',
+        'Diskon': '0.00',
+        'Retur': '38500.00',
+        'Bersih': '115500.00',
+        'Pajak': '0.00',
+        'PerMetodeBayar': [
+          {'Jenis': 'Tunai', 'Nama': 'Tunai', 'Jumlah': '115500.00'},
+        ],
+        'PerKasir': [
+          {'Nama': 'Rina', 'JumlahTransaksi': 2, 'Bersih': '115500.00'},
+        ],
+      }, 200);
+    });
+    final r = await klien.AmbilRingkasanHarian(tanggal: '2026-10-02');
+    expect(dikirim.single.url.path, '/api/pos/v1/ringkasan-harian');
+    expect(dikirim.single.url.query, 'tanggal=2026-10-02');
+    expect(r.jumlahVoid, 1);
+    expect(r.bersih, '115500.00');
+    expect(r.perMetodeBayar.single.nama, 'Tunai');
+    expect(r.perKasir.single.jumlahTransaksi, 2);
+  });
+
   test('K-21: laporan galat dikirim ke perangkat/galat', () async {
     final dikirim = <http.Request>[];
     final klien = BuatKlien((permintaan) async {

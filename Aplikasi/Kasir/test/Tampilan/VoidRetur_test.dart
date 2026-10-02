@@ -188,6 +188,7 @@ void main() {
       expect((data['Refund']! as List<Object?>).single, containsPair('Jumlah', '33333.33'));
 
       await Ketuk(tester, find.widgetWithText(FilledButton, 'Selesai'));
+      await tester.scrollUntilVisible(find.text('Retur hari ini'), 200, scrollable: find.byType(Scrollable).first);
       expect(find.text('Retur hari ini'), findsOneWidget);
       expect(find.text('RJ/SLB/260924/POS-001-0001'), findsOneWidget);
       expect(tester.takeException(), isNull);

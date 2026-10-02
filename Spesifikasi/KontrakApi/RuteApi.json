@@ -358,5 +358,10 @@
         "Metode": "POST",
         "Jalur": "api/pos/v1/perangkat/galat",
         "Nama": "pos.perangkat.galat"
+    },
+    "GET api/pos/v1/ringkasan-harian": {
+        "Metode": "GET",
+        "Jalur": "api/pos/v1/ringkasan-harian",
+        "Nama": "pos.ringkasan-harian"
     }
 }

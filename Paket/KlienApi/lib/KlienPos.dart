@@ -532,6 +532,15 @@ class KlienPos {
     return UraiJson.AmbilBenar(json['Habis'], habis);
   }
 
+  /// K-24: ringkasan akhir hari outlet perangkat (semua perangkat) pada [tanggal] (`YYYY-MM-DD`, bawaan hari ini).
+  Future<RingkasanHarianPos> AmbilRingkasanHarian({String? tanggal}) async => RingkasanHarianPos.DariJson(
+    await _Kirim(
+      'GET',
+      tanggal == null ? 'ringkasan-harian' : 'ringkasan-harian?tanggal=${Uri.encodeQueryComponent(tanggal)}',
+      null,
+    ),
+  );
+
   /// K-21: kirim log galat aplikasi (maks. 50 entri `{Waktu, Tingkat, Sumber, Pesan, Jejak?}`, sudah disaring dari
   /// data pribadi). Mengembalikan jumlah yang diterima server. Offline → `GalatJaringan`.
   Future<int> LaporGalat(List<Map<String, Object?>> galat) async =>

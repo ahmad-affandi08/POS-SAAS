@@ -111,7 +111,14 @@ void main() {
       expect(find.text('10.00–11.00 · Ratna Sari · Creambath Ginseng · Dikonfirmasi'), findsOneWidget);
       expect(find.text('Kosong: 09:00–10:00, 11:00–12:00'), findsOneWidget);
       expect(
-        tester.widget<IconButton>(find.widgetWithIcon(IconButton, Icons.chevron_left)).onPressed,
+        tester
+            .widget<IconButton>(
+              find.descendant(
+                of: find.byKey(const ValueKey('KalenderBooking')),
+                matching: find.widgetWithIcon(IconButton, Icons.chevron_left),
+              ),
+            )
+            .onPressed,
         isNull,
         reason: 'Tidak bisa booking hari yang sudah lewat.',
       );
@@ -138,7 +145,12 @@ void main() {
       expect(find.textContaining('Booking RS/2026/09/0001 dicatat: Dina Lestari, 11.00 dengan Maya.'), findsOneWidget);
       expect(find.text('Maya · 09:00–12:00'), findsOneWidget, reason: 'Kembali ke kalender setelah tersimpan.');
 
-      await Ketuk(find.widgetWithIcon(IconButton, Icons.chevron_right));
+      await Ketuk(
+        find.descendant(
+          of: find.byKey(const ValueKey('KalenderBooking')),
+          matching: find.widgetWithIcon(IconButton, Icons.chevron_right),
+        ),
+      );
       expect(find.text('Jumat, 25 Sep 2026'), findsOneWidget);
       expect(diminta.last.url.queryParameters['tanggal'], '2026-09-25');
       expect(tester.takeException(), isNull);

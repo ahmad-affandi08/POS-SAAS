@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:klien_api/KlienApi.dart';
 import 'package:mesin_kasir/MesinKasir.dart';
 import 'package:sistem_desain/SistemDesain.dart';
 
 import '../Aplikasi/Penyedia.dart';
 import '../Data/BasisData/BasisDataKasir.dart';
 import '../Data/RepositoriPenjualan.dart';
+import '../Domain/GalatKasir.dart';
 import '../Domain/Penjualan/LayananVoidPenjualan.dart';
 import 'Komponen/FormatAngka.dart';
 import 'Komponen/FormatWaktu.dart';
@@ -94,11 +96,18 @@ class LayarRiwayat extends ConsumerWidget {
     final jumlahVoid = daftar.length - dihitung.length;
     final retur = ref.watch(penyediaReturHariIni).value ?? const <RiwayatRetur>[];
     final shiftAktif = ref.watch(penyediaShiftAktif).value;
+    final konteks = ref.watch(penyediaKonteksPenjualan).value;
+    final hariIni = konteks?.HitungTanggalBisnis(ref.read(penyediaJam)());
+    final dipilih = ref.watch(penyediaTanggalRiwayat);
+    final tanggal = dipilih ?? hariIni;
+    final lampau = dipilih != null && dipilih != hariIni;
 
     return IsiAreaKerja(
-      judul: 'Riwayat transaksi hari ini',
+      judul: lampau ? 'Riwayat transaksi' : 'Riwayat transaksi hari ini',
       lebarMaksimum: 840,
       anak: [
+        // K-24: riwayat perangkat per tanggal (data lokal, offline) & ringkasan akhir hari outlet (server).
+        if (tanggal != null && hariIni != null) _NavigasiTanggal(tanggal: tanggal, hariIni: hariIni),
         if (riwayat.isLoading && riwayat.value == null) const LinearProgressIndicator(),
         if (riwayat.hasError)
           Builder(
@@ -114,7 +123,9 @@ class LayarRiwayat extends ConsumerWidget {
           children: [
             Text(
               daftar.isEmpty
-                  ? 'Belum ada transaksi hari ini di perangkat ini.'
+                  ? (lampau
+                        ? 'Tidak ada transaksi pada tanggal ini di perangkat ini.'
+                        : 'Belum ada transaksi hari ini di perangkat ini.')
                   : '${dihitung.length} transaksi · ${total.FormatRupiah()}'
                         '${jumlahVoid == 0 ? '' : ' · $jumlahVoid void'}',
               style: teks.titleMedium,
@@ -191,7 +202,7 @@ class LayarRiwayat extends ConsumerWidget {
           ),
         if (retur.isNotEmpty) ...[
           const SizedBox(height: TokenJarak.jarak24),
-          Text('Retur hari ini', style: teks.titleMedium),
+          Text(lampau ? 'Retur' : 'Retur hari ini', style: teks.titleMedium),
           const SizedBox(height: TokenJarak.jarak8),
           Material(
             color: warna.permukaan,
@@ -426,4 +437,187 @@ class _TombolCetakUlangState extends ConsumerState<_TombolCetakUlang> {
       label: Text(_mencetak ? 'Mencetak…' : 'Cetak ulang struk'),
     ),
   );
+}
+
+/// K-24: geser tanggal riwayat (sampai 31 hari ke belakang, tidak ke masa depan) dan buka ringkasan akhir hari outlet.
+class _NavigasiTanggal extends ConsumerWidget {
+  const _NavigasiTanggal({required this.tanggal, required this.hariIni});
+
+  final String tanggal;
+  final String hariIni;
+
+  static const int batasHari = 31;
+  static const List<String> _bulan = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'Mei',
+    'Jun',
+    'Jul',
+    'Agu',
+    'Sep',
+    'Okt',
+    'Nov',
+    'Des',
+  ];
+
+  static String Geser(String tanggal, int hari) {
+    final t = DateTime.utc(
+      int.parse(tanggal.substring(0, 4)),
+      int.parse(tanggal.substring(5, 7)),
+      int.parse(tanggal.substring(8, 10)),
+    ).add(Duration(days: hari));
+    return '${t.year}-${t.month.toString().padLeft(2, '0')}-${t.day.toString().padLeft(2, '0')}';
+  }
+
+  static String Label(String tanggal) =>
+      '${int.parse(tanggal.substring(8, 10))} ${_bulan[int.parse(tanggal.substring(5, 7)) - 1]} ${tanggal.substring(0, 4)}';
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final teks = Theme.of(context).textTheme;
+    final notifier = ref.read(penyediaTanggalRiwayat.notifier);
+    final paling = Geser(hariIni, -batasHari);
+    void Atur(String baru) => notifier.Atur(baru == hariIni ? null : baru);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: TokenJarak.jarak12),
+      child: Wrap(
+        spacing: TokenJarak.jarak8,
+        runSpacing: TokenJarak.jarak8,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                tooltip: 'Hari sebelumnya',
+                onPressed: tanggal.compareTo(paling) <= 0 ? null : () => Atur(Geser(tanggal, -1)),
+                icon: const Icon(Icons.chevron_left),
+              ),
+              Flexible(
+                child: Text(
+                  tanggal == hariIni ? '${Label(tanggal)} (hari ini)' : Label(tanggal),
+                  key: const ValueKey('TanggalRiwayat'),
+                  style: teks.titleSmall,
+                ),
+              ),
+              IconButton(
+                tooltip: 'Hari berikutnya',
+                onPressed: tanggal.compareTo(hariIni) >= 0 ? null : () => Atur(Geser(tanggal, 1)),
+                icon: const Icon(Icons.chevron_right),
+              ),
+            ],
+          ),
+          SizedBox(
+            height: TokenJarak.targetSentuh,
+            child: OutlinedButton.icon(
+              onPressed: () => showDialog<void>(
+                context: context,
+                builder: (_) => _DialogRingkasanHarian(tanggal: tanggal),
+              ),
+              icon: const Icon(Icons.summarize_outlined),
+              label: const Text('Ringkasan outlet'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// K-24: ringkasan akhir hari outlet (semua perangkat) dari server.
+class _DialogRingkasanHarian extends ConsumerStatefulWidget {
+  const _DialogRingkasanHarian({required this.tanggal});
+
+  final String tanggal;
+
+  @override
+  ConsumerState<_DialogRingkasanHarian> createState() => _DialogRingkasanHarianState();
+}
+
+class _DialogRingkasanHarianState extends ConsumerState<_DialogRingkasanHarian> {
+  late final Future<RingkasanHarianPos> _ringkasan = ref
+      .read(penyediaLayananRingkasanHarian)
+      .Ambil(tanggal: widget.tanggal);
+
+  @override
+  Widget build(BuildContext context) {
+    final teks = Theme.of(context).textTheme;
+    final warna = TokenWarna.AmbilDari(context);
+    Widget Baris(String label, Widget nilai, {TextStyle? gaya}) => Padding(
+      padding: const EdgeInsets.symmetric(vertical: TokenJarak.jarak4),
+      child: Row(
+        children: [
+          Expanded(child: Text(label, style: gaya ?? teks.bodyMedium)),
+          const SizedBox(width: TokenJarak.jarak8),
+          Flexible(
+            child: FittedBox(fit: BoxFit.scaleDown, alignment: Alignment.centerRight, child: nilai),
+          ),
+        ],
+      ),
+    );
+    return AlertDialog(
+      title: Text('Ringkasan outlet · ${_NavigasiTanggal.Label(widget.tanggal)}'),
+      content: SizedBox(
+        width: 480,
+        child: FutureBuilder<RingkasanHarianPos>(
+          future: _ringkasan,
+          builder: (context, hasil) {
+            if (hasil.connectionState != ConnectionState.done) {
+              return const LinearProgressIndicator();
+            }
+            final r = hasil.data;
+            if (r == null) {
+              final galat = hasil.error;
+              return Text(
+                galat is GalatKasir ? galat.pesan : 'Ringkasan belum bisa dimuat. Coba lagi.',
+                style: TextStyle(color: warna.bahaya),
+              );
+            }
+            return SingleChildScrollView(
+              child: Column(
+                key: const ValueKey('RingkasanOutlet'),
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    'Semua perangkat kasir di outlet ini, dihitung server dari transaksi yang sudah terkirim.',
+                    style: teks.bodySmall,
+                  ),
+                  const SizedBox(height: TokenJarak.jarak8),
+                  Baris('Transaksi', Text('${r.jumlahTransaksi}', style: teks.bodyMedium)),
+                  Baris('Void', Text('${r.jumlahVoid}', style: teks.bodyMedium)),
+                  Baris(
+                    'Retur',
+                    Text('${r.jumlahRetur} · ${Uang.Dari(r.retur).FormatRupiah()}', style: teks.bodyMedium),
+                  ),
+                  Baris('Penjualan kotor', TeksUang(Uang.Dari(r.kotor))),
+                  Baris('Diskon', TeksUang(Uang.Dari(r.diskon))),
+                  Baris('Pajak', TeksUang(Uang.Dari(r.pajak))),
+                  Baris(
+                    'Penjualan bersih',
+                    TeksUang(Uang.Dari(r.bersih), gaya: teks.titleMedium),
+                    gaya: teks.titleMedium,
+                  ),
+                  if (r.perMetodeBayar.isNotEmpty) ...[
+                    const Divider(),
+                    Text('Per metode bayar', style: teks.titleSmall),
+                    for (final m in r.perMetodeBayar) Baris(m.nama, TeksUang(Uang.Dari(m.jumlah))),
+                  ],
+                  if (r.perKasir.isNotEmpty) ...[
+                    const Divider(),
+                    Text('Per kasir', style: teks.titleSmall),
+                    for (final k in r.perKasir)
+                      Baris('${k.nama} · ${k.jumlahTransaksi} transaksi', TeksUang(Uang.Dari(k.bersih))),
+                  ],
+                ],
+              ),
+            );
+          },
+        ),
+      ),
+      actions: [TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Tutup'))],
+    );
+  }
 }
