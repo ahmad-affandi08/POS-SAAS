@@ -63,6 +63,22 @@ final class PembuatPengirimWhatsapp
         return is_string($nama) && $nama !== '' ? $nama : null;
     }
 
+    /** Nama templat resmi untuk tautan persetujuan estimasi servis bengkel (§9.10); null = kirim teks. */
+    public function AmbilTemplatPersetujuanServis(): ?string
+    {
+        $nama = config('integrasi.Whatsapp.Pengaturan.NamaTemplatPersetujuanServis');
+
+        return is_string($nama) && $nama !== '' ? $nama : null;
+    }
+
+    /** Nama templat resmi untuk pengingat servis berkala bengkel (§9.10); null = kirim teks. */
+    public function AmbilTemplatPengingatServis(): ?string
+    {
+        $nama = config('integrasi.Whatsapp.Pengaturan.NamaTemplatPengingatServis');
+
+        return is_string($nama) && $nama !== '' ? $nama : null;
+    }
+
     /** Nama templat resmi untuk notifikasi cucian siap diambil (laundry §9.9); null = kirim teks. */
     public function AmbilTemplatLaundrySiap(): ?string
     {

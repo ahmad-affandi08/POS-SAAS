@@ -25,6 +25,7 @@ use App\Http\Kontroler\Publik\BerhentiLanggananKontroler;
 use App\Http\Kontroler\Publik\DokumenLegalPublikKontroler;
 use App\Http\Kontroler\Publik\KompatibilitasPerangkatKontroler as KompatibilitasPerangkatPublikKontroler;
 use App\Http\Kontroler\Publik\PengembangKontroler;
+use App\Http\Kontroler\Publik\PersetujuanServisKontroler;
 use App\Http\Kontroler\Publik\PesanSendiriKontroler;
 use App\Http\Kontroler\Publik\PortalKurirKontroler;
 use App\Http\Kontroler\Publik\ProspekSitusKontroler;
@@ -237,6 +238,8 @@ Route::middleware([TolakDomainPengelola::class, ArahkanDomainAplikasi::class, Ba
             Route::group([], base_path('routes/Reservasi.php'));
             // Laundry (§9.9): tiket & status proses cucian.
             Route::group([], base_path('routes/Laundry.php'));
+            // Bengkel (§9.10): perintah kerja, kendaraan pelanggan, persetujuan estimasi, servis berkala.
+            Route::group([], base_path('routes/Bengkel.php'));
             // F-17/F-10c: toko online, pesanan, zona ongkir, kurir, dan pengiriman.
             Route::group([], base_path('routes/TokoOnline.php'));
         });
@@ -277,6 +280,16 @@ Route::middleware([TolakDomainPengelola::class, ArahkanDomainAplikasi::class, Ba
                 ->withoutMiddleware(ValidateCsrfToken::class)
                 ->middleware('throttle:pesan-sendiri-20')
                 ->name('publik.pesan-sendiri.pesan');
+        });
+
+    // Bengkel (§9.10): persetujuan estimasi servis tanpa akun lewat tautan rahasia (WhatsApp) dari bengkel. Slug
+    // situs pemasaran bagian kedua `servis` ditolak `AturanSlugSitus` supaya tidak menaungi rute ini.
+    Route::prefix('/{slugTenant}/servis/{tokenServis}')
+        ->where(['slugTenant' => '[a-z0-9]+(?:-[a-z0-9]+)*', 'tokenServis' => '[A-Za-z0-9]{40}'])
+        ->group(function (): void {
+            Route::get('/', [PersetujuanServisKontroler::class, 'Tampilkan'])->middleware('throttle:60,1')->name('publik.persetujuan-servis');
+            Route::post('/setujui', [PersetujuanServisKontroler::class, 'Setujui'])->middleware('throttle:10,1')->name('publik.persetujuan-servis.setujui');
+            Route::post('/tolak', [PersetujuanServisKontroler::class, 'Tolak'])->middleware('throttle:10,1')->name('publik.persetujuan-servis.tolak');
         });
 
     // F-10 (v3.49): portal kurir tanpa akun lewat tautan rahasia dari toko.

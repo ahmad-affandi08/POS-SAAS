@@ -1,13 +1,22 @@
+import { Link, usePage } from '@inertiajs/react';
+
+import AksiHalaman from '@/Komponen/Kelola/AksiHalaman';
 import { kolomPenjualan } from '@/Komponen/Penjualan/KolomPenjualan';
 import TabelData from '@/Komponen/TabelData/TabelData';
 import type { DefinisiSaring } from '@/Komponen/TabelData/Tipe';
+import { Button } from '@/Komponen/Ui/button';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
+import type { PropsBersamaAplikasi } from '@/Tipe/Aplikasi';
+import { IzinTenant, PunyaIzinTenant } from '@/Tipe/Organisasi';
 import type { PropsDaftarPenjualan } from '@/Tipe/Penjualan';
 
 const alamat = '/kelola/penjualan';
 
 /** F-07b: daftar penjualan dari aplikasi POS (baca saja). Koreksi lewat void/retur menyusul (F-09). */
 export default function HalamanDaftarPenjualan({ Penjualan, OpsiOutlet, OpsiStatus, OpsiKanal }: PropsDaftarPenjualan) {
+    const { props } = usePage<PropsBersamaAplikasi>();
+    // Bengkel (§9.10): grup menu ini sudah di batas 7 sub-menu (D-27), jadi perintah kerja dibuka dari sini & Ctrl+K.
+    const bengkel = PunyaIzinTenant(props.Akses, IzinTenant.BengkelKelola);
     const saring: DefinisiSaring[] = [
         ...(OpsiOutlet.length > 1
             ? [
@@ -41,6 +50,13 @@ export default function HalamanDaftarPenjualan({ Penjualan, OpsiOutlet, OpsiStat
                 Penjualan dibuat kasir di aplikasi POS, termasuk saat offline, lalu terkirim ke sini begitu perangkat
                 online. Stok dan jurnal tercatat otomatis saat penjualan diterima.
             </p>
+            {bengkel ? (
+                <AksiHalaman>
+                    <Button asChild variant="outline" className="h-8 pointer-coarse:h-11">
+                        <Link href="/kelola/bengkel/perintah-kerja">Perintah kerja bengkel</Link>
+                    </Button>
+                </AksiHalaman>
+            ) : null}
 
             <TabelData
                 id="penjualan"

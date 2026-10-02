@@ -7,6 +7,7 @@ namespace App\Domain\Penjualan\Aksi;
 use App\Domain\Akuntansi\Aksi\BalikkanJurnal;
 use App\Domain\Akuntansi\Enum\JenisSumberJurnal;
 use App\Domain\Akuntansi\Layanan\PenjagaKunciPeriode;
+use App\Domain\Bengkel\Layanan\PenagihPerintahKerjaPenjualan;
 use App\Domain\Bersama\Audit\Layanan\PencatatAudit;
 use App\Domain\Bersama\Dokumen\Layanan\PencatatRiwayatStatus;
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
@@ -93,6 +94,7 @@ final class TerimaVoidPenjualanPos
         private readonly PencatatDepositPenjualan $deposit,
         private readonly PencatatSesiPenjualan $sesi,
         private readonly PencatatLaundryPenjualan $laundry,
+        private readonly PenagihPerintahKerjaPenjualan $perintahKerja,
         private readonly InfoBatchStok $infoBatch,
         private readonly InfoNomorSeri $infoSeri,
     ) {}
@@ -244,6 +246,8 @@ final class TerimaVoidPenjualanPos
         $this->penutupUangMukaOnline->Batalkan($penjualan->Id, $kasir->id);
         // Laundry (§9.9): tiket laundry penjualan yang di-void dibatalkan (kecuali sudah diambil).
         $this->laundry->Batalkan($penjualan->Id, $kasir->id);
+        // Bengkel (§9.10): perintah kerja yang ditagih lewat penjualan ini kembali Selesai dan bisa ditagih ulang.
+        $this->perintahKerja->Batalkan($penjualan->Id, $kasir->id);
 
         // F-14a: void mengeluarkan penjualan dari tanggal bisnisnya; ringkasan dihitung ulang di antrean setelah commit.
         PenjualanDivoid::dispatch($penjualan->IdTenant, $penjualan->IdOutlet, $penjualan->TanggalBisnis->toDateString(), $penjualan->Id);

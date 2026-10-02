@@ -26,4 +26,27 @@ final class StokTersediaGudang
 
         return $hasil;
     }
+
+    /**
+     * Bengkel (§9.10): jumlah tersedia sebagian produk saja (sparepart di perintah kerja), tanpa memuat seluruh lokasi.
+     *
+     * @param  list<int>  $idProduk
+     * @return array<int, string> Id produk → JumlahTersedia (string desimal); produk tanpa saldo tidak muncul
+     */
+    public function AmbilProduk(int $idGudang, array $idProduk): array
+    {
+        $idProduk = array_values(array_unique($idProduk));
+
+        if ($idProduk === []) {
+            return [];
+        }
+
+        $hasil = [];
+
+        foreach (SaldoStok::query()->where('IdGudang', $idGudang)->whereIn('IdProduk', $idProduk)->get(['IdProduk', 'JumlahTersedia']) as $s) {
+            $hasil[$s->IdProduk] = (string) $s->JumlahTersedia;
+        }
+
+        return $hasil;
+    }
 }

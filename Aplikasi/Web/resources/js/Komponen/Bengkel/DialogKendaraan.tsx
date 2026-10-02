@@ -1,0 +1,208 @@
+import { useForm } from '@inertiajs/react';
+import { useState } from 'react';
+
+import PemilihCariBengkel from '@/Komponen/Bengkel/PemilihCariBengkel';
+import BidangTeks from '@/Komponen/Formulir/BidangTeks';
+import BidangTeksPanjang from '@/Komponen/Formulir/BidangTeksPanjang';
+import KotakCentang from '@/Komponen/Formulir/KotakCentang';
+import Tombol from '@/Komponen/Formulir/Tombol';
+import BidangJumlah from '@/Komponen/Katalog/BidangJumlah';
+import DialogFormulir from '@/Komponen/Tindakan/DialogFormulir';
+import { DialogFooter } from '@/Komponen/Ui/dialog';
+import type { Kendaraan } from '@/Tipe/Bengkel';
+
+type PelangganPilihan = { Uuid: string; Nama: string; NoHp: string | null };
+
+type IsianKendaraan = {
+    UuidPelanggan: string;
+    NomorPolisi: string;
+    Merek: string;
+    Tipe: string;
+    Tahun: string;
+    Warna: string;
+    NomorRangka: string;
+    NomorMesin: string;
+    KmTerakhir: string;
+    Catatan: string;
+    Aktif: boolean;
+};
+
+export const AlamatKendaraan = '/kelola/bengkel/kendaraan';
+
+/**
+ * Tambah/ubah kendaraan pelanggan (§9.10). Nomor polisi dirapikan server ("ad1234xy" → "AD 1234 XY") dan unik di antara
+ * kendaraan aktif; kendaraan yang berganti pemilik diarsipkan supaya nomornya bisa didaftarkan ulang tanpa menghapus
+ * riwayat servisnya.
+ */
+export default function DialogKendaraan({
+    kendaraan,
+    pelanggan,
+    saatTutup,
+}: {
+    kendaraan: Kendaraan | null;
+    /** Pelanggan tetap (dari formulir perintah kerja / detail pelanggan); null = pilih di dialog. */
+    pelanggan: { Uuid: string; Nama: string } | null;
+    saatTutup: () => void;
+}) {
+    const [namaPelanggan, AturNamaPelanggan] = useState(kendaraan?.Pelanggan.Nama ?? pelanggan?.Nama ?? '');
+    const formulir = useForm<IsianKendaraan>({
+        UuidPelanggan: kendaraan?.Pelanggan.Uuid ?? pelanggan?.Uuid ?? '',
+        NomorPolisi: kendaraan?.NomorPolisi ?? '',
+        Merek: kendaraan?.Merek ?? '',
+        Tipe: kendaraan?.Tipe ?? '',
+        Tahun: kendaraan?.Tahun === null || kendaraan === null ? '' : String(kendaraan.Tahun),
+        Warna: kendaraan?.Warna ?? '',
+        NomorRangka: kendaraan?.NomorRangka ?? '',
+        NomorMesin: kendaraan?.NomorMesin ?? '',
+        KmTerakhir: kendaraan?.KmTerakhir === null || kendaraan === null ? '' : String(kendaraan.KmTerakhir),
+        Catatan: kendaraan?.Catatan ?? '',
+        Aktif: kendaraan?.Aktif ?? true,
+    });
+    const d = formulir.data;
+    const galat = formulir.errors as Record<string, string | undefined>;
+    const judul = kendaraan === null ? 'Tambah kendaraan' : `Ubah kendaraan ${kendaraan.NomorPolisi}`;
+
+    return (
+        <DialogFormulir judul={judul} lebar="lebar" saatTutup={saatTutup} galatUmum={galat.Umum}>
+            <form
+                onSubmit={(e) => {
+                    e.preventDefault();
+                    formulir.transform((isi) => ({
+                        ...isi,
+                        Tahun: isi.Tahun === '' ? null : Number(isi.Tahun),
+                        KmTerakhir: isi.KmTerakhir === '' ? null : Number(isi.KmTerakhir),
+                    }));
+                    const pilihan = { preserveScroll: true, preserveState: true, onSuccess: saatTutup };
+
+                    if (kendaraan === null) {
+                        formulir.post(AlamatKendaraan, pilihan);
+                    } else {
+                        formulir.put(`${AlamatKendaraan}/${kendaraan.Uuid}`, pilihan);
+                    }
+                }}
+                className="grid gap-4 sm:grid-cols-2"
+                noValidate
+                aria-label={judul}
+            >
+                <div className="sm:col-span-2">
+                    {pelanggan === null ? (
+                        <PemilihCariBengkel<PelangganPilihan>
+                            sumber="pelanggan"
+                            label="Pemilik (pelanggan)"
+                            placeholder="Pilih pelanggan"
+                            buatUrl={(kata) =>
+                                `/kelola/bengkel/pelanggan/cari?${new URLSearchParams({ kata }).toString()}`
+                            }
+                            ambilId={(p) => p.Uuid}
+                            ambilJudul={(p) => p.Nama}
+                            ambilKeterangan={(p) => p.NoHp}
+                            saatPilih={(p) => {
+                                formulir.setData('UuidPelanggan', p.Uuid);
+                                AturNamaPelanggan(p.Nama);
+                            }}
+                            nilaiTerpilih={d.UuidPelanggan === '' ? undefined : namaPelanggan}
+                            pesanKosong="Belum ada pelanggan aktif. Tambahkan dulu di Pelanggan."
+                            galat={galat.UuidPelanggan}
+                            wajib
+                        />
+                    ) : (
+                        <p className="text-isi text-teks-utama">
+                            Pemilik: <span className="font-semibold">{pelanggan.Nama}</span>
+                        </p>
+                    )}
+                </div>
+                <BidangTeks
+                    label="Nomor polisi"
+                    nilai={d.NomorPolisi}
+                    saatBerubah={(nilai) => formulir.setData('NomorPolisi', nilai)}
+                    galat={galat.NomorPolisi}
+                    keterangan="Contoh: AD 1234 XY. Huruf & spasi dirapikan otomatis."
+                    kode
+                    required
+                    maxLength={20}
+                />
+                <BidangTeks
+                    label="Merek"
+                    nilai={d.Merek}
+                    saatBerubah={(nilai) => formulir.setData('Merek', nilai)}
+                    galat={galat.Merek}
+                    required
+                    maxLength={50}
+                />
+                <BidangTeks
+                    label="Tipe"
+                    nilai={d.Tipe}
+                    saatBerubah={(nilai) => formulir.setData('Tipe', nilai)}
+                    galat={galat.Tipe}
+                    maxLength={80}
+                />
+                <BidangJumlah
+                    label="Tahun"
+                    nilai={d.Tahun}
+                    saatBerubah={(nilai) => formulir.setData('Tahun', nilai)}
+                    galat={galat.Tahun}
+                    desimal={0}
+                    digitBulat={4}
+                />
+                <BidangTeks
+                    label="Warna"
+                    nilai={d.Warna}
+                    saatBerubah={(nilai) => formulir.setData('Warna', nilai)}
+                    galat={galat.Warna}
+                    maxLength={30}
+                />
+                <BidangJumlah
+                    label="KM terakhir"
+                    nilai={d.KmTerakhir}
+                    saatBerubah={(nilai) => formulir.setData('KmTerakhir', nilai)}
+                    galat={galat.KmTerakhir}
+                    desimal={0}
+                    digitBulat={7}
+                    akhiran="km"
+                />
+                <BidangTeks
+                    label="Nomor rangka"
+                    nilai={d.NomorRangka}
+                    saatBerubah={(nilai) => formulir.setData('NomorRangka', nilai)}
+                    galat={galat.NomorRangka}
+                    kode
+                    maxLength={40}
+                />
+                <BidangTeks
+                    label="Nomor mesin"
+                    nilai={d.NomorMesin}
+                    saatBerubah={(nilai) => formulir.setData('NomorMesin', nilai)}
+                    galat={galat.NomorMesin}
+                    kode
+                    maxLength={40}
+                />
+                <div className="sm:col-span-2">
+                    <BidangTeksPanjang
+                        label="Catatan"
+                        nilai={d.Catatan}
+                        saatBerubah={(nilai) => formulir.setData('Catatan', nilai)}
+                        galat={galat.Catatan}
+                        maksimal={255}
+                    />
+                </div>
+                {kendaraan !== null ? (
+                    <div className="sm:col-span-2">
+                        <KotakCentang
+                            label="Kendaraan aktif (hapus centang bila sudah dijual atau berganti pemilik)"
+                            nilai={d.Aktif}
+                            saatBerubah={(nilai) => formulir.setData('Aktif', nilai)}
+                        />
+                    </div>
+                ) : null}
+                <DialogFooter className="sm:col-span-2 sm:justify-start">
+                    <Tombol type="submit" memproses={formulir.processing}>
+                        Simpan kendaraan
+                    </Tombol>
+                    <Tombol type="button" varian="sekunder" onClick={saatTutup}>
+                        Batal
+                    </Tombol>
+                </DialogFooter>
+            </form>
+        </DialogFormulir>
+    );
+}

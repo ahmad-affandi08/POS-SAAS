@@ -8,6 +8,7 @@ use App\Domain\Akuntansi\Aksi\PostingJurnal;
 use App\Domain\Akuntansi\Enum\PeranAkun;
 use App\Domain\Akuntansi\Layanan\PenjagaKunciPeriode;
 use App\Domain\Akuntansi\Layanan\PenyediaAkunPeran;
+use App\Domain\Bengkel\Layanan\PenagihPerintahKerjaPenjualan;
 use App\Domain\Bersama\Audit\Layanan\PencatatAudit;
 use App\Domain\Bersama\Dokumen\Layanan\PencatatRiwayatStatus;
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
@@ -170,6 +171,7 @@ final class TerimaPenjualanPos
         private readonly PemeriksaTukarBarang $pemeriksaTukar,
         private readonly SelesaikanReservasiPenjualan $reservasi,
         private readonly PencatatLaundryPenjualan $laundry,
+        private readonly PenagihPerintahKerjaPenjualan $perintahKerja,
         private readonly PenautTagihanQrisPenjualan $penautQris,
         private readonly PencatatDepositPenjualan $deposit,
         private readonly PencatatSesiPenjualan $sesi,
@@ -469,12 +471,37 @@ final class TerimaPenjualanPos
             }
         }
 
+        // Bengkel (§9.10): perintah kerja yang ditagih ditandai Ditagih & ditautkan di transaksi yang sama; masalah (tidak
+        // dikenal, belum disetujui, sudah ditagih) = penjualan tetap diterima + tinjauan.
+        $stafPerintahKerja = [];
+
+        if ($data->uuidPerintahKerja !== null) {
+            [$masalahPerintahKerja, $stafPerintahKerja] = $this->perintahKerja->Tagih(
+                $data->uuidPerintahKerja,
+                $penjualan->Id,
+                $outlet->idOutlet,
+                $kasir->id,
+                array_values(array_map(fn ($b): string => $b->uuidProduk, $data->baris)),
+            );
+
+            if ($masalahPerintahKerja !== []) {
+                $tinjauan['PerintahKerja'] = 'PerintahKerja: '.implode('; ', $masalahPerintahKerja);
+            }
+        }
+
         // F-18: komisi staf yang melayani baris (hanya laporan, tanpa jurnal) di transaksi yang sama. Staf yang belum dikenal
-        // server tidak mendapat komisi; penjualan tetap diterima + tinjauan.
+        // server tidak mendapat komisi; penjualan tetap diterima + tinjauan. Baris tanpa staf yang berasal dari perintah
+        // kerja bengkel mendapat mekanik baris jasanya (urut baris per produk).
         $barisKomisi = [];
 
         foreach ($data->baris as $indeks => $baris) {
-            if ($baris->uuidKaryawan === []) {
+            $staf = $baris->uuidKaryawan;
+
+            if ($staf === [] && ($stafPerintahKerja[$baris->uuidProduk] ?? []) !== []) {
+                $staf = array_shift($stafPerintahKerja[$baris->uuidProduk]);
+            }
+
+            if ($staf === []) {
                 continue;
             }
 
@@ -485,7 +512,7 @@ final class TerimaPenjualanPos
                 $produk[$baris->uuidProduk]->uuidKategori,
                 $baris->jumlah,
                 $h->bruto->Kurangi($h->diskon)->Kurangi($h->diskonPesanan)->Kurangi($h->pajak->Kurangi($h->pajakEksklusif)),
-                $baris->uuidKaryawan,
+                $staf,
             );
         }
 

@@ -455,13 +455,31 @@ const sumberPencarian: SumberPencarian[] = [
  * Halaman yang berumah sebagai tab di halaman lain (D-27: satu rumah menu, grup sudah di batas sub-menu). Ia tidak
  * punya entri menu, tetapi Ctrl+K harus tetap menemukannya; hanya muncul bila halaman induknya terlihat (izin sama).
  */
-const halamanTurunan: (HalamanPencarian & { induk: string })[] = [
+const halamanTurunan: (HalamanPencarian & { induk: string; izin?: KunciIzinTenant })[] = [
     {
         induk: '/kelola/persediaan/kartu-stok',
         label: 'Riwayat nomor seri / IMEI',
         href: '/kelola/persediaan/kartu-stok/nomor-seri',
         grup: 'Persediaan',
         ikon: 'Gudang',
+    },
+    // Bengkel (§9.10): grup "Penjualan & kasir" sudah 7 sub-menu (D-27); perintah kerja & kendaraan dibuka dari tombol
+    // di Daftar penjualan, detail pelanggan, Kotak Tindakan, dan Ctrl+K. Tetap disaring izin `bengkel.kelola`.
+    {
+        induk: '/kelola/penjualan',
+        label: 'Perintah kerja bengkel',
+        href: '/kelola/bengkel/perintah-kerja',
+        grup: 'Penjualan & kasir',
+        ikon: 'Struk',
+        izin: IzinTenant.BengkelKelola,
+    },
+    {
+        induk: '/kelola/penjualan',
+        label: 'Kendaraan pelanggan',
+        href: '/kelola/bengkel/kendaraan',
+        grup: 'Penjualan & kasir',
+        ikon: 'Struk',
+        izin: IzinTenant.BengkelKelola,
     },
 ];
 
@@ -494,8 +512,10 @@ export function SusunPencarian(
             })),
     );
     // Halaman yang rumahnya tab di halaman lain (bukan entri menu sendiri) ikut Ctrl+K selama induknya terlihat.
-    const turunan = halamanTurunan.flatMap(({ induk, ...halamanTurunanItem }): HalamanPencarian[] =>
-        menu.some((ada) => ada.href === induk) ? [halamanTurunanItem] : [],
+    const turunan = halamanTurunan.flatMap(({ induk, izin, ...halamanTurunanItem }): HalamanPencarian[] =>
+        menu.some((ada) => ada.href === induk) && (izin === undefined || PunyaIzinTenant(akses, izin))
+            ? [halamanTurunanItem]
+            : [],
     );
     // Menu samping menang bila alamatnya sama, supaya satu halaman tidak muncul dua kali di hasil pencarian.
     const halaman = [...menu, ...turunan, ...pengaturan.filter((item) => !menu.some((ada) => ada.href === item.href))];

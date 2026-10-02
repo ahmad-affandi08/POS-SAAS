@@ -47,6 +47,10 @@ export const KunciKueri = {
         Slot: (alamat: string, outlet: string, layanan: string, tanggal: string, staf: string) =>
             ['Reservasi', 'Slot', alamat, outlet, layanan, tanggal, staf] as const,
     },
+    // Bengkel (§9.10): pemilih pelanggan, kendaraan, dan produk jasa/sparepart di formulir perintah kerja (cari-server).
+    Bengkel: {
+        Cari: (sumber: string, url: string) => ['Bengkel', 'Cari', sumber, url] as const,
+    },
     // P-10: dampak menaikkan versi minimum (BR-P10.2), dibaca saat dialog dibuka.
     Pengelola: {
         DampakVersiMinimum: (uuidRilis: string) => ['Pengelola', 'DampakVersiMinimum', uuidRilis] as const,

@@ -18,6 +18,7 @@ use App\Http\Kontroler\Pos\V1\MejaKontroler;
 use App\Http\Kontroler\Pos\V1\PelangganKontroler;
 use App\Http\Kontroler\Pos\V1\PenjualanKontroler;
 use App\Http\Kontroler\Pos\V1\PerangkatKontroler;
+use App\Http\Kontroler\Pos\V1\PerintahKerjaKontroler;
 use App\Http\Kontroler\Pos\V1\PersetujuanJarakJauhKontroler;
 use App\Http\Kontroler\Pos\V1\PesananOnlineKontroler;
 use App\Http\Kontroler\Pos\V1\PesananPenjualanKontroler;
@@ -161,6 +162,10 @@ Route::middleware([AutentikasiPerangkat::class, IdempotensiPos::class])->group(f
         Route::get('/salesman/stok', [SalesmanKontroler::class, 'Stok'])->middleware('throttle:pos-30')->name('pos.salesman.stok');
         Route::get('/salesman/kunjungan', [SalesmanKontroler::class, 'Kunjungan'])->middleware('throttle:pos-60')->name('pos.salesman.kunjungan');
 
+        // Bengkel (§9.10): perintah kerja siap tagih outlet & satu perintah kerja untuk dimuat ke keranjang (online).
+        Route::get('/perintah-kerja', [PerintahKerjaKontroler::class, 'Daftar'])->middleware('throttle:pos-60')->name('pos.perintah-kerja');
+        Route::get('/perintah-kerja/{perintahKerja}', [PerintahKerjaKontroler::class, 'Ambil'])
+            ->middleware('throttle:pos-120')->where('perintahKerja', $ulid)->name('pos.perintah-kerja.tampil');
         Route::get('/laundry', [LaundryKontroler::class, 'Cari'])->middleware('throttle:pos-30')->name('pos.laundry');
         Route::post('/laundry/{tiket}/status', [LaundryKontroler::class, 'UbahStatus'])
             ->middleware('throttle:pos-60')->where('tiket', $ulid)->name('pos.laundry.status');
