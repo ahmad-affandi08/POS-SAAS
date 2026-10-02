@@ -81,6 +81,7 @@ use App\Domain\Persediaan\Kueri\InfoNomorSeri;
 use App\Domain\Persediaan\Layanan\AlokatorBatchFefo;
 use App\Domain\Persediaan\Layanan\PelacakNomorSeri;
 use App\Domain\Persediaan\Layanan\PemeriksaStokMinus;
+use App\Domain\Persediaan\Layanan\PencadangStok;
 use App\Domain\Persediaan\Layanan\PetaAkunPersediaan;
 use App\Domain\Promo\Layanan\PemakaiVoucher;
 use App\Domain\Promo\Layanan\PencatatKlaimPromoPemasok;
@@ -158,6 +159,7 @@ final class TerimaPenjualanPos
         private readonly PemeriksaPromoPenjualan $pemeriksaPromo,
         private readonly PencatatPemakaianPromo $pemakaianPromo,
         private readonly PencatatKlaimPromoPemasok $klaimPemasok,
+        private readonly PencadangStok $pencadangStok,
         private readonly PemakaiVoucher $voucher,
         private readonly PencatatPiutangPenjualan $piutang,
         private readonly PencatatKomisiPenjualan $komisi,
@@ -375,6 +377,8 @@ final class TerimaPenjualanPos
         }
 
         if ($pesananOnline !== null) {
+            // v3.48: cadangan stok pesanan ditutup; stoknya berkurang lewat mutasi penjualan ini.
+            $this->pencadangStok->Pakai(PencadangStok::SUMBER_PESANAN_ONLINE, $pesananOnline->Uuid);
             $masalahUangMuka = [...$masalahUangMuka, ...$this->penutupUangMukaOnline->Tandai($pesananOnline, $penjualan->Id, $uangMukaDipakai, $data->dibuatPada, $kasir->id)];
             // F-17 bagian 3: ongkir pesanan yang tidak ditagih kasir berarti uang yang tidak pernah masuk. Ditandai,
             // tidak ditolak (§18.3): uangnya sudah diterima, dan yang salah harus diperiksa orang.

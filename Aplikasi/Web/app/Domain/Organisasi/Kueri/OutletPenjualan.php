@@ -26,13 +26,6 @@ final class OutletPenjualan
             return null;
         }
 
-        $gudang = Gudang::query()
-            ->where('IdOutlet', $idOutlet)
-            ->where('Jenis', JenisGudang::Toko->value)
-            ->orderByRaw('CASE WHEN `Status` = ? THEN 0 ELSE 1 END', [StatusOrganisasi::Aktif->value])
-            ->orderBy('Id')
-            ->first(['Id']);
-
         return new DataOutletPenjualan(
             idOutlet: $outlet->Id,
             uuidOutlet: $outlet->Uuid,
@@ -46,8 +39,21 @@ final class OutletPenjualan
             idPerangkat: $perangkat->Id,
             uuidPerangkat: $perangkat->Uuid,
             kodePerangkat: $perangkat->Kode,
-            idGudangToko: $gudang?->Id,
+            idGudangToko: $this->AmbilIdGudangToko($idOutlet),
         );
+    }
+
+    /** Lokasi stok Toko pertama outlet (aktif didahulukan, lalu Id terkecil); null bila belum ada. */
+    public function AmbilIdGudangToko(int $idOutlet): ?int
+    {
+        $id = Gudang::query()
+            ->where('IdOutlet', $idOutlet)
+            ->where('Jenis', JenisGudang::Toko->value)
+            ->orderByRaw('CASE WHEN `Status` = ? THEN 0 ELSE 1 END', [StatusOrganisasi::Aktif->value])
+            ->orderBy('Id')
+            ->value('Id');
+
+        return $id === null ? null : (int) $id;
     }
 
     /** F-17: sakelar toko online outlet ini (kolom `Outlet.TokoOnlineAktif`). */

@@ -11,6 +11,7 @@ use App\Domain\Penjualan\Enum\StatusPesananOnline;
 use App\Domain\Penjualan\Layanan\PemberitahuPesananOnline;
 use App\Domain\Penjualan\Model\PengaturanTokoOnline;
 use App\Domain\Penjualan\Model\PesananOnline;
+use App\Domain\Persediaan\Layanan\PencadangStok;
 use App\Domain\Promo\Aksi\LepasVoucherPos;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -42,6 +43,7 @@ final class KedaluwarsakanPesananOnline
         private readonly PencatatAudit $audit,
         private readonly PemberitahuPesananOnline $pemberitahu,
         private readonly LepasVoucherPos $lepasVoucher,
+        private readonly PencadangStok $pencadang,
     ) {}
 
     /** @return int jumlah pesanan yang dihanguskan */
@@ -100,6 +102,7 @@ final class KedaluwarsakanPesananOnline
             if ($pesanan->KodeVoucher !== null) {
                 $this->lepasVoucher->Jalankan($pesanan->KodeVoucher, $pesanan->Uuid);
             }
+            $this->pencadang->Lepas(PencadangStok::SUMBER_PESANAN_ONLINE, $pesanan->Uuid);
             $this->riwayat->Catat(PesananOnline::JENIS_DOKUMEN, $pesanan->Id, $dari->value, StatusPesananOnline::Kedaluwarsa->value, null, $alasan);
             $this->pemberitahu->Antrekan($pesanan, PeristiwaPesananOnline::Kedaluwarsa);
             $this->audit->Catat(

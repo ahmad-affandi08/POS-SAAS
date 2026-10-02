@@ -21,6 +21,7 @@ use App\Domain\Penjualan\Layanan\PenghitungTokoOnline;
 use App\Domain\Penjualan\Model\PengaturanTokoOnline;
 use App\Domain\Penjualan\Model\PesananOnline;
 use App\Domain\Penjualan\Model\PesananOnlineDetail;
+use App\Domain\Persediaan\Layanan\PencadangStok;
 use App\Domain\Promo\Aksi\PesanVoucherPos;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\QueryException;
@@ -33,6 +34,7 @@ use Illuminate\Support\Str;
  * karena nomor itulah yang sudah diverifikasi), dan harga tier/promo pelanggan ikut dihitung. Tanpa masuk, pesanan
  * tidak pernah ditautkan ke pelanggan walau nomornya cocok: nomor ketikan tamu belum terbukti miliknya.
  * `KodeVoucher` (v3.46) opsional: diperiksa saat menghitung lalu dipesan untuk pesanan ini di transaksi yang sama.
+ * Stok (v3.48) dicadangkan untuk pesanan ini di transaksi yang sama; stok yang direbut checkout lain = checkout gagal utuh.
  */
 final class BuatPesananOnline
 {
@@ -43,6 +45,7 @@ final class BuatPesananOnline
         private readonly PenomorDokumen $penomor,
         private readonly IdentitasPelanggan $pelanggan,
         private readonly PesanVoucherPos $pesanVoucher,
+        private readonly PencadangStok $pencadang,
     ) {}
 
     /**
@@ -151,6 +154,8 @@ final class BuatPesananOnline
                         'TotalBaris' => $b['Total']->KeString(),
                     ]);
                 }
+
+                $this->pencadang->Cadangkan(PencadangStok::SUMBER_PESANAN_ONLINE, $pesanan->Uuid, $konteks->idOutlet, PenghitungTokoOnline::BarisCadangan($hitung['Baris']));
 
                 // v3.46: voucher dipesan atas Uuid pesanan sampai kasir menagihnya (berpindah ke penjualan) atau pesanan
                 // batal/kedaluwarsa (dilepas). Gagal memesan (habis direbut) = checkout gagal utuh.

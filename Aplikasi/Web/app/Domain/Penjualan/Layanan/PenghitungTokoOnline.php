@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Penjualan\Layanan;
 
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
+use App\Domain\Bersama\Nilai\Kuantitas;
 use App\Domain\Bersama\Nilai\Uang;
 use App\Domain\Organisasi\Model\Outlet;
 use App\Domain\Penjualan\Data\DataKonteksPesanSendiri;
@@ -12,6 +13,7 @@ use App\Domain\Penjualan\Enum\JenisPemenuhanOnline;
 use App\Domain\Penjualan\Enum\KanalPenjualan;
 use App\Domain\Penjualan\Model\PengaturanTokoOnline;
 use App\Domain\Penjualan\Model\ZonaPengiriman;
+use App\Domain\Persediaan\Layanan\PencadangStok;
 use App\Domain\Promo\Aksi\PesanVoucherPos;
 
 /**
@@ -29,13 +31,33 @@ use App\Domain\Promo\Aksi\PesanVoucherPos;
  * `$idPelanggan` = pembeli yang sudah masuk (F-17 bagian 3): harga tier & promo bersyarat pelanggan ikut dihitung.
  * `$kodeVoucher` (v3.46): voucher berkode diperiksa domain Promo (tidak dikenal/habis/kedaluwarsa = galat di bidang
  * `KodeVoucher`); promo wajib voucher-nya ikut dihitung. `Voucher` di hasil = {Kode, UuidPromo, NamaPromo} atau null.
+ *
+ * Stok (v3.48): ketersediaan diperiksa terhadap stok lokasi Toko dikurangi cadangan pesanan online lain
+ * (`PencadangStok::Periksa`, galat `StokTidakCukup`); pencadangan sungguhan terjadi saat checkout.
  */
 final class PenghitungTokoOnline
 {
     public function __construct(
         private readonly PenghitungPesanSendiri $dasar,
         private readonly PesanVoucherPos $voucher,
+        private readonly PencadangStok $pencadang,
     ) {}
+
+    /**
+     * Baris hasil hitung → masukan `PencadangStok` (produk yang dipesan, satuan, jumlah, pilihan).
+     *
+     * @param  list<array{UuidProduk: string, UuidProdukSatuan: string, Jumlah: Kuantitas, Pilihan: list<array{UuidPilihan: string}>}>  $baris
+     * @return list<array{UuidProduk: string, UuidProdukSatuan: string|null, Jumlah: Kuantitas, UuidPilihan: list<string>}>
+     */
+    public static function BarisCadangan(array $baris): array
+    {
+        return array_map(fn (array $b): array => [
+            'UuidProduk' => $b['UuidProduk'],
+            'UuidProdukSatuan' => $b['UuidProdukSatuan'],
+            'Jumlah' => $b['Jumlah'],
+            'UuidPilihan' => array_values(array_map(fn (array $p): string => $p['UuidPilihan'], $b['Pilihan'])),
+        ], $baris);
+    }
 
     /**
      * @param  list<array{UuidProduk: string, Jumlah: int, Pilihan: list<string>, UuidVarian?: string|null}>  $baris
@@ -59,6 +81,8 @@ final class PenghitungTokoOnline
         if ($hasil['Subtotal']->Bandingkan(Uang::Dari($pengaturan->MinimalPesanan)) < 0) {
             throw new PelanggaranAturanBisnis('MinimalPesanan', 'Nilai pesanan belum mencapai minimal belanja.', 'Baris');
         }
+
+        $this->pencadang->Periksa($konteks->idOutlet, self::BarisCadangan($hasil['Baris']));
 
         $zona = null;
         $ongkir = Uang::Nol();
