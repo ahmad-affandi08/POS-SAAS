@@ -75,6 +75,15 @@ return [
             'replace_placeholders' => true,
         ],
 
+        // K-21: laporan galat aplikasi kasir (konteks IdTenant & IdPerangkat, sudah disaring dari data pribadi).
+        'galat-perangkat' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/galat-perangkat.log'),
+            'level' => 'warning',
+            'days' => 30,
+            'replace_placeholders' => false,
+        ],
+
         'monthly' => [
             'driver' => 'monthly',
             'path' => storage_path('logs/laravel.log'),

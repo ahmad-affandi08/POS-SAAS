@@ -353,5 +353,10 @@
         "Metode": "POST",
         "Jalur": "api/pos/v1/reservasi",
         "Nama": "pos.reservasi.buat"
+    },
+    "POST api/pos/v1/perangkat/galat": {
+        "Metode": "POST",
+        "Jalur": "api/pos/v1/perangkat/galat",
+        "Nama": "pos.perangkat.galat"
     }
 }

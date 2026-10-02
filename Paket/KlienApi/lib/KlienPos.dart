@@ -532,6 +532,11 @@ class KlienPos {
     return UraiJson.AmbilBenar(json['Habis'], habis);
   }
 
+  /// K-21: kirim log galat aplikasi (maks. 50 entri `{Waktu, Tingkat, Sumber, Pesan, Jejak?}`, sudah disaring dari
+  /// data pribadi). Mengembalikan jumlah yang diterima server. Offline → `GalatJaringan`.
+  Future<int> LaporGalat(List<Map<String, Object?>> galat) async =>
+      UraiJson.AmbilBulat((await _Kirim('POST', 'perangkat/galat', {'Galat': galat}))['Diterima']);
+
   /// Laporkan profil hardware & hasil Wizard Uji Perangkat (PRD v1.96) untuk dukungan teknis. Offline → `GalatJaringan`.
   Future<void> KirimProfilHardware(Map<String, Object?> profil) async {
     await _Kirim('POST', 'perangkat/profil-hardware', profil);

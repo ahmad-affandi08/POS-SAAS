@@ -18,6 +18,7 @@ import '../Data/KameraSwafotoPlatform.dart';
 import '../Data/PemindaiQrPlatform.dart';
 import '../Data/LayarPelanggan/PabrikLayarPelanggan.dart';
 import '../Data/RepositoriAbsensi.dart';
+import '../Domain/Diagnostik/LogLokal.dart';
 import '../Domain/Karyawan/LayananAbsensi.dart';
 import '../Domain/Perangkat/KameraBukti.dart';
 import '../Domain/Perangkat/KameraSwafoto.dart';
@@ -84,6 +85,12 @@ import 'Lingkungan.dart';
 /// di test.
 final penyediaBasisData = Provider<BasisDataKasir>((ref) => throw UnimplementedError('Override penyediaBasisData'));
 final penyediaFolderAplikasi = Provider<Directory?>((ref) => null);
+
+/// K-21: log lokal & laporan galat (null bila folder aplikasi tidak tersedia, misalnya di test widget).
+final penyediaLogLokal = Provider<LogLokal?>((ref) {
+  final folder = ref.watch(penyediaFolderAplikasi);
+  return folder == null ? null : LogLokal(folder: folder, jam: ref.watch(penyediaJam));
+});
 final penyediaRahasia = Provider<PenyimpanRahasia>((ref) => PenyimpanRahasiaAman());
 final penyediaKlienHttp = Provider<http.Client>((ref) => http.Client());
 final penyediaLingkungan = Provider<Lingkungan>((ref) => Lingkungan.Dev);
@@ -166,6 +173,7 @@ final penyediaLayananSinkron = Provider<LayananSinkron>(
     repositori: ref.watch(penyediaRepositori),
     perangkat: ref.watch(penyediaLayananPerangkat),
     ujiPerangkat: ref.watch(penyediaLayananUjiPerangkat),
+    log: ref.watch(penyediaLogLokal),
     jam: ref.watch(penyediaJam),
   ),
 );

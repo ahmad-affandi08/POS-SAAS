@@ -58,6 +58,8 @@ Route::middleware([AutentikasiPerangkat::class, IdempotensiPos::class])->group(f
         ->middleware('throttle:pos-10')
         ->name('pos.perangkat.profil-hardware');
 
+    // K-21: laporan galat aplikasi kasir (log harian `galat-perangkat`, tanpa data pribadi).
+    Route::post('/perangkat/galat', [PerangkatKontroler::class, 'LaporGalat'])->middleware('throttle:pos-10')->name('pos.perangkat.galat');
     Route::post('/sinkron/kirim', [SinkronKontroler::class, 'Kirim'])->middleware('throttle:pos-120')->name('pos.sinkron.kirim');
 
     // Endpoint berjualan: POS terkunci saat langganan Ditangguhkan/Berhenti.

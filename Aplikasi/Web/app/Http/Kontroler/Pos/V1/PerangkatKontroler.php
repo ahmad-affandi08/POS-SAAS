@@ -6,6 +6,7 @@ namespace App\Http\Kontroler\Pos\V1;
 
 use App\Domain\Bersama\Audit\Layanan\PencatatAudit;
 use App\Domain\Organisasi\Aksi\AktifkanPerangkat;
+use App\Domain\Organisasi\Aksi\CatatLaporanGalatPerangkat;
 use App\Domain\Organisasi\Aksi\SimpanProfilHardware;
 use App\Domain\Tenant\Kueri\RingkasanTenant;
 use App\Domain\Tenant\Kueri\StatusLanggananTenant;
@@ -21,6 +22,7 @@ use Illuminate\Validation\Rule;
  * `POST /api/pos/v1/perangkat/aktivasi` (F-02 langkah 5, §16.3): tukar kode aktivasi → token perangkat, kode perangkat
  * untuk penomoran offline, info outlet & tenant. Token hanya dikirim sekali; aplikasi menyimpannya di secure storage.
  * `POST /api/pos/v1/perangkat/profil-hardware` (v1.96): laporan profil hardware & hasil Wizard Uji Perangkat.
+ * `POST /api/pos/v1/perangkat/galat` (K-21): kiriman log galat aplikasi (maks. 50 per kiriman) ke kanal log harian.
  */
 final class PerangkatKontroler extends Kontroler
 {
@@ -70,5 +72,28 @@ final class PerangkatKontroler extends Kontroler
         $simpan->Jalankan(AutentikasiPerangkat::AmbilPerangkat($permintaan), $data);
 
         return response()->json(['Tersimpan' => true]);
+    }
+
+    public function LaporGalat(Request $permintaan, CatatLaporanGalatPerangkat $catat): JsonResponse
+    {
+        $data = $permintaan->validate([
+            'Galat' => ['required', 'array', 'min:1', 'max:50'],
+            'Galat.*' => ['array:Waktu,Tingkat,Sumber,Pesan,Jejak'],
+            'Galat.*.Waktu' => ['required', 'date'],
+            'Galat.*.Tingkat' => ['required', Rule::in(['Galat', 'Peringatan'])],
+            'Galat.*.Sumber' => ['required', 'string', 'max:60'],
+            'Galat.*.Pesan' => ['required', 'string', 'max:500'],
+            'Galat.*.Jejak' => ['nullable', 'string', 'max:4000'],
+        ]);
+        $versi = $permintaan->header('X-Versi-Aplikasi');
+
+        /** @var list<array{Waktu: string, Tingkat: string, Sumber: string, Pesan: string, Jejak?: string|null}> $galat */
+        $galat = array_values($data['Galat']);
+
+        return response()->json(['Diterima' => $catat->Jalankan(
+            AutentikasiPerangkat::AmbilPerangkat($permintaan),
+            $galat,
+            is_string($versi) ? mb_substr(trim($versi), 0, 40) : null,
+        )]);
     }
 }

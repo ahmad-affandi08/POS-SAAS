@@ -787,6 +787,20 @@ void main() {
     expect(jsonDecode(dikirim.last.body), {'UuidPengguna': 'U1', 'Habis': false});
   });
 
+  test('K-21: laporan galat dikirim ke perangkat/galat', () async {
+    final dikirim = <http.Request>[];
+    final klien = BuatKlien((permintaan) async {
+      dikirim.add(permintaan);
+      return Json({'Diterima': 1}, 200);
+    });
+    final galat = {'Waktu': '2026-10-02T03:00:00.000Z', 'Tingkat': 'Galat', 'Sumber': 'Flutter', 'Pesan': 'x'};
+    expect(await klien.LaporGalat([galat]), 1);
+    expect(dikirim.single.url.path, '/api/pos/v1/perangkat/galat');
+    expect(jsonDecode(dikirim.single.body), {
+      'Galat': [galat],
+    });
+  });
+
   test('K-20: kalender, slot, dan buat booking dari kasir', () async {
     final dikirim = <http.Request>[];
     final reservasi = {

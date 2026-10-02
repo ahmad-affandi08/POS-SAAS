@@ -4,6 +4,7 @@ import 'package:sistem_desain/SistemDesain.dart';
 
 import '../Aplikasi/Penyedia.dart';
 import '../Domain/Perangkat/PengaturanPerangkat.dart';
+import 'BagianLogPerangkat.dart';
 import 'RuangKerja/IsiAreaKerja.dart';
 import 'Struk/BagianLayarPelanggan.dart';
 import 'Struk/BagianPrinterDapur.dart';
@@ -11,7 +12,7 @@ import 'Struk/BagianPrinterStruk.dart';
 import 'Struk/BagianUjiPerangkat.dart';
 
 /// Pengaturan perangkat kasir (PRD §17.2.7): printer struk (v1.79), printer dapur per stasiun (v1.87), ukuran tampilan, posisi keranjang, kunci otomatis,
-/// dan perbarui data kasir dari back-office. Tersimpan lokal di perangkat ini dan langsung berlaku.
+/// perbarui data kasir dari back-office, dan log & laporan galat (K-21). Tersimpan lokal di perangkat ini dan langsung berlaku.
 class LayarPengaturan extends ConsumerStatefulWidget {
   const LayarPengaturan({super.key});
 
@@ -173,6 +174,11 @@ class _LayarPengaturanState extends ConsumerState<LayarPengaturan> {
           'Uji perangkat',
           'Periksa printer, pemotong kertas, laci, dan pemindai. Hasilnya membantu tim dukungan bila ada kendala.',
           const BagianUjiPerangkat(),
+        ),
+        Bagian(
+          'Log & laporan galat',
+          'Galat aplikasi dicatat di perangkat tanpa data pribadi dan dikirim ke tim dukungan saat online.',
+          const BagianLogPerangkat(),
         ),
       ],
     );

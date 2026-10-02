@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:klien_api/KlienApi.dart';
 
+import '../Diagnostik/LogLokal.dart';
 import '../Perangkat/LayananUjiPerangkat.dart';
 import '../../Data/RepositoriKasir.dart';
 import '../Sesi/LayananPerangkat.dart';
@@ -40,6 +42,7 @@ class LayananSinkron {
     required this.repositori,
     required this.perangkat,
     this.ujiPerangkat,
+    this.log,
     DateTime Function()? jam,
   }) : _jam = jam ?? DateTime.now;
 
@@ -51,6 +54,9 @@ class LayananSinkron {
 
   /// v1.96: laporan Wizard Uji Perangkat yang tertunda ikut dikirim setelah outbox kosong.
   final LayananUjiPerangkat? ujiPerangkat;
+
+  /// K-21: galat lokal yang belum terkirim ikut dikirim setelah outbox kosong.
+  final LogLokal? log;
   final DateTime Function() _jam;
 
   bool _berjalan = false;
@@ -74,6 +80,10 @@ class LayananSinkron {
             return RingkasanSinkron(terkirim: terkirim, ditolak: ditolak, perangkatDicabut: true, tersambung: true);
           }
           await ujiPerangkat?.KirimTertunda();
+          // Tidak ditunggu: laporan galat tidak boleh menahan sinkron transaksi.
+          if (log case final log?) {
+            unawaited(log.KirimTertunda(klien));
+          }
           return RingkasanSinkron(terkirim: terkirim, ditolak: ditolak, tersambung: dijawabServer ? true : null);
         }
 

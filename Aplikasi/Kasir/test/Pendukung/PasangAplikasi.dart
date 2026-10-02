@@ -9,6 +9,7 @@ import 'package:kasir/Tampilan/Jual/UmpanBalikPindai.dart';
 import 'package:kasir/Aplikasi/AplikasiKasir.dart';
 import 'package:kasir/Aplikasi/Lingkungan.dart';
 import 'package:kasir/Aplikasi/Penyedia.dart';
+import 'package:kasir/Domain/Diagnostik/LogLokal.dart';
 import 'package:kasir/Domain/Perangkat/KameraBukti.dart';
 import 'package:kasir/Domain/Perangkat/KameraSwafoto.dart';
 import 'package:kasir/Domain/Perangkat/LayananLayarPelanggan.dart';
@@ -31,6 +32,7 @@ Future<void> PasangAplikasi(
   KameraBukti? kameraBukti,
   PemindaiQr? pemindaiQr,
   UmpanBalikPindai? umpanBalikPindai,
+  LogLokal? logLokal,
 }) async {
   // Ukuran logis juga untuk MediaQuery (tata letak ruang kerja memakai lebar layar), bukan hanya permukaan render.
   tester.view.devicePixelRatio = 1;
@@ -53,6 +55,7 @@ Future<void> PasangAplikasi(
         penyediaPemindaiQr.overrideWithValue(pemindaiQr ?? PemindaiQrTiruan(tersedia: false)),
         penyediaPemindaiPrinter.overrideWithValue(u.pemindai),
         penyediaUmpanBalikPindai.overrideWithValue(umpanBalikPindai ?? const UmpanBalikPindai()),
+        penyediaLogLokal.overrideWithValue(logLokal),
         penyediaPembuatLayarPelanggan.overrideWithValue(
           (p) => p.aktif ? u.layarPelanggan : const LayarPelangganTidakAda(),
         ),
