@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -562,15 +563,35 @@ final penyediaLaporanZTertunda = StreamProvider<String?>(
 ///
 /// v3.51: transaksi baru memakai jenis pesanan bawaan outlet (misal Makan di tempat di kafe); Bawa pulang tetap
 /// `kanal == null` seperti sebelumnya.
+///
+/// v3.54 (K-4, §17.2.7 "ingatan kerja"): keranjang penjualan langsung yang belum dibayar disimpan ke SQLite
+/// (pengaturan `DrafKeranjang`, JSON yang sama dengan pesanan tertahan) 300 ms setelah berubah, dan dipulihkan saat
+/// aplikasi dibuka lagi — aplikasi tertutup, baterai habis, atau dipaksa berhenti tidak menghapus pesanan pembeli.
+/// Pesanan meja tidak ikut disimpan (barisnya sudah tersimpan di pesanan terbuka).
 class PengaturKeranjang extends Notifier<Keranjang> {
+  static const String kunciDraf = 'DrafKeranjang';
+  static const Duration jedaSimpan = Duration(milliseconds: 300);
+
   KanalPenjualan? _bawaan;
+  Timer? _pewaktuSimpan;
+  bool _sudahDipulihkan = false;
 
   @override
-  Keranjang build() => Keranjang.kosong;
+  Keranjang build() {
+    ref.onDispose(() => _pewaktuSimpan?.cancel());
+    unawaited(Future<void>.microtask(_Pulihkan));
+    return Keranjang.kosong;
+  }
 
-  void Ganti(Keranjang keranjang) => state = keranjang;
+  void Ganti(Keranjang keranjang) => _Atur(keranjang);
 
-  void Kosongkan() => state = _AmbilKosong();
+  void Kosongkan() => _Atur(_AmbilKosong());
+
+  void _Atur(Keranjang keranjang) {
+    _sudahDipulihkan = true;
+    state = keranjang;
+    _JadwalkanSimpan();
+  }
 
   Keranjang _AmbilKosong() =>
       _bawaan == null || _bawaan == KanalPenjualan.BawaPulang ? Keranjang.kosong : Keranjang(kanal: _bawaan);
@@ -586,6 +607,49 @@ class PengaturKeranjang extends Notifier<Keranjang> {
     final k = state;
     if (k.CekKosong && k.pesananMeja == null && k.praPesan == null && k.reservasi == null && k.kanal == lama) {
       state = _AmbilKosong();
+    }
+  }
+
+  Future<void> _Pulihkan() async {
+    final String? teks;
+    try {
+      teks = await ref.read(penyediaRepositori).AmbilPengaturan(kunciDraf);
+    } on Object {
+      return;
+    }
+    // Kasir sudah mulai mengisi sebelum draf terbaca: yang di layar yang menang.
+    if (_sudahDipulihkan || teks == null || teks.isEmpty) {
+      return;
+    }
+    try {
+      final draf = Keranjang.DariJson(jsonDecode(teks) as Map<String, Object?>);
+      if (!draf.CekKosong) {
+        state = draf;
+      }
+    } on Object {
+      // Draf dari versi aplikasi yang tidak bisa dibaca: dibuang, bukan membuat layar Jual gagal.
+      unawaited(ref.read(penyediaRepositori).HapusPengaturan(kunciDraf));
+    }
+  }
+
+  void _JadwalkanSimpan() {
+    _pewaktuSimpan?.cancel();
+    _pewaktuSimpan = Timer(jedaSimpan, () => unawaited(SimpanSekarang()));
+  }
+
+  /// Tulis draf sekarang (juga dipakai test). Keranjang kosong atau pesanan meja = draf dihapus.
+  Future<void> SimpanSekarang() async {
+    _pewaktuSimpan?.cancel();
+    final k = state;
+    final repositori = ref.read(penyediaRepositori);
+    try {
+      if (k.CekKosong || k.pesananMeja != null) {
+        await repositori.HapusPengaturan(kunciDraf);
+      } else {
+        await repositori.SimpanPengaturan(kunciDraf, jsonEncode(k.KeJson()));
+      }
+    } on Object {
+      // Basis data sedang ditutup (aplikasi keluar/test selesai): draf terakhir tetap yang tersimpan sebelumnya.
     }
   }
 }
