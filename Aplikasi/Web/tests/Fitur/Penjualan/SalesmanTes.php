@@ -58,6 +58,7 @@ function SiapkanSalesman(TestCase $tes, string $nama = 'Distributor Sembako Sumb
     $toko = Pelanggan::query()->create([
         'Nama' => 'Toko Kelontong Makmur Jaya Abadi',
         'NoHp' => '6281355550001',
+        'Alamat' => 'Jl. Slamet Riyadi No. 212, Purwosari, Laweyan, Surakarta',
         'LimitKredit' => '25000000',
         'TerminHari' => 30,
     ]);
@@ -286,7 +287,7 @@ describe('API /api/pos/v1/salesman', function (): void {
             ->and(PeranTenantBawaan::Kasir->AmbilIzin())->not->toContain(IzinTenant::SalesmanKunjungan);
     });
 
-    it('pelanggan: posisi kredit, piutang jatuh tempo, nomor HP tersamar, kunjungan terakhir', function (): void {
+    it('pelanggan: posisi kredit, piutang jatuh tempo, nomor HP & alamat (K30), kunjungan terakhir', function (): void {
         /** @var TestCase $this */
         $k = SiapkanSalesman($this);
         $tempo = fn (string $harga): array => BantuanPenjualan::Item(
@@ -310,8 +311,9 @@ describe('API /api/pos/v1/salesman', function (): void {
         $p = $respons->json('Pelanggan.0');
 
         expect($p['Uuid'])->toBe($k['Toko']->Uuid)
-            ->and($p['NoHp'])->not->toBe('6281355550001')
-            ->and($p['NoHp'])->toEndWith('0001')
+            // K30 (v3.86): salesman perlu menghubungi & mendatangi toko, jadi nomor penuh + alamat dikirim.
+            ->and($p['NoHp'])->toBe('6281355550001')
+            ->and($p['Alamat'])->toBe('Jl. Slamet Riyadi No. 212, Purwosari, Laweyan, Surakarta')
             ->and($p['LimitKredit'])->toBe('25000000.00')
             ->and($p['SisaPiutang'])->toBe('300000.00')
             ->and($p['JumlahPiutangJatuhTempo'])->toBe('150000.00')

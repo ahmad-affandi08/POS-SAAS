@@ -15,8 +15,10 @@ use Carbon\CarbonImmutable;
 
 /**
  * Kueri publik pelanggan untuk aplikasi salesman (Modul Salesman bagian 1, §9.7, SLS-11; §19 "Sales/Salesman":
- * pelanggan & piutang pelanggan). Hasil disimpan perangkat untuk kerja offline, jadi nomor HP tetap **tersamar**
- * (`NomorHp::Samarkan`, sama dengan `CariPelangganPos`): data pribadi tidak disimpan di HP. Uang string desimal.
+ * pelanggan & piutang pelanggan). Hasil disimpan perangkat untuk kerja offline. K30 (v3.86): nomor HP **penuh** dan
+ * alamat ikut dikirim karena salesman perlu menghubungi & mendatangi toko pelanggan (tujuan pemrosesan yang sah);
+ * hanya untuk pengguna ber-izin `salesman.kunjungan`, dan basis data lokal aplikasi terenkripsi (K-7). Uang string
+ * desimal.
  */
 final class PelangganSalesman
 {
@@ -28,7 +30,7 @@ final class PelangganSalesman
      * Pelanggan aktif urut nama, 50 per halaman; `kata` kosong = semua (untuk unduh awal), selain itu cocok nama atau
      * nomor HP. `JumlahPiutangJatuhTempo` = Σ sisa piutang yang jatuh temponya sudah lewat pada [hariIni].
      *
-     * @return array{Data: list<array{Uuid: string, Nama: string, NoHp: string, KodeTier: string|null, NamaTier: string|null, LimitKredit: string|null, TerminHari: int, SisaPiutang: string, JumlahPiutangJatuhTempo: string, HariLewatJatuhTempo: int}>, Halaman: int, AdaBerikutnya: bool}
+     * @return array{Data: list<array{Uuid: string, Nama: string, NoHp: string|null, Alamat: string|null, KodeTier: string|null, NamaTier: string|null, LimitKredit: string|null, TerminHari: int, SisaPiutang: string, JumlahPiutangJatuhTempo: string, HariLewatJatuhTempo: int}>, Halaman: int, AdaBerikutnya: bool}
      */
     public function Daftar(string $kata, int $halaman, CarbonImmutable $hariIni): array
     {
@@ -48,7 +50,7 @@ final class PelangganSalesman
             ->orderBy('Id')
             ->offset(($halaman - 1) * self::PER_HALAMAN)
             ->limit(self::PER_HALAMAN + 1)
-            ->get(['Id', 'Uuid', 'Nama', 'NoHp', 'IdTier', 'LimitKredit', 'TerminHari']);
+            ->get(['Id', 'Uuid', 'Nama', 'NoHp', 'Alamat', 'IdTier', 'LimitKredit', 'TerminHari']);
 
         $adaBerikutnya = $daftar->count() > self::PER_HALAMAN;
         $daftar = $daftar->take(self::PER_HALAMAN)->values();
@@ -59,7 +61,8 @@ final class PelangganSalesman
             'Data' => array_values($daftar->map(fn (Pelanggan $p): array => [
                 'Uuid' => $p->Uuid,
                 'Nama' => $p->Nama,
-                'NoHp' => NomorHp::Samarkan($p->NoHp),
+                'NoHp' => $p->NoHp,
+                'Alamat' => $p->Alamat,
                 'KodeTier' => $p->IdTier === null ? null : ($tier[$p->IdTier]['Kode'] ?? null),
                 'NamaTier' => $p->IdTier === null ? null : ($tier[$p->IdTier]['Nama'] ?? null),
                 'LimitKredit' => $p->LimitKredit === null ? null : (string) $p->LimitKredit,
