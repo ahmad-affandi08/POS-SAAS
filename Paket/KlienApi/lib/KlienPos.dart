@@ -469,6 +469,10 @@ class KlienPos {
   Future<Set<String>> AmbilProdukHabis() async =>
       UraiJson.AmbilDaftarTeks((await _Kirim('GET', 'produk-habis', null))['Produk']).toSet();
 
+  /// K-19: batch bersisa produk di lokasi stok Toko outlet perangkat, urut FEFO. Offline → `GalatJaringan`.
+  Future<BatchProdukPos> AmbilBatchProduk(String uuidProduk) async =>
+      BatchProdukPos.DariJson(await _Kirim('GET', 'produk/${Uri.encodeComponent(uuidProduk)}/batch', null));
+
   /// Tandai produk habis ([habis] true) atau tersedia lagi di outlet perangkat (idempoten). Mengembalikan keadaan
   /// terbaru menurut server. Pelaku tanpa izin → `GalatApi` 403/422.
   Future<bool> UbahKetersediaanProduk(String uuidProduk, {required bool habis, required String uuidPengguna}) async {

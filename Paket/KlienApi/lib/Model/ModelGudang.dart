@@ -266,3 +266,57 @@ class OpnameGudangPos {
     baris: [for (final b in UraiJson.AmbilDaftarPeta(json['Baris'])) BarisOpnameGudang.DariJson(b)],
   );
 }
+
+/// K-19 (`GET /api/pos/v1/produk/{uuid}/batch`): satu batch bersisa di lokasi stok Toko outlet. [sisaHari] null =
+/// tanpa tanggal kedaluwarsa; negatif = sudah lewat.
+class BarisBatchPos {
+  const BarisBatchPos({
+    required this.nomorBatch,
+    required this.tanggalKedaluwarsa,
+    required this.jumlahSisa,
+    required this.sisaHari,
+  });
+
+  final String nomorBatch;
+
+  /// Tanggal `YYYY-MM-DD`.
+  final String? tanggalKedaluwarsa;
+  final String jumlahSisa;
+  final int? sisaHari;
+
+  static BarisBatchPos DariJson(Map<String, Object?> json) => BarisBatchPos(
+    nomorBatch: UraiJson.AmbilTeks(json['NomorBatch']),
+    tanggalKedaluwarsa: UraiJson.AmbilTeksAtauNull(json['TanggalKedaluwarsa']),
+    jumlahSisa: UraiJson.AmbilDesimal(json['JumlahSisa']),
+    sisaHari: UraiJson.AmbilBulatAtauNull(json['SisaHari']),
+  );
+}
+
+/// K-19: batch produk urut FEFO (urutan yang dipakai server saat mengalokasikan penjualan). [batch] dibatasi 20 baris
+/// pertama; [jumlahBatch] = semua batch bersisa. [hariSegera] = batas "segera kedaluwarsa" (hari).
+class BatchProdukPos {
+  const BatchProdukPos({
+    required this.uuidProduk,
+    required this.pelacakan,
+    required this.simbolSatuan,
+    required this.hariSegera,
+    required this.jumlahBatch,
+    required this.batch,
+  });
+
+  final String uuidProduk;
+  final String pelacakan;
+  final String simbolSatuan;
+  final int hariSegera;
+  final int jumlahBatch;
+  final List<BarisBatchPos> batch;
+
+  static BatchProdukPos DariJson(Map<String, Object?> json) => BatchProdukPos(
+    uuidProduk: UraiJson.AmbilTeks(json['UuidProduk']),
+    pelacakan: UraiJson.AmbilTeks(json['Pelacakan'], 'Tidak'),
+    simbolSatuan: UraiJson.AmbilTeks(json['SimbolSatuan']),
+    hariSegera: UraiJson.AmbilBulat(json['HariSegera'], 30),
+    jumlahBatch: UraiJson.AmbilBulat(json['JumlahBatch']),
+    batch: [for (final b in UraiJson.AmbilDaftarPeta(json['Batch'])) BarisBatchPos.DariJson(b)],
+  );
+}

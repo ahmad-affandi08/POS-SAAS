@@ -59,6 +59,7 @@ import '../Domain/Penjualan/LayananVoucher.dart';
 import '../Domain/Penjualan/LayananReturPenjualan.dart';
 import '../Domain/Penjualan/LayananVoidPenjualan.dart';
 import '../Domain/Perangkat/LayananLayarPelanggan.dart';
+import '../Domain/Persediaan/LayananInfoBatch.dart';
 import '../Domain/Persediaan/LayananBahanTerbuang.dart';
 import '../Domain/Persediaan/LayananGudang.dart';
 import '../Domain/Perangkat/LayananUjiPerangkat.dart';
@@ -385,6 +386,11 @@ final penyediaRepositoriPersediaan = Provider<RepositoriPersediaan>(
 /// F-05f bagian 2: catat bahan/menu terbuang dari perangkat (offline).
 final penyediaLayananBahanTerbuang = Provider<LayananBahanTerbuang>(
   (ref) => LayananBahanTerbuang(repositori: ref.watch(penyediaRepositoriPersediaan), jam: ref.watch(penyediaJam)),
+);
+
+/// K-19: info batch & kedaluwarsa produk ber-batch (online, disimpan sebentar).
+final penyediaLayananInfoBatch = Provider<LayananInfoBatch>(
+  (ref) => LayananInfoBatch(klien: ref.watch(penyediaKlienPos), jam: ref.watch(penyediaJam)),
 );
 
 /// X4 persetujuan jarak jauh (online): minta, pantau, batalkan.

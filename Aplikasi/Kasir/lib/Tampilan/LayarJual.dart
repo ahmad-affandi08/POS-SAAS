@@ -481,8 +481,20 @@ class _LayarJualState extends ConsumerState<LayarJual> {
       if (_pesan != null) {
         setState(() => _pesan = null);
       }
+      if (produk.berBatch) {
+        unawaited(_PeriksaBatch(produk));
+      }
     } on GalatKasir catch (galat) {
       _TampilPesan(galat.pesan);
+    }
+  }
+
+  /// K-19: peringatan bila batch yang akan terjual lebih dulu (FEFO server) sudah/hampir kedaluwarsa. Tidak memblokir
+  /// penjualan; offline = diam.
+  Future<void> _PeriksaBatch(ProdukJual produk) async {
+    final peringatan = await ref.read(penyediaLayananInfoBatch).PeriksaSaatJual(produk.uuid, produk.nama);
+    if (peringatan != null && mounted) {
+      _TampilPesan(peringatan.teks, galat: peringatan.lewat);
     }
   }
 

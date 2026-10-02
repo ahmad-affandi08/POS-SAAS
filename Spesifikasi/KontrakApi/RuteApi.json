@@ -333,5 +333,10 @@
         "Metode": "GET",
         "Jalur": "api/pemilik/v1/pengumuman",
         "Nama": "pemilik.pengumuman"
+    },
+    "GET api/pos/v1/produk/{produk}/batch": {
+        "Metode": "GET",
+        "Jalur": "api/pos/v1/produk/{produk}/batch",
+        "Nama": "pos.produk.batch"
     }
 }

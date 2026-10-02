@@ -1,17 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:klien_api/KlienApi.dart';
 import 'package:mesin_kasir/MesinKasir.dart';
 import 'package:sistem_desain/SistemDesain.dart';
 
 import '../../Aplikasi/Penyedia.dart';
 import '../../Domain/Katalog/KatalogLokal.dart';
 import '../../Domain/Penjualan/LayananPenjualan.dart';
+import '../../Domain/Persediaan/LayananInfoBatch.dart';
 import '../Komponen/FormatAngka.dart';
 
 /// Cek harga (K-10, §9.3): pelanggan bertanya "ini berapa?" tanpa membeli. Kasir memindai barcode atau mengetik
 /// nama/SKU; panel menampilkan harga per satuan menurut kanal & tier pelanggan keranjang saat ini, harga bertingkat
 /// (mulai jumlah tertentu), dan alasan bila produk tidak bisa dijual. Keranjang tidak berubah kecuali kasir mengetuk
 /// "Tambah ke keranjang". Pemindaian saat panel terbuka diarahkan ke sini lewat [PanelCekHargaState.Tampilkan].
+/// K-19: produk ber-batch menampilkan batch bersisa di toko urut FEFO (yang terjual lebih dulu di atas) beserta sisa
+/// hari kedaluwarsanya (butuh internet).
 class PanelCekHarga extends ConsumerStatefulWidget {
   const PanelCekHarga({super.key, required this.saatTambah});
 
@@ -164,6 +168,11 @@ class PanelCekHargaState extends ConsumerState<PanelCekHarga> {
               ),
           const SizedBox(height: TokenJarak.jarak8),
         ],
+        if (produk.berBatch) ...[
+          const SizedBox(height: TokenJarak.jarak8),
+          _BagianBatch(key: ValueKey('batch-${produk.uuid}'), uuidProduk: produk.uuid),
+          const SizedBox(height: TokenJarak.jarak8),
+        ],
         if (alasan != null || habis)
           Row(
             children: [
@@ -192,6 +201,98 @@ class PanelCekHargaState extends ConsumerState<PanelCekHarga> {
             if (alasan == null && !habis)
               FilledButton(onPressed: () => widget.saatTambah(produk), child: const Text('Tambah ke keranjang')),
           ],
+        ),
+      ],
+    );
+  }
+}
+
+/// K-19: daftar batch bersisa di toko (urut FEFO) dengan status kedaluwarsa.
+class _BagianBatch extends ConsumerStatefulWidget {
+  const _BagianBatch({super.key, required this.uuidProduk});
+
+  final String uuidProduk;
+
+  @override
+  ConsumerState<_BagianBatch> createState() => _BagianBatchState();
+}
+
+class _BagianBatchState extends ConsumerState<_BagianBatch> {
+  late Future<BatchProdukPos> _info = ref.read(penyediaLayananInfoBatch).Ambil(widget.uuidProduk);
+
+  @override
+  Widget build(BuildContext context) {
+    final teks = Theme.of(context).textTheme;
+    final warna = TokenWarna.AmbilDari(context);
+    final kecil = teks.bodySmall?.copyWith(color: warna.teksSekunder);
+    return Column(
+      key: const ValueKey('CekHargaBatch'),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text('Batch & kedaluwarsa di toko', style: teks.titleSmall),
+        const SizedBox(height: TokenJarak.jarak4),
+        FutureBuilder<BatchProdukPos>(
+          future: _info,
+          builder: (context, hasil) {
+            if (hasil.connectionState != ConnectionState.done) {
+              return const LinearProgressIndicator();
+            }
+            final info = hasil.data;
+            if (info == null) {
+              return Row(
+                children: [
+                  Expanded(child: Text('Info batch butuh internet.', style: kecil)),
+                  TextButton(
+                    onPressed: () => setState(
+                      () => _info = ref.read(penyediaLayananInfoBatch).Ambil(widget.uuidProduk, paksa: true),
+                    ),
+                    child: const Text('Coba lagi'),
+                  ),
+                ],
+              );
+            }
+            if (info.batch.isEmpty) {
+              return Text('Tidak ada stok ber-batch di toko.', style: kecil);
+            }
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                for (final (i, b) in info.batch.indexed)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: TokenJarak.jarak4),
+                    child: Row(
+                      children: [
+                        Icon(
+                          (b.sisaHari ?? 1) < 0 ? Icons.error_outline : Icons.inventory_2_outlined,
+                          size: TokenJarak.ikonKecil,
+                          color: switch (b.sisaHari) {
+                            final h? when h < 0 => warna.bahaya,
+                            final h? when h <= info.hariSegera => warna.peringatan,
+                            _ => warna.teksSekunder,
+                          },
+                        ),
+                        const SizedBox(width: TokenJarak.jarak8),
+                        Expanded(
+                          child: Text(
+                            '${b.nomorBatch} · ${FormatAngka.FormatJumlah(Kuantitas.Dari(b.jumlahSisa))} '
+                            '${info.simbolSatuan}${i == 0 ? ' · dijual lebih dulu' : ''}',
+                            style: teks.bodySmall,
+                          ),
+                        ),
+                        Text(
+                          LayananInfoBatch.LabelSisaHari(b.sisaHari),
+                          style: teks.bodySmall?.copyWith(
+                            color: (b.sisaHari ?? 1) < 0 ? warna.bahaya : warna.teksSekunder,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                if (info.jumlahBatch > info.batch.length)
+                  Text('+${info.jumlahBatch - info.batch.length} batch lain', style: kecil),
+              ],
+            );
+          },
         ),
       ],
     );

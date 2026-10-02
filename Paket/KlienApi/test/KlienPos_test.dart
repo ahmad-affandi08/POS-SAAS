@@ -787,6 +787,34 @@ void main() {
     expect(jsonDecode(dikirim.last.body), {'UuidPengguna': 'U1', 'Habis': false});
   });
 
+  test('K-19: batch produk urut FEFO dengan sisa hari (null = tanpa kedaluwarsa)', () async {
+    final dikirim = <http.Request>[];
+    final klien = BuatKlien((permintaan) async {
+      dikirim.add(permintaan);
+      return Json({
+        'UuidProduk': 'P1',
+        'Pelacakan': 'Batch',
+        'SimbolSatuan': 'pcs',
+        'HariSegera': 30,
+        'JumlahBatch': 2,
+        'Batch': [
+          {'NomorBatch': 'A-DEKAT', 'TanggalKedaluwarsa': '2026-10-12', 'JumlahSisa': '3.0000', 'SisaHari': -2},
+          {'NomorBatch': 'C-TANPA', 'TanggalKedaluwarsa': null, 'JumlahSisa': '5.0000', 'SisaHari': null},
+        ],
+      }, 200);
+    });
+
+    final hasil = await klien.AmbilBatchProduk('P1');
+    expect(dikirim.single.method, 'GET');
+    expect(dikirim.single.url.path, '/api/pos/v1/produk/P1/batch');
+    expect(hasil.pelacakan, 'Batch');
+    expect(hasil.jumlahBatch, 2);
+    expect(hasil.batch.first.nomorBatch, 'A-DEKAT');
+    expect(hasil.batch.first.sisaHari, -2);
+    expect(hasil.batch.last.tanggalKedaluwarsa, isNull);
+    expect(hasil.batch.last.sisaHari, isNull);
+  });
+
   test('laundry: cari cucian (kosong = siap), ubah status, data awal membawa pengaturan laundry', () async {
     final dikirim = <http.Request>[];
     final tiket = {

@@ -17,6 +17,7 @@ abstract final class JenisProdukKasir {
   static const String jasa = 'Jasa';
   static const String pelacakanTidak = 'Tidak';
   static const String pelacakanSeri = 'Seri';
+  static const String pelacakanBatch = 'Batch';
 }
 
 /// Satuan jual produk (baris `ProdukSatuan` + nama satuan).
@@ -224,6 +225,7 @@ class ProdukJual {
 
   /// F-05h: produk ini dijual dengan nomor seri/IMEI per unit (kasir mengetik atau memindai).
   bool get bernomorSeri => pelacakan == JenisProdukKasir.pelacakanSeri;
+  bool get berBatch => pelacakan == JenisProdukKasir.pelacakanBatch;
 
   /// Alasan produk tidak bisa dijual di POS fase 1 (null = bisa dijual) beserta kode galat server padanannya.
   ({String kode, String pesan})? AmbilAlasanTidakBisaDijual() {

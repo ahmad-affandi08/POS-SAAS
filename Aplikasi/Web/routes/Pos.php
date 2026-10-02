@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Kontroler\Pos\V1\BatchProdukKontroler;
 use App\Http\Kontroler\Pos\V1\DapurKontroler;
 use App\Http\Kontroler\Pos\V1\DataAwalKontroler;
 use App\Http\Kontroler\Pos\V1\GambarProdukKontroler;
@@ -149,6 +150,9 @@ Route::middleware([AutentikasiPerangkat::class, IdempotensiPos::class])->group(f
             ->middleware('throttle:pos-60')->where('tiket', $ulid)->name('pos.laundry.status');
         // F-17 Self-Order QR Meja: pesanan tamu menunggu konfirmasi (ditarik berkala), terima/tolak oleh staf.
         // F-17 BR-17.2: tandai habis ("86") dari POS/KDS; tercermin di menu self-order & toko online outlet.
+        // K-19: batch & kedaluwarsa produk di lokasi stok Toko outlet (urut FEFO), info sebelum menjual.
+        Route::get('/produk/{produk}/batch', [BatchProdukKontroler::class, 'Ambil'])
+            ->middleware('throttle:pos-120')->where('produk', $ulid)->name('pos.produk.batch');
         Route::get('/produk-habis', [KetersediaanProdukKontroler::class, 'Ambil'])->middleware('throttle:pos-30')->name('pos.produk-habis');
         Route::post('/produk/{produk}/habis', [KetersediaanProdukKontroler::class, 'Ubah'])
             ->middleware('throttle:pos-60')->where('produk', $ulid)->name('pos.produk.habis');
