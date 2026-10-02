@@ -280,7 +280,7 @@ erDiagram
 | `PerangkatKerasTerverifikasi` (HCL) | Merek, Model, Jenis (AllInOne/Printer/Pemindai/LaciKas), StatusKompatibilitas (Tersertifikasi/Kompatibel/Terbatas), VersiAdaptor, Catatan |
 | `Mitra` | Kode, Nama, Jenis (Reseller/Referral/Hardware/Implementasi), Status, Npwp, Rekening (terenkripsi), PersenKomisi |
 | `AtribusiMitra` | IdMitra, IdTenant, Sumber, MulaiPada, BerakhirPada |
-| `KomisiMitra` / `PencairanKomisi` | IdMitra, IdTagihanLangganan, Jumlah, Status (Tertunda/Disetujui/Dibayar/Dibatalkan) / IdMitra, Periode, Total, PotonganPajak, DibayarPada |
+| `KomisiMitra` / `PencairanKomisi` | IdMitra, IdTenant, IdTagihanLangganan (unik), NomorTagihan, DasarKomisi, PersenKomisi, Jumlah, Status (Tertunda/Dibayar/Dibatalkan; v3.50: Disetujui digabung ke pencairan), IdPencairanKomisi, AlasanBatal / IdMitra, Periode (unik per mitra), Total, PotonganPajak, JumlahBersih, DibayarPada, Catatan |
 
 Tabel `Paket`, `PaketFitur`, `Langganan`, `TagihanLangganan`, `TarifPajak`, `JenisPajak`, dan `RilisAplikasi` (sudah di atas) juga dikelola dari Platform Pengelola.
 

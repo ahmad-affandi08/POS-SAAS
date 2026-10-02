@@ -51,6 +51,8 @@ export type RiwayatTindakan = {
 };
 
 export type Tampilan360 = {
+    /** P-12: mitra perujuk (null = mendaftar langsung). */
+    MitraPerujuk: { Uuid: string; Kode: string; Nama: string; MulaiPada: string } | null;
     Profil: {
         Uuid: string;
         Nama: string;

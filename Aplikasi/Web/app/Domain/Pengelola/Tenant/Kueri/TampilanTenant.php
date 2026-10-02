@@ -20,7 +20,9 @@ use App\Domain\Tenant\Enum\JenisOverride;
 use App\Domain\Tenant\Enum\StatusLangganan;
 use App\Domain\Tenant\Kueri\SumberFiturTenant;
 use App\Domain\Tenant\Layanan\EvaluatorFitur;
+use App\Domain\Tenant\Model\AtribusiMitra;
 use App\Domain\Tenant\Model\DokumenLegal;
+use App\Domain\Tenant\Model\Mitra;
 use App\Domain\Tenant\Model\OverrideTenant;
 use App\Domain\Tenant\Model\PersetujuanDokumenLegal;
 use App\Domain\Tenant\Model\Tenant;
@@ -28,7 +30,7 @@ use App\Domain\Tenant\Model\Tenant;
 /**
  * Tampilan 360° dasar satu tenant (P-07). Data usaha tenant (outlet, gudang, merek) dibaca lewat
  * `KonteksPengelola::JalankanLintasTenant` sehingga setiap pembukaan tercatat di log audit (CLAUDE.md #11).
- * Bagian yang modulnya belum dibangun (tagihan, tiket, perangkat, skor kesehatan, mitra) tidak diisi di sini;
+ * Bagian yang modulnya belum dibangun (tagihan, tiket, perangkat, skor kesehatan) tidak diisi di sini;
  * halaman menampilkannya sebagai keadaan kosong.
  */
 final class TampilanTenant
@@ -88,6 +90,8 @@ final class TampilanTenant
                 'TemplateSektor' => array_values(array_unique(array_filter(array_column($organisasi['Outlet'], 'TemplateSektor')))),
             ],
             'Langganan' => $this->PetakanLangganan($tenant),
+            // P-12: mitra perujuk tenant ini (BR-P12.2: paling banyak satu), null bila mendaftar langsung.
+            'MitraPerujuk' => self::AmbilMitraPerujuk($tenant->Id),
             'Pemakaian' => [
                 ['Label' => 'Outlet', 'Pakai' => $organisasi['PakaiOutlet'], 'Batas' => $batas['BatasOutlet'] ?? null],
                 ['Label' => 'Pengguna', 'Pakai' => $organisasi['PakaiPengguna'], 'Batas' => $batas['BatasPengguna'] ?? null],
@@ -201,5 +205,16 @@ final class TampilanTenant
                 'Penulis' => $catatan->Penulis->Nama,
                 'DibuatPada' => $catatan->DibuatPada->toIso8601String(),
             ])->all());
+    }
+
+    /** @return array{Uuid: string, Kode: string, Nama: string, MulaiPada: string}|null */
+    private static function AmbilMitraPerujuk(int $idTenant): ?array
+    {
+        $atribusi = AtribusiMitra::query()->where('IdTenant', $idTenant)->first();
+        $mitra = $atribusi === null ? null : Mitra::query()->whereKey($atribusi->IdMitra)->first();
+
+        return $atribusi === null || $mitra === null ? null : [
+            'Uuid' => $mitra->Uuid, 'Kode' => $mitra->Kode, 'Nama' => $mitra->Nama, 'MulaiPada' => $atribusi->MulaiPada->toIso8601String(),
+        ];
     }
 }

@@ -74,6 +74,10 @@ export const IzinPengelola = {
     RilisLihat: 'rilis.lihat',
     RilisKelola: 'rilis.kelola',
     FlagFiturKelola: 'flag-fitur.kelola',
+    // P-12
+    MitraLihat: 'mitra.lihat',
+    MitraKelola: 'mitra.kelola',
+    MitraPencairan: 'mitra.pencairan',
 } as const;
 
 export type Pilihan = { Nilai: string; Label: string };

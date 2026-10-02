@@ -7,6 +7,7 @@ namespace App\Http\Kontroler\Autentikasi;
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Integrasi\Layanan\PemeriksaCaptcha;
 use App\Domain\Organisasi\Aksi\KirimVerifikasiEmail;
+use App\Domain\Tenant\Aksi\CatatAtribusiMitra;
 use App\Domain\Tenant\Aksi\DaftarkanTenant;
 use App\Domain\Tenant\Kueri\PaketTersedia;
 use App\Domain\Tenant\Kueri\StatusPendaftaran;
@@ -14,9 +15,11 @@ use App\Domain\Tenant\Model\Paket;
 use App\Http\Kontroler\Kontroler;
 use App\Http\Perantara\IdentifikasiTenantSesi;
 use App\Http\Permintaan\Autentikasi\DaftarPermintaan;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -27,6 +30,9 @@ use Throwable;
  */
 final class PendaftaranKontroler extends Kontroler
 {
+    /** P-12: cookie atribusi tautan mitra (`kode|unix detik klik pertama`), berlaku `CatatAtribusiMitra::HARI_BERLAKU`. */
+    public const COOKIE_MITRA = 'payou_mitra';
+
     public function Tampilkan(Request $permintaan, StatusPendaftaran $status, PaketTersedia $paket, PemeriksaCaptcha $captcha): Response
     {
         $daftarPaket = array_values(array_map(
@@ -35,6 +41,12 @@ final class PendaftaranKontroler extends Kontroler
         ));
         $kodeTersedia = array_column($daftarPaket, 'Kode');
         $diminta = mb_strtoupper($permintaan->string('paket')->toString());
+        $kodeMitra = mb_strtoupper(trim($permintaan->string('mitra')->toString()));
+
+        // P-12 langkah 3: klik **pertama** tautan mitra yang dihitung; tautan mitra lain sesudahnya tidak menimpa.
+        if (preg_match('/^[A-Z0-9-]{3,20}$/', $kodeMitra) === 1 && ! $permintaan->hasCookie(self::COOKIE_MITRA)) {
+            Cookie::queue(self::COOKIE_MITRA, $kodeMitra.'|'.now()->getTimestamp(), CatatAtribusiMitra::HARI_BERLAKU * 24 * 60, '/', null, (bool) config('session.secure'), true, false, 'lax');
+        }
 
         return Inertia::render('Autentikasi/Daftar', [
             'Dibuka' => $status->AmbilAlasanDitutup() === [],
@@ -66,6 +78,7 @@ final class PendaftaranKontroler extends Kontroler
 
         // D-24: pendaftaran baru wajib menyelesaikan panduan awal dulu.
         $hasil = $daftarkan->Jalankan($permintaan->AmbilData(), wajibPanduanAwal: true);
+        $this->CatatMitra($permintaan, $hasil['Tenant']->Id);
 
         Auth::guard('web')->login($hasil['Pengguna']);
         $permintaan->session()->regenerate();
@@ -85,5 +98,23 @@ final class PendaftaranKontroler extends Kontroler
         return redirect()->route('kelola.panduan-awal')->with('Kilat', $terkirim
             ? "Selamat datang di {$hasil['Tenant']->Nama}! Cek email Anda untuk verifikasi."
             : "Selamat datang di {$hasil['Tenant']->Nama}! Email verifikasi belum berhasil dikirim; kirim ulang dari banner di atas.");
+    }
+
+    /** P-12: tenant baru diatribusikan ke mitra dari cookie tautan; cookie lalu dihapus. Gagal tidak menggagalkan pendaftaran. */
+    private function CatatMitra(Request $permintaan, int $idTenant): void
+    {
+        $nilai = $permintaan->cookie(self::COOKIE_MITRA);
+
+        if (! is_string($nilai) || preg_match('/^([A-Z0-9-]{3,20})\|(\d{1,12})$/', $nilai, $cocok) !== 1) {
+            return;
+        }
+
+        Cookie::queue(Cookie::forget(self::COOKIE_MITRA));
+
+        try {
+            app(CatatAtribusiMitra::class)->Jalankan($idTenant, $cocok[1], CarbonImmutable::createFromTimestamp((int) $cocok[2]));
+        } catch (Throwable $galat) {
+            Log::error('Atribusi mitra gagal dicatat.', ['Pesan' => $galat->getMessage()]);
+        }
     }
 }

@@ -109,6 +109,8 @@ export const daftarMenuPengelola: GrupMenu[] = [
             },
             // D-21 Situs pemasaran (payou.id).
             { label: 'Situs pemasaran', href: '/situs/halaman', izin: IzinPengelola.SitusLihat, ikon: 'Lokasi' },
+            // P-12 Mitra, reseller & referral: kanal akuisisi tenant, jadi serumpun dengan pemasaran.
+            { label: 'Mitra', href: '/mitra', izin: IzinPengelola.MitraLihat, ikon: 'Loyalitas' },
         ],
     },
     {

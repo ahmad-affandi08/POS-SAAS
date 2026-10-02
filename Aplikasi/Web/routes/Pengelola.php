@@ -20,6 +20,7 @@ use App\Http\Kontroler\Pengelola\Konten\DokumenLegalKontroler;
 use App\Http\Kontroler\Pengelola\Konten\ProspekSitusKontroler;
 use App\Http\Kontroler\Pengelola\Konten\SitusKontroler;
 use App\Http\Kontroler\Pengelola\LogAuditKontroler;
+use App\Http\Kontroler\Pengelola\Mitra\MitraKontroler;
 use App\Http\Kontroler\Pengelola\Operasional\OperasionalKontroler;
 use App\Http\Kontroler\Pengelola\Referensi\HariLiburKontroler;
 use App\Http\Kontroler\Pengelola\Referensi\ReferensiBankKontroler;
@@ -311,6 +312,18 @@ Route::middleware(['auth:pengelola', PastikanPenggunaPengelola::class, WajibGant
                 Route::post('/tagihan/pembayaran/{pembayaran}/terima', [TagihanKontroler::class, 'Terima'])->name('pengelola.tagihan.pembayaran.terima');
                 Route::post('/tagihan/pembayaran/{pembayaran}/tolak', [TagihanKontroler::class, 'Tolak'])->name('pengelola.tagihan.pembayaran.tolak');
             });
+        });
+
+        // P-12 Mitra, reseller & referral (§19.3: Mitra & Penjualan mengelola, Keuangan mencairkan).
+        Route::middleware($izin(IzinPengelola::MitraLihat))->group(function () use ($izin): void {
+            Route::get('/mitra', [MitraKontroler::class, 'Daftar'])->name('pengelola.mitra.daftar');
+            Route::get('/mitra/{mitra}', [MitraKontroler::class, 'Tampilkan'])->name('pengelola.mitra.tampil');
+            Route::middleware($izin(IzinPengelola::MitraKelola))->group(function (): void {
+                Route::post('/mitra', [MitraKontroler::class, 'Simpan'])->name('pengelola.mitra.simpan');
+                Route::put('/mitra/{mitra}', [MitraKontroler::class, 'Ubah'])->name('pengelola.mitra.ubah');
+                Route::post('/mitra/komisi/{komisi}/batal', [MitraKontroler::class, 'BatalkanKomisi'])->name('pengelola.mitra.komisi.batal');
+            });
+            Route::post('/mitra/{mitra}/pencairan', [MitraKontroler::class, 'Cairkan'])->middleware($izin(IzinPengelola::MitraPencairan))->name('pengelola.mitra.pencairan');
         });
 
         // P-02 Master regulasi & referensi.

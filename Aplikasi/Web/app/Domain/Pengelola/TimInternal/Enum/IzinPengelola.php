@@ -77,6 +77,11 @@ enum IzinPengelola: string
     case RilisKelola = 'rilis.kelola';
     case FlagFiturKelola = 'flag-fitur.kelola';
 
+    // P-12 Mitra, reseller & referral
+    case MitraLihat = 'mitra.lihat';
+    case MitraKelola = 'mitra.kelola';
+    case MitraPencairan = 'mitra.pencairan';
+
     public function AmbilLabel(): string
     {
         return match ($this) {
@@ -131,6 +136,10 @@ enum IzinPengelola: string
             self::RilisLihat => 'Melihat rilis aplikasi & flag fitur',
             self::RilisKelola => 'Mencatat, menerbitkan, menghentikan rilis aplikasi dan menaikkan versi minimum',
             self::FlagFiturKelola => 'Mengubah flag fitur & kill switch',
+            // P-12
+            self::MitraLihat => 'Melihat mitra, tenant rujukan, komisi & pencairan',
+            self::MitraKelola => 'Menambah & mengubah mitra (kode, komisi, rekening) dan membatalkan komisi tertunda',
+            self::MitraPencairan => 'Mencatat pencairan komisi bulanan mitra',
         };
     }
 }

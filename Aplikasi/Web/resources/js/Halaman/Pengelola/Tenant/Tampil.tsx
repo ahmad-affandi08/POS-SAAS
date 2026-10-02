@@ -1,4 +1,4 @@
-import { usePage } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import { useState, type ReactNode } from 'react';
 
 import Tombol from '@/Komponen/Formulir/Tombol';
@@ -273,6 +273,21 @@ export default function Tampil({ Tenant, Pilihan, Aturan }: PropsTampil) {
                                         : 'Belum memilih template sektor',
                                 ],
                                 ['Terdaftar', FormatTanggalWaktu(Profil.DibuatPada)],
+                                [
+                                    'Mitra perujuk',
+                                    Tenant.MitraPerujuk === null ? (
+                                        'Mendaftar langsung'
+                                    ) : PunyaIzin(pengguna, IzinPengelola.MitraLihat) ? (
+                                        <Link
+                                            href={`/mitra/${Tenant.MitraPerujuk.Uuid}`}
+                                            className="font-semibold text-brand underline"
+                                        >
+                                            {Tenant.MitraPerujuk.Nama} ({Tenant.MitraPerujuk.Kode})
+                                        </Link>
+                                    ) : (
+                                        `${Tenant.MitraPerujuk.Nama} (${Tenant.MitraPerujuk.Kode})`
+                                    ),
+                                ],
                             ]}
                         />
                     </Panel>
@@ -496,7 +511,6 @@ export default function Tampil({ Tenant, Pilihan, Aturan }: PropsTampil) {
                                 judul="Perangkat (platform, versi aplikasi, outbox tertunda)"
                                 modul="aktivasi perangkat POS"
                             />
-                            <ModulMenyusul judul="Mitra perujuk" modul="Mitra, Reseller & Referral (P-12)" />
                             <ModulMenyusul judul="Skor kesehatan" modul="skor kesehatan tenant (fase berikutnya)" />
                             <ModulMenyusul
                                 judul="Permintaan penghapusan data (UU PDP)"

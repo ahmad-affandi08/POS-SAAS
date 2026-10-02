@@ -31,7 +31,10 @@ use Carbon\CarbonImmutable;
  */
 final class PelunasTagihanLangganan
 {
-    public function __construct(private readonly PenghitungPeriodeLangganan $periode) {}
+    public function __construct(
+        private readonly PenghitungPeriodeLangganan $periode,
+        private readonly PencatatKomisiMitra $komisiMitra,
+    ) {}
 
     /**
      * @param  CarbonImmutable|null  $mulaiPaketSebelumnya  Jangkar grandfathering (BR-P04.1) dari tagihan lunas
@@ -120,6 +123,9 @@ final class PelunasTagihanLangganan
             'PeriodeMulai' => $periode['Mulai'],
             'PeriodeSelesai' => $periode['Selesai'],
         ]);
+
+        // P-12 (BR-P12.1): komisi mitra perujuk lahir dari tagihan lunas, di transaksi pelunasan yang sama.
+        $this->komisiMitra->CatatDariTagihan($tagihan);
 
         return new HasilPelunasanLangganan($periode, $langgananLama, $statusTagihanLama, $lanjutan);
     }
