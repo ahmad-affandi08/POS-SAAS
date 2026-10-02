@@ -7,6 +7,7 @@ namespace App\Domain\Penjualan\Kueri;
 use App\Domain\Penjualan\Model\Penjualan;
 use App\Domain\Penjualan\Model\PenjualanDetail;
 use App\Domain\Penjualan\Model\PenjualanPembayaran;
+use App\Domain\Penjualan\Model\ReturPenjualan;
 use Carbon\CarbonImmutable;
 
 /**
@@ -19,10 +20,11 @@ final class PenjualanUntukApiPublik
     /**
      * @return array{Data: list<array<string, mixed>>, IdTerakhir: int|null}
      */
-    public function Daftar(int $setelahId, int $batas, ?CarbonImmutable $dari = null, ?CarbonImmutable $sampai = null, ?string $uuid = null): array
+    public function Daftar(int $setelahId, int $batas, ?CarbonImmutable $dari = null, ?CarbonImmutable $sampai = null, ?string $uuid = null, ?int $id = null): array
     {
         $penjualan = Penjualan::query()
             ->when($uuid !== null, fn ($k) => $k->where('Uuid', $uuid), fn ($k) => $k->where('Id', '>', $setelahId))
+            ->when($id !== null, fn ($k) => $k->whereKey($id))
             ->when($dari !== null, fn ($k) => $k->where('TanggalBisnis', '>=', $dari?->toDateString()))
             ->when($sampai !== null, fn ($k) => $k->where('TanggalBisnis', '<=', $sampai?->toDateString()))
             ->orderBy('Id')
@@ -75,6 +77,35 @@ final class PenjualanUntukApiPublik
                 ])->all()),
             ])->all()),
             'IdTerakhir' => $penjualan->count() < $batas ? null : $penjualan->last()?->Id,
+        ];
+    }
+
+    /**
+     * Retur penjualan untuk webhook `penjualan.diretur` (X7 bagian 2). HPP tidak dikirim.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function Retur(int $idRetur): ?array
+    {
+        $retur = ReturPenjualan::query()->find($idRetur);
+
+        if ($retur === null) {
+            return null;
+        }
+
+        return [
+            'Uuid' => $retur->Uuid,
+            'Nomor' => $retur->Nomor,
+            'UuidPenjualan' => Penjualan::query()->whereKey($retur->IdPenjualanAsal)->value('Uuid'),
+            'IdOutlet' => $retur->IdOutlet,
+            'TanggalBisnis' => $retur->TanggalBisnis->toDateString(),
+            'Status' => $retur->Status->value,
+            'Alasan' => $retur->Alasan,
+            'MetodeRefund' => $retur->MetodeRefund->value,
+            'TotalNilai' => (string) $retur->TotalNilai,
+            'TotalPajak' => (string) $retur->TotalPajak,
+            'TotalRefund' => (string) $retur->TotalRefund,
+            'DiterimaPada' => $retur->DiterimaPada->toIso8601ZuluString(),
         ];
     }
 }

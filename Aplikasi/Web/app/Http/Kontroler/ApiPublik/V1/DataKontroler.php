@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Http\Kontroler\ApiPublik\V1;
 
+use App\Domain\Integrasi\ApiPublik\Layanan\PenyusunDataPenjualanApi;
 use App\Domain\Katalog\Kueri\InfoProdukStok;
 use App\Domain\Katalog\Kueri\ProdukUntukApiPublik;
 use App\Domain\Organisasi\Kueri\InfoGudang;
-use App\Domain\Organisasi\Kueri\PetaUuidOutlet;
 use App\Domain\Pelanggan\Kueri\PelangganUntukApiPublik;
 use App\Domain\Penjualan\Kueri\PenjualanUntukApiPublik;
 use App\Domain\Persediaan\Kueri\StokUntukApiPublik;
@@ -83,7 +83,7 @@ final class DataKontroler extends Controller
         ], $hasil['Data']), $hasil['IdTerakhir']);
     }
 
-    public function Penjualan(Request $permintaan, PenjualanUntukApiPublik $penjualan, PetaUuidOutlet $outlet, PelangganUntukApiPublik $pelanggan, InfoProdukStok $produk): JsonResponse
+    public function Penjualan(Request $permintaan, PenjualanUntukApiPublik $penjualan, PenyusunDataPenjualanApi $penyusun): JsonResponse
     {
         [$setelah, $per] = self::BacaHalaman($permintaan);
 
@@ -100,16 +100,16 @@ final class DataKontroler extends Controller
 
         $hasil = $penjualan->Daftar($setelah, $per, $dari, $sampai);
 
-        return self::Halaman($this->PetakanPenjualan($hasil['Data'], $outlet, $pelanggan, $produk), $hasil['IdTerakhir']);
+        return self::Halaman($penyusun->Petakan($hasil['Data']), $hasil['IdTerakhir']);
     }
 
-    public function PenjualanSatu(string $uuidPenjualan, PenjualanUntukApiPublik $penjualan, PetaUuidOutlet $outlet, PelangganUntukApiPublik $pelanggan, InfoProdukStok $produk): JsonResponse
+    public function PenjualanSatu(string $uuidPenjualan, PenjualanUntukApiPublik $penjualan, PenyusunDataPenjualanApi $penyusun): JsonResponse
     {
         $data = $penjualan->Daftar(0, 1, uuid: $uuidPenjualan)['Data'];
 
         return $data === []
             ? GalatApi::Buat('TidakDitemukan', 'Penjualan tidak ditemukan.', 404)
-            : response()->json(['Data' => $this->PetakanPenjualan($data, $outlet, $pelanggan, $produk)[0]]);
+            : response()->json(['Data' => $penyusun->Petakan($data)[0]]);
     }
 
     public function Pelanggan(Request $permintaan, PelangganUntukApiPublik $pelanggan): JsonResponse
@@ -123,39 +123,6 @@ final class DataKontroler extends Controller
         $hasil = $pelanggan->Daftar($setelah, $per);
 
         return self::Halaman($hasil['Data'], $hasil['IdTerakhir']);
-    }
-
-    /**
-     * @param  list<array<string, mixed>>  $data
-     * @return list<array<string, mixed>>
-     */
-    private function PetakanPenjualan(array $data, PetaUuidOutlet $outlet, PelangganUntukApiPublik $pelanggan, InfoProdukStok $produk): array
-    {
-        $uuidOutlet = $outlet->Ambil(array_values(array_unique(array_map(fn (array $p): int => (int) $p['IdOutlet'], $data))));
-        $uuidPelanggan = $pelanggan->PetaUuid(array_values(array_filter(array_map(fn (array $p): ?int => is_int($p['IdPelanggan']) ? $p['IdPelanggan'] : null, $data))));
-        $idProduk = [];
-
-        foreach ($data as $p) {
-            foreach ((array) $p['Baris'] as $b) {
-                $idProduk[] = (int) $b['IdProduk'];
-            }
-        }
-
-        $infoProduk = $produk->AmbilBanyak(array_values(array_unique($idProduk)), denganTerhapus: true);
-
-        return array_map(function (array $p) use ($uuidOutlet, $uuidPelanggan, $infoProduk): array {
-            $hasil = ['Uuid' => $p['Uuid'], 'Nomor' => $p['Nomor'], 'UuidOutlet' => $uuidOutlet[(int) $p['IdOutlet']] ?? null,
-                'UuidPelanggan' => is_int($p['IdPelanggan']) ? ($uuidPelanggan[$p['IdPelanggan']] ?? null) : null];
-            unset($p['Uuid'], $p['Nomor'], $p['IdOutlet'], $p['IdPelanggan']);
-            $p['Baris'] = array_map(function (array $b) use ($infoProduk): array {
-                $uuid = ($infoProduk[(int) $b['IdProduk']] ?? null)?->uuid;
-                unset($b['IdProduk']);
-
-                return ['Uuid' => $b['Uuid'], 'UuidProduk' => $uuid, ...array_diff_key($b, ['Uuid' => true])];
-            }, (array) $p['Baris']);
-
-            return [...$hasil, ...$p];
-        }, $data);
     }
 
     /**

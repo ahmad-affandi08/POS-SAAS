@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Domain\Organisasi\Enum\IzinTenant;
 use App\Http\Kontroler\Kelola\PengaturanKontroler;
 use App\Http\Kontroler\Kelola\TokenApiKontroler;
+use App\Http\Kontroler\Kelola\WebhookKontroler;
 use App\Http\Perantara\SiapkanAuditTenant;
 use App\Http\Perantara\WajibIzinTenant;
 use Illuminate\Support\Facades\Route;
@@ -33,5 +34,11 @@ Route::prefix('pengaturan')->group(function () use ($izin): void {
         Route::get('/api', [TokenApiKontroler::class, 'Daftar'])->name('kelola.pengaturan.api');
         Route::post('/api', [TokenApiKontroler::class, 'Buat'])->name('kelola.pengaturan.api.buat');
         Route::delete('/api/{uuidToken}', [TokenApiKontroler::class, 'Cabut'])->where('uuidToken', '[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}')->name('kelola.pengaturan.api.cabut');
+        // X7 bagian 2: webhook keluar.
+        Route::get('/webhook', [WebhookKontroler::class, 'Daftar'])->name('kelola.pengaturan.webhook');
+        Route::post('/webhook', [WebhookKontroler::class, 'Buat'])->name('kelola.pengaturan.webhook.buat');
+        Route::put('/webhook/{uuidWebhook}/status', [WebhookKontroler::class, 'UbahStatus'])->where('uuidWebhook', '[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}')->name('kelola.pengaturan.webhook.status');
+        Route::delete('/webhook/{uuidWebhook}', [WebhookKontroler::class, 'Hapus'])->where('uuidWebhook', '[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}')->name('kelola.pengaturan.webhook.hapus');
+        Route::post('/webhook/kiriman/{uuidKiriman}/kirim-ulang', [WebhookKontroler::class, 'KirimUlang'])->where('uuidKiriman', '[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}')->name('kelola.pengaturan.webhook.kirim-ulang');
     });
 });

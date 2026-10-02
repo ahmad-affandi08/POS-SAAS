@@ -32,6 +32,9 @@ Schedule::command('pengelola:detak')->everyMinute()->withoutOverlapping();
 // P-11 (§14.4): worker antrean database dijalankan scheduler tiap menit di Hostinger (tanpa proses daemon).
 Schedule::command('queue:work --stop-when-empty --max-time=50')->everyMinute()->withoutOverlapping();
 
+// X7 bagian 2 (PRD §16.4): coba ulang webhook keluar yang jatuh tempo (1m, 5m, 30m, 2j, 12j) + retensi log 30 hari.
+Schedule::command('integrasi:kirim-webhook')->everyMinute()->withoutOverlapping();
+
 // P-09: tiket selesai yang tidak dibuka lagi dalam 7 hari ditutup otomatis.
 Schedule::command('pengelola:tutup-tiket-selesai')->dailyAt('01:00')->timezone('Asia/Jakarta')->withoutOverlapping();
 

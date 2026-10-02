@@ -11,6 +11,7 @@ use App\Domain\Bersama\Sinkron\Layanan\PenandaSinkronPos;
 use App\Domain\Bersama\Tenant\KonteksTenant;
 use App\Domain\Dukungan\Peristiwa\TiketDukunganDibalasPelapor;
 use App\Domain\Dukungan\Peristiwa\TiketDukunganDibuat;
+use App\Domain\Integrasi\ApiPublik\Penangan\AntrekanWebhookPenjualan;
 use App\Domain\Organisasi\Layanan\PenjagaAsalSinkronPerangkat;
 use App\Domain\Organisasi\Model\Perangkat;
 use App\Domain\Organisasi\Model\TokenAksesPengguna;
@@ -21,6 +22,9 @@ use App\Domain\Pengelola\Operasional\Penangan\PeriksaOperasionalSaatCekSehat;
 use App\Domain\Pengelola\Tagihan\Penangan\KirimSurelPelunasanGerbang;
 use App\Domain\Pengelola\Tenant\Layanan\KonteksPengelola;
 use App\Domain\Pengelola\TimInternal\Layanan\PencatatAuditPengelola;
+use App\Domain\Penjualan\Peristiwa\PenjualanDiterima;
+use App\Domain\Penjualan\Peristiwa\PenjualanDivoid;
+use App\Domain\Penjualan\Peristiwa\ReturPenjualanDiterima;
 use App\Domain\Tenant\Peristiwa\TagihanLanggananDilunasiGerbang;
 use App\Http\Perantara\AutentikasiPemilik;
 use App\Http\Perantara\AutentikasiPerangkat;
@@ -160,6 +164,11 @@ final class PenyediaAplikasi extends ServiceProvider
         // BR-P08.11: email pelunasan tagihan langganan lewat gerbang (templat sama dengan jalur transfer manual).
         Event::listen(TagihanLanggananDilunasiGerbang::class, KirimSurelPelunasanGerbang::class);
         Event::listen(TiketDukunganDibalasPelapor::class, BeritahuPenanggungJawabBalasanPelapor::class);
+
+        // X7 bagian 2: webhook keluar tenant untuk penjualan selesai, void, dan retur (antrean, setelah commit).
+        foreach ([PenjualanDiterima::class, PenjualanDivoid::class, ReturPenjualanDiterima::class] as $peristiwa) {
+            Event::listen($peristiwa, AntrekanWebhookPenjualan::class);
+        }
 
         // P-11 BR-P11.1: /sehat (uptime monitor eksternal) ikut memeriksa alert, agar scheduler mati tetap terdeteksi.
         Event::listen(DiagnosingHealth::class, PeriksaOperasionalSaatCekSehat::class);

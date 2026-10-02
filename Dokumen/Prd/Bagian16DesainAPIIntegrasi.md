@@ -53,6 +53,7 @@ Event: `penjualan.selesai`, `penjualan.divoid`, `penjualan.diretur`, `pembayaran
 - Payload ditandatangani HMAC-SHA256 (`X-Tanda-Tangan`), berisi `IdPeristiwa` unik untuk dedup di sisi penerima.
 - Retry eksponensial (1m, 5m, 30m, 2j, 12j), dikirim oleh queue via cron.
 - Log pengiriman terlihat oleh tenant, tersedia tombol "kirim ulang".
+- *(v3.83, terimplementasi untuk `penjualan.selesai`, `penjualan.divoid`, `penjualan.diretur`; peristiwa lain menyusul.)* Tanda tangan dihitung atas `{X-Waktu-Kirim}.{badan}` dan dikirim sebagai `X-Tanda-Tangan: sha256=<hex>`; header lain `X-Id-Peristiwa`, `X-Peristiwa`. Alamat wajib HTTPS publik (penjaga SSRF saat dibuat & sebelum tiap kiriman, IP dipin). Setelah percobaan ke-6 gagal status Gagal; log disimpan 30 hari.
 
 ### 16.5 Integrasi Pihak Ketiga
 

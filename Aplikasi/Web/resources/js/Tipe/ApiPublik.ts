@@ -18,3 +18,38 @@ export type PropsHalamanTokenApi = {
     TokenBaru: { Nama: string; Token: string } | null;
     AlamatApi: string;
 };
+
+/** X7 bagian 2: webhook keluar (tanpa rahasia). */
+export type WebhookTenant = {
+    Uuid: string;
+    Nama: string;
+    Url: string;
+    Peristiwa: string[];
+    Aktif: boolean;
+    DibuatPada: string | null;
+};
+
+export type StatusKirimanWebhook = 'Menunggu' | 'Terkirim' | 'Gagal';
+
+/** Log kiriman (tanpa muatan). */
+export type KirimanWebhook = {
+    Uuid: string;
+    NamaWebhook: string;
+    Peristiwa: string;
+    Status: StatusKirimanWebhook;
+    Percobaan: number;
+    KodeRespons: number | null;
+    CuplikanRespons: string | null;
+    BerikutnyaPada: string | null;
+    TerkirimPada: string | null;
+    DibuatPada: string | null;
+    BisaKirimUlang: boolean;
+};
+
+export type PropsHalamanWebhook = {
+    Webhook: WebhookTenant[];
+    Kiriman: KirimanWebhook[];
+    OpsiPeristiwa: { Nilai: string; Label: string }[];
+    /** Rahasia penandatangan, hanya sekali setelah dibuat. */
+    RahasiaBaru: { Nama: string; Rahasia: string } | null;
+};

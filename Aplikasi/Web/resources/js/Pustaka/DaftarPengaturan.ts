@@ -229,6 +229,14 @@ export const daftarPengaturan: GrupPengaturan[] = [
                 izin: IzinTenant.IntegrasiApiKelola,
                 fitur: 'api.publik',
             },
+            {
+                label: 'Webhook',
+                keterangan:
+                    'Kirim pemberitahuan otomatis ke aplikasi lain saat penjualan selesai, di-void, atau diretur.',
+                href: '/kelola/pengaturan/webhook',
+                izin: IzinTenant.IntegrasiApiKelola,
+                fitur: 'api.publik',
+            },
         ],
     },
 ];

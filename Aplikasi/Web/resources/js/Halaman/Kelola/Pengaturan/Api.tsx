@@ -5,6 +5,7 @@ import { useState, type FormEvent } from 'react';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import GrupCentang from '@/Komponen/Formulir/GrupCentang';
 import Tombol from '@/Komponen/Formulir/Tombol';
+import AksiHalaman from '@/Komponen/Kelola/AksiHalaman';
 import Panel from '@/Komponen/Kelola/Panel';
 import PemilihTanggal from '@/Komponen/Tanggal/PemilihTanggal';
 import TabelData from '@/Komponen/TabelData/TabelData';
@@ -87,9 +88,9 @@ export default function HalamanTokenApi({ Token, OpsiCakupan, TokenBaru, AlamatA
 
             {TokenBaru ? <KartuTokenBaru nama={TokenBaru.Nama} token={TokenBaru.Token} /> : null}
 
-            <div>
+            <AksiHalaman>
                 <Tombol onClick={() => AturBuat(true)}>Buat token</Tombol>
-            </div>
+            </AksiHalaman>
 
             {buat ? <FormBuat opsi={OpsiCakupan} saatSelesai={() => AturBuat(false)} /> : null}
             {cabut ? <KonfirmasiCabut token={cabut} saatSelesai={() => AturCabut(null)} /> : null}
