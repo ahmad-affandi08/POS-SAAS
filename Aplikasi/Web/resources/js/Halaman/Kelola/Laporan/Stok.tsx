@@ -192,6 +192,15 @@ const kolomRestock: KolomTabel<BarisSaranRestock>[] = [
         cell: ({ row }) => FormatJumlahStok(row.original.Saldo, row.original.SimbolSatuan),
     },
     {
+        id: 'FaktorMusim',
+        accessorKey: 'FaktorMusim',
+        header: 'Faktor musim',
+        enableSorting: false,
+        meta: { label: 'Faktor musim', angka: true, prioritas: 'penting' },
+        cell: ({ row }) =>
+            row.original.FaktorMusim === '1.00' ? '–' : `×${row.original.FaktorMusim.replace('.', ',')}`,
+    },
+    {
         id: 'RataPerHari',
         accessorKey: 'RataPerHari',
         header: 'Terpakai per hari',
@@ -406,6 +415,12 @@ export default function HalamanLaporanStok({
                         {String(Restock.HariDasar)} hari terakhir (sampai kemarin), dikurangi retur. Saran beli =
                         rata-rata per hari × {String(Restock.HariCakupan)} hari − saldo sekarang. Ini perkiraan;
                         sesuaikan dengan promo, musim, dan jadwal kirim pemasok sebelum membuat pesanan pembelian.
+                    </p>
+                    <p className="max-w-3xl text-label text-teks-sekunder">
+                        {Restock.Musim.Jenis === 'Lebaran'
+                            ? `Periode ini dekat Ramadan & Lebaran (${Restock.Musim.Lebaran ? FormatTanggal(Restock.Musim.Lebaran) : ''}). Laju dikali faktor musim dari masa yang sama sebelum Lebaran tahun lalu (digeser ${String(Restock.Musim.SelisihHari)} hari).`
+                            : 'Laju dikali faktor musim dari periode yang sama tahun lalu bila datanya ada (tanpa data = ×1).'}{' '}
+                        Faktor dibatasi ×0,5 sampai ×3.
                     </p>
                     <TabelData
                         id="laporan-stok-restock"

@@ -2,6 +2,9 @@
 
 declare(strict_types=1);
 
+use App\Domain\Bersama\Status\StatusDataMaster;
+use App\Domain\Referensi\Enum\JenisHariLibur;
+use App\Domain\Referensi\Model\HariLibur;
 use Carbon\CarbonImmutable;
 use Inertia\Testing\AssertableInertia;
 use Tests\Pendukung\Penjualan\BantuanPenjualan;
@@ -107,4 +110,39 @@ it('saran restock: pemakaian hari ini belum dihitung, besok jadi laju harian; ca
 
     $csv = $this->get('/kelola/laporan/stok/ekspor?tab=restock&hari=30')->assertOk()->streamedContent();
     expect($csv)->toContain('Saran beli')->toContain('9.0000');
+});
+
+it('saran restock musiman: laju dikali faktor Ramadan/Lebaran tahun lalu (selaras Lebaran, bukan tanggal Masehi)', function (): void {
+    HariLibur::query()->create(['Tanggal' => '2026-03-20', 'Nama' => 'Hari Raya Idul Fitri 1447 H', 'Jenis' => JenisHariLibur::Nasional, 'Status' => StatusDataMaster::Terbit]);
+    HariLibur::query()->create(['Tanggal' => '2027-03-09', 'Nama' => 'Cuti Bersama Idul Fitri', 'Jenis' => JenisHariLibur::CutiBersama, 'Status' => StatusDataMaster::Terbit]);
+    HariLibur::query()->create(['Tanggal' => '2027-03-10', 'Nama' => 'Hari Raya Idul Fitri 1448 H', 'Jenis' => JenisHariLibur::Nasional, 'Status' => StatusDataMaster::Terbit]);
+    $this->travelTo(CarbonImmutable::parse('2026-01-05 05:00:00', 'UTC'));
+    $k = BantuanPenjualan::Siapkan($this, 'Toko Sembako Musiman Boyolali');
+    $sirup = BantuanPenjualan::BuatProdukBerstok($k['Gudang'], $k['Pemilik']->Id, 'Sirup Markisa Botol 600 ml', '100', '15000', '22000.00');
+    $jual = function (string $waktu) use ($k, $sirup): void {
+        $this->travelTo(CarbonImmutable::parse($waktu, 'UTC'));
+        BantuanPenjualan::Jual($this, $k, ['Baris' => [['Produk' => $sirup, 'Jumlah' => '28', 'Harga' => '22000.00']]]);
+    };
+    // Geser 355 hari: dasar tahun lalu 2 Feb–1 Mar 2026 (28 = 1/hari); cakupan 2–15 Mar 2026 (28 dalam 14 hari = 2/hari).
+    $jual('2026-02-10 05:00:00');
+    $jual('2026-03-05 05:00:00');
+    // Tahun ini: dasar 23 Jan–19 Feb 2027 = 1/hari.
+    $jual('2027-02-10 05:00:00');
+    $this->travelTo(CarbonImmutable::parse('2027-02-20 05:00:00', 'UTC'));
+    BantuanPersediaan::MasukSebagai($this, $k['Tenant']->Id);
+
+    // Faktor 2,00 → 2/hari; saldo 16 → habis 8 hari lagi; 14 hari: 28 − 16 = 12.
+    $this->get('/kelola/laporan/stok?tab=restock')->assertOk()->assertInertia(fn (AssertableInertia $h) => $h
+        ->where('Restock.Musim.Jenis', 'Lebaran')
+        ->where('Restock.Musim.SelisihHari', 355)
+        ->where('Restock.Musim.Lebaran', '2027-03-10')
+        ->where('Restock.Baris.0.RataPerHari', '1.0000')
+        ->where('Restock.Baris.0.FaktorMusim', '2.00')
+        ->where('Restock.Baris.0.RataPerkiraan', '2.0000')
+        ->where('Restock.Baris.0.Saldo', '16.0000')
+        ->where('Restock.Baris.0.HariHabis', 8)
+        ->where('Restock.Baris.0.SaranBeli', '12.0000'));
+
+    $csv = $this->get('/kelola/laporan/stok/ekspor?tab=restock')->assertOk()->streamedContent();
+    expect($csv)->toContain('Faktor musim')->toContain('2.00');
 });

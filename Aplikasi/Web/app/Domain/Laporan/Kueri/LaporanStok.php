@@ -9,9 +9,11 @@ use App\Domain\Bersama\Nilai\Uang;
 use App\Domain\Katalog\Enum\JenisProduk;
 use App\Domain\Katalog\Kueri\InfoProdukStok;
 use App\Domain\Katalog\Kueri\ProdukUntukLaporan;
+use App\Domain\Laporan\Layanan\PenilaiMusimRestock;
 use App\Domain\Organisasi\Data\DataInfoGudang;
 use App\Domain\Organisasi\Kueri\InfoGudang;
 use App\Domain\Persediaan\Kueri\StokUntukLaporan;
+use App\Domain\Referensi\Kueri\HariLiburTerbit;
 use Brick\Math\BigDecimal;
 use Brick\Math\RoundingMode;
 use Carbon\CarbonImmutable;
@@ -37,6 +39,7 @@ final class LaporanStok
         private readonly StokUntukLaporan $stok,
         private readonly ProdukUntukLaporan $produk,
         private readonly InfoProdukStok $infoProduk,
+        private readonly HariLiburTerbit $hariLibur,
     ) {}
 
     /**
@@ -174,9 +177,11 @@ final class LaporanStok
      * × lokasi stok (`StokUntukLaporan::AmbilPemakaian`), saldo terkini, perkiraan hari stok habis, dan saran beli =
      * rata-rata × `$hariCakupan` − saldo (dibulatkan ke atas ke satuan bulat bila satuannya tidak desimal; minimal 0).
      * Urut dari yang paling cepat habis. Hanya produk yang dipakai pada periode dasar.
+     * X6 musiman (v3.78): laju dikali faktor musim per produk × lokasi dari pemakaian periode yang sama tahun lalu
+     * (`PenilaiMusimRestock`; selaras Lebaran bila periode cakupan jatuh di sekitar Ramadan/Lebaran).
      *
      * @param  list<int>|null  $idOutletBoleh
-     * @return array{HariDasar: int, HariCakupan: int, Baris: list<array<string, mixed>>}
+     * @return array{HariDasar: int, HariCakupan: int, Musim: array{Jenis: string, SelisihHari: int, Lebaran: string|null}, Baris: list<array<string, mixed>>}
      */
     public function SaranRestock(?array $idOutletBoleh, CarbonImmutable $hariIni, string $uuidGudang = '', int $hariCakupan = 14): array
     {
@@ -185,6 +190,10 @@ final class LaporanStok
         $pakai = $this->stok->AmbilPemakaian(array_keys($gudang), $sampai->subDays(self::HARI_DASAR_RESTOCK - 1), $sampai);
         $saldo = $this->stok->AmbilSaldo(array_keys($gudang), array_values(array_unique(array_column($pakai, 'IdProduk'))));
         $info = $this->infoProduk->AmbilBanyak(array_values(array_unique(array_column($pakai, 'IdProduk'))));
+        $musim = PenilaiMusimRestock::TentukanPergeseran($hariIni, $hariCakupan, $this->AmbilLebaran($hariIni));
+        $geser = $musim['SelisihHari'];
+        $laluCakupan = $this->PetakanPakai($this->stok->AmbilPemakaian(array_keys($gudang), $hariIni->subDays($geser), $hariIni->addDays($hariCakupan - 1)->subDays($geser)));
+        $laluDasar = $this->PetakanPakai($this->stok->AmbilPemakaian(array_keys($gudang), $sampai->subDays(self::HARI_DASAR_RESTOCK - 1 + $geser), $sampai->subDays($geser)));
         $baris = [];
 
         foreach ($pakai as $b) {
@@ -197,9 +206,12 @@ final class LaporanStok
 
             $stok = BigDecimal::of($saldo["{$b['IdProduk']}|{$b['IdGudang']}"]['Jumlah'] ?? '0');
             $rata = BigDecimal::of($b['Pakai'])->dividedBy(self::HARI_DASAR_RESTOCK, 4, RoundingMode::HalfUp);
-            $butuh = $rata->multipliedBy($hariCakupan)->minus($stok);
+            $kunci = "{$b['IdProduk']}|{$b['IdGudang']}";
+            $faktor = PenilaiMusimRestock::HitungFaktor($laluCakupan[$kunci] ?? '0', $hariCakupan, $laluDasar[$kunci] ?? '0', self::HARI_DASAR_RESTOCK);
+            $perkiraan = $rata->multipliedBy($faktor)->toScale(4, RoundingMode::HalfUp);
+            $butuh = $perkiraan->multipliedBy($hariCakupan)->minus($stok);
             $saran = $butuh->isPositive() ? $butuh->toScale($p->bolehDesimal ? 4 : 0, RoundingMode::Up) : BigDecimal::zero()->toScale(4);
-            $hariHabis = $rata->isZero() ? null : ($stok->isPositive() ? $stok->dividedBy($rata, 0, RoundingMode::Down)->toInt() : 0);
+            $hariHabis = $perkiraan->isZero() ? null : ($stok->isPositive() ? $stok->dividedBy($perkiraan, 0, RoundingMode::Down)->toInt() : 0);
             $baris[] = [
                 'Kunci' => $p->uuid.'-'.($g->uuid ?? (string) $b['IdGudang']),
                 'UuidProduk' => $p->uuid,
@@ -211,6 +223,8 @@ final class LaporanStok
                 'NamaOutlet' => $g->namaOutlet ?? '',
                 'Pakai' => $b['Pakai'],
                 'RataPerHari' => (string) $rata,
+                'FaktorMusim' => (string) $faktor,
+                'RataPerkiraan' => (string) $perkiraan,
                 'Saldo' => (string) $stok->toScale(4),
                 'HariHabis' => $hariHabis,
                 'SaranBeli' => (string) $saran->toScale(4),
@@ -219,7 +233,44 @@ final class LaporanStok
 
         usort($baris, fn (array $a, array $b): int => ($a['HariHabis'] ?? PHP_INT_MAX) <=> ($b['HariHabis'] ?? PHP_INT_MAX) ?: strcmp((string) $a['NamaProduk'], (string) $b['NamaProduk']));
 
-        return ['HariDasar' => self::HARI_DASAR_RESTOCK, 'HariCakupan' => $hariCakupan, 'Baris' => $baris];
+        return ['HariDasar' => self::HARI_DASAR_RESTOCK, 'HariCakupan' => $hariCakupan, 'Musim' => $musim, 'Baris' => $baris];
+    }
+
+    /**
+     * Hari pertama Idul Fitri per tahun (tahun lalu s.d. tahun depan) dari master hari libur nasional terbit (cuti
+     * bersama sebelum Lebaran tidak dihitung).
+     *
+     * @return array<int, CarbonImmutable>
+     */
+    private function AmbilLebaran(CarbonImmutable $hariIni): array
+    {
+        $hasil = [];
+
+        foreach (range($hariIni->year - 1, $hariIni->year + 1) as $tahun) {
+            foreach ($this->hariLibur->AmbilTahun($tahun) as $libur) {
+                if ($libur->Jenis->value === 'Nasional' && preg_match('/idul\s*fitri|idulfitri|lebaran/i', $libur->Nama) === 1) {
+                    $hasil[$tahun] = CarbonImmutable::parse($libur->Tanggal->toDateString(), $hariIni->getTimezone());
+                    break;
+                }
+            }
+        }
+
+        return $hasil;
+    }
+
+    /**
+     * @param  list<array{IdProduk: int, IdGudang: int, Pakai: string}>  $pakai
+     * @return array<string, string>
+     */
+    private function PetakanPakai(array $pakai): array
+    {
+        $hasil = [];
+
+        foreach ($pakai as $b) {
+            $hasil["{$b['IdProduk']}|{$b['IdGudang']}"] = $b['Pakai'];
+        }
+
+        return $hasil;
     }
 
     /**

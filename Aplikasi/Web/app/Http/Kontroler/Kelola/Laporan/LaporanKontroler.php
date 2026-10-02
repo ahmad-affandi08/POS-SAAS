@@ -141,8 +141,8 @@ final class LaporanKontroler extends DasarKelolaKontroler
         if ($tab === 'restock') {
             $isi = $laporan->SaranRestock($this->IdOutletBoleh(), $tanggal->Hitung(null), $uuidGudang, $hari)['Baris'];
 
-            return PenulisCsvLaporan::Alirkan("laporan-saran-restock-{$hari}-hari", ['Produk', 'SKU', 'Satuan', 'Lokasi stok', 'Outlet', 'Terpakai 28 hari', 'Rata-rata per hari', 'Saldo', 'Habis dalam (hari)', 'Saran beli'], array_map(
-                fn (array $b): array => [$b['NamaProduk'], $b['Sku'], $b['SimbolSatuan'], $b['NamaGudang'], $b['NamaOutlet'], $b['Pakai'], $b['RataPerHari'], $b['Saldo'], $b['HariHabis'], $b['SaranBeli']],
+            return PenulisCsvLaporan::Alirkan("laporan-saran-restock-{$hari}-hari", ['Produk', 'SKU', 'Satuan', 'Lokasi stok', 'Outlet', 'Terpakai 28 hari', 'Rata-rata per hari', 'Faktor musim', 'Perkiraan per hari', 'Saldo', 'Habis dalam (hari)', 'Saran beli'], array_map(
+                fn (array $b): array => [$b['NamaProduk'], $b['Sku'], $b['SimbolSatuan'], $b['NamaGudang'], $b['NamaOutlet'], $b['Pakai'], $b['RataPerHari'], $b['FaktorMusim'], $b['RataPerkiraan'], $b['Saldo'], $b['HariHabis'], $b['SaranBeli']],
                 $isi,
             ));
         }

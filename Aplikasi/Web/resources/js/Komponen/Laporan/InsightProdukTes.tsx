@@ -144,6 +144,7 @@ describe('X6 saran restock di laporan stok', () => {
         Restock: {
             HariDasar: 28,
             HariCakupan: 14,
+            Musim: { Jenis: 'Lebaran', SelisihHari: 355, Lebaran: '2027-03-10' },
             Baris: [
                 {
                     Kunci: 'p1-g1',
@@ -156,6 +157,8 @@ describe('X6 saran restock di laporan stok', () => {
                     NamaOutlet: 'Toko Kelontong Berkah Solo',
                     Pakai: '56.0000',
                     RataPerHari: '2.0000',
+                    FaktorMusim: '1.50',
+                    RataPerkiraan: '3.0000',
                     Saldo: '6.0000',
                     HariHabis: 3,
                     SaranBeli: '22.0000',
@@ -171,6 +174,8 @@ describe('X6 saran restock di laporan stok', () => {
                     NamaOutlet: 'Toko Kelontong Berkah Solo',
                     Pakai: '28.0000',
                     RataPerHari: '1.0000',
+                    FaktorMusim: '1.00',
+                    RataPerkiraan: '1.0000',
                     Saldo: '0.0000',
                     HariHabis: 0,
                     SaranBeli: '14.0000',
@@ -187,6 +192,8 @@ describe('X6 saran restock di laporan stok', () => {
         expect(screen.getAllByText('Sudah habis').length).toBeGreaterThan(0);
         expect(screen.getAllByText('22 pcs').length).toBeGreaterThan(0);
         expect(screen.getByText(/28 hari terakhir/)).toBeTruthy();
+        expect(screen.getByText(/dekat Ramadan & Lebaran \(10 /)).toBeTruthy();
+        expect(screen.getAllByText('×1,50').length).toBeGreaterThan(0);
         expect(screen.getByRole('link', { name: 'Ekspor CSV' }).getAttribute('href')).toBe(
             '/kelola/laporan/stok/ekspor?tanggal=2026-10-07&hari=14&tab=restock',
         );
@@ -200,7 +207,17 @@ describe('X6 saran restock di laporan stok', () => {
     });
 
     it('keadaan kosong saat belum ada pemakaian', () => {
-        RenderUji(<HalamanLaporanStok {...props} Restock={{ HariDasar: 28, HariCakupan: 14, Baris: [] }} />);
+        RenderUji(
+            <HalamanLaporanStok
+                {...props}
+                Restock={{
+                    HariDasar: 28,
+                    HariCakupan: 14,
+                    Musim: { Jenis: 'TahunLalu', SelisihHari: 364, Lebaran: null },
+                    Baris: [],
+                }}
+            />,
+        );
         expect(screen.getByText('Belum ada pemakaian stok dalam 28 hari terakhir.')).toBeTruthy();
     });
 });

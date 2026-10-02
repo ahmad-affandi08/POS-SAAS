@@ -272,11 +272,16 @@ export type BarisSaranRestock = {
     NamaOutlet: string;
     Pakai: string;
     RataPerHari: string;
+    /** X6 musiman: pengali laju dari periode yang sama tahun lalu (1.00 = tanpa data/tanpa musim). */
+    FaktorMusim: string;
+    RataPerkiraan: string;
     Saldo: string;
     HariHabis: number | null;
     SaranBeli: string;
 };
-export type SaranRestock = { HariDasar: number; HariCakupan: number; Baris: BarisSaranRestock[] };
+/** Pembanding tahun lalu: `Lebaran` = selaras Idul Fitri (digeser `SelisihHari`), `TahunLalu` = 364 hari. */
+export type MusimRestock = { Jenis: 'Lebaran' | 'TahunLalu'; SelisihHari: number; Lebaran: string | null };
+export type SaranRestock = { HariDasar: number; HariCakupan: number; Musim: MusimRestock; Baris: BarisSaranRestock[] };
 
 export type PropsLaporanStok = {
     Saring: { Tab: 'nilai' | 'kritis' | 'kedaluwarsa' | 'restock'; Tanggal: string; Gudang: string; Hari: number };
