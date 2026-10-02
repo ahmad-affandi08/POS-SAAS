@@ -103,7 +103,7 @@ kode. Urutan pengerjaan = urutan tabel; butir yang selesai diberi **SELESAI @ ve
 |---|---|---|---|
 | K-8 | `ModeKasir` template sektor (Retail/Cepat/Meja/Layanan/Grosir) tidak pernah sampai ke kasir; tata letak sama untuk semua sektor | §5.1, §9 | SELESAI v3.58 (beranda Meja, katalog daftar Retail/Grosir, pengali `12*kode`) |
 | K-9 | **Pemilih varian** (ukuran × warna) di kasir tidak ada; produk induk varian ditolak | `KatalogLokal.dart`; §9.4 | SELESAI v3.59 (`PanelVarian`, skema lokal 23) |
-| K-10 | **Cek harga** tanpa menambah ke keranjang | §9.3 | TERBUKA |
+| K-10 | **Cek harga** tanpa menambah ke keranjang | §9.3 | SELESAI v3.60 (`PanelCekHarga`, F4) |
 | K-11 | **Retur tanpa struk & tukar barang** satu layar | `LembarRetur.dart`; §9.3–§9.4 | TERBUKA |
 | K-12 | Status meja **minta bill / perlu dibersihkan** | `LayarMeja.dart`; §9.1 | TERBUKA |
 | K-13 | **Course / tahan & kirim** (hold & fire) per kursus | §9.1 | TERBUKA |

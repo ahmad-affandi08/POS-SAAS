@@ -22,6 +22,7 @@ import '../Domain/Perangkat/LayananLayarPelanggan.dart';
 import '../Domain/Perangkat/PengaturanPerangkat.dart';
 import '../Domain/Sesi/StafLokal.dart';
 import 'Jual/PanelBayar.dart';
+import 'Jual/PanelCekHarga.dart';
 import 'Jual/PanelDiskon.dart';
 import 'Jual/PanelItem.dart';
 import 'Jual/PanelKeranjang.dart';
@@ -37,6 +38,7 @@ enum _JenisPanel {
   Keranjang,
   Item,
   Varian,
+  CekHarga,
   DiskonPesanan,
   Bayar,
   Selesai,
@@ -53,8 +55,8 @@ enum _JenisPanel {
 /// - Tugas (pilihan item, diskon, bayar, pesanan tertahan) dibuka sebagai panel samping (≥ 1024dp) atau lembar di atas
 ///   area kerja, sehingga keranjang tidak hilang.
 /// - Pemindai barcode tanpa fokus: rangkaian karakter cepat diakhiri Enter di mana pun di layar Jual (bukan saat mengetik
-///   di kolom isian). Pintasan desktop (tabel §17.2.3): F1 cari, F8 bayar, F9 uang pas (tunai uang pas langsung
-///   disimpan), Esc tutup panel atau hapus item terakhir keranjang, F2 pilih pelanggan (F-16a).
+///   di kolom isian). Pintasan desktop (tabel §17.2.3): F1 cari, F4 cek harga (K-10), F8 bayar, F9 uang pas (tunai
+///   uang pas langsung disimpan), Esc tutup panel atau hapus item terakhir keranjang, F2 pilih pelanggan (F-16a).
 ///   Batalkan transaksi hanya lewat tombol di keranjang (dengan konfirmasi).
 /// - Katalog diperbarui berkala 60 detik saat online dan keranjang kosong (perubahan tidak mengejutkan di tengah
 ///   transaksi, §17.2.7).
@@ -105,6 +107,7 @@ class _LayarJualState extends ConsumerState<LayarJual> {
   final _fokusAkar = FocusNode(debugLabel: 'Layar Jual');
   final _pemindai = PengenalPemindai();
   final _kunciBayar = GlobalKey<PanelBayarState>();
+  final _kunciCekHarga = GlobalKey<PanelCekHargaState>();
   Timer? _pewaktuKatalog;
   Timer? _pewaktuProdukHabis;
   Timer? _pewaktuKunciBayar;
@@ -247,6 +250,10 @@ class _LayarJualState extends ConsumerState<LayarJual> {
       _BukaPelanggan();
       return KeyEventResult.handled;
     }
+    if (event.logicalKey == LogicalKeyboardKey.f4) {
+      _BukaCekHarga();
+      return KeyEventResult.handled;
+    }
     if (event.logicalKey == LogicalKeyboardKey.f8) {
       _BukaBayar();
       return KeyEventResult.handled;
@@ -303,6 +310,11 @@ class _LayarJualState extends ConsumerState<LayarJual> {
   // Aksi keranjang -----------------------------------------------------------------------------------------------------
 
   void _TanganiKode(String kode) {
+    // K-10: pindaian saat panel Cek harga terbuka hanya menampilkan harga, tidak menambah ke keranjang.
+    if (_panel == _JenisPanel.CekHarga) {
+      _kunciCekHarga.currentState?.Tampilkan(kode);
+      return;
+    }
     final katalog = ref.read(penyediaKatalog).value;
     final hasil = katalog?.CariKode(kode);
     if (hasil == null && _CobaBarcodeTimbangan(kode)) {
@@ -582,6 +594,17 @@ class _LayarJualState extends ConsumerState<LayarJual> {
     ref.read(penyediaKeranjang.notifier).Kosongkan();
     _TutupPanel();
     widget.saatKeMeja?.call();
+  }
+
+  /// K-10 (F4): cek harga tanpa menambah ke keranjang.
+  void _BukaCekHarga() {
+    if (_panel == _JenisPanel.Bayar || _panel == _JenisPanel.Selesai) {
+      return;
+    }
+    setState(() {
+      _panel = _JenisPanel.CekHarga;
+      _pesan = null;
+    });
   }
 
   void _BukaPelanggan() {
@@ -1035,6 +1058,12 @@ class _LayarJualState extends ConsumerState<LayarJual> {
                       ),
                     ),
                   IconButton(
+                    key: const ValueKey('TombolCekHarga'),
+                    tooltip: 'Cek harga (F4)',
+                    onPressed: _BukaCekHarga,
+                    icon: const Icon(Icons.sell_outlined),
+                  ),
+                  IconButton(
                     tooltip: 'Perbarui katalog',
                     onPressed: _memperbarui ? null : () => _PerbaruiKatalog(manual: true),
                     icon: const Icon(Icons.sync),
@@ -1373,6 +1402,16 @@ class _LayarJualState extends ConsumerState<LayarJual> {
                 _TambahProduk(v);
               },
             );
+          },
+        ),
+      ),
+      _JenisPanel.CekHarga => (
+        judul: 'Cek harga',
+        isi: PanelCekHarga(
+          key: _kunciCekHarga,
+          saatTambah: (p) {
+            _TutupPanel();
+            _TambahProduk(p);
           },
         ),
       ),
