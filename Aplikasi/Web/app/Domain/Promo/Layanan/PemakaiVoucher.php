@@ -6,6 +6,7 @@ namespace App\Domain\Promo\Layanan;
 
 use App\Domain\Promo\Enum\StatusPemakaianVoucher;
 use App\Domain\Promo\Enum\StatusVoucher;
+use App\Domain\Promo\Kueri\PromoBerlaku;
 use App\Domain\Promo\Model\Promo;
 use App\Domain\Promo\Model\Voucher;
 use App\Domain\Promo\Model\VoucherPemakaian;
@@ -18,6 +19,9 @@ use Carbon\CarbonImmutable;
  *   dikunci). Idempoten per (voucher, penjualan). Voucher yang nonaktif, kedaluwarsa, atau melewati batas pakai tidak
  *   menggagalkan penjualan (sudah terjadi di kasir); masalahnya dikembalikan untuk tinjauan.
  * - `Lepaskan`: penjualan di-void → voucher yang dipakai dilepas dan bisa dipakai lagi.
+ * - F-17 (v3.46): voucher yang dipesan pembeli di checkout toko online tercatat atas Uuid pesanan; `Pakai` dengan
+ *   `$uuidCadangan` = Uuid pesanan itu memindahkannya ke penjualan yang menagih pesanan. `AmbilUntukPos` memberi kasir
+ *   definisi promonya supaya keranjang bisa memuat voucher tanpa memesan ulang.
  */
 final class PemakaiVoucher
 {
@@ -35,7 +39,7 @@ final class PemakaiVoucher
     /**
      * @return list<string> masalah untuk alasan tinjauan
      */
-    public function Pakai(string $kode, string $uuidPenjualan, int $idPenjualan, CarbonImmutable $waktuPenjualan): array
+    public function Pakai(string $kode, string $uuidPenjualan, int $idPenjualan, CarbonImmutable $waktuPenjualan, ?string $uuidCadangan = null): array
     {
         $kode = Voucher::RapikanKode($kode);
         $voucher = Voucher::query()->where('Kode', $kode)->lockForUpdate()->first();
@@ -48,6 +52,15 @@ final class PemakaiVoucher
 
         if ($pemakaian?->Status === StatusPemakaianVoucher::Dipakai) {
             return [];
+        }
+
+        if ($pemakaian === null && $uuidCadangan !== null) {
+            $pemakaian = VoucherPemakaian::query()
+                ->where('IdVoucher', $voucher->Id)
+                ->where('UuidPenjualan', $uuidCadangan)
+                ->where('Status', StatusPemakaianVoucher::Dipesan->value)
+                ->first();
+            $pemakaian?->fill(['UuidPenjualan' => $uuidPenjualan]);
         }
 
         $masalah = [];
@@ -75,6 +88,47 @@ final class PemakaiVoucher
         $voucher->save();
 
         return $masalah;
+    }
+
+    /**
+     * Voucher pesanan toko online untuk dimuat kasir (bentuk promo sama dengan `GET /promo`); null bila kode tidak dikenal.
+     *
+     * @return array{Kode: string, UuidPromo: string, NamaPromo: string, Promo: array<string, mixed>}|null
+     */
+    public function AmbilUntukPos(?string $kode): ?array
+    {
+        if ($kode === null || trim($kode) === '') {
+            return null;
+        }
+
+        $voucher = Voucher::query()->where('Kode', Voucher::RapikanKode($kode))->first();
+        $promo = $voucher === null ? null : Promo::query()->find($voucher->IdPromo);
+
+        return $voucher === null || $promo === null ? null : [
+            'Kode' => $voucher->Kode,
+            'UuidPromo' => $promo->Uuid,
+            'NamaPromo' => $promo->Nama,
+            'Promo' => PromoBerlaku::PetakanUntukPos($promo),
+        ];
+    }
+
+    /**
+     * v3.46: pesanan voucher atas [uuidPemesan] (mis. Uuid pesanan toko online) dilepas bila masih `Dipesan`, misalnya
+     * kasir menagih pesanan tanpa voucher-nya. Voucher yang sudah dipakai tidak tersentuh.
+     */
+    public function LepasPesanan(string $kode, string $uuidPemesan): void
+    {
+        $voucher = Voucher::query()->where('Kode', Voucher::RapikanKode($kode))->first();
+
+        if ($voucher === null) {
+            return;
+        }
+
+        VoucherPemakaian::query()
+            ->where('IdVoucher', $voucher->Id)
+            ->where('UuidPenjualan', $uuidPemesan)
+            ->where('Status', StatusPemakaianVoucher::Dipesan->value)
+            ->update(['Status' => StatusPemakaianVoucher::Dilepas->value, 'DipesanSampai' => null]);
     }
 
     public function Lepaskan(int $idPenjualan): void

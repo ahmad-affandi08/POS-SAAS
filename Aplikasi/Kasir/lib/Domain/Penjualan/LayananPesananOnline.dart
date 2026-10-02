@@ -25,11 +25,17 @@ import 'LayananPenjualan.dart';
 /// Pembeli yang masuk dengan kode WhatsApp (F-17 bagian 3) ikut terpasang sebagai pelanggan keranjang, sehingga poin,
 /// tier, dan riwayat belanjanya tercatat seperti belanja di toko. Harga baris **tidak** dihitung ulang: harga saat
 /// dipesan (yang sudah memakai harga tier pelanggan itu di server) yang ditagih, sama seperti pre-order.
+///
+/// Voucher checkout (v3.46) sudah dipesan server atas Uuid pesanan, jadi keranjang memuatnya langsung (tanpa memesan
+/// ulang) dengan Uuid penjualan baru; server memindahkan pesanan voucher itu ke penjualan saat `Penjualan.Buat` membawa
+/// `UuidPesananOnline` dan kode yang sama.
 class LayananPesananOnline {
-  LayananPesananOnline({required this.klien, required this.penjualan});
+  LayananPesananOnline({required this.klien, required this.penjualan, PembuatUlid? ulid})
+    : _ulid = ulid ?? PembuatUlid();
 
   final KlienPos klien;
   final LayananPenjualan penjualan;
+  final PembuatUlid _ulid;
 
   Future<HasilPesananOnline> AmbilAktif() async {
     try {
@@ -151,6 +157,16 @@ class LayananPesananOnline {
       kanal: KanalPenjualan.Online,
       biayaKirim: Uang.Dari(pesanan.ongkir),
       diskonKirim: Uang.Dari(pesanan.diskonOngkir),
+      voucher: switch (pesanan.voucher) {
+        final v? => VoucherKeranjang(
+          kode: v.kode,
+          uuidPenjualan: _ulid.Buat(),
+          uuidPromo: v.uuidPromo,
+          namaPromo: v.namaPromo,
+          promo: v.promo,
+        ),
+        null => null,
+      },
       praPesan: PraPesananKeranjang(
         uuid: pesanan.uuid,
         nomor: pesanan.nomor,

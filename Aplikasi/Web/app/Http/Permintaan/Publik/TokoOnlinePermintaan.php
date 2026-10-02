@@ -28,6 +28,8 @@ final class TokoOnlinePermintaan extends FormRequest
             'Provinsi' => ['nullable', 'required_if:JenisPemenuhan,Kirim', 'string', 'max:100'],
             'KodePos' => ['nullable', 'required_if:JenisPemenuhan,Kirim', 'digits:5'],
             'Catatan' => ['nullable', 'string', 'max:500'],
+            // v3.46: voucher berkode (opsional) di perkiraan & checkout.
+            'KodeVoucher' => ['nullable', 'string', 'max:30', 'regex:/^[A-Za-z0-9-]+$/'],
             'SetujuDataPribadi' => [$checkout ? 'required' : 'sometimes', 'accepted'],
             'Baris' => ['required', 'array', 'min:1', 'max:50'],
             'Baris.*.Uuid' => ['sometimes', 'ulid', 'distinct:ignore_case'],

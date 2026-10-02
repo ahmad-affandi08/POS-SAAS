@@ -38,6 +38,7 @@ use LogicException;
  * @property string $Pajak
  * @property string $Ongkir ongkir kotor (tarif zona); yang dibayar pembeli = Ongkir − DiskonOngkir
  * @property string $DiskonOngkir potongan promo gratis ongkir (F-16c); pasangan `Penjualan.DiskonKirim`
+ * @property string|null $KodeVoucher kode voucher checkout (v3.46)
  * @property string $Total
  * @property array<string, mixed> $Perkiraan
  * @property StatusPesananOnline $Status
@@ -72,7 +73,7 @@ final class PesananOnline extends ModelDasar
         'IdPelanggan' => null, 'Email' => null, 'Alamat' => null, 'Kelurahan' => null, 'Kecamatan' => null,
         'Kota' => null, 'Provinsi' => null, 'KodePos' => null, 'IdZonaPengiriman' => null, 'Catatan' => null,
         'Diskon' => '0.00', 'BiayaLayanan' => '0.00', 'Pajak' => '0.00', 'Ongkir' => '0.00', 'DiskonOngkir' => '0.00',
-        'IdPenjualan' => null, 'DibayarPada' => null, 'JumlahDibayar' => null, 'UangMukaTerpakai' => '0.00',
+        'KodeVoucher' => null, 'IdPenjualan' => null, 'DibayarPada' => null, 'JumlahDibayar' => null, 'UangMukaTerpakai' => '0.00',
         'IdJurnal' => null, 'DikembalikanPada' => null, 'IdJurnalRefund' => null, 'HashNoHp' => null, 'HashIp' => null, 'DikonfirmasiOleh' => null, 'DikonfirmasiPada' => null,
         'SelesaiPada' => null, 'DiubahOleh' => null, 'Alasan' => null,
     ];

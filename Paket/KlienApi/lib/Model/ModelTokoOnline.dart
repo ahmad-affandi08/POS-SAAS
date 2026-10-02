@@ -60,6 +60,7 @@ class PesananOnlinePos {
     required this.dibuatPada,
     required this.baris,
     this.pelanggan,
+    this.voucher,
   });
 
   final String uuid;
@@ -92,6 +93,10 @@ class PesananOnlinePos {
   /// atau server lama.
   final PelangganPos? pelanggan;
 
+  /// v3.46: voucher yang dipakai pembeli di checkout (sudah dipesan server untuk pesanan ini); null = tanpa voucher
+  /// atau server lama.
+  final VoucherPesananOnlinePos? voucher;
+
   bool get CekKirim => jenisPemenuhan == 'Kirim';
 
   static PesananOnlinePos DariJson(Map<String, Object?> json, {String? tanggalBisnis}) => PesananOnlinePos(
@@ -114,7 +119,38 @@ class PesananOnlinePos {
       final Map<String, Object?> p => PelangganPos.DariJson(p, tanggalBisnis: tanggalBisnis),
       null => null,
     },
+    voucher: VoucherPesananOnlinePos.DariJson(json['Voucher']),
   );
+}
+
+/// Voucher checkout toko online (v3.46): kode, promo voucher-nya, dan definisi promo bentuk `GET /promo` supaya
+/// keranjang bisa menilainya walau daftar promo perangkat belum diperbarui.
+class VoucherPesananOnlinePos {
+  const VoucherPesananOnlinePos({
+    required this.kode,
+    required this.uuidPromo,
+    required this.namaPromo,
+    required this.promo,
+  });
+
+  final String kode;
+  final String uuidPromo;
+  final String namaPromo;
+  final Map<String, Object?> promo;
+
+  static VoucherPesananOnlinePos? DariJson(Object? json) {
+    final peta = UraiJson.AmbilPetaAtauNull(json);
+    final kode = UraiJson.AmbilTeks(peta?['Kode']);
+    if (peta == null || kode.isEmpty) {
+      return null;
+    }
+    return VoucherPesananOnlinePos(
+      kode: kode,
+      uuidPromo: UraiJson.AmbilTeks(peta['UuidPromo']),
+      namaPromo: UraiJson.AmbilTeks(peta['NamaPromo']),
+      promo: UraiJson.AmbilPeta(peta['Promo']),
+    );
+  }
 }
 
 /// BR-17.3 (v3.33): `GET /api/pos/v1/pesanan-online/ringkas` — dipolling kasir tiap 10 detik.

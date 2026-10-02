@@ -46,6 +46,8 @@ type Hasil = {
     DiskonOngkir: string;
     Total: string;
     Zona: { Nama: string; EstimasiHariMin: number; EstimasiHariMaks: number } | null;
+    /** v3.46: voucher yang berlaku di perhitungan ini (diperiksa server). */
+    Voucher?: { Kode: string; NamaPromo: string } | null;
 };
 type Props = {
     Aktif: boolean;
@@ -97,6 +99,10 @@ export default function TokoOnline({
     );
     const [hasil, AturHasil] = useState<Hasil | null>(null);
     const [galat, AturGalat] = useState<string | null>(null);
+    // v3.46: kode yang diketik, kode yang sedang dipakai di perhitungan, dan galat khusus voucher.
+    const [isianVoucher, AturIsianVoucher] = useState('');
+    const [voucher, AturVoucher] = useState('');
+    const [galatVoucher, AturGalatVoucher] = useState<string | null>(null);
     const [memproses, AturMemproses] = useState(false);
     const [setuju, AturSetuju] = useState(false);
     const [pelanggan, AturPelanggan] = useState(() => ({
@@ -133,6 +139,7 @@ export default function TokoOnline({
                 Outlet: OutletDipilih,
                 JenisPemenuhan: jenis,
                 KodePos: kodePos || null,
+                KodeVoucher: voucher || null,
                 Baris: baris,
             })
                 .then((h) => {
@@ -140,13 +147,26 @@ export default function TokoOnline({
                     AturGalat(null);
                 })
                 .catch((e: unknown) => {
+                    const pesan = e instanceof Error ? e.message : 'Gagal menghitung keranjang.';
+                    // Voucher yang ditolak dilepas lalu keranjang dihitung ulang tanpa voucher.
+                    if (voucher !== '') {
+                        AturGalatVoucher(pesan);
+                        AturVoucher('');
+                        return;
+                    }
                     AturHasil(null);
-                    AturGalat(e instanceof Error ? e.message : 'Gagal menghitung keranjang.');
+                    AturGalat(pesan);
                 });
         }, 250);
         return () => window.clearTimeout(tunda);
         // Masuk/keluar mengubah harga (harga tier & promo pelanggan dihitung server), jadi keranjang dihitung ulang.
-    }, [Slug, OutletDipilih, baris, jenis, kodePos, pembeli?.Uuid]);
+    }, [Slug, OutletDipilih, baris, jenis, kodePos, pembeli?.Uuid, voucher]);
+
+    function PakaiVoucher() {
+        const kode = isianVoucher.trim().toUpperCase();
+        AturGalatVoucher(null);
+        AturVoucher(kode);
+    }
 
     function Tambah(p: Produk) {
         const dipilih = pilihanProduk[p.Uuid] ?? { varian: '', pilihan: [] };
@@ -209,6 +229,7 @@ export default function TokoOnline({
                 JenisPemenuhan: jenis,
                 MetodePembayaran: bayarBerlaku,
                 KodePos: kodePos || null,
+                KodeVoucher: hasilBerlaku?.Voucher?.Kode ?? null,
                 SetujuDataPribadi: setuju,
                 Baris: baris,
             });
@@ -531,12 +552,55 @@ export default function TokoOnline({
                                 saatBerubah={AturSetuju}
                             />
                             {galat ? <Pemberitahuan jenis="bahaya">{galat}</Pemberitahuan> : null}
+                            <div className="flex flex-col gap-1">
+                                <div className="flex items-end gap-2">
+                                    <div className="min-w-0 flex-1">
+                                        <BidangTeks
+                                            label="Kode voucher (opsional)"
+                                            nilai={isianVoucher}
+                                            saatBerubah={AturIsianVoucher}
+                                            galat={galatVoucher ?? undefined}
+                                            kode
+                                        />
+                                    </div>
+                                    {hasilBerlaku?.Voucher ? (
+                                        <Tombol
+                                            varian="sekunder"
+                                            onClick={() => {
+                                                AturVoucher('');
+                                                AturIsianVoucher('');
+                                            }}
+                                        >
+                                            Lepas
+                                        </Tombol>
+                                    ) : (
+                                        <Tombol
+                                            varian="sekunder"
+                                            disabled={isianVoucher.trim() === '' || baris.length === 0}
+                                            onClick={PakaiVoucher}
+                                        >
+                                            Pakai
+                                        </Tombol>
+                                    )}
+                                </div>
+                                {hasilBerlaku?.Voucher ? (
+                                    <p className="text-keterangan text-sukses">
+                                        Voucher {hasilBerlaku.Voucher.Kode} dipakai: {hasilBerlaku.Voucher.NamaPromo}
+                                    </p>
+                                ) : null}
+                            </div>
                             {hasilBerlaku ? (
                                 <dl className="flex flex-col gap-1 border-t border-garis pt-3 text-isi">
                                     <div className="flex justify-between">
                                         <dt>Subtotal</dt>
                                         <dd>{FormatRupiah(hasilBerlaku.Subtotal)}</dd>
                                     </div>
+                                    {Number(hasilBerlaku.Diskon) > 0 ? (
+                                        <div className="flex justify-between text-sukses">
+                                            <dt>Diskon promo</dt>
+                                            <dd>−{FormatRupiah(hasilBerlaku.Diskon)}</dd>
+                                        </div>
+                                    ) : null}
                                     {Number(hasilBerlaku.Ongkir) > 0 ? (
                                         <div className="flex justify-between">
                                             <dt>Ongkir</dt>

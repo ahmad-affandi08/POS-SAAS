@@ -498,11 +498,17 @@ final class TerimaPenjualanPos
 
         // F-16c bagian 2: voucher yang dipesan online menjadi terpakai di transaksi yang sama.
         if ($data->kodeVoucher !== null) {
-            $masalahVoucher = $this->voucher->Pakai($data->kodeVoucher, $data->uuid, $penjualan->Id, $data->dibuatPada);
+            $masalahVoucher = $this->voucher->Pakai($data->kodeVoucher, $data->uuid, $penjualan->Id, $data->dibuatPada, $data->uuidPesananOnline);
 
             if ($masalahVoucher !== []) {
                 $tinjauan['VoucherTidakBerlaku'] = 'VoucherTidakBerlaku: '.implode('; ', $masalahVoucher);
             }
+        }
+
+        // v3.46: voucher checkout pesanan online yang tidak ikut ditagih kasir dilepas supaya jatahnya kembali.
+        if ($pesananOnline !== null && $pesananOnline->KodeVoucher !== null
+            && ($data->kodeVoucher === null || strcasecmp(trim($data->kodeVoucher), $pesananOnline->KodeVoucher) !== 0)) {
+            $this->voucher->LepasPesanan($pesananOnline->KodeVoucher, $pesananOnline->Uuid);
         }
 
         if ($masalahPromo !== []) {

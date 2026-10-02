@@ -12,6 +12,7 @@ use App\Domain\Penjualan\Enum\JenisPemenuhanOnline;
 use App\Domain\Penjualan\Enum\KanalPenjualan;
 use App\Domain\Penjualan\Model\PengaturanTokoOnline;
 use App\Domain\Penjualan\Model\ZonaPengiriman;
+use App\Domain\Promo\Aksi\PesanVoucherPos;
 
 /**
  * Hitung checkout sepenuhnya di server: harga kanal Online, promo/pajak, lalu ongkir zona kode pos.
@@ -26,18 +27,26 @@ use App\Domain\Penjualan\Model\ZonaPengiriman;
  * promonya; yang dibayar pembeli = `Ongkir − DiskonOngkir` dan sudah termasuk di `Total`.
  *
  * `$idPelanggan` = pembeli yang sudah masuk (F-17 bagian 3): harga tier & promo bersyarat pelanggan ikut dihitung.
+ * `$kodeVoucher` (v3.46): voucher berkode diperiksa domain Promo (tidak dikenal/habis/kedaluwarsa = galat di bidang
+ * `KodeVoucher`); promo wajib voucher-nya ikut dihitung. `Voucher` di hasil = {Kode, UuidPromo, NamaPromo} atau null.
  */
 final class PenghitungTokoOnline
 {
-    public function __construct(private readonly PenghitungPesanSendiri $dasar) {}
+    public function __construct(
+        private readonly PenghitungPesanSendiri $dasar,
+        private readonly PesanVoucherPos $voucher,
+    ) {}
 
     /**
      * @param  list<array{UuidProduk: string, Jumlah: int, Pilihan: list<string>, UuidVarian?: string|null}>  $baris
      * @return array<string, mixed>
      */
-    public function Hitung(DataKonteksPesanSendiri $konteks, array $baris, JenisPemenuhanOnline $pemenuhan, ?string $kodePos, ?int $idPelanggan = null): array
+    public function Hitung(DataKonteksPesanSendiri $konteks, array $baris, JenisPemenuhanOnline $pemenuhan, ?string $kodePos, ?int $idPelanggan = null, ?string $kodeVoucher = null): array
     {
-        $hasil = $this->dasar->Hitung($konteks, $baris, KanalPenjualan::Online, true, null, $idPelanggan);
+        // v3.46: voucher diperiksa (tidak dipesan) di sini; dipesan untuk pesanan saat checkout.
+        $voucher = $kodeVoucher === null || trim($kodeVoucher) === '' ? null : $this->voucher->Periksa($kodeVoucher);
+        $uuidVoucher = $voucher === null ? [] : [$voucher['UuidPromo']];
+        $hasil = $this->dasar->Hitung($konteks, $baris, KanalPenjualan::Online, true, null, $idPelanggan, $uuidVoucher);
         $pengaturan = PengaturanTokoOnline::query()->firstOrFail();
         $outlet = Outlet::query()->findOrFail($konteks->idOutlet);
         $total = $hasil['Perkiraan']['Total'];
@@ -75,7 +84,7 @@ final class PenghitungTokoOnline
             $ongkir = $gratis ? Uang::Nol() : Uang::Dari($zona->Ongkir);
 
             if (! $ongkir->BernilaiNol()) {
-                $hasil = $this->dasar->Hitung($konteks, $baris, KanalPenjualan::Online, true, $ongkir, $idPelanggan);
+                $hasil = $this->dasar->Hitung($konteks, $baris, KanalPenjualan::Online, true, $ongkir, $idPelanggan, $uuidVoucher);
                 $diskonOngkir = $hasil['Perkiraan']['DiskonKirim'] ?? Uang::Nol();
                 $total = $hasil['Perkiraan']['Total'];
             }
@@ -87,6 +96,7 @@ final class PenghitungTokoOnline
             'Ongkir' => $ongkir,
             'DiskonOngkir' => $diskonOngkir,
             'Total' => $total,
+            'Voucher' => $voucher,
         ];
     }
 }

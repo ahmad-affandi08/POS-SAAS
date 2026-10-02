@@ -35,12 +35,15 @@ use App\Http\Permintaan\Publik\TokoOnlinePermintaan;
 use Closure;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
 use Inertia\Inertia;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 final class TokoOnlineKontroler extends Kontroler
 {
+    public const MAKS_GAGAL_VOUCHER = 10;
+
     public function __construct(
         private readonly KonteksTenant $konteks,
         private readonly ProfilTenant $profil,
@@ -101,13 +104,21 @@ final class TokoOnlineKontroler extends Kontroler
     {
         return $this->DalamTenant($slugTenant, function () use ($permintaan, $penghitung): JsonResponse {
             $jenis = JenisPemenuhanOnline::from((string) $permintaan->validated('JenisPemenuhan'));
-            $hasil = $penghitung->Hitung($this->penentu->WajibAktif((string) $permintaan->validated('Outlet')), $permintaan->AmbilBaris(), $jenis, $permintaan->validated('KodePos'), $this->CariIdPembeli($permintaan));
+            $hasil = self::DenganBatasVoucher($permintaan, fn (): array => $penghitung->Hitung(
+                $this->penentu->WajibAktif((string) $permintaan->validated('Outlet')),
+                $permintaan->AmbilBaris(),
+                $jenis,
+                $permintaan->validated('KodePos'),
+                $this->CariIdPembeli($permintaan),
+                $permintaan->validated('KodeVoucher'),
+            ));
 
             return response()->json([
                 'Baris' => array_map(fn (array $b): array => ['UuidProduk' => $b['UuidProduk'], 'NamaProduk' => $b['NamaProduk'], 'Jumlah' => $b['Jumlah']->KeString(), 'Total' => $b['Total']->KeString()], $hasil['Baris']),
                 'Subtotal' => $hasil['Subtotal']->KeString(), ...PenghitungPesanSendiri::KeLarik($hasil['Perkiraan']),
                 'Ongkir' => $hasil['Ongkir']->KeString(), 'DiskonOngkir' => $hasil['DiskonOngkir']->KeString(), 'Total' => $hasil['Total']->KeString(),
                 'Zona' => $hasil['Zona'] === null ? null : ['Nama' => $hasil['Zona']->Nama, 'EstimasiHariMin' => $hasil['Zona']->EstimasiHariMin, 'EstimasiHariMaks' => $hasil['Zona']->EstimasiHariMaks],
+                'Voucher' => $hasil['Voucher'] === null ? null : ['Kode' => $hasil['Voucher']['Kode'], 'NamaPromo' => $hasil['Voucher']['NamaPromo']],
             ]);
         });
     }
@@ -117,7 +128,7 @@ final class TokoOnlineKontroler extends Kontroler
         $hashIp = hash_hmac('sha256', (string) $permintaan->ip(), (string) config('app.key'));
 
         return $this->DalamTenant($slugTenant, function () use ($permintaan, $buat, $hashIp): JsonResponse {
-            [$pesanan, $baru] = $buat->Jalankan($this->penentu->WajibAktif((string) $permintaan->validated('Outlet')), $permintaan->validated(), $hashIp, $this->CariIdPembeli($permintaan));
+            [$pesanan, $baru] = self::DenganBatasVoucher($permintaan, fn (): array => $buat->Jalankan($this->penentu->WajibAktif((string) $permintaan->validated('Outlet')), $permintaan->validated(), $hashIp, $this->CariIdPembeli($permintaan)));
 
             return response()->json([
                 'KodeAkses' => $pesanan->KodeAkses, 'Nomor' => $pesanan->Nomor,
@@ -206,6 +217,40 @@ final class TokoOnlineKontroler extends Kontroler
     }
 
     /** Pembeli yang sudah masuk (F-17 bagian 3); null = tamu, atau akun pembeli sedang dimatikan toko. */
+    /**
+     * v3.46: kode voucher bisa ditebak lewat rute publik, jadi kode yang salah dibatasi `MAKS_GAGAL_VOUCHER` kali per
+     * 10 menit per IP (percobaan sah tidak dihitung). Galat voucher selain itu diteruskan apa adanya.
+     *
+     * @template T
+     *
+     * @param  Closure(): T  $kerja
+     * @return T
+     */
+    private static function DenganBatasVoucher(TokoOnlinePermintaan $permintaan, Closure $kerja): mixed
+    {
+        $kode = $permintaan->validated('KodeVoucher');
+
+        if (! is_string($kode) || $kode === '') {
+            return $kerja();
+        }
+
+        $kunci = 'voucher-toko-online:'.hash_hmac('sha256', (string) $permintaan->ip(), (string) config('app.key'));
+
+        if (RateLimiter::tooManyAttempts($kunci, self::MAKS_GAGAL_VOUCHER)) {
+            throw new PelanggaranAturanBisnis('TerlaluBanyakPercobaanVoucher', 'Terlalu banyak kode voucher yang salah. Coba lagi beberapa menit lagi.', 'KodeVoucher', 429);
+        }
+
+        try {
+            return $kerja();
+        } catch (PelanggaranAturanBisnis $galat) {
+            if ($galat->kode === 'VoucherTidakDitemukan') {
+                RateLimiter::hit($kunci, 600);
+            }
+
+            throw $galat;
+        }
+    }
+
     private function CariPembeli(Request $request): ?Pelanggan
     {
         return $this->sesi->CariPelanggan($request->cookie(SesiPembeliOnline::NAMA_COOKIE));

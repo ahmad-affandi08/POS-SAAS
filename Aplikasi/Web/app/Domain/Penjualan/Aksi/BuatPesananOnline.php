@@ -21,6 +21,7 @@ use App\Domain\Penjualan\Layanan\PenghitungTokoOnline;
 use App\Domain\Penjualan\Model\PengaturanTokoOnline;
 use App\Domain\Penjualan\Model\PesananOnline;
 use App\Domain\Penjualan\Model\PesananOnlineDetail;
+use App\Domain\Promo\Aksi\PesanVoucherPos;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
@@ -31,6 +32,7 @@ use Illuminate\Support\Str;
  * lewat kode WhatsApp: pesanan tertaut ke `Pelanggan`-nya, nomor HP diambil dari pelanggan (nomor ketikan diabaikan,
  * karena nomor itulah yang sudah diverifikasi), dan harga tier/promo pelanggan ikut dihitung. Tanpa masuk, pesanan
  * tidak pernah ditautkan ke pelanggan walau nomornya cocok: nomor ketikan tamu belum terbukti miliknya.
+ * `KodeVoucher` (v3.46) opsional: diperiksa saat menghitung lalu dipesan untuk pesanan ini di transaksi yang sama.
  */
 final class BuatPesananOnline
 {
@@ -40,6 +42,7 @@ final class BuatPesananOnline
         private readonly PenghitungTokoOnline $penghitung,
         private readonly PenomorDokumen $penomor,
         private readonly IdentitasPelanggan $pelanggan,
+        private readonly PesanVoucherPos $pesanVoucher,
     ) {}
 
     /**
@@ -98,7 +101,7 @@ final class BuatPesananOnline
             'UuidProduk' => strtoupper((string) $b['UuidProduk']), 'Jumlah' => (int) $b['Jumlah'],
             'Pilihan' => array_values((array) ($b['Pilihan'] ?? [])),
             'UuidVarian' => is_string($b['UuidVarian'] ?? null) ? strtoupper($b['UuidVarian']) : null,
-        ], $barisMasukan), $pemenuhan, is_string($data['KodePos'] ?? null) ? $data['KodePos'] : null, $idPelanggan);
+        ], $barisMasukan), $pemenuhan, is_string($data['KodePos'] ?? null) ? $data['KodePos'] : null, $idPelanggan, is_string($data['KodeVoucher'] ?? null) ? $data['KodeVoucher'] : null);
 
         try {
             return DB::transaction(function () use ($konteks, $data, $uuid, $noHp, $hashNoHp, $pemenuhan, $pembayaran, $hashIp, $hitung, $barisMasukan, $idPelanggan): array {
@@ -127,6 +130,7 @@ final class BuatPesananOnline
                     'Catatan' => self::Teks($data['Catatan'] ?? null), 'Subtotal' => $hitung['Subtotal']->KeString(),
                     'Diskon' => $perkiraan['Diskon'], 'BiayaLayanan' => $perkiraan['BiayaLayanan'], 'Pajak' => $pajak->KeString(),
                     'Ongkir' => $hitung['Ongkir']->KeString(), 'DiskonOngkir' => $hitung['DiskonOngkir']->KeString(),
+                    'KodeVoucher' => $hitung['Voucher']['Kode'] ?? null,
                     'Total' => $hitung['Total']->KeString(), 'Perkiraan' => $perkiraan,
                     'Status' => $pembayaran->CekBayarDiMuka() ? StatusPesananOnline::MenungguPembayaran : StatusPesananOnline::MenungguKonfirmasi,
                     'HashNoHp' => $hashNoHp, 'HashIp' => $hashIp,
@@ -146,6 +150,12 @@ final class BuatPesananOnline
                         'SnapshotPajak' => ['IdKelompokPajak' => $b['IdKelompokPajak'], 'HargaTermasukPajak' => $b['HargaTermasukPajak']],
                         'TotalBaris' => $b['Total']->KeString(),
                     ]);
+                }
+
+                // v3.46: voucher dipesan atas Uuid pesanan sampai kasir menagihnya (berpindah ke penjualan) atau pesanan
+                // batal/kedaluwarsa (dilepas). Gagal memesan (habis direbut) = checkout gagal utuh.
+                if ($pesanan->KodeVoucher !== null) {
+                    $this->pesanVoucher->Jalankan($pesanan->KodeVoucher, $pesanan->Uuid, null, PesanVoucherPos::MENIT_PESAN_ONLINE);
                 }
 
                 return [$pesanan, true];

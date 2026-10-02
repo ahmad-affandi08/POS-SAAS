@@ -16,6 +16,7 @@ use App\Domain\Penjualan\Layanan\PemberitahuPesananOnline;
 use App\Domain\Penjualan\Layanan\PemeriksaPenyelesaianPesananOnline;
 use App\Domain\Penjualan\Model\PesananOnline;
 use App\Domain\Penjualan\Model\ZonaPengiriman;
+use App\Domain\Promo\Aksi\LepasVoucherPos;
 use Illuminate\Support\Facades\DB;
 
 final class UbahStatusPesananOnline
@@ -25,6 +26,7 @@ final class UbahStatusPesananOnline
         private readonly PencatatAudit $audit,
         private readonly PemeriksaPenyelesaianPesananOnline $selesai,
         private readonly PemberitahuPesananOnline $pemberitahu,
+        private readonly LepasVoucherPos $lepasVoucher,
     ) {}
 
     public function Jalankan(PesananOnline $pesanan, StatusPesananOnline $status, int $idPengguna, ?string $alasan = null): void
@@ -72,6 +74,10 @@ final class UbahStatusPesananOnline
                 $this->riwayat->Catat('PengirimanPesanan', $pengiriman->Id, $dariPengiriman->value, StatusPengirimanPesanan::Dibatalkan->value, $idPengguna, $alasan);
             }
             $pesanan->save();
+            // v3.46: voucher checkout yang dipesan untuk pesanan ini dilepas begitu pesanan tidak jadi ditagih.
+            if ($pesanan->KodeVoucher !== null && in_array($status, [StatusPesananOnline::Ditolak, StatusPesananOnline::Dibatalkan], true)) {
+                $this->lepasVoucher->Jalankan($pesanan->KodeVoucher, $pesanan->Uuid);
+            }
             $this->riwayat->Catat(PesananOnline::JENIS_DOKUMEN, $pesanan->Id, $dari->value, $status->value, $idPengguna, $alasan);
             $this->audit->Catat('pesanan-online.status', $pesanan, ['Status' => $dari->value], ['Status' => $status->value, 'Alasan' => $alasan], idPengguna: $idPengguna);
 

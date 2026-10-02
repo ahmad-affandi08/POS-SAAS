@@ -31,6 +31,7 @@ void main() {
     String sisaUangMuka = '28000.00',
     String total = '28000.00',
     bool sudahDibayar = true,
+    Map<String, Object?>? voucher,
   }) => {
     'Uuid': '01K5PESANANONLINE000000001',
     'Nomor': 'ON/SLB/260930-0001',
@@ -46,6 +47,7 @@ void main() {
     'SisaUangMuka': sisaUangMuka,
     'Catatan': 'Tolong tanpa gula',
     'DibuatPada': '2026-09-30T02:00:00Z',
+    'Voucher': voucher,
     'Baris': [
       {
         'UuidProduk': UuidUji.americano,
@@ -146,6 +148,53 @@ void main() {
     expect(data['UuidPesananOnline'], '01K5PESANANONLINE000000001');
     expect(data.containsKey('UuidPesananPenjualan'), isFalse, reason: 'Satu sumber uang muka saja.');
     expect(data['Kanal'], 'Online');
+  });
+
+  test('v3.46: voucher checkout ikut dimuat ke keranjang tanpa memesan ulang, kodenya terkirim di outbox', () async {
+    final katalog = await u.MuatKatalog();
+    final k = await u.MuatKonteks();
+    final voucher = {
+      'Kode': 'HEMAT5K',
+      'UuidPromo': '01K5PROMO00000000000000009',
+      'NamaPromo': 'Voucher hemat Rp 5.000',
+      'Promo': {
+        'Uuid': '01K5PROMO00000000000000009',
+        'Kode': 'VCR-HEMAT',
+        'Nama': 'Voucher hemat Rp 5.000',
+        'Prioritas': 0,
+        'Eksklusif': false,
+        'MulaiPada': null,
+        'SelesaiPada': null,
+        'KuotaTersisa': null,
+        'Definisi': {
+          'WajibVoucher': true,
+          'Aksi': {'Jenis': 'DiskonTetapPesanan', 'Jumlah': '5000'},
+        },
+      },
+    };
+    u.server.penangan = (_) async =>
+        JsonUji(Balasan(Pesanan(sudahDibayar: false, sisaUangMuka: '0.00', voucher: voucher), adaMetode: false));
+    final hasil = await u.pesananOnline.AmbilAktif();
+    expect(hasil.pesanan.single.voucher?.kode, 'HEMAT5K');
+    final jumlahPermintaan = u.server.permintaan.length;
+
+    final keranjang = u.pesananOnline.MuatKeKeranjang(hasil.pesanan.single, hasil, katalog, k);
+    expect(keranjang.voucher?.kode, 'HEMAT5K');
+    expect(keranjang.voucher?.uuidPromo, '01K5PROMO00000000000000009');
+    expect(u.server.permintaan.length, jumlahPermintaan, reason: 'Voucher sudah dipesan server atas pesanan ini.');
+
+    final tunai = k.metodePembayaran.firstWhere((m) => m.Jenis == 'Tunai');
+    final total = u.penjualan.Hitung(keranjang, k).hasil.totalAkhir;
+    final jual = await u.penjualan.Bayar(
+      keranjang: keranjang,
+      pembayaran: [PembayaranMasukan(metode: tunai, jumlah: total)],
+      kasir: rina,
+      k: k,
+    );
+    expect(jual.uuid, keranjang.voucher?.uuidPenjualan, reason: 'Penjualan memakai Uuid yang dibawa voucher.');
+    final data = await BacaOutboxTerakhir();
+    expect(data['UuidPesananOnline'], '01K5PESANANONLINE000000001');
+    expect(data['Voucher'], 'HEMAT5K');
   });
 
   test('pesanan COD tanpa uang muka tetap bisa ditagih penuh di kasir', () async {

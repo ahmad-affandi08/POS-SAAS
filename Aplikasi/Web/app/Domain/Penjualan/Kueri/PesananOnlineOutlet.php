@@ -11,6 +11,7 @@ use App\Domain\Penjualan\Enum\StatusPesananOnline;
 use App\Domain\Penjualan\Model\MetodePembayaran;
 use App\Domain\Penjualan\Model\PesananOnline;
 use App\Domain\Penjualan\Model\PesananOnlineDetail;
+use App\Domain\Promo\Layanan\PemakaiVoucher;
 use Carbon\CarbonImmutable;
 
 /**
@@ -29,6 +30,7 @@ final class PesananOnlineOutlet
     public function __construct(
         private readonly CariPelangganPos $pelanggan,
         private readonly TanggalBisnisOutlet $tanggal,
+        private readonly PemakaiVoucher $voucher,
     ) {}
 
     /**
@@ -72,6 +74,8 @@ final class PesananOnlineOutlet
                 'Catatan' => $p->Catatan, 'DibuatPada' => $p->DibuatPada?->toIso8601ZuluString(),
                 'SudahDibayar' => $p->DibayarPada !== null, 'SisaUangMuka' => $p->AmbilSisaUangMuka()->KeString(),
                 'Pelanggan' => $p->IdPelanggan === null ? null : ($pelanggan[$p->IdPelanggan] ?? null),
+                // v3.46 (aditif): voucher checkout yang sudah dipesan untuk pesanan; kasir memuatnya tanpa memesan ulang.
+                'Voucher' => $this->voucher->AmbilUntukPos($p->KodeVoucher),
                 'Baris' => $p->Detail->map(fn (PesananOnlineDetail $d): array => [
                     'UuidProduk' => $d->UuidProduk, 'UuidProdukSatuan' => $d->UuidProdukSatuan,
                     'NamaProduk' => $d->NamaProduk, 'Jumlah' => $d->Jumlah, 'HargaSatuan' => $d->HargaSatuan,

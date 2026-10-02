@@ -25,18 +25,21 @@ final class PesanVoucherPos
 {
     public const MENIT_PESAN = 60;
 
+    /** F-17 (v3.46): voucher di checkout toko online dipesan sampai pesanan ditagih, batal, atau kedaluwarsa. */
+    public const MENIT_PESAN_ONLINE = 60 * 24 * 14;
+
     public function __construct(private readonly PromoBerlaku $berlaku) {}
 
     /**
      * @return array{Voucher: array{Kode: string, UuidPromo: string, DipesanSampai: string, SisaPakai: int|null}, Promo: array<string, mixed>}
      */
-    public function Jalankan(string $kode, string $uuidPenjualan, int $idPerangkat): array
+    public function Jalankan(string $kode, string $uuidPenjualan, ?int $idPerangkat, int $menitPesan = self::MENIT_PESAN): array
     {
         if (! $this->berlaku->CekFiturAktif()) {
             throw new PelanggaranAturanBisnis('VoucherTidakDitemukan', 'Kode voucher tidak ditemukan.', 'Kode', 404);
         }
 
-        return DB::transaction(function () use ($kode, $uuidPenjualan, $idPerangkat): array {
+        return DB::transaction(function () use ($kode, $uuidPenjualan, $idPerangkat, $menitPesan): array {
             $sekarang = CarbonImmutable::now();
             $voucher = Voucher::query()->where('Kode', Voucher::RapikanKode($kode))->lockForUpdate()->first()
                 ?? throw new PelanggaranAturanBisnis('VoucherTidakDitemukan', 'Kode voucher tidak ditemukan.', 'Kode', 404);
@@ -67,7 +70,7 @@ final class PesanVoucherPos
                 }
             }
 
-            $sampai = $sekarang->addMinutes(self::MENIT_PESAN);
+            $sampai = $sekarang->addMinutes($menitPesan);
             $pemakaian ??= new VoucherPemakaian(['IdVoucher' => $voucher->Id, 'UuidPenjualan' => $uuidPenjualan]);
             $pemakaian->fill(['Status' => StatusPemakaianVoucher::Dipesan, 'DipesanSampai' => $sampai, 'IdPerangkat' => $idPerangkat]);
             $pemakaian->save();
@@ -82,6 +85,36 @@ final class PesanVoucherPos
                 'Promo' => PromoBerlaku::PetakanUntukPos($promo),
             ];
         });
+    }
+
+    /**
+     * F-17 (v3.46): periksa voucher tanpa memesannya (perkiraan total checkout toko online). Pesanan voucher lain yang
+     * masih berlaku ikut mengurangi sisa, sama seperti saat memesan.
+     *
+     * @return array{Kode: string, UuidPromo: string, NamaPromo: string}
+     */
+    public function Periksa(string $kode): array
+    {
+        if (! $this->berlaku->CekFiturAktif()) {
+            throw new PelanggaranAturanBisnis('VoucherTidakDitemukan', 'Kode voucher tidak ditemukan.', 'KodeVoucher', 404);
+        }
+
+        $sekarang = CarbonImmutable::now();
+        $voucher = Voucher::query()->where('Kode', Voucher::RapikanKode($kode))->first()
+            ?? throw new PelanggaranAturanBisnis('VoucherTidakDitemukan', 'Kode voucher tidak ditemukan.', 'KodeVoucher', 404);
+        $promo = Promo::query()->findOrFail($voucher->IdPromo);
+        $this->PastikanBisaDipakai($voucher, $promo, $sekarang);
+        $sisa = $voucher->AmbilSisaPakai();
+
+        if ($sisa !== null && $sisa - VoucherPemakaian::query()
+            ->where('IdVoucher', $voucher->Id)
+            ->where('Status', StatusPemakaianVoucher::Dipesan->value)
+            ->where('DipesanSampai', '>', $sekarang)
+            ->count() <= 0) {
+            throw new PelanggaranAturanBisnis('VoucherHabis', "Voucher {$voucher->Kode} sudah habis dipakai.", 'KodeVoucher', 409);
+        }
+
+        return ['Kode' => $voucher->Kode, 'UuidPromo' => $promo->Uuid, 'NamaPromo' => $promo->Nama];
     }
 
     private function PastikanBisaDipakai(Voucher $voucher, Promo $promo, CarbonImmutable $sekarang): void
