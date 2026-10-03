@@ -82,6 +82,11 @@ class BagiTagihan {
 class PanelBayar extends ConsumerStatefulWidget {
   const PanelBayar({super.key, required this.kasir, required this.saatSelesai, this.saatPreOrder});
 
+  /// Lebar area kerja minimal untuk dua kolom (ringkasan & metode | rincian metode & papan angka).
+  static const double lebarDuaKolom = 960;
+  static const double lebarMaksDuaKolom = 1120;
+  static const double lebarMaksSatuKolom = 720;
+
   final StafLokal kasir;
   final ValueChanged<PenjualanTersimpan> saatSelesai;
 
@@ -915,235 +920,311 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
         (syaratApotek.CekWajibResep && _resep == null) ||
         (syaratApotek.CekWajibApoteker && _apoteker == null && !_kasirApoteker);
 
-    return Padding(
-      padding: const EdgeInsets.all(TokenJarak.jarak24),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          if (keranjang.praPesan case final praPesan?)
-            Padding(
-              padding: const EdgeInsets.only(bottom: TokenJarak.jarak8),
-              child: Text(
-                praPesan.sumber == SumberUangMuka.pesananOnline
-                    ? 'Menagih pesanan online ${praPesan.nomor}'
-                    : 'Mengambil pre-order ${praPesan.nomor}',
-                style: teks.bodySmall,
-              ),
-            ),
-          if (keranjang.laundry case final laundry?)
-            Padding(
-              padding: const EdgeInsets.only(bottom: TokenJarak.jarak8),
-              child: Text('Tiket laundry ${laundry.jenisLayanan} · ${laundry.RingkasIsi()}', style: teks.bodySmall),
-            ),
-          if (keranjang.reservasi case final reservasi?)
-            Padding(
-              padding: const EdgeInsets.only(bottom: TokenJarak.jarak8),
-              child: Text('Melayani reservasi ${reservasi.nomor}', style: teks.bodySmall),
-            ),
-          if (keranjang.perintahKerja case final pk?)
-            Padding(
-              padding: const EdgeInsets.only(bottom: TokenJarak.jarak8),
-              child: Text(['Menagih perintah kerja ${pk.nomor}', ?pk.nomorPolisi].join(' · '), style: teks.bodySmall),
-            ),
-          if (keranjang.tukar case final tukar?)
-            Padding(
-              padding: const EdgeInsets.only(bottom: TokenJarak.jarak8),
-              child: Text(
-                'Tukar barang dari ${tukar.nomorPenjualanAsal} · nilai retur ${tukar.nilai.FormatRupiah()}'
-                '${tukar.nilai.Bandingkan(hitungan.hasil.totalAkhir) > 0 ? ' · kembalikan ${tukar.nilai.Kurangi(hitungan.hasil.totalAkhir).FormatRupiah()} tunai' : ''}',
-                style: teks.bodySmall,
-              ),
-            ),
-          ...RingkasanTotal.BangunBaris(context, hitungan, keranjang, tampilPembulatan: true),
-          if (_bagi case final bagi?) ...[
-            const SizedBox(height: TokenJarak.jarak8),
-            Container(
-              key: const ValueKey('InfoBagiTagihan'),
-              padding: const EdgeInsets.all(TokenJarak.jarak12),
-              decoration: BoxDecoration(
-                border: Border.all(color: warna.garis, width: TokenJarak.tebalGaris),
-                borderRadius: BorderRadius.circular(TokenJarak.radiusPanel),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+    final kiri = <Widget>[
+      if (keranjang.praPesan case final praPesan?)
+        Padding(
+          padding: const EdgeInsets.only(bottom: TokenJarak.jarak8),
+          child: Text(
+            praPesan.sumber == SumberUangMuka.pesananOnline
+                ? 'Menagih pesanan online ${praPesan.nomor}'
+                : 'Mengambil pre-order ${praPesan.nomor}',
+            style: teks.bodySmall,
+          ),
+        ),
+      if (keranjang.laundry case final laundry?)
+        Padding(
+          padding: const EdgeInsets.only(bottom: TokenJarak.jarak8),
+          child: Text('Tiket laundry ${laundry.jenisLayanan} · ${laundry.RingkasIsi()}', style: teks.bodySmall),
+        ),
+      if (keranjang.reservasi case final reservasi?)
+        Padding(
+          padding: const EdgeInsets.only(bottom: TokenJarak.jarak8),
+          child: Text('Melayani reservasi ${reservasi.nomor}', style: teks.bodySmall),
+        ),
+      if (keranjang.perintahKerja case final pk?)
+        Padding(
+          padding: const EdgeInsets.only(bottom: TokenJarak.jarak8),
+          child: Text(['Menagih perintah kerja ${pk.nomor}', ?pk.nomorPolisi].join(' · '), style: teks.bodySmall),
+        ),
+      if (keranjang.tukar case final tukar?)
+        Padding(
+          padding: const EdgeInsets.only(bottom: TokenJarak.jarak8),
+          child: Text(
+            'Tukar barang dari ${tukar.nomorPenjualanAsal} · nilai retur ${tukar.nilai.FormatRupiah()}'
+            '${tukar.nilai.Bandingkan(hitungan.hasil.totalAkhir) > 0 ? ' · kembalikan ${tukar.nilai.Kurangi(hitungan.hasil.totalAkhir).FormatRupiah()} tunai' : ''}',
+            style: teks.bodySmall,
+          ),
+        ),
+      ...RingkasanTotal.BangunBaris(context, hitungan, keranjang, tampilPembulatan: true),
+      if (_bagi case final bagi?) ...[
+        const SizedBox(height: TokenJarak.jarak8),
+        Container(
+          key: const ValueKey('InfoBagiTagihan'),
+          padding: const EdgeInsets.all(TokenJarak.jarak12),
+          decoration: BoxDecoration(
+            border: Border.all(color: warna.garis, width: TokenJarak.tebalGaris),
+            borderRadius: BorderRadius.circular(TokenJarak.radiusPanel),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
                 children: [
-                  Row(
-                    children: [
-                      const Icon(Icons.call_split, size: TokenJarak.ikonKecil),
-                      const SizedBox(width: TokenJarak.jarak8),
-                      Expanded(
-                        child: Text(
-                          bagi.perNominal
-                              ? 'Bagi per nominal · tamu $_tamuKe'
-                              : 'Bagi rata ${bagi.jumlahOrang} orang · tamu $_tamuKe dari ${bagi.jumlahOrang}',
-                          style: teks.titleSmall,
-                        ),
-                      ),
-                    ],
-                  ),
-                  if (!bagi.perNominal) ...[
-                    const SizedBox(height: TokenJarak.jarak4),
-                    Text(
-                      _tamuTerakhir
-                          ? 'Tamu terakhir membayar sisa ${sisa.FormatRupiah()}'
-                          : 'Porsi per orang ${bagi.porsi!.FormatRupiah()}',
-                      style: teks.bodyMedium,
+                  const Icon(Icons.call_split, size: TokenJarak.ikonKecil),
+                  const SizedBox(width: TokenJarak.jarak8),
+                  Expanded(
+                    child: Text(
+                      bagi.perNominal
+                          ? 'Bagi per nominal · tamu $_tamuKe'
+                          : 'Bagi rata ${bagi.jumlahOrang} orang · tamu $_tamuKe dari ${bagi.jumlahOrang}',
+                      style: teks.titleSmall,
                     ),
-                  ],
-                  if (_infoBagi != null) ...[
-                    const SizedBox(height: TokenJarak.jarak4),
-                    Semantics(liveRegion: true, child: Text(_infoBagi!, style: teks.bodyMedium)),
-                  ],
+                  ),
                 ],
               ),
-            ),
-          ],
-          for (final p in _entri)
-            Row(
-              children: [
-                Expanded(child: Text('${p.metode.Nama}${p.referensi == null ? '' : ' · ${p.referensi}'}')),
-                TeksUang(p.jumlah),
-                if (p.metode.Jenis == JenisMetodeBayar.uangMuka ||
-                    p.metode.Jenis == JenisMetodeBayar.qrisDinamis ||
-                    p.metode.Jenis == JenisMetodeBayar.tukar)
-                  const SizedBox(width: TokenJarak.targetSentuh)
-                else
-                  IconButton(
-                    tooltip: 'Hapus pembayaran ${p.metode.Nama}',
-                    onPressed: () => setState(() {
-                      _entri.remove(p);
-                      if (p.metode.Jenis == JenisMetodeBayar.tempo) {
-                        _penyetujuTempo = null;
-                      }
-                    }),
-                    icon: const Icon(Icons.close),
-                  ),
+              if (!bagi.perNominal) ...[
+                const SizedBox(height: TokenJarak.jarak4),
+                Text(
+                  _tamuTerakhir
+                      ? 'Tamu terakhir membayar sisa ${sisa.FormatRupiah()}'
+                      : 'Porsi per orang ${bagi.porsi!.FormatRupiah()}',
+                  style: teks.bodyMedium,
+                ),
               ],
-            ),
-          if (_entri.isNotEmpty)
-            Row(
-              children: [
-                Expanded(child: Text('Sisa', style: teks.titleMedium)),
-                TeksUang(sisa, gaya: teks.titleMedium),
+              if (_infoBagi != null) ...[
+                const SizedBox(height: TokenJarak.jarak4),
+                Semantics(liveRegion: true, child: Text(_infoBagi!, style: teks.bodyMedium)),
               ],
-            ),
-          if (!syaratApotek.CekKosong) ...[
-            const SizedBox(height: TokenJarak.jarak12),
-            _BangunApotek(context, k, syaratApotek),
-          ],
-          const SizedBox(height: TokenJarak.jarak16),
-          if (gerbangApotek)
-            Text(
-              'Lengkapi syarat obat di atas sebelum menerima pembayaran.',
-              key: const ValueKey('GerbangApotek'),
-              style: teks.bodyMedium?.copyWith(color: warna.peringatan),
-            )
-          else if (k.metodePembayaran.isEmpty)
-            Text(
-              'Metode pembayaran belum tersedia di perangkat ini. Sambungkan ke internet agar data terbaru terunduh.',
-              style: TextStyle(color: warna.bahaya),
-            )
-          else
-            Wrap(
-              spacing: TokenJarak.jarak8,
-              runSpacing: TokenJarak.jarak8,
-              children: [
-                for (final m in LayananPenjualan.SaringMetodeKanal(
-                  k.metodePembayaran,
-                  LayananPenjualan.AmbilKanal(keranjang),
-                ))
-                  if (!(tunaiDipakai && _bagi == null && m.Jenis == JenisMetodeBayar.tunai) &&
-                      !(m.Jenis == JenisMetodeBayar.tempo && (keranjang.pelanggan == null || tempoDipakai)) &&
-                      !(m.Jenis == JenisMetodeBayar.deposit &&
-                          (keranjang.pelanggan == null || depositDipakai || !k.deposit.berlaku)))
-                    ChoiceChip(
-                      label: Text(m.Nama),
-                      tooltip: AmbilLabelJenisMetode(m.Jenis),
-                      selected: metode?.Uuid == m.Uuid,
-                      onSelected: _sibuk ? null : (_) => _PilihMetode(k, m),
-                    ),
-              ],
-            ),
-          if (metode != null && !gerbangApotek) ...[
-            const SizedBox(height: TokenJarak.jarak16),
-            if (metode.Jenis == JenisMetodeBayar.tunai)
-              _BangunTunai(context, k)
-            else
-              _BangunNonTunai(context, k, metode),
-          ],
-          if (_galat != null)
-            Padding(
-              padding: const EdgeInsets.only(top: TokenJarak.jarak8),
-              child: Text(_galat!, style: TextStyle(color: warna.bahaya)),
-            ),
-          const SizedBox(height: TokenJarak.jarak16),
-          SizedBox(
-            height: 56,
-            child: FilledButton(
-              onPressed: _sibuk || gerbangApotek
-                  ? null
-                  : metode != null
-                  ? () => _Terapkan(k)
-                  : lunasTanpaMetode
-                  ? () => _Selesaikan(k, List.of(_entri))
-                  : null,
-              child: Text(
-                _sibuk
-                    ? 'Menyimpan…'
-                    : _bagi?.porsi != null && !_tamuTerakhir && metode != null
-                    ? 'Bayar porsi tamu $_tamuKe'
-                    : melunasi || metode == null
-                    ? 'Selesaikan pembayaran'
-                    : 'Tambah pembayaran ${metode.Nama}',
-              ),
-            ),
+            ],
           ),
-          if (_bagi == null &&
-              _entri.isEmpty &&
-              keranjang.tukar == null &&
-              keranjang.praPesan == null &&
-              hitungan.hasil.totalAkhir.Bandingkan(Uang.DariBulat(1)) > 0) ...[
-            const SizedBox(height: TokenJarak.jarak8),
-            SizedBox(
-              height: TokenJarak.targetSentuh,
-              child: OutlinedButton.icon(
-                onPressed: _sibuk ? null : () => unawaited(_MulaiBagi(hitungan.hasil.totalAkhir)),
-                icon: const Icon(Icons.call_split),
-                label: const Text('Bagi tagihan'),
+        ),
+      ],
+      for (final p in _entri)
+        Row(
+          children: [
+            Expanded(child: Text('${p.metode.Nama}${p.referensi == null ? '' : ' · ${p.referensi}'}')),
+            TeksUang(p.jumlah),
+            if (p.metode.Jenis == JenisMetodeBayar.uangMuka ||
+                p.metode.Jenis == JenisMetodeBayar.qrisDinamis ||
+                p.metode.Jenis == JenisMetodeBayar.tukar)
+              const SizedBox(width: TokenJarak.targetSentuh)
+            else
+              IconButton(
+                tooltip: 'Hapus pembayaran ${p.metode.Nama}',
+                onPressed: () => setState(() {
+                  _entri.remove(p);
+                  if (p.metode.Jenis == JenisMetodeBayar.tempo) {
+                    _penyetujuTempo = null;
+                  }
+                }),
+                icon: const Icon(Icons.close),
               ),
-            ),
           ],
-          if (_bagi != null && _entri.isEmpty) ...[
-            const SizedBox(height: TokenJarak.jarak8),
-            SizedBox(
-              height: TokenJarak.targetSentuh,
-              child: TextButton(
-                onPressed: _sibuk ? null : () => setState(() => _bagi = null),
-                child: const Text('Batal bagi tagihan'),
-              ),
-            ),
+        ),
+      if (_entri.isNotEmpty)
+        Row(
+          children: [
+            Expanded(child: Text('Sisa', style: teks.titleMedium)),
+            TeksUang(sisa, gaya: teks.titleMedium),
           ],
-          if (widget.saatPreOrder != null &&
-              keranjang.pelanggan != null &&
-              keranjang.praPesan == null &&
-              keranjang.reservasi == null &&
-              keranjang.perintahKerja == null &&
-              keranjang.laundry == null &&
-              keranjang.pesananMeja == null &&
-              _entri.isEmpty) ...[
-            const SizedBox(height: TokenJarak.jarak8),
-            SizedBox(
-              height: TokenJarak.targetSentuh,
-              child: OutlinedButton.icon(
-                onPressed: _sibuk ? null : widget.saatPreOrder,
-                icon: const Icon(Icons.event_available_outlined),
-                label: const Text('Jadikan pre-order (bayar DP)'),
-              ),
-            ),
+        ),
+      if (!syaratApotek.CekKosong) ...[
+        const SizedBox(height: TokenJarak.jarak12),
+        _BangunApotek(context, k, syaratApotek),
+      ],
+      const SizedBox(height: TokenJarak.jarak16),
+      if (gerbangApotek)
+        Text(
+          'Lengkapi syarat obat di atas sebelum menerima pembayaran.',
+          key: const ValueKey('GerbangApotek'),
+          style: teks.bodyMedium?.copyWith(color: warna.peringatan),
+        )
+      else if (k.metodePembayaran.isEmpty)
+        Text(
+          'Metode pembayaran belum tersedia di perangkat ini. Sambungkan ke internet agar data terbaru terunduh.',
+          style: TextStyle(color: warna.bahaya),
+        )
+      else
+        Wrap(
+          spacing: TokenJarak.jarak8,
+          runSpacing: TokenJarak.jarak8,
+          children: [
+            for (final m in LayananPenjualan.SaringMetodeKanal(
+              k.metodePembayaran,
+              LayananPenjualan.AmbilKanal(keranjang),
+            ))
+              if (!(tunaiDipakai && _bagi == null && m.Jenis == JenisMetodeBayar.tunai) &&
+                  !(m.Jenis == JenisMetodeBayar.tempo && (keranjang.pelanggan == null || tempoDipakai)) &&
+                  !(m.Jenis == JenisMetodeBayar.deposit &&
+                      (keranjang.pelanggan == null || depositDipakai || !k.deposit.berlaku)))
+                ChoiceChip(
+                  label: Text(m.Nama),
+                  tooltip: AmbilLabelJenisMetode(m.Jenis),
+                  selected: metode?.Uuid == m.Uuid,
+                  onSelected: _sibuk ? null : (_) => _PilihMetode(k, m),
+                ),
           ],
-        ],
+        ),
+    ];
+    // Rincian metode terpilih (tagihan, tombol uang cepat, isian, papan angka / QR / referensi).
+    final rincian = <Widget>[
+      if (metode != null && !gerbangApotek)
+        if (metode.Jenis == JenisMetodeBayar.tunai) _BangunTunai(context, k) else _BangunNonTunai(context, k, metode),
+    ];
+    // Bilah aksi menempel di bawah: tombol selesaikan/tambah pembayaran & aksi sekunder selalu terlihat tanpa digulir.
+    final aksi = <Widget>[
+      if (_galat != null)
+        Padding(
+          padding: const EdgeInsets.only(bottom: TokenJarak.jarak8),
+          child: Text(_galat!, style: TextStyle(color: warna.bahaya)),
+        ),
+      SizedBox(
+        height: 56,
+        child: FilledButton(
+          onPressed: _sibuk || gerbangApotek
+              ? null
+              : metode != null
+              ? () => _Terapkan(k)
+              : lunasTanpaMetode
+              ? () => _Selesaikan(k, List.of(_entri))
+              : null,
+          child: Text(
+            _sibuk
+                ? 'Menyimpan…'
+                : _bagi?.porsi != null && !_tamuTerakhir && metode != null
+                ? 'Bayar porsi tamu $_tamuKe'
+                : melunasi || metode == null
+                ? 'Selesaikan pembayaran'
+                : 'Tambah pembayaran ${metode.Nama}',
+          ),
+        ),
       ),
+    ];
+    // Aksi sekunder: ikut menempel di layar lebar; di layar sempit di akhir isi yang digulir agar area kerja tetap luas.
+    final aksiSekunder = <Widget>[
+      if (_bagi == null &&
+          _entri.isEmpty &&
+          keranjang.tukar == null &&
+          keranjang.praPesan == null &&
+          hitungan.hasil.totalAkhir.Bandingkan(Uang.DariBulat(1)) > 0) ...[
+        const SizedBox(height: TokenJarak.jarak8),
+        SizedBox(
+          height: TokenJarak.targetSentuh,
+          child: OutlinedButton.icon(
+            onPressed: _sibuk ? null : () => unawaited(_MulaiBagi(hitungan.hasil.totalAkhir)),
+            icon: const Icon(Icons.call_split),
+            label: const Text('Bagi tagihan'),
+          ),
+        ),
+      ],
+      if (_bagi != null && _entri.isEmpty) ...[
+        const SizedBox(height: TokenJarak.jarak8),
+        SizedBox(
+          height: TokenJarak.targetSentuh,
+          child: TextButton(
+            onPressed: _sibuk ? null : () => setState(() => _bagi = null),
+            child: const Text('Batal bagi tagihan'),
+          ),
+        ),
+      ],
+      if (widget.saatPreOrder != null &&
+          keranjang.pelanggan != null &&
+          keranjang.praPesan == null &&
+          keranjang.reservasi == null &&
+          keranjang.perintahKerja == null &&
+          keranjang.laundry == null &&
+          keranjang.pesananMeja == null &&
+          _entri.isEmpty) ...[
+        const SizedBox(height: TokenJarak.jarak8),
+        SizedBox(
+          height: TokenJarak.targetSentuh,
+          child: OutlinedButton.icon(
+            onPressed: _sibuk ? null : widget.saatPreOrder,
+            icon: const Icon(Icons.event_available_outlined),
+            label: const Text('Jadikan pre-order (bayar DP)'),
+          ),
+        ),
+      ],
+    ];
+
+    return LayoutBuilder(
+      builder: (context, batas) {
+        final duaKolom = batas.maxWidth >= PanelBayar.lebarDuaKolom;
+        final lebarIsi = duaKolom ? PanelBayar.lebarMaksDuaKolom : PanelBayar.lebarMaksSatuKolom;
+        final aksiMenempel = [...aksi, if (duaKolom) ...aksiSekunder];
+        final isi = duaKolom
+            ? Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: kiri),
+                  ),
+                  const SizedBox(width: TokenJarak.jarak24),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        if (rincian.isNotEmpty)
+                          ...rincian
+                        else if (!gerbangApotek)
+                          Text(
+                            'Pilih metode pembayaran di sebelah kiri.',
+                            style: teks.bodyMedium?.copyWith(color: warna.teksSekunder),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+              )
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  ...kiri,
+                  if (rincian.isNotEmpty) ...[const SizedBox(height: TokenJarak.jarak16), ...rincian],
+                  ...aksiSekunder,
+                ],
+              );
+        Widget Batasi(Widget anak) => Align(
+          alignment: Alignment.topCenter,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: lebarIsi),
+            child: anak,
+          ),
+        );
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                key: const ValueKey('GulirBayar'),
+                padding: const EdgeInsets.fromLTRB(
+                  TokenJarak.jarak24,
+                  TokenJarak.jarak24,
+                  TokenJarak.jarak24,
+                  TokenJarak.jarak16,
+                ),
+                child: Batasi(isi),
+              ),
+            ),
+            DecoratedBox(
+              key: const ValueKey('BilahAksiBayar'),
+              decoration: BoxDecoration(
+                color: warna.permukaan,
+                border: Border(
+                  top: BorderSide(color: warna.garis, width: TokenJarak.tebalGaris),
+                ),
+              ),
+              child: SafeArea(
+                top: false,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: TokenJarak.jarak24, vertical: TokenJarak.jarak12),
+                  child: Batasi(Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: aksiMenempel)),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }

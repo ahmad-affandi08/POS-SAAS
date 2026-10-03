@@ -1821,20 +1821,20 @@ class _LayarJualState extends ConsumerState<LayarJual> {
             ),
           ),
           Expanded(
-            child: LayoutBuilder(
-              builder: (context, batas) => SingleChildScrollView(
-                // Isi yang lebih pendek dari layar ditengahkan; yang lebih panjang tetap bisa digulir.
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(minHeight: batas.maxHeight),
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: LayarJual.lebarIsiHalaman),
-                      child: halaman.isi,
+            // Bayar mengatur gulir & bilah aksinya sendiri (tombol selesaikan selalu terlihat, dua kolom di layar
+            // lebar). Halaman lain: rata atas di tengah horizontal, digulir bila lebih panjang dari layar; tidak
+            // ditengahkan vertikal agar isi tidak melompat setiap kali tingginya berubah.
+            child: halaman.isi is PanelBayar
+                ? halaman.isi
+                : SingleChildScrollView(
+                    child: Align(
+                      alignment: Alignment.topCenter,
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: LayarJual.lebarIsiHalaman),
+                        child: halaman.isi,
+                      ),
                     ),
                   ),
-                ),
-              ),
-            ),
           ),
         ],
       ),
