@@ -108,6 +108,23 @@ final penyediaLogLokal = Provider<LogLokal?>((ref) {
 final penyediaRahasia = Provider<PenyimpanRahasia>((ref) => PenyimpanRahasiaAman());
 final penyediaKlienHttp = Provider<http.Client>((ref) => http.Client());
 final penyediaLingkungan = Provider<Lingkungan>((ref) => Lingkungan.Dev);
+
+/// D-35: alamat server toko sendiri yang tersimpan saat aplikasi dibuka (diisi `Persiapan` dari secure storage).
+final penyediaAlamatServerAwal = Provider<Uri?>((ref) => null);
+
+/// D-35 edisi Lisensi: alamat server toko sendiri (null = alamat bawaan build). Diganti saat aktivasi; klien API
+/// ikut dibuat ulang karena menonton penyedia ini.
+class AlamatServer extends Notifier<Uri?> {
+  @override
+  Uri? build() => ref.watch(penyediaAlamatServerAwal);
+
+  Future<void> Atur(Uri? alamat) async {
+    await ref.read(penyediaRahasia).Tulis(PenyimpanRahasia.kunciAlamatServer, alamat?.toString() ?? '');
+    state = alamat;
+  }
+}
+
+final penyediaAlamatServer = NotifierProvider<AlamatServer, Uri?>(AlamatServer.new);
 final penyediaPlatform = Provider<String>((ref) => 'Android');
 final penyediaJam = Provider<DateTime Function()>((ref) => DateTime.now);
 
@@ -119,7 +136,7 @@ final penyediaRepositori = Provider<RepositoriKasir>((ref) => RepositoriKasir(re
 final penyediaKlienPos = Provider<KlienPos>((ref) {
   final rahasia = ref.watch(penyediaRahasia);
   return KlienPos(
-    alamatDasar: ref.watch(penyediaLingkungan).AmbilAlamatServer(),
+    alamatDasar: ref.watch(penyediaLingkungan).AmbilAlamatServer(tersimpan: ref.watch(penyediaAlamatServer)),
     versiAplikasi: '1.0.0',
     ambilToken: () => rahasia.Baca(PenyimpanRahasia.kunciToken),
     klien: ref.watch(penyediaKlienHttp),
@@ -1125,7 +1142,11 @@ class PengaturSesi extends Notifier<KeadaanSesi> {
     }
   }
 
-  Future<void> Aktifkan(String kode) async {
+  /// [alamatServer] (D-35): server toko sendiri dari QR/ketikan; disimpan sebelum aktivasi agar klien API memakainya.
+  Future<void> Aktifkan(String kode, {Uri? alamatServer}) async {
+    if (alamatServer != null) {
+      await ref.read(penyediaAlamatServer.notifier).Atur(alamatServer);
+    }
     await ref.read(penyediaLayananPerangkat).Aktifkan(kode);
     _sedangDicabut = false;
     ref.invalidate(penyediaStaf);

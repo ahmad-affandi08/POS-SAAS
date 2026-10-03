@@ -15,6 +15,7 @@ import 'Data/BasisData/BasisDataKasir.dart';
 import 'Data/BasisData/EnkripsiBasisData.dart';
 import 'Data/PenyimpanRahasia.dart';
 import 'Domain/Diagnostik/LogLokal.dart';
+import 'Domain/Perangkat/IsiAktivasi.dart';
 
 /// Inisialisasi bersama semua flavor lalu menjalankan aplikasi (PRD §17.2.1): basis data lokal di folder data
 /// aplikasi (bukan folder dokumen pengguna), terenkripsi dengan kunci di secure storage (K-7, §17.2.6), lalu
@@ -24,7 +25,10 @@ Future<void> JalankanAplikasi(Lingkungan lingkungan) async {
   WidgetsFlutterBinding.ensureInitialized();
   DaftarkanLisensiFont();
   final folder = await getApplicationSupportDirectory();
-  final kunci = await EnkripsiBasisData.AmbilAtauBuatKunci(PenyimpanRahasiaAman());
+  final rahasia = PenyimpanRahasiaAman();
+  final kunci = await EnkripsiBasisData.AmbilAtauBuatKunci(rahasia);
+  // D-35: server toko sendiri (edisi Lisensi) yang tersimpan saat aktivasi sebelumnya.
+  final alamatServer = IsiAktivasi.NormalkanAlamat(await rahasia.Baca(PenyimpanRahasia.kunciAlamatServer) ?? '');
   final basisData = BasisDataKasir(EnkripsiBasisData.Buka(File(jalur.join(folder.path, 'Kasir.sqlite')), kunci));
   final log = LogLokal(folder: folder);
   PasangPencatatGalat(log);
@@ -36,6 +40,7 @@ Future<void> JalankanAplikasi(Lingkungan lingkungan) async {
         penyediaFolderAplikasi.overrideWithValue(folder),
         penyediaLogLokal.overrideWithValue(log),
         penyediaLingkungan.overrideWithValue(lingkungan),
+        penyediaAlamatServerAwal.overrideWithValue(alamatServer),
         penyediaPlatform.overrideWithValue(AmbilPlatform()),
       ],
       child: AplikasiKasir(lingkungan: lingkungan),

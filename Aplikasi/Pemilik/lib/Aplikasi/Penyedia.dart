@@ -17,10 +17,27 @@ final penyediaPenyimpanSesi = Provider<PenyimpanSesi>((ref) => PenyimpanSesiAman
 final penyediaJam = Provider<DateTime Function()>((ref) => DateTime.now);
 final penyediaNotifikasiPush = Provider<NotifikasiPush>((ref) => const NotifikasiPushTidakAda());
 
+/// D-35: alamat server toko sendiri yang tersimpan saat aplikasi dibuka (diisi `Persiapan` dari secure storage).
+final penyediaAlamatServerAwal = Provider<Uri?>((ref) => null);
+
+/// D-35 edisi Lisensi: alamat server toko sendiri (null = alamat bawaan build). Diganti saat masuk; klien API ikut
+/// dibuat ulang karena menonton penyedia ini.
+class AlamatServer extends Notifier<Uri?> {
+  @override
+  Uri? build() => ref.watch(penyediaAlamatServerAwal);
+
+  Future<void> Atur(Uri? alamat) async {
+    await ref.read(penyediaPenyimpanSesi).Tulis(PenyimpanSesi.kunciAlamatServer, alamat?.toString() ?? '');
+    state = alamat;
+  }
+}
+
+final penyediaAlamatServer = NotifierProvider<AlamatServer, Uri?>(AlamatServer.new);
+
 final penyediaKlien = Provider<KlienPemilik>((ref) {
   final sesi = ref.watch(penyediaPenyimpanSesi);
   return KlienPemilik(
-    alamatDasar: ref.watch(penyediaLingkungan).AmbilAlamatServer(),
+    alamatDasar: ref.watch(penyediaLingkungan).AmbilAlamatServer(tersimpan: ref.watch(penyediaAlamatServer)),
     versiAplikasi: versiAplikasi,
     ambilToken: () => sesi.Baca(PenyimpanSesi.kunciToken),
     ambilTenant: () => sesi.Baca(PenyimpanSesi.kunciTenant),
@@ -108,10 +125,14 @@ class PengaturSesi extends Notifier<KeadaanSesi> {
     }
   }
 
-  Future<void> Masuk(String email, String kataSandi) async {
+  /// [alamatServer] (D-35): server toko sendiri; disimpan sebelum masuk agar klien API memakainya.
+  Future<void> Masuk(String email, String kataSandi, {Uri? alamatServer}) async {
     if (email.trim().isEmpty || kataSandi.isEmpty) {
       state = state.Salin(pesan: () => 'Isi email dan kata sandi.');
       return;
+    }
+    if (alamatServer != null) {
+      await ref.read(penyediaAlamatServer.notifier).Atur(alamatServer);
     }
     state = state.Salin(sibuk: true, pesan: () => null);
     try {

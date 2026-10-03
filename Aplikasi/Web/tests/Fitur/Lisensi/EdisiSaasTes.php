@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
+use App\Domain\Organisasi\Layanan\PembuatQrKodeAktivasi;
 use App\Domain\Pengelola\Integrasi\Aksi\SimpanKonfigurasiIntegrasi;
 use App\Domain\Pengelola\Integrasi\Data\DataKonfigurasiIntegrasi;
 use App\Domain\Pengelola\Integrasi\Enum\JenisIntegrasi;
@@ -18,6 +19,10 @@ describe('Edisi SaaS menolak jalan pintas edisi Lisensi (D-35)', function (): vo
     it('lisensi:siapkan-data dan lisensi:atur-integrasi ditolak', function (): void {
         $this->artisan('lisensi:siapkan-data')->expectsOutputToContain('hanya di edisi Lisensi')->assertFailed();
         $this->artisan('lisensi:atur-integrasi', ['jenis' => 'Email'])->expectsOutputToContain('hanya untuk edisi Lisensi')->assertFailed();
+    });
+
+    it('QR aktivasi perangkat tetap berisi kode saja', function (): void {
+        expect(PembuatQrKodeAktivasi::AmbilIsi('AB12CD34'))->toBe('AB12CD34');
     });
 
     it('menyimpan konfigurasi integrasi tanpa anggota Platform Pengelola ditolak', function (): void {

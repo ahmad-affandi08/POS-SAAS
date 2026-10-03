@@ -4,6 +4,7 @@ import 'package:sistem_desain/SistemDesain.dart';
 
 import '../Aplikasi/Penyedia.dart';
 import '../Domain/GalatKasir.dart';
+import '../Domain/Perangkat/IsiAktivasi.dart';
 import 'Komponen/BingkaiMasuk.dart';
 
 /// F-02 langkah 5: tukar kode aktivasi dari back-office (menu Perangkat) menjadi token perangkat. Butuh internet.
@@ -18,12 +19,26 @@ class LayarAktivasi extends ConsumerStatefulWidget {
 
 class _LayarAktivasiState extends ConsumerState<LayarAktivasi> {
   final _kode = TextEditingController();
+  final _alamat = TextEditingController();
   bool _sibuk = false;
   String? _galat;
+  String? _galatAlamat;
+
+  /// D-35: isian alamat server toko sendiri (edisi Lisensi) terbuka bila sudah pernah diisi atau dibuka kasir.
+  late bool _pakaiServerSendiri;
+
+  @override
+  void initState() {
+    super.initState();
+    final tersimpan = ref.read(penyediaAlamatServer);
+    _pakaiServerSendiri = tersimpan != null;
+    _alamat.text = tersimpan?.toString() ?? '';
+  }
 
   @override
   void dispose() {
     _kode.dispose();
+    _alamat.dispose();
     super.dispose();
   }
 
@@ -33,18 +48,32 @@ class _LayarAktivasiState extends ConsumerState<LayarAktivasi> {
     if (hasil == null || !mounted) {
       return;
     }
-    // Isi QR = kode aktivasi apa adanya (PembuatQrKodeAktivasi), jadi langsung dipakai.
-    _kode.text = hasil;
+    // Isi QR = kode aktivasi apa adanya (PembuatQrKodeAktivasi); edisi Lisensi menyertakan alamat server toko.
+    final isi = IsiAktivasi.Uraikan(hasil);
+    _kode.text = isi.kode;
+    if (isi.alamatServer case final Uri alamat) {
+      setState(() => _pakaiServerSendiri = true);
+      _alamat.text = alamat.toString();
+    }
     await _Aktifkan();
   }
 
   Future<void> _Aktifkan() async {
+    Uri? alamatServer;
+    if (_pakaiServerSendiri) {
+      alamatServer = IsiAktivasi.NormalkanAlamat(_alamat.text);
+      if (alamatServer == null) {
+        setState(() => _galatAlamat = 'Isi alamat server toko, misal https://kasir.tokoanda.com');
+        return;
+      }
+    }
     setState(() {
       _sibuk = true;
       _galat = null;
+      _galatAlamat = null;
     });
     try {
-      await ref.read(penyediaSesi.notifier).Aktifkan(_kode.text);
+      await ref.read(penyediaSesi.notifier).Aktifkan(_kode.text, alamatServer: alamatServer);
     } on GalatKasir catch (galat) {
       if (mounted) {
         setState(() => _galat = galat.pesan);
@@ -104,6 +133,29 @@ class _LayarAktivasiState extends ConsumerState<LayarAktivasi> {
             decoration: InputDecoration(labelText: 'Kode aktivasi', errorText: _galat),
             onSubmitted: (_) => _Aktifkan(),
           ),
+          const SizedBox(height: TokenJarak.jarak8),
+          if (_pakaiServerSendiri)
+            TextField(
+              key: const ValueKey('AlamatServer'),
+              controller: _alamat,
+              keyboardType: TextInputType.url,
+              autocorrect: false,
+              decoration: InputDecoration(
+                labelText: 'Alamat server toko',
+                hintText: 'https://kasir.tokoanda.com',
+                helperText: 'Untuk toko yang memasang PAYOU di server sendiri.',
+                errorText: _galatAlamat,
+              ),
+              onSubmitted: (_) => _Aktifkan(),
+            )
+          else
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton(
+                onPressed: _sibuk ? null : () => setState(() => _pakaiServerSendiri = true),
+                child: const Text('Toko memakai server sendiri?'),
+              ),
+            ),
           const SizedBox(height: TokenJarak.jarak16),
           SizedBox(
             height: TokenJarak.targetSentuh,

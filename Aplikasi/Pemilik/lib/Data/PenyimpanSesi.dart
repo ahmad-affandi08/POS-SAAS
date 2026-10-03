@@ -8,6 +8,10 @@ abstract class PenyimpanSesi {
   static const String kunciNamaTenant = 'NamaTenant';
   static const String kunciNamaPengguna = 'NamaPengguna';
 
+  /// D-35 edisi Lisensi: alamat server toko sendiri (kosong = alamat bawaan build). Bertahan saat keluar
+  /// ([HapusSemua]) supaya pemilik tidak perlu mengetiknya lagi.
+  static const String kunciAlamatServer = 'AlamatServer';
+
   Future<String?> Baca(String kunci);
 
   Future<void> Tulis(String kunci, String nilai);
@@ -27,7 +31,13 @@ class PenyimpanSesiAman implements PenyimpanSesi {
   Future<void> Tulis(String kunci, String nilai) => _penyimpan.write(key: kunci, value: nilai);
 
   @override
-  Future<void> HapusSemua() => _penyimpan.deleteAll();
+  Future<void> HapusSemua() async {
+    for (final kunci in (await _penyimpan.readAll()).keys) {
+      if (kunci != PenyimpanSesi.kunciAlamatServer) {
+        await _penyimpan.delete(key: kunci);
+      }
+    }
+  }
 }
 
 /// Untuk test & pratinjau.
@@ -41,5 +51,5 @@ class PenyimpanSesiMemori implements PenyimpanSesi {
   Future<void> Tulis(String kunci, String nilai) async => isi[kunci] = nilai;
 
   @override
-  Future<void> HapusSemua() async => isi.clear();
+  Future<void> HapusSemua() async => isi.removeWhere((kunci, _) => kunci != PenyimpanSesi.kunciAlamatServer);
 }

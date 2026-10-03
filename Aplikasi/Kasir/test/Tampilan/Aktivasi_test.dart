@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:kasir/Data/PenyimpanRahasia.dart';
 
 import '../Pendukung/LingkunganUji.dart';
 import '../Pendukung/MuatFont.dart';
@@ -92,6 +93,45 @@ void main() {
     expect(pemindai.dipanggil, 1);
     expect(find.text('Aktifkan perangkat kasir'), findsOneWidget);
     expect(find.widgetWithText(TextField, 'A7K9M2QT'), findsNothing);
+
+    await Lepas(tester, u);
+  });
+
+  testWidgets('D-35: QR server toko sendiri menyimpan alamatnya dan mengaktifkan ke server itu', (tester) async {
+    final u = LingkunganUji.Buat();
+    final pemindai = PemindaiQrTiruan(hasil: 'https://kasir.tokoabc.id/aktivasi-perangkat?kode=A7K9M2QT');
+    await PasangAplikasi(tester, u, pemindaiQr: pemindai);
+
+    await tester.tap(find.widgetWithText(OutlinedButton, 'Pindai kode QR'));
+    await Tunggu(tester, const Duration(milliseconds: 600));
+
+    expect(u.rahasia.isi[PenyimpanRahasia.kunciAlamatServer], 'https://kasir.tokoabc.id/');
+    expect(u.server.permintaan.first.url.toString(), startsWith('https://kasir.tokoabc.id/api/pos/v1/'));
+    expect(find.text('Aktifkan perangkat kasir'), findsNothing);
+
+    await Lepas(tester, u);
+  });
+
+  testWidgets('D-35: alamat server toko diketik manual; alamat tidak sah ditolak sebelum dikirim', (tester) async {
+    final u = LingkunganUji.Buat();
+    await PasangAplikasi(tester, u, pemindaiQr: PemindaiQrTiruan(tersedia: false));
+
+    await tester.tap(find.text('Toko memakai server sendiri?'));
+    await tester.pump();
+    await tester.enterText(find.widgetWithText(TextField, 'Kode aktivasi'), 'A7K9M2QT');
+    await tester.enterText(find.byKey(const ValueKey('AlamatServer')), 'https://kasir.tokoabc.id/?x=1');
+    await tester.tap(find.widgetWithText(FilledButton, 'Aktifkan perangkat'));
+    await tester.pump();
+
+    expect(find.text('Isi alamat server toko, misal https://kasir.tokoanda.com'), findsOneWidget);
+    expect(u.server.permintaan, isEmpty);
+
+    await tester.enterText(find.byKey(const ValueKey('AlamatServer')), 'kasir.tokoabc.id');
+    await tester.tap(find.widgetWithText(FilledButton, 'Aktifkan perangkat'));
+    await Tunggu(tester, const Duration(milliseconds: 600));
+
+    expect(u.server.permintaan.first.url.host, 'kasir.tokoabc.id');
+    expect(u.rahasia.isi[PenyimpanRahasia.kunciAlamatServer], 'https://kasir.tokoabc.id/');
 
     await Lepas(tester, u);
   });

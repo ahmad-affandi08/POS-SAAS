@@ -10,11 +10,18 @@ abstract class PenyimpanRahasia {
   /// belum terkirim untuk dikirim setelah aktivasi ulang, dan tanpa kunci ini outbox itu tidak terbaca lagi.
   static const String kunciBasisData = 'KunciBasisData';
 
+  /// D-35 edisi Lisensi: alamat server toko sendiri (kosong = alamat bawaan build). Tidak ikut [HapusSemua]: outbox
+  /// perangkat yang dicabut tetap harus terkirim ke server yang sama setelah aktivasi ulang.
+  static const String kunciAlamatServer = 'AlamatServer';
+
+  /// Kunci yang bertahan saat [HapusSemua].
+  static const Set<String> kunciBertahan = {kunciBasisData, kunciAlamatServer};
+
   Future<String?> Baca(String kunci);
 
   Future<void> Tulis(String kunci, String nilai);
 
-  /// Hapus semua rahasia kecuali [kunciBasisData].
+  /// Hapus semua rahasia kecuali [kunciBertahan].
   Future<void> HapusSemua();
 }
 
@@ -32,7 +39,7 @@ class PenyimpanRahasiaAman implements PenyimpanRahasia {
   @override
   Future<void> HapusSemua() async {
     for (final kunci in (await _penyimpan.readAll()).keys) {
-      if (kunci != PenyimpanRahasia.kunciBasisData) {
+      if (!PenyimpanRahasia.kunciBertahan.contains(kunci)) {
         await _penyimpan.delete(key: kunci);
       }
     }
@@ -50,5 +57,5 @@ class PenyimpanRahasiaMemori implements PenyimpanRahasia {
   Future<void> Tulis(String kunci, String nilai) async => isi[kunci] = nilai;
 
   @override
-  Future<void> HapusSemua() async => isi.removeWhere((kunci, _) => kunci != PenyimpanRahasia.kunciBasisData);
+  Future<void> HapusSemua() async => isi.removeWhere((kunci, _) => !PenyimpanRahasia.kunciBertahan.contains(kunci));
 }

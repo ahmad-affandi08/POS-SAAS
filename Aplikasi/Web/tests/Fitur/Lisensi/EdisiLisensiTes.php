@@ -10,6 +10,7 @@ use App\Domain\Lisensi\Galat\LisensiTidakSah;
 use App\Domain\Lisensi\Kueri\LisensiBerlaku;
 use App\Domain\Lisensi\Model\LisensiTerpasang;
 use App\Domain\Organisasi\Data\DataPemilikBaru;
+use App\Domain\Organisasi\Layanan\PembuatQrKodeAktivasi;
 use App\Domain\Organisasi\Model\Outlet;
 use App\Domain\Organisasi\Model\Pengguna;
 use App\Domain\Organisasi\Model\TenantPengguna;
@@ -239,6 +240,12 @@ describe('Edisi Lisensi (D-35)', function (): void {
             ->and($konfigurasi->Penyedia)->toBe(PenyediaIntegrasi::Fonnte)
             ->and($konfigurasi->Kredensial['Token'])->toBe('tok-fonnte-rahasia-1234')
             ->and((string) $konfigurasi->getRawOriginal('Kredensial'))->not->toContain('tok-fonnte');
+    });
+
+    it('QR aktivasi perangkat membawa alamat server pembeli', function (): void {
+        config(['app.url' => 'https://kasir.tokoabc.id/']);
+
+        expect(PembuatQrKodeAktivasi::AmbilIsi('AB12CD34'))->toBe('https://kasir.tokoabc.id/aktivasi-perangkat?kode=AB12CD34');
     });
 
     it('perintah lisensi:pasang meminta data Owner, kata sandi tersembunyi, lalu lisensi:info menampilkannya', function (): void {

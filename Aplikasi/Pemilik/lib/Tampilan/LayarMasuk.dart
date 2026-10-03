@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sistem_desain/SistemDesain.dart';
 
+import 'package:klien_api/KlienApi.dart';
+
 import '../Aplikasi/Penyedia.dart';
 
 /// Masuk OWN-01: email + kata sandi akun back-office; bila 2FA aktif, lanjut ke kode dari aplikasi autentikator.
@@ -18,14 +20,41 @@ class _LayarMasukState extends ConsumerState<LayarMasuk> {
   final _email = TextEditingController();
   final _sandi = TextEditingController();
   final _kode = TextEditingController();
+  final _alamat = TextEditingController();
   bool _sandiTerlihat = false;
+  String? _galatAlamat;
+
+  /// D-35: isian alamat server toko sendiri (edisi Lisensi) terbuka bila sudah pernah diisi atau dibuka pemilik.
+  late bool _pakaiServerSendiri;
+
+  @override
+  void initState() {
+    super.initState();
+    final tersimpan = ref.read(penyediaAlamatServer);
+    _pakaiServerSendiri = tersimpan != null;
+    _alamat.text = tersimpan?.toString() ?? '';
+  }
 
   @override
   void dispose() {
     _email.dispose();
     _sandi.dispose();
     _kode.dispose();
+    _alamat.dispose();
     super.dispose();
+  }
+
+  Future<void> _Masuk() async {
+    Uri? alamatServer;
+    if (_pakaiServerSendiri) {
+      alamatServer = NormalkanAlamatServer(_alamat.text);
+      if (alamatServer == null) {
+        setState(() => _galatAlamat = 'Isi alamat server toko, misal https://kasir.tokoanda.com');
+        return;
+      }
+    }
+    setState(() => _galatAlamat = null);
+    await ref.read(penyediaSesi.notifier).Masuk(_email.text, _sandi.text, alamatServer: alamatServer);
   }
 
   @override
@@ -86,8 +115,31 @@ class _LayarMasukState extends ConsumerState<LayarMasuk> {
                             tooltip: _sandiTerlihat ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi',
                           ),
                         ),
-                        onSubmitted: (_) => unawaited(notifier.Masuk(_email.text, _sandi.text)),
+                        onSubmitted: (_) => unawaited(_Masuk()),
                       ),
+                      const SizedBox(height: TokenJarak.jarak8),
+                      if (_pakaiServerSendiri)
+                        TextField(
+                          key: const ValueKey('AlamatServer'),
+                          controller: _alamat,
+                          keyboardType: TextInputType.url,
+                          autocorrect: false,
+                          decoration: InputDecoration(
+                            labelText: 'Alamat server toko',
+                            hintText: 'https://kasir.tokoanda.com',
+                            helperText: 'Untuk toko yang memasang PAYOU di server sendiri.',
+                            errorText: _galatAlamat,
+                          ),
+                          onSubmitted: (_) => unawaited(_Masuk()),
+                        )
+                      else
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: TextButton(
+                            onPressed: sesi.sibuk ? null : () => setState(() => _pakaiServerSendiri = true),
+                            child: const Text('Toko memakai server sendiri?'),
+                          ),
+                        ),
                     ],
                     if (sesi.pesan != null) ...[
                       const SizedBox(height: TokenJarak.jarak12),
@@ -99,11 +151,7 @@ class _LayarMasukState extends ConsumerState<LayarMasuk> {
                       child: FilledButton(
                         onPressed: sesi.sibuk
                             ? null
-                            : () => unawaited(
-                                duaFaktor
-                                    ? notifier.KonfirmasiDuaFaktor(_kode.text)
-                                    : notifier.Masuk(_email.text, _sandi.text),
-                              ),
+                            : () => unawaited(duaFaktor ? notifier.KonfirmasiDuaFaktor(_kode.text) : _Masuk()),
                         child: Text(sesi.sibuk ? 'Memproses…' : (duaFaktor ? 'Verifikasi' : 'Masuk')),
                       ),
                     ),

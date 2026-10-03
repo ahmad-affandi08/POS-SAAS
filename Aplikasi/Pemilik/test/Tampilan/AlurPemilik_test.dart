@@ -81,6 +81,31 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  testWidgets('D-35: masuk ke server toko sendiri; alamat tersimpan dan bertahan setelah keluar', (tester) async {
+    server.penangan = Penangan;
+    await PasangPemilik(tester, server: server, sesi: sesi);
+
+    await tester.tap(find.text('Toko memakai server sendiri?'));
+    await tester.pump();
+    await tester.enterText(find.byKey(const ValueKey('AlamatServer')), 'bukan alamat?x=1');
+    await tester.enterText(find.widgetWithText(TextField, 'Email'), 'sari@contoh.id');
+    await tester.enterText(find.widgetWithText(TextField, 'Kata sandi'), 'rahasia123');
+    await tester.tap(find.widgetWithText(FilledButton, 'Masuk'));
+    await tester.pump();
+    expect(find.text('Isi alamat server toko, misal https://kasir.tokoanda.com'), findsOneWidget);
+    expect(server.permintaan, isEmpty);
+
+    await tester.enterText(find.byKey(const ValueKey('AlamatServer')), 'kasir.tokoabc.id');
+    await tester.tap(find.widgetWithText(FilledButton, 'Masuk'));
+    await tester.pumpAndSettle();
+
+    expect(server.permintaan.first.url.toString(), 'https://kasir.tokoabc.id/api/pemilik/v1/masuk');
+    expect(sesi.isi[PenyimpanSesi.kunciAlamatServer], 'https://kasir.tokoabc.id/');
+
+    await sesi.HapusSemua();
+    expect(sesi.isi[PenyimpanSesi.kunciAlamatServer], 'https://kasir.tokoabc.id/');
+  });
+
   for (final ukuran in const [Size(360, 740), Size(800, 1280)]) {
     testWidgets('masuk → dasbor: omzet, perbandingan, perlu tindakan, per outlet (${ukuran.width.toInt()} dp)', (
       tester,

@@ -11,8 +11,12 @@ enum Lingkungan {
   /// Selain produksi, aplikasi menampilkan penanda lingkungan yang mencolok.
   bool get tampilkanPenanda => this != Lingkungan.Produksi;
 
-  /// Alamat server API (`--dart-define=ALAMAT_SERVER=https://…/`). Dev bawaan: server lokal dari emulator Android.
-  Uri AmbilAlamatServer() {
+  /// Alamat server API: [tersimpan] (D-35, server toko sendiri yang diisi/dipindai saat aktivasi), lalu
+  /// `--dart-define=ALAMAT_SERVER=https://…/`. Dev bawaan: server lokal dari emulator Android.
+  Uri AmbilAlamatServer({Uri? tersimpan}) {
+    if (tersimpan != null) {
+      return tersimpan;
+    }
     const alamat = String.fromEnvironment('ALAMAT_SERVER');
     if (alamat.isNotEmpty) {
       return Uri.parse(alamat.endsWith('/') ? alamat : '$alamat/');
