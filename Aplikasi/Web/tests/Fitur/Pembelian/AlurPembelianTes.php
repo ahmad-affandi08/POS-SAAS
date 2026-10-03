@@ -82,7 +82,9 @@ function SaldoProduk(int $idProduk, int $idGudang): SaldoStok
 describe('F-04 pesanan pembelian: status & persetujuan (§19.2)', function (): void {
     it('PO di bawah batas langsung Disetujui; di atas batas menunggu persetujuan orang lain, bukan pembuatnya', function (): void {
         $t = BantuanPembelian::SiapkanTenant();
-        $id = $t['Pemilik']->Id;
+        // D-38: Pemilik yang mengajukan langsung disetujui, jadi four-eyes diuji lewat pengaju bukan-Pemilik.
+        $id = BantuanOrganisasi::TambahAnggota($t['Tenant']->Id, PeranTenantBawaan::ManajerOutlet)->Id;
+        BantuanOrganisasi::AturKonteks($t['Tenant']->Id);
         $pemasok = BantuanPembelian::BuatPemasok();
         $minyak = BantuanKatalog::BuatProduk(['Nama' => 'Minyak Goreng Sawit Bening Kemasan Pouch 2 Liter']);
 

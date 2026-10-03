@@ -64,17 +64,19 @@ it('transfer & penyesuaian: Lanjutkan langsung mengirim / memposting; penyesuaia
         'Uuid' => $kecil, 'UuidGudang' => $t['Gudang']->Uuid, 'Tanggal' => B::Kemarin(), 'KodeAlasan' => 'Hilang', 'Keterangan' => null,
         'Baris' => [['UuidProduk' => $t['Produk']['Stok']->Uuid, 'Arah' => 'Keluar', 'Jumlah' => '2']], 'Lanjutkan' => true,
     ])->assertSessionHasNoErrors()->assertRedirect("/kelola/persediaan/penyesuaian/{$kecil}");
+    // Di atas batas oleh bukan-Pemilik (D-38: Pemilik sendiri langsung memposting) tetap menunggu persetujuan.
     $besar = (string) Str::ulid();
-    $this->post('/kelola/persediaan/penyesuaian', [
+    BantuanPersediaan::MasukSebagai($this, $t['Tenant']->Id, PeranTenantBawaan::StafGudang)->post('/kelola/persediaan/penyesuaian', [
         'Uuid' => $besar, 'UuidGudang' => $t['Gudang']->Uuid, 'Tanggal' => B::Kemarin(), 'KodeAlasan' => 'Hilang', 'Keterangan' => null,
         'Baris' => [['UuidProduk' => $t['Produk']['Stok']->Uuid, 'Arah' => 'Keluar', 'Jumlah' => '20']], 'Lanjutkan' => true,
     ])->assertSessionHasNoErrors();
     $tanpa = (string) Str::ulid();
-    $this->post('/kelola/persediaan/penyesuaian', [
+    BantuanPersediaan::MasukSebagai($this, $t['Tenant']->Id)->post('/kelola/persediaan/penyesuaian', [
         'Uuid' => $tanpa, 'UuidGudang' => $t['Gudang']->Uuid, 'Tanggal' => B::Kemarin(), 'KodeAlasan' => 'Hilang', 'Keterangan' => null,
         'Baris' => [['UuidProduk' => $t['Produk']['Stok']->Uuid, 'Arah' => 'Keluar', 'Jumlah' => '1']],
     ])->assertSessionHasNoErrors();
 
+    BantuanOrganisasi::AturKonteks($t['Tenant']->Id);
     expect(PenyesuaianStok::query()->where('Uuid', $kecil)->value('Status'))->toBe(StatusPenyesuaianStok::Diposting)
         ->and(PenyesuaianStok::query()->where('Uuid', $besar)->value('Status'))->toBe(StatusPenyesuaianStok::MenungguPersetujuan)
         ->and(PenyesuaianStok::query()->where('Uuid', $tanpa)->value('Status'))->toBe(StatusPenyesuaianStok::Draf)

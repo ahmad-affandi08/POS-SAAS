@@ -102,7 +102,7 @@ final class StokKontroler
                     keterangan: is_string($permintaan->validated('Keterangan')) ? $permintaan->validated('Keterangan') : null,
                     baris: $baris,
                 ), null);
-                $ajukan->Jalankan($draf, $token->DibuatOleh);
+                $ajukan->Jalankan($draf, $token->DibuatOleh, bolehLangsung: false);
             });
         } catch (QueryException $galat) {
             // Dua POST pertama bersamaan dengan Uuid sama: yang kalah membaca hasil pemenang, bukan HTTP 500.

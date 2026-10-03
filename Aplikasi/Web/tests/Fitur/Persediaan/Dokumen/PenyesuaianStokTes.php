@@ -6,6 +6,8 @@ use App\Domain\Akuntansi\Model\Jurnal;
 use App\Domain\Bersama\Audit\Model\LogAudit;
 use App\Domain\Bersama\Nilai\Uang;
 use App\Domain\Organisasi\Enum\PeranTenantBawaan;
+use App\Domain\Organisasi\Enum\StatusKeanggotaan;
+use App\Domain\Organisasi\Model\TenantPengguna;
 use App\Domain\Persediaan\Aksi\AjukanPenyesuaianStok;
 use App\Domain\Persediaan\Aksi\BatalkanPenyesuaianStok;
 use App\Domain\Persediaan\Aksi\SetujuiPenyesuaianStok;
@@ -128,13 +130,16 @@ describe('F-05b penyesuaian stok: batas persetujuan (§19.2)', function (): void
     it('di atas batas → Menunggu persetujuan; pembuat/pengaju tidak boleh menyetujui; orang lain menyetujui → Diposting', function (): void {
         $t = SiapkanPenyesuaian();
         $draf = B::DrafPenyesuaian($t['Gudang'], AlasanPenyesuaian::Hilang, [B::Baris($t['Produk']['Stok'], '-13')]);
-        $menunggu = app(AjukanPenyesuaianStok::class)->Jalankan($draf, $t['Pemilik']->Id);
+        // D-38: pengaju bukan-Pemilik (Pemilik sendiri langsung memposting, diuji di bawah).
+        $pengaju = BantuanOrganisasi::TambahAnggota($t['Tenant']->Id, PeranTenantBawaan::StafGudang);
+        BantuanOrganisasi::AturKonteks($t['Tenant']->Id);
+        $menunggu = app(AjukanPenyesuaianStok::class)->Jalankan($draf, $pengaju->Id);
 
         expect($menunggu->Status)->toBe(StatusPenyesuaianStok::MenungguPersetujuan)
             ->and($menunggu->NilaiPerkiraan)->toBe('500500.00')
             ->and($menunggu->PerluPersetujuan)->toBeTrue()
             ->and(MutasiStok::query()->where('JenisReferensi', 'PenyesuaianStok')->count())->toBe(0)
-            ->and(B::KodeGalat(fn () => app(SetujuiPenyesuaianStok::class)->Jalankan($menunggu, $t['Pemilik']->Id)))->toBe('PenyetujuTidakBoleh');
+            ->and(B::KodeGalat(fn () => app(SetujuiPenyesuaianStok::class)->Jalankan($menunggu, $pengaju->Id)))->toBe('PenyetujuTidakBoleh');
 
         $penyetuju = BantuanOrganisasi::TambahAnggota($t['Tenant']->Id, PeranTenantBawaan::ManajerOutlet);
         $dokumen = app(SetujuiPenyesuaianStok::class)->Jalankan($menunggu, $penyetuju->Id);
@@ -145,6 +150,28 @@ describe('F-05b penyesuaian stok: batas persetujuan (§19.2)', function (): void
             ->and(PemeriksaInvarian::PeriksaSemua($t['Tenant']->Id))->toBe([]);
     });
 
+    it('D-38: Pemilik mengajukan di atas batas → langsung diposting, Pemilik tercatat penyetuju, alasan di audit', function (): void {
+        $t = SiapkanPenyesuaian();
+        $dokumen = app(AjukanPenyesuaianStok::class)->Jalankan(B::DrafPenyesuaian($t['Gudang'], AlasanPenyesuaian::Hilang, [B::Baris($t['Produk']['Stok'], '-13')]), $t['Pemilik']->Id);
+
+        expect($dokumen->Status)->toBe(StatusPenyesuaianStok::Diposting)
+            ->and($dokumen->PerluPersetujuan)->toBeTrue()
+            ->and($dokumen->DisetujuiOleh)->toBe($t['Pemilik']->Id)
+            ->and(LogAudit::query()->where('Peristiwa', 'penyesuaian-stok.posting')->sole()->NilaiBaru['DisetujuiLangsung'] ?? null)->toBe('Pemilik')
+            ->and(PemeriksaInvarian::PeriksaSemua($t['Tenant']->Id))->toBe([]);
+    });
+
+    it('D-38: tanpa penyetuju lain yang aktif (Pemilik nonaktif, staf tunggal) → langsung diposting dengan alasan PenyetujuTunggal', function (): void {
+        $t = SiapkanPenyesuaian();
+        $staf = BantuanOrganisasi::TambahAnggota($t['Tenant']->Id, PeranTenantBawaan::StafGudang);
+        TenantPengguna::query()->where('IdTenant', $t['Tenant']->Id)->where('IdPengguna', $t['Pemilik']->Id)->update(['Status' => StatusKeanggotaan::Nonaktif->value]);
+        BantuanOrganisasi::AturKonteks($t['Tenant']->Id);
+
+        $dokumen = app(AjukanPenyesuaianStok::class)->Jalankan(B::DrafPenyesuaian($t['Gudang'], AlasanPenyesuaian::Hilang, [B::Baris($t['Produk']['Stok'], '-13')]), $staf->Id);
+        expect($dokumen->Status)->toBe(StatusPenyesuaianStok::Diposting)
+            ->and(LogAudit::query()->where('Peristiwa', 'penyesuaian-stok.posting')->sole()->NilaiBaru['DisetujuiLangsung'] ?? null)->toBe('PenyetujuTunggal');
+    });
+
     it('tepat di batas langsung diposting; ditolak kembali ke Draf beralasan lalu bisa dibatalkan', function (): void {
         $t = SiapkanPenyesuaian();
         app(UbahPengaturanPersediaan::class)->Jalankan(MetodeHpp::RataRata, false, Uang::Dari('77000'));
@@ -153,7 +180,9 @@ describe('F-05b penyesuaian stok: batas persetujuan (§19.2)', function (): void
         $tepat = app(AjukanPenyesuaianStok::class)->Jalankan(B::DrafPenyesuaian($t['Gudang'], AlasanPenyesuaian::KonsumsiInternal, [B::Baris($t['Produk']['Stok'], '-2')]), $t['Pemilik']->Id);
         expect($tepat->Status)->toBe(StatusPenyesuaianStok::Diposting);
 
-        $lewat = app(AjukanPenyesuaianStok::class)->Jalankan(B::DrafPenyesuaian($t['Gudang'], AlasanPenyesuaian::KonsumsiInternal, [B::Baris($t['Produk']['Stok'], '-3')]), $t['Pemilik']->Id);
+        $pengaju = BantuanOrganisasi::TambahAnggota($t['Tenant']->Id, PeranTenantBawaan::StafGudang);
+        BantuanOrganisasi::AturKonteks($t['Tenant']->Id);
+        $lewat = app(AjukanPenyesuaianStok::class)->Jalankan(B::DrafPenyesuaian($t['Gudang'], AlasanPenyesuaian::KonsumsiInternal, [B::Baris($t['Produk']['Stok'], '-3')]), $pengaju->Id);
         $penyetuju = BantuanOrganisasi::TambahAnggota($t['Tenant']->Id, PeranTenantBawaan::ManajerOutlet);
         $ditolak = app(TolakPenyesuaianStok::class)->Jalankan($lewat, 'Konsumsi internal dibatasi 2 botol', $penyetuju->Id);
 

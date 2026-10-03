@@ -119,7 +119,7 @@ final class PesananPembelianKontroler extends DasarPembelianKontroler
     {
         $po = $ajukan->Jalankan($this->CariDokumen(PesananPembelian::class, $pesanan), $this->Pelaku()->Id);
         $pesan = $po->Status === StatusPesananPembelian::Disetujui
-            ? "{$po->Nomor} disetujui otomatis (di bawah batas persetujuan). Barang bisa diterima."
+            ? "{$po->Nomor} disetujui. Barang bisa diterima."
             : "{$po->Nomor} menunggu persetujuan pemegang izin persetujuan PO.";
 
         return to_route('kelola.pembelian.pesanan.detail', ['pesanan' => $po->Uuid])->with('Kilat', $pesan);

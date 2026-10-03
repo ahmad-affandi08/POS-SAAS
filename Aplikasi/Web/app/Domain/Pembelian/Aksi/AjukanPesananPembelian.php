@@ -9,6 +9,10 @@ use App\Domain\Bersama\Dokumen\Layanan\PencatatRiwayatStatus;
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Bersama\Nilai\Uang;
 use App\Domain\Bersama\Peristiwa\PeristiwaIntegrasi;
+use App\Domain\Organisasi\Enum\IzinTenant;
+use App\Domain\Organisasi\Kueri\AksesPengguna;
+use App\Domain\Organisasi\Kueri\InfoGudang;
+use App\Domain\Organisasi\Kueri\PenyetujuLain;
 use App\Domain\Pembelian\Enum\StatusPesananPembelian;
 use App\Domain\Pembelian\Layanan\PenyusunDataIntegrasiPembelian;
 use App\Domain\Pembelian\Model\PesananPembelian;
@@ -19,6 +23,9 @@ use Illuminate\Support\Facades\DB;
  * Mengajukan draf PO (F-04 fase 1, §19.2): Total di atas `BatasPersetujuanPo` → MenungguPersetujuan (disetujui pemegang
  * `pembelian.po.setujui` yang bukan pembuatnya); sampai batas → langsung Disetujui. Idempoten untuk PO yang sudah
  * diajukan. Audit `pesanan-pembelian.ajukan`.
+ *
+ * D-38 four-eyes adaptif: di atas batas tetapi pelaku Pemilik, atau tidak ada pemegang `pembelian.po.setujui` lain
+ * yang menjangkau outlet lokasi PO (`PenyetujuLain`) → langsung Disetujui dengan alasan di audit (`DisetujuiLangsung`).
  */
 final class AjukanPesananPembelian
 {
@@ -27,6 +34,9 @@ final class AjukanPesananPembelian
         private readonly PencatatRiwayatStatus $riwayat,
         private readonly PencatatAudit $audit,
         private readonly PenyusunDataIntegrasiPembelian $dataIntegrasi,
+        private readonly AksesPengguna $akses,
+        private readonly PenyetujuLain $penyetujuLain,
+        private readonly InfoGudang $infoGudang,
     ) {}
 
     /**
@@ -46,7 +56,9 @@ final class AjukanPesananPembelian
             }
 
             $batas = $this->pengaturan->Ambil()->batasPersetujuanPo;
-            $butuhPersetujuan = Uang::Dari($terkunci->Total)->Bandingkan($batas) > 0;
+            $diAtasBatas = Uang::Dari($terkunci->Total)->Bandingkan($batas) > 0;
+            $langsung = $diAtasBatas ? $this->AmbilAlasanLangsung($terkunci, $idPengguna) : null;
+            $butuhPersetujuan = $diAtasBatas && $langsung === null;
             $tujuan = $butuhPersetujuan ? StatusPesananPembelian::MenungguPersetujuan : StatusPesananPembelian::Disetujui;
 
             $terkunci->UbahStatus($tujuan);
@@ -64,6 +76,7 @@ final class AjukanPesananPembelian
                 'Status' => $tujuan->value,
                 'Total' => $terkunci->Total,
                 'BatasPersetujuanPo' => $batas->KeString(),
+                ...($langsung === null ? [] : ['DisetujuiLangsung' => $langsung]),
             ], idPengguna: $idPengguna);
 
             if (! $butuhPersetujuan) {
@@ -73,5 +86,17 @@ final class AjukanPesananPembelian
 
             return $terkunci;
         }, 3);
+    }
+
+    /** D-38: alasan PO di atas batas disetujui tanpa penyetuju kedua, atau null bila four-eyes berlaku. */
+    private function AmbilAlasanLangsung(PesananPembelian $po, int $idPengguna): ?string
+    {
+        if (($this->akses->Ambil($po->IdTenant, $idPengguna)['Pemilik'] ?? false) === true) {
+            return 'Pemilik';
+        }
+
+        $idOutlet = ($this->infoGudang->AmbilBanyak([$po->IdGudang])[$po->IdGudang] ?? null)?->idOutlet;
+
+        return $this->penyetujuLain->CekAda($po->IdTenant, $idPengguna, IzinTenant::PembelianPoSetujui, $idOutlet) ? null : 'PenyetujuTunggal';
     }
 }
