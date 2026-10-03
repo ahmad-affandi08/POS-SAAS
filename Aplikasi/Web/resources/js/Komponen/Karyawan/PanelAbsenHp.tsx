@@ -5,7 +5,10 @@ import { useState } from 'react';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import { AlamatKaryawan } from '@/Komponen/Karyawan/FormulirKaryawan';
+import DialogKonfirmasi from '@/Komponen/Tindakan/DialogKonfirmasi';
+import { Button } from '@/Komponen/Ui/button';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/Komponen/Ui/sheet';
+import { Skeleton } from '@/Komponen/Ui/skeleton';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import { FormatTanggalWaktu } from '@/Pustaka/FormatWaktu';
@@ -36,6 +39,27 @@ export function JenisLabelWajah(status: StatusWajahKaryawan | null): 'sukses' | 
             : 'netral';
 }
 
+type AksiBerisiko = 'buat-ulang' | 'cabut' | 'hapus';
+
+/** Judul, akibat, label tombol, dan permintaan tiap aksi yang perlu dikonfirmasi. */
+const isiKonfirmasi: Record<AksiBerisiko, { judul: string; akibat: string; label: string }> = {
+    'buat-ulang': {
+        judul: 'Buat ulang tautan absen?',
+        akibat: 'Tautan lama langsung tidak berlaku. Kirim tautan baru ke karyawan supaya bisa absen lagi.',
+        label: 'Buat ulang tautan',
+    },
+    cabut: {
+        judul: 'Cabut tautan absen?',
+        akibat: 'Karyawan tidak bisa absen dari HP sampai Anda membuat tautan baru.',
+        label: 'Cabut tautan',
+    },
+    hapus: {
+        judul: 'Atur ulang wajah?',
+        akibat: 'Wajah terdaftar dan fotonya dihapus. Karyawan harus mendaftarkan wajah lagi dan menunggu persetujuan sebelum bisa absen.',
+        label: 'Hapus wajah',
+    },
+};
+
 /**
  * F-18 bagian 4 (D-37): panel "Absen dari HP" satu karyawan (`karyawan.kelola`). Tautan absen pribadi (buat ulang,
  * salin, kirim lewat WhatsApp, cabut) dan wajah terdaftar: lihat 3 foto pendaftaran lalu setujui atau tolak dengan
@@ -49,6 +73,7 @@ export default function PanelAbsenHp({ karyawan, saatTutup }: { karyawan: BarisK
     const [tolak, AturTolak] = useState(false);
     const [alasan, AturAlasan] = useState('');
     const [tersalin, AturTersalin] = useState(false);
+    const [konfirmasi, AturKonfirmasi] = useState<AksiBerisiko | null>(null);
     const alamat = `${AlamatKaryawan}/${karyawan.Uuid}`;
     const data = kueri.data;
 
@@ -63,6 +88,7 @@ export default function PanelAbsenHp({ karyawan, saatTutup }: { karyawan: BarisK
             preserveScroll: true,
             onSuccess: () => {
                 AturTolak(false);
+                AturKonfirmasi(null);
                 AturAlasan('');
                 void klien.invalidateQueries({ queryKey: kunci });
             },
@@ -98,9 +124,16 @@ export default function PanelAbsenHp({ karyawan, saatTutup }: { karyawan: BarisK
 
                 <div className="flex flex-col gap-5 px-4 pb-6">
                     {kueri.isPending ? (
-                        <p role="status" className="text-isi text-teks-sekunder">
-                            Memuat…
-                        </p>
+                        <div role="status" aria-label="Memuat data absen HP" className="flex flex-col gap-3">
+                            <Skeleton className="h-4 w-32" />
+                            <Skeleton className="h-10 w-full" />
+                            <Skeleton className="h-4 w-40" />
+                            <div className="grid grid-cols-3 gap-2">
+                                <Skeleton className="aspect-square w-full" />
+                                <Skeleton className="aspect-square w-full" />
+                                <Skeleton className="aspect-square w-full" />
+                            </div>
+                        </div>
                     ) : null}
                     {kueri.isError ? (
                         <Pemberitahuan jenis="bahaya">Data absen HP gagal dimuat. Tutup lalu buka lagi.</Pemberitahuan>
@@ -125,27 +158,30 @@ export default function PanelAbsenHp({ karyawan, saatTutup }: { karyawan: BarisK
                                             <Tombol varian="sekunder" onClick={() => void Salin(data.Tautan ?? '')}>
                                                 {tersalin ? 'Tersalin' : 'Salin tautan'}
                                             </Tombol>
-                                            <a
-                                                className="inline-flex h-8 items-center rounded-md border border-garis px-4 text-label font-semibold text-teks-utama pointer-coarse:h-11"
-                                                href={`https://wa.me/?text=${encodeURIComponent(`Tautan absen ${karyawan.Nama}: ${data.Tautan} (simpan ke layar utama HP, jangan dibagikan)`)}`}
-                                                target="_blank"
-                                                rel="noreferrer"
+                                            <Button
+                                                asChild
+                                                variant="outline"
+                                                className="h-8 px-4 text-label font-semibold pointer-coarse:h-11"
                                             >
-                                                Kirim lewat WhatsApp
-                                            </a>
+                                                <a
+                                                    href={`https://wa.me/?text=${encodeURIComponent(`Tautan absen ${karyawan.Nama}: ${data.Tautan} (simpan ke layar utama HP, jangan dibagikan)`)}`}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                >
+                                                    Kirim lewat WhatsApp
+                                                </a>
+                                            </Button>
                                             <Tombol
                                                 varian="sekunder"
-                                                memproses={memproses === 'buat'}
                                                 disabled={memproses !== null}
-                                                onClick={() => Kirim('buat', 'post', `${alamat}/tautan-absen`)}
+                                                onClick={() => AturKonfirmasi('buat-ulang')}
                                             >
                                                 Buat ulang tautan
                                             </Tombol>
                                             <Tombol
                                                 varian="bahaya"
-                                                memproses={memproses === 'cabut'}
                                                 disabled={memproses !== null}
-                                                onClick={() => Kirim('cabut', 'delete', `${alamat}/tautan-absen`)}
+                                                onClick={() => AturKonfirmasi('cabut')}
                                             >
                                                 Cabut tautan
                                             </Tombol>
@@ -227,6 +263,7 @@ export default function PanelAbsenHp({ karyawan, saatTutup }: { karyawan: BarisK
                                             label="Alasan penolakan"
                                             nilai={alasan}
                                             saatBerubah={AturAlasan}
+                                            maxLength={200}
                                             keterangan="Ditampilkan ke karyawan, misal: foto gelap, wajah tertutup masker."
                                             required
                                         />
@@ -254,8 +291,8 @@ export default function PanelAbsenHp({ karyawan, saatTutup }: { karyawan: BarisK
                                     <div>
                                         <Tombol
                                             varian="sekunder"
-                                            memproses={memproses === 'hapus'}
-                                            onClick={() => Kirim('hapus', 'delete', `${alamat}/wajah`)}
+                                            disabled={memproses !== null}
+                                            onClick={() => AturKonfirmasi('hapus')}
                                         >
                                             Atur ulang wajah
                                         </Tombol>
@@ -265,6 +302,23 @@ export default function PanelAbsenHp({ karyawan, saatTutup }: { karyawan: BarisK
                         </>
                     ) : null}
                 </div>
+                {konfirmasi ? (
+                    <DialogKonfirmasi
+                        judul={isiKonfirmasi[konfirmasi].judul}
+                        labelAksi={isiKonfirmasi[konfirmasi].label}
+                        memproses={memproses === konfirmasi}
+                        saatBatal={() => AturKonfirmasi(null)}
+                        saatKonfirmasi={() =>
+                            konfirmasi === 'buat-ulang'
+                                ? Kirim('buat-ulang', 'post', `${alamat}/tautan-absen`)
+                                : konfirmasi === 'cabut'
+                                  ? Kirim('cabut', 'delete', `${alamat}/tautan-absen`)
+                                  : Kirim('hapus', 'delete', `${alamat}/wajah`)
+                        }
+                    >
+                        <p>{isiKonfirmasi[konfirmasi].akibat}</p>
+                    </DialogKonfirmasi>
+                ) : null}
             </SheetContent>
         </Sheet>
     );

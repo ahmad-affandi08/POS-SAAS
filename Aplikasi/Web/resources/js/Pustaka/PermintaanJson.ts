@@ -30,6 +30,29 @@ export function AmbilPesanGalat(isi: unknown): string | null {
     return typeof pesan === 'string' && pesan !== '' ? pesan : null;
 }
 
+/** Pesan cadangan per status HTTP bila jawaban server tidak membawa pesan galat PAYOU (§17.6.7). */
+export function PesanStatusHttp(status: number): string {
+    if (status === 419) {
+        return 'Sesi halaman kedaluwarsa. Muat ulang halaman, lalu coba lagi.';
+    }
+
+    if (status === 429) {
+        return 'Terlalu banyak percobaan. Tunggu satu menit, lalu coba lagi.';
+    }
+
+    if (status === 422) {
+        return 'Data yang dikirim tidak lengkap atau tidak sah. Muat ulang halaman, lalu coba lagi.';
+    }
+
+    if (status === 404) {
+        return 'Halaman tidak ditemukan atau tautannya sudah tidak berlaku.';
+    }
+
+    return status >= 500
+        ? 'Server sedang bermasalah. Coba lagi beberapa saat lagi.'
+        : `Permintaan gagal (${String(status)}).`;
+}
+
 export async function KirimJson<T>(alamat: string, data: unknown = {}, metode: 'POST' | 'PUT' = 'POST'): Promise<T> {
     const respons = await fetch(alamat, {
         method: metode,
@@ -45,7 +68,7 @@ export async function KirimJson<T>(alamat: string, data: unknown = {}, metode: '
     const isi: unknown = await respons.json().catch(() => null);
 
     if (!respons.ok) {
-        throw new Error(AmbilPesanGalat(isi) ?? `Permintaan gagal (${String(respons.status)}).`);
+        throw new Error(AmbilPesanGalat(isi) ?? PesanStatusHttp(respons.status));
     }
 
     return isi as T;

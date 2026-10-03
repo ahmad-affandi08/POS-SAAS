@@ -67,6 +67,11 @@ describe('Panel absen dari HP', () => {
             'https://wa.me/?text=',
         );
 
+        fireEvent.click(screen.getByRole('button', { name: 'Cabut tautan' }));
+        expect(screen.getByRole('alertdialog', { name: 'Cabut tautan absen?' })).not.toBeNull();
+        expect(tiruanRouter.delete).not.toHaveBeenCalled();
+        fireEvent.click(screen.getByRole('button', { name: 'Batal' }));
+
         // Tiruan router tidak memanggil onFinish (tombol tetap "memproses"), jadi tolak diuji lebih dulu, setujui di
         // render berikutnya.
         fireEvent.click(screen.getByRole('button', { name: 'Tolak' }));
@@ -116,7 +121,18 @@ describe('Panel absen dari HP', () => {
             {},
             expect.anything(),
         );
-        fireEvent.click(screen.getByRole('button', { name: 'Atur ulang wajah' }));
+        cleanup();
+
+        // Aksi merusak lewat konfirmasi dulu: klik pertama hanya membuka dialog.
+        RenderUji(
+            <PanelAbsenHp
+                karyawan={{ ...karyawan, TautanAbsen: false, StatusWajah: 'Disetujui' }}
+                saatTutup={() => undefined}
+            />,
+        );
+        fireEvent.click(await screen.findByRole('button', { name: 'Atur ulang wajah' }));
+        expect(tiruanRouter.delete).not.toHaveBeenCalled();
+        fireEvent.click(screen.getByRole('button', { name: 'Hapus wajah' }));
         expect(tiruanRouter.delete).toHaveBeenCalledWith(`/kelola/karyawan/${karyawan.Uuid}/wajah`, expect.anything());
     });
 });

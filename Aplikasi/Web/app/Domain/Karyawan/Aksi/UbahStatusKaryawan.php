@@ -7,6 +7,7 @@ namespace App\Domain\Karyawan\Aksi;
 use App\Domain\Bersama\Audit\Layanan\PencatatAudit;
 use App\Domain\Karyawan\Enum\StatusKaryawan;
 use App\Domain\Karyawan\Model\Karyawan;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Nonaktifkan/aktifkan karyawan (F-18, izin `karyawan.kelola`). Nonaktif = tidak bisa absen di POS dan tidak muncul
@@ -29,22 +30,25 @@ final class UbahStatusKaryawan
         }
 
         $lama = $karyawan->Status;
-        $karyawan->Status = $status;
 
-        if ($status === StatusKaryawan::Nonaktif) {
-            $karyawan->forceFill(['TokenAbsen' => null, 'HashTokenAbsen' => null, 'TokenAbsenDibuatPada' => null]);
-            $this->hapusWajah->HapusSemua($karyawan);
-        }
+        return DB::transaction(function () use ($karyawan, $status, $lama, $idPengguna): Karyawan {
+            $karyawan->Status = $status;
 
-        $karyawan->save();
-        $this->audit->Catat(
-            $status === StatusKaryawan::Aktif ? 'karyawan.aktifkan' : 'karyawan.nonaktifkan',
-            $karyawan,
-            ['Status' => $lama->value],
-            ['Status' => $status->value],
-            idPengguna: $idPengguna,
-        );
+            if ($status === StatusKaryawan::Nonaktif) {
+                $karyawan->forceFill(['TokenAbsen' => null, 'HashTokenAbsen' => null, 'TokenAbsenDibuatPada' => null]);
+                $this->hapusWajah->HapusSemua($karyawan);
+            }
 
-        return $karyawan;
+            $karyawan->save();
+            $this->audit->Catat(
+                $status === StatusKaryawan::Aktif ? 'karyawan.aktifkan' : 'karyawan.nonaktifkan',
+                $karyawan,
+                ['Status' => $lama->value],
+                ['Status' => $status->value],
+                idPengguna: $idPengguna,
+            );
+
+            return $karyawan;
+        });
     }
 }

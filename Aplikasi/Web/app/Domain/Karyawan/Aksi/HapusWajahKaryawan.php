@@ -8,6 +8,7 @@ use App\Domain\Bersama\Audit\Layanan\PencatatAudit;
 use App\Domain\Karyawan\Layanan\PenyimpanSwafoto;
 use App\Domain\Karyawan\Model\Karyawan;
 use App\Domain\Karyawan\Model\WajahKaryawan;
+use Illuminate\Support\Facades\DB;
 
 /**
  * F-18 bagian 4 (D-37): menghapus wajah terdaftar karyawan beserta fotonya (atur ulang oleh pengelola, atau otomatis
@@ -37,8 +38,10 @@ final class HapusWajahKaryawan
         $daftar = WajahKaryawan::query()->where('IdKaryawan', $karyawan->Id)->get();
 
         foreach ($daftar as $wajah) {
-            array_map($this->penyimpan->Hapus(...), $wajah->PathFoto);
+            $path = $wajah->PathFoto;
             $wajah->delete();
+            // Berkas dihapus setelah commit: transaksi pemanggil yang batal tidak meninggalkan baris tanpa foto.
+            DB::afterCommit(fn () => array_map($this->penyimpan->Hapus(...), $path));
         }
 
         return $daftar->count();

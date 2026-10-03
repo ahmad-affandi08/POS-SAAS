@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Kontroler\Publik;
 
+use App\Domain\Bersama\Audit\Layanan\PencatatAudit;
 use App\Domain\Bersama\Tenant\KonteksTenant;
 use App\Domain\Karyawan\Aksi\AturTautanAbsen;
 use App\Domain\Karyawan\Aksi\CatatAbsensiWeb;
@@ -26,7 +27,7 @@ use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
  * F-18 bagian 4 (D-37) absensi web `/{slugTenant}/absen/{token}`: karyawan membuka tautan pribadinya di HP, mendaftarkan
  * wajah sekali, lalu absen masuk/keluar dengan lokasi GPS + wajah. Halaman mobile-first & dapat dipasang (PWA; hanya
  * cakupan halaman absen). Kiriman berbentuk JSON dari halaman; galat memakai format galat seragam. Tautan tak dikenal,
- * dicabut, atau karyawan nonaktif = 404 yang sama.
+ * dicabut, atau karyawan nonaktif = 404 yang sama. Isi kiriman baru divalidasi setelah tautan terbukti sah.
  */
 final class AbsensiWebKontroler extends Kontroler
 {
@@ -36,6 +37,7 @@ final class AbsensiWebKontroler extends Kontroler
     public function __construct(
         private readonly KonteksTenant $konteks,
         private readonly ProfilTenant $profil,
+        private readonly PencatatAudit $audit,
     ) {}
 
     public function Tampilkan(string $slugTenant, string $token, StatusAbsensiWeb $status): SymfonyResponse
@@ -90,14 +92,15 @@ final class AbsensiWebKontroler extends Kontroler
 
     public function DaftarWajah(Request $permintaan, string $slugTenant, string $token, DaftarkanWajahKaryawan $daftar): SymfonyResponse
     {
-        $valid = $permintaan->validate([
-            'SidikWajah' => ['required', 'array'],
-            'Foto' => ['required', 'array'],
-            'Foto.*' => ['string', 'max:450000'],
-            'Persetujuan' => ['required', 'boolean'],
-        ]);
-
-        return $this->DenganKaryawan($slugTenant, $token, function (Karyawan $karyawan) use ($daftar, $valid): JsonResponse {
+        return $this->DenganKaryawan($slugTenant, $token, function (Karyawan $karyawan) use ($permintaan, $daftar): JsonResponse {
+            $valid = $permintaan->validate([
+                'SidikWajah' => ['required', 'array', 'max:'.(int) config('karyawan.JumlahFotoDaftarWajah')],
+                'SidikWajah.*' => ['array', 'max:1024'],
+                'SidikWajah.*.*' => ['integer'],
+                'Foto' => ['required', 'array', 'max:'.(int) config('karyawan.JumlahFotoDaftarWajah')],
+                'Foto.*' => ['string', 'max:450000'],
+                'Persetujuan' => ['required', 'boolean'],
+            ]);
             $wajah = $daftar->Jalankan($karyawan, array_values((array) $valid['SidikWajah']), array_values((array) $valid['Foto']), (bool) $valid['Persetujuan']);
 
             return response()->json(['Status' => $wajah->Status->value, 'Pesan' => 'Wajah terdaftar. Tunggu persetujuan pengelola sebelum absen.'], 201);
@@ -106,10 +109,8 @@ final class AbsensiWebKontroler extends Kontroler
 
     public function Masuk(Request $permintaan, string $slugTenant, string $token, CatatAbsensiWeb $catat): SymfonyResponse
     {
-        $data = $this->AmbilData($permintaan);
-
-        return $this->DenganKaryawan($slugTenant, $token, function (Karyawan $karyawan) use ($catat, $data): JsonResponse {
-            $absensi = $catat->Masuk($karyawan, $data);
+        return $this->DenganKaryawan($slugTenant, $token, function (Karyawan $karyawan) use ($permintaan, $catat): JsonResponse {
+            $absensi = $catat->Masuk($karyawan, $this->AmbilData($permintaan));
 
             return response()->json(['Uuid' => $absensi->Uuid, 'MasukPada' => $absensi->MasukPada->toIso8601String(), 'JarakMeter' => $absensi->JarakMasukMeter]);
         });
@@ -117,10 +118,8 @@ final class AbsensiWebKontroler extends Kontroler
 
     public function Keluar(Request $permintaan, string $slugTenant, string $token, CatatAbsensiWeb $catat): SymfonyResponse
     {
-        $data = $this->AmbilData($permintaan);
-
-        return $this->DenganKaryawan($slugTenant, $token, function (Karyawan $karyawan) use ($catat, $data): JsonResponse {
-            $absensi = $catat->Keluar($karyawan, $data);
+        return $this->DenganKaryawan($slugTenant, $token, function (Karyawan $karyawan) use ($permintaan, $catat): JsonResponse {
+            $absensi = $catat->Keluar($karyawan, $this->AmbilData($permintaan));
 
             return response()->json(['Uuid' => $absensi->Uuid, 'KeluarPada' => $absensi->KeluarPada?->toIso8601String(), 'JarakMeter' => $absensi->JarakKeluarMeter]);
         });
@@ -133,7 +132,8 @@ final class AbsensiWebKontroler extends Kontroler
             'Lintang' => ['required', 'string', 'regex:'.self::POLA_KOORDINAT],
             'Bujur' => ['required', 'string', 'regex:'.self::POLA_KOORDINAT],
             'AkurasiMeter' => ['required', 'integer', 'min:0', 'max:100000'],
-            'SidikWajah' => ['required', 'array'],
+            'SidikWajah' => ['required', 'array', 'max:1024'],
+            'SidikWajah.*' => ['integer'],
             'Swafoto' => ['required', 'string', 'max:450000'],
         ]);
         $lintang = BigDecimal::of((string) $valid['Lintang']);
@@ -159,6 +159,8 @@ final class AbsensiWebKontroler extends Kontroler
         $idTenant = $this->profil->CariIdDariSlug($slugTenant);
         abort_if($idTenant === null || strlen($token) !== AturTautanAbsen::PANJANG_TOKEN, 404);
         $this->konteks->Atur($idTenant);
+        // Halaman publik tanpa perantara audit: jejak percobaan (di luar radius, wajah tidak cocok) tetap ber-IP.
+        $this->audit->AturKonteks(null, request()->ip(), request()->userAgent());
 
         try {
             $karyawan = Karyawan::query()->where('HashTokenAbsen', AturTautanAbsen::Hash($token))->first();

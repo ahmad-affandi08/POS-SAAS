@@ -133,7 +133,7 @@ export default function LokasiAbsensiOutlet({ alamatOutlet, data, bolehKelola }:
                         </Tombol>
                         {ada ? (
                             <Tombol
-                                varian="sekunder"
+                                varian="bahaya"
                                 disabled={memproses}
                                 onClick={() => Kirim({ Lintang: null, Bujur: null })}
                             >

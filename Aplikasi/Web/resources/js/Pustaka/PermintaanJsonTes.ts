@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { AmbilPesanGalat, AmbilTokenXsrf } from './PermintaanJson';
+import { AmbilPesanGalat, AmbilTokenXsrf, PesanStatusHttp } from './PermintaanJson';
 
 describe('AmbilTokenXsrf', () => {
     it('mengambil token walau cookie lain mendahuluinya', () => {
@@ -35,5 +35,15 @@ describe('AmbilPesanGalat', () => {
         expect(AmbilPesanGalat(null)).toBeNull();
         expect(AmbilPesanGalat({ message: 'Server Error' })).toBeNull();
         expect(AmbilPesanGalat({ Galat: { Pesan: '' } })).toBeNull();
+    });
+});
+
+describe('PesanStatusHttp', () => {
+    it('memberi pesan Indonesia untuk sesi kedaluwarsa, batas percobaan, dan data tidak sah', () => {
+        expect(PesanStatusHttp(419)).toMatch(/Sesi halaman kedaluwarsa/);
+        expect(PesanStatusHttp(429)).toMatch(/Terlalu banyak percobaan/);
+        expect(PesanStatusHttp(422)).toMatch(/tidak sah/);
+        expect(PesanStatusHttp(503)).toMatch(/Server sedang bermasalah/);
+        expect(PesanStatusHttp(409)).toBe('Permintaan gagal (409).');
     });
 });

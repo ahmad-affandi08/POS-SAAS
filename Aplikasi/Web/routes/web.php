@@ -320,9 +320,9 @@ Route::middleware([TolakDomainPengelola::class, ArahkanDomainAplikasi::class, Ba
             Route::get('/', [AbsensiWebKontroler::class, 'Tampilkan'])->middleware('throttle:60,1')->name('publik.absensi-web');
             Route::get('/manifest', [AbsensiWebKontroler::class, 'Manifest'])->middleware('throttle:60,1')->name('publik.absensi-web.manifest');
             Route::get('/pekerja-layanan', [AbsensiWebKontroler::class, 'PekerjaLayanan'])->middleware('throttle:60,1')->name('publik.absensi-web.pekerja-layanan');
-            Route::post('/wajah', [AbsensiWebKontroler::class, 'DaftarWajah'])->middleware('throttle:10,1')->name('publik.absensi-web.wajah');
-            Route::post('/masuk', [AbsensiWebKontroler::class, 'Masuk'])->middleware('throttle:10,1')->name('publik.absensi-web.masuk');
-            Route::post('/keluar', [AbsensiWebKontroler::class, 'Keluar'])->middleware('throttle:10,1')->name('publik.absensi-web.keluar');
+            Route::post('/wajah', [AbsensiWebKontroler::class, 'DaftarWajah'])->middleware('throttle:absensi-web')->name('publik.absensi-web.wajah');
+            Route::post('/masuk', [AbsensiWebKontroler::class, 'Masuk'])->middleware('throttle:absensi-web')->name('publik.absensi-web.masuk');
+            Route::post('/keluar', [AbsensiWebKontroler::class, 'Keluar'])->middleware('throttle:absensi-web')->name('publik.absensi-web.keluar');
         });
 
     // F-10 (v3.49): portal kurir tanpa akun lewat tautan rahasia dari toko.

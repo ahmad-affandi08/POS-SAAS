@@ -10,6 +10,7 @@ use App\Domain\Karyawan\Aksi\UbahStatusKaryawan;
 use App\Domain\Karyawan\Enum\StatusKaryawan;
 use App\Domain\Karyawan\Enum\StatusWajahKaryawan;
 use App\Domain\Karyawan\Model\Absensi;
+use App\Domain\Karyawan\Model\JadwalKerja;
 use App\Domain\Karyawan\Model\Karyawan;
 use App\Domain\Karyawan\Model\WajahKaryawan;
 use App\Domain\Organisasi\Enum\PeranTenantBawaan;
@@ -18,6 +19,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Inertia\Testing\AssertableInertia;
+use Tests\Pendukung\Akuntansi\BantuanJurnal;
 use Tests\Pendukung\Organisasi\BantuanOrganisasi;
 use Tests\Pendukung\Penjualan\BantuanPenjualan;
 use Tests\Pendukung\Tenant\BantuanPendaftaran;
@@ -264,4 +266,61 @@ it('lokasi absensi outlet: simpan titik & radius (dinormalkan 7 desimal), valida
     $this->post("{$outlet}/lokasi-absensi", ['Lintang' => null, 'Bujur' => null, 'RadiusAbsensiMeter' => 100])->assertSessionHasNoErrors();
     BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
     expect($k['Outlet']->refresh()->Lintang)->toBeNull();
+});
+
+it('batas percobaan per tautan: satu karyawan yang kena batas tidak menghabiskan jatah rekan satu wifi; isi dinilai setelah tautan sah', function (): void {
+    [$k, , $alamat] = SiapkanAbsensiWeb($this, wajahDisetujui: false);
+    BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+    $rekan = Karyawan::query()->create(['Nama' => 'Dewi Lestari', 'IdOutlet' => $k['Outlet']->Id]);
+    $alamatRekan = substr($alamat, 0, -40).app(AturTautanAbsen::class)->Jalankan($rekan, true, $k['Pemilik']->Id);
+
+    // Tautan palsu dengan isi kosong = 404 (bukan 422 yang membocorkan bentuk isian).
+    $this->postJson(substr($alamat, 0, -40).str_repeat('C', 40).'/masuk', [])->assertNotFound();
+
+    foreach (range(1, 10) as $_) {
+        $this->postJson("{$alamat}/masuk", [])->assertStatus(422);
+    }
+
+    $this->postJson("{$alamat}/masuk", [])->assertStatus(429);
+    $this->postJson("{$alamatRekan}/masuk", [])->assertStatus(422);
+});
+
+it('masuk memilih outlet terdekat yang radiusnya memuat posisi; jadwal dinilai per tanggal bisnis (kemarin boleh, besok tidak)', function (): void {
+    [$k, $karyawan, $alamat] = SiapkanAbsensiWeb($this);
+    BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+    // Outlet A: radius 20 m, posisi ±30 m darinya. Outlet B: radius 100 m, posisi ±58 m darinya.
+    $k['Outlet']->forceFill(['RadiusAbsensiMeter' => 20])->save();
+    $b = BantuanJurnal::BuatOutlet('ABS-B', 'Outlet Sebelah');
+    $b->forceFill(['Lintang' => '-7.5560000', 'Bujur' => '110.8318000', 'RadiusAbsensiMeter' => 100])->save();
+    $posisi = ['Bujur' => '110.8312700'];
+
+    // Outlet utama A saja: di luar radius A, walau di dalam radius B.
+    $this->postJson("{$alamat}/masuk", KirimanAbsenWebUji($posisi))->assertStatus(422)->assertJsonPath('Galat.Kode', 'DiLuarRadius');
+
+    // Jadwal di B untuk besok (tanggal bisnis) tidak membuka B hari ini.
+    BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+    JadwalKerja::query()->create(['IdKaryawan' => $karyawan->Id, 'IdOutlet' => $b->Id, 'Tanggal' => '2026-10-06', 'JamMulai' => '08:00', 'JamSelesai' => '16:00']);
+    $this->postJson("{$alamat}/masuk", KirimanAbsenWebUji($posisi))->assertStatus(422)->assertJsonPath('Galat.Kode', 'DiLuarRadius');
+
+    // Jadwal kemarin (shift malam lewat tengah malam) membuka B; B dipilih walau A lebih dekat.
+    BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+    JadwalKerja::query()->create(['IdKaryawan' => $karyawan->Id, 'IdOutlet' => $b->Id, 'Tanggal' => '2026-10-04', 'JamMulai' => '22:00', 'JamSelesai' => '06:00']);
+    $this->postJson("{$alamat}/masuk", KirimanAbsenWebUji($posisi))->assertOk();
+
+    BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+    expect(Absensi::query()->sole()->IdOutlet)->toBe($b->Id)
+        ->and(LogAudit::query()->where('Peristiwa', 'absensi.web.di-luar-radius')->latest('Id')->first()?->Ip)->not->toBeNull();
+});
+
+it('keluar setelah titik lokasi outlet dihapus: ditolak dengan arahan koreksi absensi oleh pengelola', function (): void {
+    [$k, , $alamat] = SiapkanAbsensiWeb($this);
+    $masuk = KirimanAbsenWebUji();
+    $this->postJson("{$alamat}/masuk", $masuk)->assertOk();
+
+    BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+    $k['Outlet']->forceFill(['Lintang' => null, 'Bujur' => null])->save();
+    $this->postJson("{$alamat}/keluar", KirimanAbsenWebUji(['Uuid' => $masuk['Uuid']]))
+        ->assertStatus(422)
+        ->assertJsonPath('Galat.Kode', 'OutletTanpaLokasi')
+        ->assertJsonPath('Galat.Pesan', fn (string $pesan): bool => str_contains($pesan, 'koreksi absensi'));
 });

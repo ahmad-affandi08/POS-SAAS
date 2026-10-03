@@ -117,6 +117,9 @@ function PanelAbsen({
     const [galat, AturGalat] = useState<string | null>(null);
     const [berhasil, AturBerhasil] = useState<string | null>(null);
     const lokasi = useRef<Promise<Lokasi> | null>(null);
+    // Satu Uuid per absen masuk, dipakai ulang saat mencoba lagi (koneksi putus setelah server mencatat tidak
+    // menghasilkan galat "sudah absen"), dan baru diganti setelah berhasil.
+    const uuidMasuk = useRef<string | null>(null);
     const keluar = AbsensiTerbuka !== null;
 
     const Mulai = () => {
@@ -140,11 +143,12 @@ function PanelAbsen({
             const posisi = await lokasi.current;
             AturLangkah('Mengirim absen…');
             await KirimJson(`${jalur}/${keluar ? 'keluar' : 'masuk'}`, {
-                Uuid: keluar ? AbsensiTerbuka.Uuid : BuatUlid(),
+                Uuid: keluar ? AbsensiTerbuka.Uuid : (uuidMasuk.current ??= BuatUlid()),
                 ...posisi,
                 SidikWajah: foto.Sidik,
                 Swafoto: foto.Swafoto,
             });
+            uuidMasuk.current = null;
             AturBerhasil(keluar ? 'Absen keluar tercatat. Terima kasih!' : 'Absen masuk tercatat. Selamat bekerja!');
             router.reload({ only: ['AbsensiTerbuka', 'Riwayat'] });
         } catch (kesalahan) {
@@ -412,7 +416,7 @@ function PemindaiWajah({
 
     return (
         <div className="flex flex-col items-center gap-3">
-            <div className="relative aspect-square w-full max-w-72 overflow-hidden rounded-full border-4 border-brand bg-teks-utama">
+            <div className="relative aspect-square w-full max-w-72 overflow-hidden rounded-full border-4 border-brand bg-permukaan-redup">
                 <video
                     ref={video}
                     className="size-full -scale-x-100 object-cover"

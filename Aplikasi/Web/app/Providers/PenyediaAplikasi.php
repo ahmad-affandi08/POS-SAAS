@@ -148,6 +148,17 @@ final class PenyediaAplikasi extends ServiceProvider
             });
         }
 
+        // F-18 absensi web (D-37): karyawan satu toko biasanya di balik satu IP wifi, jadi batas ketat dikunci per tautan
+        // (hash token) dan batas IP dibuat longgar supaya karyawan-karyawan satu outlet tidak saling menghabiskan jatah.
+        RateLimiter::for('absensi-web', static function (Request $permintaan): array {
+            $token = $permintaan->route()?->parameter('tokenAbsen');
+
+            return [
+                Limit::perMinute(10)->by('absen:'.hash('sha256', is_string($token) ? $token : '')),
+                Limit::perMinute(120)->by('absen-ip:'.$permintaan->ip()),
+            ];
+        });
+
         // X7: Open API v1, 120 permintaan/menit per token (throttle berjalan sebelum autentikasi, jadi kunci dari hash
         // token Bearer) dan 600/menit per IP, supaya token acak yang berganti-ganti tidak lolos dari batas.
         RateLimiter::for('api-publik', static function (Request $permintaan): array {

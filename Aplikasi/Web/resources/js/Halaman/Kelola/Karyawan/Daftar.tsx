@@ -69,10 +69,12 @@ function BuatKolom(lihatGaji: boolean): KolomTabel<BarisKaryawan>[] {
             cell: ({ row: { original: k } }) =>
                 k.TautanAbsen || k.StatusWajah ? (
                     <LabelStatus
-                        jenis={JenisLabelWajah(k.StatusWajah)}
+                        jenis={k.TautanAbsen ? JenisLabelWajah(k.StatusWajah) : 'netral'}
                         teks={
                             k.StatusWajah === 'Disetujui'
-                                ? 'Siap'
+                                ? k.TautanAbsen
+                                    ? 'Siap'
+                                    : 'Wajah disetujui, tautan dicabut'
                                 : k.StatusWajah === 'Menunggu'
                                   ? 'Wajah menunggu persetujuan'
                                   : k.StatusWajah === 'Ditolak'
