@@ -26,6 +26,7 @@ use App\Http\Kontroler\Publik\AkunTokoOnlineKontroler;
 use App\Http\Kontroler\Publik\BerhentiLanggananKontroler;
 use App\Http\Kontroler\Publik\DokumenLegalPublikKontroler;
 use App\Http\Kontroler\Publik\KompatibilitasPerangkatKontroler as KompatibilitasPerangkatPublikKontroler;
+use App\Http\Kontroler\Publik\LayarAbsensiKontroler;
 use App\Http\Kontroler\Publik\PengembangKontroler;
 use App\Http\Kontroler\Publik\PersetujuanServisKontroler;
 use App\Http\Kontroler\Publik\PesanSendiriKontroler;
@@ -323,6 +324,14 @@ Route::middleware([TolakDomainPengelola::class, ArahkanDomainAplikasi::class, Ba
             Route::post('/wajah', [AbsensiWebKontroler::class, 'DaftarWajah'])->middleware('throttle:absensi-web')->name('publik.absensi-web.wajah');
             Route::post('/masuk', [AbsensiWebKontroler::class, 'Masuk'])->middleware('throttle:absensi-web')->name('publik.absensi-web.masuk');
             Route::post('/keluar', [AbsensiWebKontroler::class, 'Keluar'])->middleware('throttle:absensi-web')->name('publik.absensi-web.keluar');
+        });
+
+    // F-18 bagian 4 (D-37): layar QR absensi outlet (tablet/monitor di outlet, tanpa akun).
+    Route::prefix('/{slugTenant}/layar-absen/{tokenLayar}')
+        ->where(['slugTenant' => '[a-z0-9]+(?:-[a-z0-9]+)*', 'tokenLayar' => '[A-Za-z0-9]{40}'])
+        ->group(function (): void {
+            Route::get('/', [LayarAbsensiKontroler::class, 'Tampilkan'])->middleware('throttle:30,1')->name('publik.layar-absensi');
+            Route::get('/kode', [LayarAbsensiKontroler::class, 'Kode'])->middleware('throttle:30,1')->name('publik.layar-absensi.kode');
         });
 
     // F-10 (v3.49): portal kurir tanpa akun lewat tautan rahasia dari toko.

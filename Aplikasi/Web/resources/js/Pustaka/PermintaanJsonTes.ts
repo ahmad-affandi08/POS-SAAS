@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { AmbilPesanGalat, AmbilTokenXsrf, PesanStatusHttp } from './PermintaanJson';
+import { AmbilKodeGalat, AmbilPesanGalat, AmbilTokenXsrf, PesanStatusHttp } from './PermintaanJson';
 
 describe('AmbilTokenXsrf', () => {
     it('mengambil token walau cookie lain mendahuluinya', () => {
@@ -45,5 +45,12 @@ describe('PesanStatusHttp', () => {
         expect(PesanStatusHttp(422)).toMatch(/tidak sah/);
         expect(PesanStatusHttp(503)).toMatch(/Server sedang bermasalah/);
         expect(PesanStatusHttp(409)).toBe('Permintaan gagal (409).');
+    });
+});
+
+describe('AmbilKodeGalat', () => {
+    it('mengambil Galat.Kode untuk percabangan halaman (misal KodeQrWajib)', () => {
+        expect(AmbilKodeGalat({ Galat: { Kode: 'KodeQrWajib', Pesan: 'Pindai QR' } })).toBe('KodeQrWajib');
+        expect(AmbilKodeGalat({ message: 'x' })).toBeNull();
     });
 });

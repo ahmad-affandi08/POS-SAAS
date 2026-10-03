@@ -135,6 +135,7 @@ final class AbsensiWebKontroler extends Kontroler
             'SidikWajah' => ['required', 'array', 'max:1024'],
             'SidikWajah.*' => ['integer'],
             'Swafoto' => ['required', 'string', 'max:450000'],
+            'KodeQr' => ['nullable', 'string', 'regex:/^\d{6}$/'],
         ]);
         $lintang = BigDecimal::of((string) $valid['Lintang']);
         $bujur = BigDecimal::of((string) $valid['Bujur']);
@@ -150,6 +151,7 @@ final class AbsensiWebKontroler extends Kontroler
             akurasiMeter: (int) $valid['AkurasiMeter'],
             sidikWajah: array_values((array) $valid['SidikWajah']),
             swafoto: (string) $valid['Swafoto'],
+            kodeQr: is_string($valid['KodeQr'] ?? null) ? $valid['KodeQr'] : null,
         );
     }
 

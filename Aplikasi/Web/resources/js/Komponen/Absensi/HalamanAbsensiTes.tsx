@@ -19,6 +19,7 @@ const dasar: PropsAbsensi = {
     AbsensiTerbuka: null,
     Riwayat: [],
     JumlahFotoDaftar: 3,
+    WajibQr: false,
 };
 
 beforeEach(() => {
@@ -49,6 +50,26 @@ describe('Halaman absensi web', () => {
 
         expect(screen.getByText(/Alasan pengelola: Foto gelap/)).not.toBeNull();
         expect(screen.getByRole('button', { name: /Mulai rekam wajah/ })).not.toBeNull();
+    });
+
+    it('outlet wajib QR: tombol absen aktif setelah 6 angka kode QR terisi (selain angka dibuang)', () => {
+        RenderUji(
+            <HalamanAbsensi
+                {...dasar}
+                WajibQr
+                Wajah={{ Status: 'Disetujui', Label: 'Disetujui', AlasanTolak: null }}
+            />,
+        );
+
+        const tombol = screen.getByRole('button', { name: 'Absen masuk' }) as HTMLButtonElement;
+        expect(tombol.disabled).toBe(true);
+        fireEvent.change(screen.getByLabelText(/Kode QR outlet/), { target: { value: '12 34-5' } });
+        expect((screen.getByLabelText(/Kode QR outlet/) as HTMLInputElement).value).toBe('12345');
+        expect(tombol.disabled).toBe(true);
+        fireEvent.change(screen.getByLabelText(/Kode QR outlet/), { target: { value: '123456' } });
+        expect(tombol.disabled).toBe(false);
+        // Tanpa BarcodeDetector (jsdom, Safari iOS) hanya isian kode yang tampil.
+        expect(screen.queryByRole('button', { name: 'Pindai QR outlet' })).toBeNull();
     });
 
     it('menunggu persetujuan: tanpa tombol absen', () => {

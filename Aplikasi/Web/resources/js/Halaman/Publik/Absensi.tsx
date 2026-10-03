@@ -1,14 +1,16 @@
 import { Head, router } from '@inertiajs/react';
-import { CameraIcon, CheckCircle2Icon, MapPinIcon, WifiOffIcon } from 'lucide-react';
+import { CameraIcon, CheckCircle2Icon, MapPinIcon, QrCodeIcon, WifiOffIcon } from 'lucide-react';
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 
+import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import JudulHalaman from '@/Komponen/Umpan/JudulHalaman';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
+import { AmbilPendeteksiQr, CekKodeQrLengkap, NormalkanKodeQr } from '@/Fitur/Absensi/KodeQr';
 import { AmbilPetunjukWajah, KeAkurasiMeter, KeTeksKoordinat } from '@/Fitur/Absensi/SidikWajah';
 import { FormatTanggalWaktu } from '@/Pustaka/FormatWaktu';
-import { KirimJson } from '@/Pustaka/PermintaanJson';
+import { GalatPermintaan, KirimJson } from '@/Pustaka/PermintaanJson';
 import { BuatUlid } from '@/Pustaka/Ulid';
 
 export type PropsAbsensi = {
@@ -20,6 +22,8 @@ export type PropsAbsensi = {
     AbsensiTerbuka: { Uuid: string; MasukPada: string; NamaOutlet: string | null } | null;
     Riwayat: { MasukPada: string; KeluarPada: string | null; NamaOutlet: string | null }[];
     JumlahFotoDaftar: number;
+    /** Outlet karyawan mewajibkan kode dari layar QR outlet (berganti tiap 30 detik). */
+    WajibQr: boolean;
 };
 
 type HasilFoto = { Sidik: number[]; Swafoto: string };
@@ -109,6 +113,7 @@ export default function HalamanAbsensi(props: PropsAbsensi) {
 function PanelAbsen({
     AbsensiTerbuka,
     AlamatModelWajah,
+    WajibQr,
     jalur,
     daring,
 }: PropsAbsensi & { jalur: string; daring: boolean }) {
@@ -121,6 +126,11 @@ function PanelAbsen({
     // menghasilkan galat "sudah absen"), dan baru diganti setelah berhasil.
     const uuidMasuk = useRef<string | null>(null);
     const keluar = AbsensiTerbuka !== null;
+    // Kolom kode QR tampil bila outlet utama mewajibkannya, atau setelah server meminta (outlet jadwal lain).
+    const [perluQr, AturPerluQr] = useState(WajibQr);
+    const [kodeQr, AturKodeQr] = useState('');
+    const [pindaiQr, AturPindaiQr] = useState(false);
+    const qrSiap = !perluQr || CekKodeQrLengkap(kodeQr);
 
     const Mulai = () => {
         AturGalat(null);
@@ -147,11 +157,21 @@ function PanelAbsen({
                 ...posisi,
                 SidikWajah: foto.Sidik,
                 Swafoto: foto.Swafoto,
+                ...(CekKodeQrLengkap(kodeQr) ? { KodeQr: kodeQr } : {}),
             });
             uuidMasuk.current = null;
+            AturKodeQr('');
             AturBerhasil(keluar ? 'Absen keluar tercatat. Terima kasih!' : 'Absen masuk tercatat. Selamat bekerja!');
             router.reload({ only: ['AbsensiTerbuka', 'Riwayat'] });
         } catch (kesalahan) {
+            if (
+                kesalahan instanceof GalatPermintaan &&
+                (kesalahan.kode === 'KodeQrWajib' || kesalahan.kode === 'KodeQrSalah')
+            ) {
+                AturPerluQr(true);
+                AturKodeQr('');
+            }
+
             AturGalat(kesalahan instanceof Error ? kesalahan.message : 'Absen gagal. Coba lagi.');
         } finally {
             AturLangkah(null);
@@ -179,6 +199,37 @@ function PanelAbsen({
             ) : null}
             {galat ? <Pemberitahuan jenis="bahaya">{galat}</Pemberitahuan> : null}
 
+            {perluQr && !pindai ? (
+                pindaiQr ? (
+                    <PemindaiQr
+                        saatTerbaca={(kode) => {
+                            AturKodeQr(kode);
+                            AturPindaiQr(false);
+                        }}
+                        saatBatal={() => AturPindaiQr(false)}
+                    />
+                ) : (
+                    <div className="flex flex-col gap-2">
+                        <BidangTeks
+                            label="Kode QR outlet"
+                            nilai={kodeQr}
+                            saatBerubah={(nilai) => AturKodeQr(NormalkanKodeQr(nilai))}
+                            inputMode="numeric"
+                            maxLength={6}
+                            autoComplete="off"
+                            keterangan="Pindai QR di layar outlet, atau ketik 6 angka di bawahnya. Kode berganti tiap 30 detik."
+                            required
+                        />
+                        {AmbilPendeteksiQr() ? (
+                            <Tombol varian="sekunder" onClick={() => AturPindaiQr(true)}>
+                                <QrCodeIcon aria-hidden="true" className="size-4" />
+                                Pindai QR outlet
+                            </Tombol>
+                        ) : null}
+                    </div>
+                )
+            ) : null}
+
             {pindai ? (
                 <PemindaiWajah
                     alamatModel={AlamatModelWajah}
@@ -194,7 +245,7 @@ function PanelAbsen({
                 <>
                     <Tombol
                         ukuran="besar"
-                        disabled={!daring || langkah !== null}
+                        disabled={!daring || langkah !== null || !qrSiap || pindaiQr}
                         memproses={langkah !== null}
                         onClick={Mulai}
                     >
@@ -441,6 +492,88 @@ function PemindaiWajah({
                 }}
             >
                 Batal
+            </Tombol>
+        </div>
+    );
+}
+
+/** Pindai QR layar outlet dengan kamera belakang lewat `BarcodeDetector` bawaan browser. */
+function PemindaiQr({ saatTerbaca, saatBatal }: { saatTerbaca: (kode: string) => void; saatBatal: () => void }) {
+    const video = useRef<HTMLVideoElement>(null);
+    const [pesan, AturPesan] = useState('Arahkan kamera ke QR di layar outlet.');
+
+    useEffect(() => {
+        let berhenti = false;
+        let aliran: MediaStream | null = null;
+        const pendeteksi = AmbilPendeteksiQr();
+
+        const Jalankan = async () => {
+            if (!pendeteksi) {
+                AturPesan('Browser ini tidak bisa memindai QR. Ketik 6 angka di layar outlet.');
+
+                return;
+            }
+
+            try {
+                aliran = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'environment' },
+                    audio: false,
+                });
+            } catch {
+                AturPesan('Kamera tidak bisa dibuka. Ketik 6 angka di layar outlet.');
+
+                return;
+            }
+
+            if (!video.current || berhenti) {
+                aliran.getTracks().forEach((trek) => trek.stop());
+
+                return;
+            }
+
+            video.current.srcObject = aliran;
+            await video.current.play().catch(() => undefined);
+
+            while (!berhenti && video.current) {
+                const hasil = await pendeteksi.detect(video.current).catch(() => []);
+                const kode = hasil.map((h) => NormalkanKodeQr(h.rawValue)).find(CekKodeQrLengkap);
+
+                if (kode) {
+                    saatTerbaca(kode);
+
+                    return;
+                }
+
+                await new Promise((selesaiTunggu) => setTimeout(selesaiTunggu, 300));
+            }
+        };
+
+        void Jalankan();
+
+        return () => {
+            berhenti = true;
+            aliran?.getTracks().forEach((trek) => trek.stop());
+        };
+        // Pemindaian dimulai sekali per tampilan.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    return (
+        <div className="flex flex-col items-center gap-3">
+            <div className="relative aspect-square w-full max-w-72 overflow-hidden rounded-panel border-4 border-brand bg-permukaan-redup">
+                <video
+                    ref={video}
+                    className="size-full object-cover"
+                    playsInline
+                    muted
+                    aria-label="Pratinjau kamera belakang"
+                />
+            </div>
+            <p className="text-center text-isi text-teks-utama" aria-live="assertive">
+                {pesan}
+            </p>
+            <Tombol varian="sekunder" onClick={saatBatal}>
+                Ketik kode saja
             </Tombol>
         </div>
     );

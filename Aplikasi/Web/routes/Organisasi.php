@@ -31,6 +31,9 @@ Route::middleware(SiapkanAuditTenant::class)->group(function () use ($izin): voi
     Route::post('/outlet/{outlet}/arsipkan', [OutletKontroler::class, 'Arsipkan'])->middleware($izin(IzinTenant::OutletKelola))->name('kelola.outlet.arsipkan');
     Route::post('/outlet/{outlet}/jenis-pesanan', [OutletKontroler::class, 'AturJenisPesanan'])->middleware($izin(IzinTenant::OutletKelola))->name('kelola.outlet.jenis-pesanan');
     Route::post('/outlet/{outlet}/lokasi-absensi', [OutletKontroler::class, 'AturLokasiAbsensi'])->middleware($izin(IzinTenant::OutletKelola))->name('kelola.outlet.lokasi-absensi');
+    Route::post('/outlet/{outlet}/layar-absensi', [OutletKontroler::class, 'BuatLayarAbsensi'])->middleware($izin(IzinTenant::OutletKelola))->name('kelola.outlet.layar-absensi.buat');
+    Route::delete('/outlet/{outlet}/layar-absensi', [OutletKontroler::class, 'CabutLayarAbsensi'])->middleware($izin(IzinTenant::OutletKelola))->name('kelola.outlet.layar-absensi.cabut');
+    Route::post('/outlet/{outlet}/wajib-qr-absensi', [OutletKontroler::class, 'AturWajibQrAbsensi'])->middleware($izin(IzinTenant::OutletKelola))->name('kelola.outlet.wajib-qr-absensi');
     Route::post('/outlet/{outlet}/pulihkan', [OutletKontroler::class, 'Pulihkan'])->middleware($izin(IzinTenant::OutletKelola))->name('kelola.outlet.pulihkan');
 
     Route::post('/outlet/{outlet}/gudang', [GudangKontroler::class, 'Simpan'])->middleware($izin(IzinTenant::OutletKelola))->name('kelola.gudang.simpan');

@@ -13,7 +13,10 @@ use App\Domain\Karyawan\Model\Absensi;
 use App\Domain\Karyawan\Model\JadwalKerja;
 use App\Domain\Karyawan\Model\Karyawan;
 use App\Domain\Karyawan\Model\WajahKaryawan;
+use App\Domain\Organisasi\Aksi\AturLayarAbsensiOutlet;
+use App\Domain\Organisasi\Aksi\AturWajibQrAbsensi;
 use App\Domain\Organisasi\Enum\PeranTenantBawaan;
+use App\Domain\Organisasi\Layanan\KodeLayarAbsensi;
 use App\Domain\Tenant\Kueri\ProfilTenant;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Storage;
@@ -323,4 +326,69 @@ it('keluar setelah titik lokasi outlet dihapus: ditolak dengan arahan koreksi ab
         ->assertStatus(422)
         ->assertJsonPath('Galat.Kode', 'OutletTanpaLokasi')
         ->assertJsonPath('Galat.Pesan', fn (string $pesan): bool => str_contains($pesan, 'koreksi absensi'));
+});
+
+it('layar QR absensi: buat tautan, wajib QR butuh layar, layar & kode publik, cabut mematikan layar dan kewajiban', function (): void {
+    [$k] = SiapkanAbsensiWeb($this, wajahDisetujui: false);
+    $outlet = "/kelola/outlet/{$k['Outlet']->Uuid}";
+    BantuanOrganisasi::Masuk($this, $k['Pemilik'], $k['Tenant']->Id);
+
+    $this->post("{$outlet}/wajib-qr-absensi", ['Wajib' => true])->assertSessionHasErrors('WajibQrAbsensi');
+    $this->post("{$outlet}/layar-absensi")->assertSessionHasNoErrors();
+    $tautan = null;
+    $this->get($outlet)->assertInertia(function (AssertableInertia $h) use (&$tautan): void {
+        $h->where('LokasiAbsensi.WajibQr', false)->etc();
+        $tautan = $h->toArray()['props']['LokasiAbsensi']['TautanLayar'];
+    });
+    expect($tautan)->toContain('/layar-absen/');
+    $jalur = (string) parse_url((string) $tautan, PHP_URL_PATH);
+
+    $this->post("{$outlet}/wajib-qr-absensi", ['Wajib' => true])->assertSessionHasNoErrors();
+    $this->get($jalur)->assertOk()->assertHeader('Cache-Control', 'no-store, private')
+        ->assertInertia(fn (AssertableInertia $h) => $h->component('Publik/LayarAbsensi')
+            ->where('NamaOutlet', $k['Outlet']->Nama)->where('WajibQr', true)->missing('IdTenant')
+            ->where('Kode', fn (string $kode): bool => preg_match('/^\d{6}$/', $kode) === 1));
+    $this->getJson("{$jalur}/kode")->assertOk()->assertJsonStructure(['NamaOutlet', 'Kode', 'BerlakuSampai', 'Qr'])->assertJsonMissingPath('IdTenant');
+
+    $this->delete("{$outlet}/layar-absensi")->assertSessionHasNoErrors();
+    $this->get($jalur)->assertNotFound();
+    BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+    expect($k['Outlet']->refresh()->WajibQrAbsensi)->toBeFalse()
+        ->and(LogAudit::query()->where('Peristiwa', 'like', 'outlet.layar-absensi.%')->count())->toBe(2);
+});
+
+it('outlet wajib QR: tanpa kode ditolak, kode salah ditolak & diaudit, kode berlaku (atau jendela sebelumnya) diterima', function (): void {
+    [$k, , $alamat] = SiapkanAbsensiWeb($this);
+    BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+    $token = app(AturLayarAbsensiOutlet::class)->Jalankan($k['Outlet'], true);
+    app(AturWajibQrAbsensi::class)->Jalankan($k['Outlet'], true);
+    $kodePada = fn (CarbonImmutable $waktu): string => app(KodeLayarAbsensi::class)->AmbilUntukLayar((string) $token, $waktu)['Kode'];
+
+    $this->get($alamat)->assertInertia(fn (AssertableInertia $h) => $h->where('WajibQr', true));
+    $this->postJson("{$alamat}/masuk", KirimanAbsenWebUji())->assertStatus(422)->assertJsonPath('Galat.Kode', 'KodeQrWajib');
+    $salah = $kodePada(CarbonImmutable::now()) === '000000' ? '000001' : '000000';
+    $this->postJson("{$alamat}/masuk", KirimanAbsenWebUji(['KodeQr' => $salah]))->assertStatus(422)->assertJsonPath('Galat.Kode', 'KodeQrSalah');
+    // Kode dua jendela lalu (≥ 60 detik) sudah tidak berlaku.
+    $this->postJson("{$alamat}/masuk", KirimanAbsenWebUji(['KodeQr' => $kodePada(CarbonImmutable::now()->subSeconds(65))]))->assertStatus(422)->assertJsonPath('Galat.Kode', 'KodeQrSalah');
+
+    // Kode jendela sebelumnya (dipindai tepat sebelum berganti) masih diterima.
+    $masuk = KirimanAbsenWebUji(['KodeQr' => $kodePada(CarbonImmutable::now()->subSeconds(30))]);
+    $this->postJson("{$alamat}/masuk", $masuk)->assertOk();
+
+    $this->travel(8)->hours();
+    $this->postJson("{$alamat}/keluar", KirimanAbsenWebUji(['Uuid' => $masuk['Uuid'], 'KodeQr' => $kodePada(CarbonImmutable::now())]))->assertOk();
+
+    BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+    $a = Absensi::query()->sole();
+    expect($a->QrMasukTerverifikasi)->toBeTrue()
+        ->and($a->QrKeluarTerverifikasi)->toBeTrue()
+        ->and(LogAudit::query()->where('Peristiwa', 'absensi.web.qr-salah')->count())->toBe(2);
+});
+
+it('outlet tanpa kewajiban QR: absen tanpa kode, kolom bukti QR tetap kosong', function (): void {
+    [$k, , $alamat] = SiapkanAbsensiWeb($this);
+    $this->postJson("{$alamat}/masuk", KirimanAbsenWebUji())->assertOk();
+
+    BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+    expect(Absensi::query()->sole()->QrMasukTerverifikasi)->toBeNull();
 });

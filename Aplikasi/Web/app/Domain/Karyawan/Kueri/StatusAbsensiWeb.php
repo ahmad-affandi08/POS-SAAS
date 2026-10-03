@@ -19,7 +19,7 @@ final class StatusAbsensiWeb
     public function __construct(private readonly LokasiAbsensiOutlet $lokasi) {}
 
     /**
-     * @return array{Wajah: array{Status: string, Label: string, AlasanTolak: string|null}|null, AbsensiTerbuka: array{Uuid: string, MasukPada: string, NamaOutlet: string|null}|null, Riwayat: list<array{MasukPada: string, KeluarPada: string|null, NamaOutlet: string|null}>, JumlahFotoDaftar: int}
+     * @return array{Wajah: array{Status: string, Label: string, AlasanTolak: string|null}|null, AbsensiTerbuka: array{Uuid: string, MasukPada: string, NamaOutlet: string|null}|null, Riwayat: list<array{MasukPada: string, KeluarPada: string|null, NamaOutlet: string|null}>, JumlahFotoDaftar: int, WajibQr: bool}
      */
     public function Ambil(Karyawan $karyawan): array
     {
@@ -44,6 +44,9 @@ final class StatusAbsensiWeb
                 'NamaOutlet' => $this->lokasi->AmbilNama($a->IdOutlet),
             ])->all()),
             'JumlahFotoDaftar' => (int) config('karyawan.JumlahFotoDaftarWajah'),
+            // Outlet utama karyawan (atau outlet mana pun bila tanpa outlet utama) mewajibkan kode layar QR. Outlet
+            // jadwal lain yang mewajibkannya ditangani lewat galat `KodeQrWajib` di halaman.
+            'WajibQr' => $this->lokasi->CekAdaWajibQr($karyawan->IdOutlet === null ? null : [$karyawan->IdOutlet]),
         ];
     }
 }

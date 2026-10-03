@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Http\Kontroler\Kelola;
 
 use App\Domain\Organisasi\Aksi\AturJenisPesananOutlet;
+use App\Domain\Organisasi\Aksi\AturLayarAbsensiOutlet;
 use App\Domain\Organisasi\Aksi\AturLokasiAbsensiOutlet;
+use App\Domain\Organisasi\Aksi\AturWajibQrAbsensi;
 use App\Domain\Organisasi\Aksi\SimpanOutlet;
 use App\Domain\Organisasi\Aksi\UbahStatusOutlet;
 use App\Domain\Organisasi\Enum\BentukMeja;
@@ -21,10 +23,12 @@ use App\Domain\Organisasi\Model\Merek;
 use App\Domain\Organisasi\Model\Outlet;
 use App\Domain\Referensi\Enum\ZonaWaktu;
 use App\Domain\Referensi\Kueri\WilayahKota;
+use App\Domain\Tenant\Kueri\ProfilTenant;
 use App\Domain\Tenant\Layanan\PastikanBatasPaket;
 use App\Domain\Tenant\Layanan\PemeriksaFiturTenant;
 use App\Http\Permintaan\Kelola\AturJenisPesananOutletPermintaan;
 use App\Http\Permintaan\Kelola\AturLokasiAbsensiOutletPermintaan;
+use App\Http\Permintaan\Kelola\AturWajibQrAbsensiPermintaan;
 use App\Http\Permintaan\Kelola\SimpanOutletPermintaan;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
@@ -101,7 +105,33 @@ final class OutletKontroler extends DasarKelolaKontroler
             : "Lokasi absensi {$baris->Nama} disimpan (radius {$baris->RadiusAbsensiMeter} m).");
     }
 
-    public function Detail(string $outlet, WilayahKota $wilayahKota, MejaOutlet $mejaOutlet, PenjagaModeMeja $modeMeja, PemeriksaFiturTenant $fitur, JenisPesananOutlet $jenisPesanan): Response
+    /** F-18 bagian 4 (D-37): buat (ulang) tautan layar QR absensi outlet; tautan & kode lama langsung mati. */
+    public function BuatLayarAbsensi(string $outlet, AturLayarAbsensiOutlet $atur): RedirectResponse
+    {
+        $baris = $this->CariOutlet($outlet);
+        $atur->Jalankan($baris, true);
+
+        return back()->with('Kilat', "Tautan layar QR absensi {$baris->Nama} dibuat. Buka tautannya di tablet atau monitor di outlet.");
+    }
+
+    public function CabutLayarAbsensi(string $outlet, AturLayarAbsensiOutlet $atur): RedirectResponse
+    {
+        $baris = $this->CariOutlet($outlet);
+        $atur->Jalankan($baris, false);
+
+        return back()->with('Kilat', "Layar QR absensi {$baris->Nama} dicabut. Absen dari HP di outlet ini tidak lagi meminta QR.");
+    }
+
+    public function AturWajibQrAbsensi(string $outlet, AturWajibQrAbsensiPermintaan $permintaan, AturWajibQrAbsensi $atur): RedirectResponse
+    {
+        $baris = $atur->Jalankan($this->CariOutlet($outlet), $permintaan->boolean('Wajib'));
+
+        return back()->with('Kilat', $baris->WajibQrAbsensi
+            ? "Absen dari HP di {$baris->Nama} kini wajib memindai QR di layar outlet."
+            : "Absen dari HP di {$baris->Nama} tidak lagi wajib memindai QR.");
+    }
+
+    public function Detail(string $outlet, WilayahKota $wilayahKota, MejaOutlet $mejaOutlet, PenjagaModeMeja $modeMeja, PemeriksaFiturTenant $fitur, JenisPesananOutlet $jenisPesanan, ProfilTenant $profil): Response
     {
         $baris = $this->CariOutlet($outlet);
 
@@ -153,6 +183,9 @@ final class OutletKontroler extends DasarKelolaKontroler
                 'Lintang' => $baris->Lintang === null ? null : (string) $baris->Lintang,
                 'Bujur' => $baris->Bujur === null ? null : (string) $baris->Bujur,
                 'RadiusMeter' => $baris->RadiusAbsensiMeter,
+                // Layar QR berganti (bukti hadir kedua): tautan rahasia untuk tablet/monitor outlet.
+                'TautanLayar' => is_string($baris->TokenLayarAbsen) ? url('/'.$profil->AmbilSlug($baris->IdTenant)."/layar-absen/{$baris->TokenLayarAbsen}") : null,
+                'WajibQr' => $baris->WajibQrAbsensi,
             ],
             // F-17: pesan sendiri QR meja (sakelar outlet + fitur paket `kanal.self-order`).
             'PesanSendiri' => [

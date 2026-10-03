@@ -30,6 +30,31 @@ export function AmbilPesanGalat(isi: unknown): string | null {
     return typeof pesan === 'string' && pesan !== '' ? pesan : null;
 }
 
+/** Kode galat API PAYOU (`Galat.Kode`); null bila bukan bentuk itu. */
+export function AmbilKodeGalat(isi: unknown): string | null {
+    if (typeof isi !== 'object' || isi === null || !('Galat' in isi)) {
+        return null;
+    }
+
+    const galat = (isi as { Galat: unknown }).Galat;
+    const kode =
+        typeof galat === 'object' && galat !== null && 'Kode' in galat ? (galat as { Kode: unknown }).Kode : null;
+
+    return typeof kode === 'string' && kode !== '' ? kode : null;
+}
+
+/** Galat dari `KirimJson`: pesan untuk pengguna, plus status HTTP & kode galat untuk percabangan di halaman. */
+export class GalatPermintaan extends Error {
+    constructor(
+        pesan: string,
+        readonly status: number,
+        readonly kode: string | null,
+    ) {
+        super(pesan);
+        this.name = 'GalatPermintaan';
+    }
+}
+
 /** Pesan cadangan per status HTTP bila jawaban server tidak membawa pesan galat PAYOU (§17.6.7). */
 export function PesanStatusHttp(status: number): string {
     if (status === 419) {
@@ -68,7 +93,11 @@ export async function KirimJson<T>(alamat: string, data: unknown = {}, metode: '
     const isi: unknown = await respons.json().catch(() => null);
 
     if (!respons.ok) {
-        throw new Error(AmbilPesanGalat(isi) ?? PesanStatusHttp(respons.status));
+        throw new GalatPermintaan(
+            AmbilPesanGalat(isi) ?? PesanStatusHttp(respons.status),
+            respons.status,
+            AmbilKodeGalat(isi),
+        );
     }
 
     return isi as T;

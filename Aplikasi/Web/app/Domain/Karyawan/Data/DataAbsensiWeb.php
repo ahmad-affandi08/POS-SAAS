@@ -21,5 +21,6 @@ final readonly class DataAbsensiWeb
         public int $akurasiMeter,
         public array $sidikWajah,
         public string $swafoto,
+        public ?string $kodeQr = null,
     ) {}
 }

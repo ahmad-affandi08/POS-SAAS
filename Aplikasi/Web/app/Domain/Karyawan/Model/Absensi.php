@@ -37,6 +37,8 @@ use Illuminate\Support\Carbon;
  * @property int|null $AkurasiKeluarMeter
  * @property int|null $JarakKeluarMeter
  * @property string|null $KemiripanWajahKeluar
+ * @property bool|null $QrMasukTerverifikasi kode layar QR outlet ikut dibuktikan saat masuk (null = tidak diminta)
+ * @property bool|null $QrKeluarTerverifikasi
  */
 final class Absensi extends ModelDasar
 {
@@ -74,6 +76,8 @@ final class Absensi extends ModelDasar
             'AkurasiKeluarMeter' => 'integer',
             'JarakKeluarMeter' => 'integer',
             'KemiripanWajahKeluar' => 'decimal:4',
+            'QrMasukTerverifikasi' => 'boolean',
+            'QrKeluarTerverifikasi' => 'boolean',
         ];
     }
 }

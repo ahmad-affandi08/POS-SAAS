@@ -32,7 +32,9 @@ use Throwable;
  *    ≤ radius. Masuk: outlet terdekat yang radiusnya memuat posisi karyawan, di antara outlet utama karyawan & outlet
  *    jadwalnya pada tanggal bisnis hari ini atau kemarin (shift malam lewat tengah malam); tanpa outlet utama = semua
  *    outlet. Keluar: outlet absensi masuknya.
- * 3. Wajah: kemiripan sidik wajah saat ini dengan sidik terdaftar ≥ `AmbangKemiripanWajah`. Swafoto disimpan sebagai
+ * 3. Outlet yang mewajibkan QR: kode 6 digit dari layar QR outlet (berganti tiap 30 detik) harus berlaku; bukti bahwa
+ *    karyawan melihat layar di outlet, bukan hanya mengirim koordinat.
+ * 4. Wajah: kemiripan sidik wajah saat ini dengan sidik terdaftar ≥ `AmbangKemiripanWajah`. Swafoto disimpan sebagai
  *    bukti. Wajah tidak cocok dicatat di log audit (tanpa sidiknya) sebagai jejak percobaan.
  *
  * Idempoten per Uuid: masuk dengan Uuid yang sudah tercatat atau keluar untuk absensi yang sudah ditutup mengembalikan
@@ -64,11 +66,12 @@ final class CatatAbsensiWeb
 
         $sekarang = CarbonImmutable::now();
         [$outlet, $jarak] = $this->PilihOutlet($karyawan, $data, $this->AmbilIdOutletBoleh($karyawan, $sekarang));
+        $qr = $this->PeriksaQr($karyawan, $outlet, $data, $sekarang);
         $kemiripan = $this->CocokkanWajah($karyawan, $data);
         $path = $this->swafoto->Simpan($karyawan->IdTenant, $data->swafoto);
 
         try {
-            return DB::transaction(function () use ($karyawan, $data, $outlet, $jarak, $kemiripan, $path, $sekarang): Absensi {
+            return DB::transaction(function () use ($karyawan, $data, $outlet, $jarak, $kemiripan, $path, $sekarang, $qr): Absensi {
                 // Dua kiriman bersamaan (dua tab, ketukan ganda dengan Uuid berbeda) diserialkan lewat kunci baris
                 // karyawan, lalu syarat "belum masuk" diperiksa ulang di dalam kunci.
                 Karyawan::query()->whereKey($karyawan->Id)->lockForUpdate()->first();
@@ -96,6 +99,7 @@ final class CatatAbsensiWeb
                     'AkurasiMasukMeter' => $data->akurasiMeter,
                     'JarakMasukMeter' => $jarak,
                     'KemiripanWajahMasuk' => (string) $kemiripan,
+                    'QrMasukTerverifikasi' => $qr,
                 ]);
             }, 3);
         } catch (Throwable $galat) {
@@ -118,12 +122,13 @@ final class CatatAbsensiWeb
         }
 
         $this->PastikanBolehAbsen($karyawan);
-        [, $jarak] = $this->PilihOutlet($karyawan, $data, [$absensi->IdOutlet], true);
+        [$outlet, $jarak] = $this->PilihOutlet($karyawan, $data, [$absensi->IdOutlet], true);
+        $qr = $this->PeriksaQr($karyawan, $outlet, $data, CarbonImmutable::now());
         $kemiripan = $this->CocokkanWajah($karyawan, $data);
         $path = $this->swafoto->Simpan($karyawan->IdTenant, $data->swafoto);
 
         try {
-            return DB::transaction(function () use ($absensi, $data, $jarak, $kemiripan, $path): Absensi {
+            return DB::transaction(function () use ($absensi, $data, $jarak, $kemiripan, $path, $qr): Absensi {
                 $terkini = Absensi::query()->lockForUpdate()->findOrFail($absensi->Id);
 
                 if ($terkini->KeluarPada !== null) {
@@ -140,6 +145,7 @@ final class CatatAbsensiWeb
                     'AkurasiKeluarMeter' => $data->akurasiMeter,
                     'JarakKeluarMeter' => $jarak,
                     'KemiripanWajahKeluar' => (string) $kemiripan,
+                    'QrKeluarTerverifikasi' => $qr,
                 ])->save();
 
                 return $terkini;
@@ -192,7 +198,7 @@ final class CatatAbsensiWeb
      * outlet terdekat belum tentu yang memuatnya). Bila tidak ada, tolak dengan jarak ke outlet terdekat.
      *
      * @param  list<int>|null  $idOutlet
-     * @return array{0: array{Id: int, Nama: string, Lintang: string, Bujur: string, RadiusMeter: int}, 1: int}
+     * @return array{0: array{Id: int, Nama: string, Lintang: string, Bujur: string, RadiusMeter: int, WajibQr: bool}, 1: int}
      */
     private function PilihOutlet(Karyawan $karyawan, DataAbsensiWeb $data, ?array $idOutlet, bool $keluar = false): array
     {
@@ -240,6 +246,30 @@ final class CatatAbsensiWeb
         }
 
         return [$terpilih, $jarakTerpilih];
+    }
+
+    /**
+     * Outlet yang mewajibkan QR: kode layar harus berlaku (true dicatat). Outlet lain: kode tidak diminta (null).
+     *
+     * @param  array{Id: int, Nama: string, WajibQr: bool}  $outlet
+     */
+    private function PeriksaQr(Karyawan $karyawan, array $outlet, DataAbsensiWeb $data, CarbonImmutable $sekarang): ?bool
+    {
+        if (! $outlet['WajibQr']) {
+            return null;
+        }
+
+        if ($data->kodeQr === null) {
+            throw new PelanggaranAturanBisnis('KodeQrWajib', "Absen di {$outlet['Nama']} wajib memindai QR di layar outlet. Pindai QR atau ketik 6 angkanya.", 'KodeQr');
+        }
+
+        if (! $this->lokasi->CekKodeQr($outlet['Id'], $data->kodeQr, $sekarang)) {
+            $this->audit->Catat('absensi.web.qr-salah', $karyawan, null, ['Outlet' => $outlet['Nama']]);
+
+            throw new PelanggaranAturanBisnis('KodeQrSalah', 'Kode QR salah atau sudah berganti. Pindai lagi QR yang sedang tampil di layar outlet.', 'KodeQr');
+        }
+
+        return true;
     }
 
     private function CocokkanWajah(Karyawan $karyawan, DataAbsensiWeb $data): BigDecimal
