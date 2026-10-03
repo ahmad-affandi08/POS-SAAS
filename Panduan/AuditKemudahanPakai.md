@@ -17,7 +17,7 @@ kali, persetujuan jarak jauh tetap); butir 3 (tautan unduh) ditunda. Butir seles
 | # | Area | Masalah | Usulan | Putusan |
 |---|---|---|---|---|
 | 1 ✓ v4.27 | Awal| Panduan wajib macet total bila belum ada template sektor terbit (`PanduanAwal/Sektor.tsx:97-111`, `LangkahPanduan::CekWajib`, `WajibPanduanAwal`) | Template "Umum" cadangan selalu tersedia; daftar kosong = langkah Sektor boleh dilewati | Agent |
-| 2 | Awal | PIN kasir pemilik tidak ditanyakan di panduan; baru gagal di perangkat ("PIN belum diatur", `MasukPinKasir.php:53`) | Minta PIN 6 digit di langkah Perangkat kasir | Agent |
+| 2 ✓ v4.29 | Awal | PIN kasir pemilik tidak ditanyakan di panduan; baru gagal di perangkat ("PIN belum diatur", `MasukPinKasir.php:53`) | Minta PIN 6 digit di langkah Perangkat kasir | Agent |
 | 3 | Awal | Tidak ada tautan unduh aplikasi kasir di back-office (`KartuKodeAktivasi.tsx:37`) | Tombol unduh per platform + QR di kartu aktivasi & langkah Perangkat | Ditunda (D-38) |
 | 4 ✓ v4.27 | Awal| "Siapkan semuanya otomatis" ada di bawah 14 kartu, tetap harus klik "Selesaikan panduan", dan bisa tidak menandai Produk selesai (`SiapkanOtomatisPanduan.php:80`) | Jalur otomatis jadi pilihan utama dan langsung menyelesaikan panduan | Agent |
 | 5 ✓ v4.27 | Awal| Metode pembayaran tidak punya rumah setelah panduan (rute hanya di `routes/PanduanAwal.php`) | Butir "Metode pembayaran" di Pengaturan › Kasir & struk | Agent |

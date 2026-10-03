@@ -10,6 +10,7 @@ use App\Domain\Organisasi\Enum\IzinTenant;
 use App\Domain\Organisasi\Enum\JenisPerangkat;
 use App\Domain\Organisasi\Kueri\AksesPengguna;
 use App\Domain\Organisasi\Kueri\DaftarPerangkat;
+use App\Domain\Organisasi\Kueri\DaftarPinAnggota;
 use App\Domain\Organisasi\Kueri\PemakaianPerangkat;
 use App\Domain\Organisasi\Layanan\PembuatQrKodeAktivasi;
 use App\Domain\Organisasi\Model\Perangkat;
@@ -29,7 +30,7 @@ final class PanduanAwalPerangkatKontroler extends DasarPanduanAwalKontroler
 {
     private const KUNCI_KODE_BARU = 'KodeAktivasiBaru';
 
-    public function Tampilkan(Request $permintaan, DaftarPerangkat $daftar, PemakaianPerangkat $pemakaian, PastikanBatasPaket $batasPaket, PembuatQrKodeAktivasi $qr, AksesPengguna $akses): Response
+    public function Tampilkan(Request $permintaan, DaftarPerangkat $daftar, PemakaianPerangkat $pemakaian, PastikanBatasPaket $batasPaket, PembuatQrKodeAktivasi $qr, AksesPengguna $akses, DaftarPinAnggota $pin): Response
     {
         $outlet = $this->OutletPanduan();
         $kodeBaru = $permintaan->session()->get(self::KUNCI_KODE_BARU);
@@ -54,6 +55,8 @@ final class PanduanAwalPerangkatKontroler extends DasarPanduanAwalKontroler
                 'QrSvg' => $qr->BuatSvg($kodeBaru['Kode']),
             ] : null,
             'BolehKelolaPerangkat' => $akses->CekIzin($this->IdTenant(), $this->Pelaku()->Id, IzinTenant::PerangkatKelola),
+            // Audit kemudahan pakai #2: PIN kasir pengguna sendiri diminta di sini, bukan baru gagal di aplikasi kasir.
+            'PinSayaDiatur' => $pin->CekPinDiatur($this->IdTenant(), $this->Pelaku()->Id),
         ]);
     }
 

@@ -173,6 +173,8 @@ export type PropsPerangkatPanduan = {
     KodeAktivasiBaru: KodeAktivasiBaru | null;
     /** Izin perangkat.kelola. */
     BolehKelolaPerangkat: boolean;
+    /** PIN kasir pengguna yang sedang masuk sudah diatur (dipakai masuk di aplikasi kasir). */
+    PinSayaDiatur: boolean;
 };
 
 /** Alamat POST panduan awal (DesainF01 §D). Hanya string URL; rute dimiliki Backend. */

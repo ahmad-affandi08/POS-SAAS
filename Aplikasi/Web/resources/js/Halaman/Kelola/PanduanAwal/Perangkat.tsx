@@ -4,7 +4,9 @@ import { useRef, useState, type FormEvent } from 'react';
 import AjakanTambahBatas from '@/Komponen/Kelola/AjakanTambahBatas';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import Tombol from '@/Komponen/Formulir/Tombol';
+import FormPin from '@/Komponen/Kelola/FormPin';
 import KartuKodeAktivasi from '@/Komponen/Kelola/KartuKodeAktivasi';
+import Panel from '@/Komponen/Kelola/Panel';
 import RingkasanGalatFormulir, { FokusGalatPertama } from '@/Komponen/PanduanAwal/RingkasanGalatFormulir';
 import TataLetakPanduan from '@/Komponen/PanduanAwal/TataLetakPanduan';
 import TabelData from '@/Komponen/TabelData/TabelData';
@@ -62,6 +64,7 @@ export default function HalamanPerangkatPanduan({
     Perangkat,
     KodeAktivasiBaru,
     BolehKelolaPerangkat,
+    PinSayaDiatur,
 }: PropsPerangkatPanduan) {
     const elemenFormulir = useRef<HTMLFormElement>(null);
     const [memproses, AturMemproses] = useState<string | null>(null);
@@ -95,6 +98,26 @@ export default function HalamanPerangkatPanduan({
             </p>
 
             {KodeAktivasiBaru ? <KartuKodeAktivasi kode={KodeAktivasiBaru} /> : null}
+
+            {/* Audit kemudahan pakai #2: tanpa PIN, pemilik baru tahu saat masuk di aplikasi kasir gagal. */}
+            {PinSayaDiatur ? (
+                <p className="text-keterangan text-teks-sekunder">
+                    PIN kasir Anda sudah diatur. Ganti kapan saja di{' '}
+                    <Link href="/kelola/keamanan/pin" className="font-semibold text-brand underline">
+                        Keamanan akun › PIN kasir
+                    </Link>
+                    .
+                </p>
+            ) : (
+                <Panel
+                    judul="Atur PIN kasir Anda"
+                    keterangan="Di aplikasi kasir Anda masuk dengan PIN 6 angka, bukan kata sandi. Hindari angka sama semua atau berurutan."
+                >
+                    <div className="max-w-md">
+                        <FormPin alamat="/kelola/keamanan/pin" labelTombol="Simpan PIN" />
+                    </div>
+                </Panel>
+            )}
 
             {!BolehKelolaPerangkat ? (
                 <Pemberitahuan jenis="info" judul="Anda belum bisa menambah perangkat">

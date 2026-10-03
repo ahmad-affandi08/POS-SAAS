@@ -52,6 +52,23 @@ describe('F-01 langkah 6: perangkat kasir (memakai aktivasi F-02b)', function ()
             ->assertSessionHas('KodeAktivasiBaru.UuidPerangkat', $perangkat->Uuid);
     });
 
+    it('audit kemudahan pakai #2: PIN kasir pemilik ditanyakan di langkah ini dan tersimpan tanpa keluar dari panduan', function (): void {
+        ['Tenant' => $tenant, 'Pemilik' => $pemilik] = BantuanPanduanAwal::BuatTenant();
+
+        BantuanPanduanAwal::Masuk($this, $pemilik, $tenant)->get('/kelola/panduan-awal/perangkat')
+            ->assertInertia(fn (AssertableInertia $halaman) => $halaman->where('PinSayaDiatur', false));
+
+        BantuanPanduanAwal::Masuk($this, $pemilik, $tenant)
+            ->from('/kelola/panduan-awal/perangkat')
+            ->put('/kelola/keamanan/pin', ['Pin' => '583920', 'KonfirmasiPin' => '583920'])
+            ->assertRedirect('/kelola/panduan-awal/perangkat')
+            ->assertSessionHasNoErrors();
+
+        BantuanPanduanAwal::Masuk($this, $pemilik, $tenant)->get('/kelola/panduan-awal/perangkat')
+            ->assertInertia(fn (AssertableInertia $halaman) => $halaman->where('PinSayaDiatur', true));
+        expect(TenantPengguna::query()->where('IdTenant', $tenant->Id)->where('IdPengguna', $pemilik->Id)->value('HashPin'))->not->toBeNull();
+    });
+
     it('BR-02.1: batas perangkat per outlet paket tetap berlaku (GRATIS = 1)', function (): void {
         ['Tenant' => $tenant, 'Pemilik' => $pemilik] = BantuanPanduanAwal::BuatTenant(kodePaket: 'GRATIS');
 
