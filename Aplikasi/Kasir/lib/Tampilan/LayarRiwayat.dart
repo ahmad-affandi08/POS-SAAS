@@ -34,11 +34,12 @@ final penyediaDetailPenjualan =
 /// (masih di outbox), atau Perlu tindakan (ditolak server; kirim ulang dari layar Sinkron). Status selalu berteks.
 /// F-09 fase 1: "Void transaksi" untuk transaksi `Lunas` shift yang masih terbuka ([saatVoid]), "Retur dari struk"
 /// ([saatRetur]), dan daftar retur hari ini. Void & retur dibuka sebagai panel tugas oleh bingkai ruang kerja.
-class LayarRiwayat extends ConsumerWidget {
+class LayarRiwayat extends ConsumerStatefulWidget {
   const LayarRiwayat({
     super.key,
     this.saatVoid,
     this.saatRetur,
+    this.saatReturStruk,
     this.saatAmbilPreOrder,
     this.saatPesananOnline,
     this.saatReservasi,
@@ -51,6 +52,9 @@ class LayarRiwayat extends ConsumerWidget {
 
   /// Buka lembar retur dari struk.
   final VoidCallback? saatRetur;
+
+  /// Audit kemudahan pakai #10: buka lembar retur/tukar langsung untuk nomor struk baris riwayat (tanpa mengetik).
+  final ValueChanged<String>? saatReturStruk;
 
   /// F-12 bagian 2: buka lembar cari & ambil pre-order.
   final VoidCallback? saatAmbilPreOrder;
@@ -89,15 +93,58 @@ class LayarRiwayat extends ConsumerWidget {
     ),
   };
 
+  /// Penjualan yang masih bisa diretur dari riwayat: bukan void dan belum diretur seluruhnya.
+  static bool CekBisaDiretur(BarisPenjualan p) =>
+      p.Status != StatusPenjualanLokal.divoid && p.Status != StatusPenjualanLokal.diretur;
+
+  /// Audit kemudahan pakai #10: cocokkan kata cari dengan sebagian nomor struk (tanpa beda huruf besar/kecil) atau
+  /// nominal total (angka saja, titik ribuan diabaikan, misal "45.000" atau "45000").
+  static bool CekCocokCari(BarisPenjualan p, String kata) {
+    final cari = kata.trim().toLowerCase();
+    if (cari.isEmpty) {
+      return true;
+    }
+    if (p.Nomor.toLowerCase().contains(cari)) {
+      return true;
+    }
+    final angka = cari.replaceAll('.', '').replaceAll(' ', '');
+    if (angka.isEmpty || !RegExp(r'^\d+$').hasMatch(angka)) {
+      return false;
+    }
+    return Uang.Dari(p.TotalAkhir).FormatRupiah().replaceAll(RegExp(r'[^0-9,]'), '').split(',').first.contains(angka);
+  }
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<LayarRiwayat> createState() => _LayarRiwayatState();
+}
+
+class _LayarRiwayatState extends ConsumerState<LayarRiwayat> {
+  final _cari = TextEditingController();
+
+  @override
+  void dispose() {
+    _cari.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final saatVoid = widget.saatVoid;
+    final saatRetur = widget.saatRetur;
+    final saatReturStruk = widget.saatReturStruk;
+    final saatAmbilPreOrder = widget.saatAmbilPreOrder;
+    final saatPesananOnline = widget.saatPesananOnline;
+    final saatReservasi = widget.saatReservasi;
+    final saatServis = widget.saatServis;
+    final saatCucian = widget.saatCucian;
     final teks = Theme.of(context).textTheme;
     final warna = TokenWarna.AmbilDari(context);
     final riwayat = ref.watch(penyediaRiwayatHariIni);
-    final daftar = riwayat.value ?? const <RiwayatPenjualan>[];
-    final dihitung = daftar.where((r) => r.penjualan.Status != StatusPenjualanLokal.divoid).toList();
+    final semua = riwayat.value ?? const <RiwayatPenjualan>[];
+    final daftar = semua.where((r) => LayarRiwayat.CekCocokCari(r.penjualan, _cari.text)).toList();
+    final dihitung = semua.where((r) => r.penjualan.Status != StatusPenjualanLokal.divoid).toList();
     final total = dihitung.fold(Uang.Nol(), (t, r) => t.Tambah(Uang.Dari(r.penjualan.TotalAkhir)));
-    final jumlahVoid = daftar.length - dihitung.length;
+    final jumlahVoid = semua.length - dihitung.length;
     final retur = ref.watch(penyediaReturHariIni).value ?? const <RiwayatRetur>[];
     final shiftAktif = ref.watch(penyediaShiftAktif).value;
     final konteks = ref.watch(penyediaKonteksPenjualan).value;
@@ -155,7 +202,7 @@ class LayarRiwayat extends ConsumerWidget {
           children: [
             if (tanggal != null && hariIni != null) _NavigasiTanggal(tanggal: tanggal, hariIni: hariIni),
             Text(
-              daftar.isEmpty
+              semua.isEmpty
                   ? (lampau
                         ? 'Tidak ada transaksi pada tanggal ini di perangkat ini.'
                         : 'Belum ada transaksi hari ini di perangkat ini.')
@@ -173,6 +220,30 @@ class LayarRiwayat extends ConsumerWidget {
               return Text(pesanGagalMuat, style: TextStyle(color: warna.bahaya));
             },
           ),
+        if (semua.isNotEmpty) ...[
+          const SizedBox(height: TokenJarak.jarak8),
+          TextField(
+            controller: _cari,
+            onChanged: (_) => setState(() {}),
+            decoration: InputDecoration(
+              labelText: 'Cari nomor struk atau nominal',
+              prefixIcon: const Icon(Icons.search),
+              border: const OutlineInputBorder(),
+              isDense: true,
+              suffixIcon: _cari.text.isEmpty
+                  ? null
+                  : IconButton(
+                      tooltip: 'Hapus pencarian',
+                      onPressed: () => setState(_cari.clear),
+                      icon: const Icon(Icons.close),
+                    ),
+            ),
+          ),
+          if (daftar.isEmpty) ...[
+            const SizedBox(height: TokenJarak.jarak8),
+            Text('Tidak ada transaksi yang cocok dengan "${_cari.text.trim()}".', style: teks.bodyMedium),
+          ],
+        ],
         const SizedBox(height: TokenJarak.jarak8),
         if (daftar.isNotEmpty)
           Material(
@@ -189,7 +260,10 @@ class LayarRiwayat extends ConsumerWidget {
                   _BarisRiwayat(
                     riwayat: daftar[i],
                     saatVoid: saatVoid != null && LayananVoidPenjualan.CekBisaDivoid(daftar[i].penjualan, shiftAktif)
-                        ? () => saatVoid!(daftar[i].penjualan.Uuid)
+                        ? () => saatVoid(daftar[i].penjualan.Uuid)
+                        : null,
+                    saatRetur: saatReturStruk != null && LayarRiwayat.CekBisaDiretur(daftar[i].penjualan)
+                        ? () => saatReturStruk(daftar[i].penjualan.Nomor)
                         : null,
                   ),
                 ],
@@ -268,9 +342,12 @@ class _BarisRetur extends StatelessWidget {
 }
 
 class _BarisRiwayat extends ConsumerWidget {
-  const _BarisRiwayat({required this.riwayat, this.saatVoid});
+  const _BarisRiwayat({required this.riwayat, this.saatVoid, this.saatRetur});
 
   final RiwayatPenjualan riwayat;
+
+  /// Null = transaksi ini tidak bisa diretur (void/diretur penuh) atau retur tidak tersedia.
+  final VoidCallback? saatRetur;
 
   /// Null = transaksi ini tidak bisa di-void di perangkat ini sekarang.
   final VoidCallback? saatVoid;
@@ -381,6 +458,15 @@ class _BarisRiwayat extends ConsumerWidget {
                       children: [
                         _TombolCetakUlang(uuidPenjualan: p.Uuid),
                         TombolKirimStruk(uuidPenjualan: p.Uuid),
+                        if (saatRetur != null)
+                          SizedBox(
+                            height: TokenJarak.targetSentuh,
+                            child: OutlinedButton.icon(
+                              onPressed: saatRetur,
+                              icon: const Icon(Icons.assignment_return_outlined),
+                              label: const Text('Retur / tukar'),
+                            ),
+                          ),
                         if (saatVoid != null)
                           SizedBox(
                             height: TokenJarak.targetSentuh,

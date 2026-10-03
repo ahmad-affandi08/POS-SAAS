@@ -360,6 +360,7 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
     TujuanRuangKerja.Riwayat => LayarRiwayat(
       saatVoid: (uuid) => _BukaPanelPenjualan(_PanelPenjualan(uuidPenjualanVoid: uuid)),
       saatRetur: () => _BukaPanelPenjualan(const _PanelPenjualan()),
+      saatReturStruk: (nomor) => _BukaPanelPenjualan(_PanelPenjualan(nomorRetur: nomor)),
       saatAmbilPreOrder: () => _BukaPanelPenjualan(const _PanelPenjualan(ambilPreOrder: true)),
       saatPesananOnline: ref.watch(penyediaKonteksPenjualan).value?.tokoOnlineAktif == true
           ? () => _BukaPanelPenjualan(const _PanelPenjualan(pesananOnline: true))
@@ -572,11 +573,12 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
           },
         ) as Widget,
       ),
-      (_, _, _PanelPenjualan()) => (
+      (_, _, _PanelPenjualan(:final nomorRetur)) => (
         LembarRetur.judul,
         LembarRetur(
-          key: const ValueKey('Retur'),
+          key: ValueKey('Retur-${nomorRetur ?? ''}'),
           kasir: widget.kasir,
+          nomorAwal: nomorRetur,
           saatSelesai: _TutupPanel,
           // K-11: tukar barang dilanjutkan di layar Jual dengan nilai retur sebagai pembayaran.
           saatTukar: () {
@@ -766,6 +768,7 @@ enum _PanelShift { Tutup, LaporanX }
 class _PanelPenjualan {
   const _PanelPenjualan({
     this.uuidPenjualanVoid,
+    this.nomorRetur,
     this.ambilPreOrder = false,
     this.pesananOnline = false,
     this.reservasi = false,
@@ -774,6 +777,9 @@ class _PanelPenjualan {
   });
 
   final String? uuidPenjualanVoid;
+
+  /// Audit kemudahan pakai #10: nomor struk dari baris Riwayat untuk lembar retur (null = kasir mengetik/memindai).
+  final String? nomorRetur;
 
   /// F-12 bagian 2: cari & ambil pre-order.
   final bool ambilPreOrder;

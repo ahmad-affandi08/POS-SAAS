@@ -30,7 +30,7 @@ enum CaraRefund { Tunai, Transfer, Campuran, Tukar }
 /// cari online → pilih barang, jumlah, & kondisi → alasan & cara refund → PIN penyetuju ber-izin `penjualan.retur` (K-22) →
 /// simpan lokal + outbox. Pemindai barcode (keyboard wedge) mengetik nomor lalu Enter langsung mencari.
 class LembarRetur extends ConsumerStatefulWidget {
-  const LembarRetur({super.key, required this.kasir, required this.saatSelesai, this.saatTukar});
+  const LembarRetur({super.key, required this.kasir, required this.saatSelesai, this.saatTukar, this.nomorAwal});
 
   static const String judul = 'Retur dari struk';
 
@@ -40,6 +40,9 @@ class LembarRetur extends ConsumerStatefulWidget {
   /// K-11: tukar barang disiapkan di keranjang; pemanggil menutup lembar dan membuka layar Jual. Null = opsi tukar
   /// barang tidak ditawarkan.
   final VoidCallback? saatTukar;
+
+  /// Audit kemudahan pakai #10: nomor struk dari baris Riwayat; diisi dan langsung dicari saat lembar dibuka.
+  final String? nomorAwal;
 
   @override
   ConsumerState<LembarRetur> createState() => _LembarReturState();
@@ -69,6 +72,11 @@ class _LembarReturState extends ConsumerState<LembarRetur> {
   void initState() {
     super.initState();
     unawaited(_MuatBatas());
+    final nomor = widget.nomorAwal;
+    if (nomor != null) {
+      _nomor.text = nomor;
+      unawaited(Future<void>.microtask(_Cari));
+    }
   }
 
   Future<void> _MuatBatas() async {

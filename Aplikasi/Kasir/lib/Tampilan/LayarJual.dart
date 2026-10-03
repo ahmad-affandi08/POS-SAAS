@@ -844,6 +844,22 @@ class _LayarJualState extends ConsumerState<LayarJual> {
   }
 
   /// K-10 (F4): cek harga tanpa menambah ke keranjang.
+  /// Audit kemudahan pakai #10: cetak ulang struk transaksi terakhir perangkat ini tanpa membuka Riwayat.
+  Future<void> _CetakUlangTerakhir() async {
+    final terakhir = await ref.read(penyediaRepositoriPenjualan).AmbilPenjualanTerakhir();
+    if (!mounted) {
+      return;
+    }
+    if (terakhir == null) {
+      _TampilPesan('Belum ada transaksi di perangkat ini.');
+      return;
+    }
+    final galat = await ref.read(penyediaPrinter.notifier).CetakPenjualan(terakhir.Uuid, cetakUlang: true);
+    if (mounted) {
+      _TampilPesan(galat ?? 'Struk ${terakhir.Nomor} dicetak ulang.', galat: galat != null);
+    }
+  }
+
   void _BukaCekHarga() {
     if (_panel == _JenisPanel.Bayar || _panel == _JenisPanel.Selesai) {
       return;
@@ -1345,6 +1361,14 @@ class _LayarJualState extends ConsumerState<LayarJual> {
                     onPressed: _BukaCekHarga,
                     icon: const Icon(Icons.sell_outlined),
                   ),
+                  // Layar sempit: kotak cari diutamakan; cetak ulang tetap ada di baris Riwayat.
+                  if (!widget.modePelayan && !ringkas)
+                    IconButton(
+                      key: const ValueKey('TombolCetakUlangTerakhir'),
+                      tooltip: 'Cetak ulang struk terakhir',
+                      onPressed: () => unawaited(_CetakUlangTerakhir()),
+                      icon: const Icon(Icons.receipt_long_outlined),
+                    ),
                   IconButton(
                     tooltip: 'Perbarui katalog',
                     onPressed: _memperbarui ? null : () => _PerbaruiKatalog(manual: true),

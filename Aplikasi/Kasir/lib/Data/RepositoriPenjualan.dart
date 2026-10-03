@@ -145,6 +145,13 @@ class RepositoriPenjualan {
   Future<BarisPenjualan?> CariPenjualan(String uuid) =>
       (db.select(db.penjualan)..where((p) => p.Uuid.equals(uuid))).getSingleOrNull();
 
+  /// Penjualan terakhir yang dibuat perangkat ini (untuk "Cetak ulang struk terakhir" di layar Jual).
+  Future<BarisPenjualan?> AmbilPenjualanTerakhir() =>
+      (db.select(db.penjualan)
+            ..orderBy([(p) => OrderingTerm.desc(p.DibuatPada)])
+            ..limit(1))
+          .getSingleOrNull();
+
   Future<List<BarisPenjualanDetail>> AmbilDetail(String uuidPenjualan) =>
       (db.select(db.penjualanDetail)
             ..where((d) => d.UuidPenjualan.equals(uuidPenjualan))

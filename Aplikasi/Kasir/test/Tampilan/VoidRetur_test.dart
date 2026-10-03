@@ -127,6 +127,9 @@ void main() {
 
       await Ketuk(tester, find.widgetWithText(FilledButton, 'Selesai'));
       expect(find.byType(PanelTugas), findsNothing);
+      // Kotak cari riwayat (audit kemudahan pakai #10) menggeser baris ke bawah di 360 dp: gulir ke baris dulu.
+      await tester.ensureVisible(find.text('Void', skipOffstage: false));
+      await Tunggu(tester);
       expect(find.text('Void'), findsOneWidget, reason: 'Status dokumen berteks di riwayat.');
       expect(find.textContaining('0 transaksi · Rp 0 · 1 void'), findsOneWidget);
       await Ketuk(tester, find.text(nomor));
