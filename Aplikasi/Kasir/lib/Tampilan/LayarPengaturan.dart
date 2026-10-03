@@ -51,17 +51,28 @@ class _LayarPengaturanState extends ConsumerState<LayarPengaturan> {
     final warna = TokenWarna.AmbilDari(context);
     final keterangan = teks.bodySmall;
 
+    // Padat (v4.11): tiap bagian satu panel bergaris dengan jarak 8dp, bukan blok lepas berjarak 24dp.
     Widget Bagian(String judul, String penjelasan, Widget kontrol) => Padding(
-      padding: const EdgeInsets.only(bottom: TokenJarak.jarak24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(judul, style: teks.titleMedium),
-          const SizedBox(height: TokenJarak.jarak4),
-          Text(penjelasan, style: keterangan),
-          const SizedBox(height: TokenJarak.jarak12),
-          kontrol,
-        ],
+      padding: const EdgeInsets.only(bottom: TokenJarak.jarak8),
+      child: Material(
+        color: warna.permukaan,
+        shape: RoundedRectangleBorder(
+          side: BorderSide(color: warna.garis, width: TokenJarak.tebalGaris),
+          borderRadius: BorderRadius.circular(TokenJarak.radiusPanel),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(TokenJarak.jarak12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(judul, style: teks.titleSmall),
+              const SizedBox(height: 2),
+              Text(penjelasan, style: keterangan),
+              const SizedBox(height: TokenJarak.jarak8),
+              kontrol,
+            ],
+          ),
+        ),
       ),
     );
 

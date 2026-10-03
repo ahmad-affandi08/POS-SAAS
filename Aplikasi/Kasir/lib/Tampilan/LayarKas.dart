@@ -28,114 +28,110 @@ class LayarKas extends ConsumerWidget {
     final refundTunai = ref.watch(penyediaRefundTunaiShift(shift.Uuid)).value ?? Uang.Nol();
     final adaPenjualan = !tunaiPenjualan.BernilaiNol() || !refundTunai.BernilaiNol();
 
+    final perkiraan = kas.Tambah(tunaiPenjualan).Kurangi(refundTunai);
+    Uang Jumlahkan(String jenis) =>
+        mutasi.where((m) => m.Jenis == jenis).fold(Uang.Nol(), (total, m) => total.Tambah(Uang.Dari(m.Jumlah)));
+
     return IsiAreaKerja(
       judul: 'Kas',
-      anak: [
-        KotakPanel(
-          anak: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _BarisNilai(label: 'Kas awal', nilai: Uang.Dari(shift.KasAwal)),
-              _BarisNilai(label: 'Kas di laci (tanpa penjualan)', nilai: kas, tebal: !adaPenjualan),
-              if (adaPenjualan) ...[
-                _BarisNilai(label: 'Penjualan tunai bersih', nilai: tunaiPenjualan),
-                if (!refundTunai.BernilaiNol())
-                  _BarisNilai(label: 'Refund tunai (void & retur)', nilai: Uang.Nol().Kurangi(refundTunai)),
-                _BarisNilai(
-                  label: 'Perkiraan kas di laci',
-                  nilai: kas.Tambah(tunaiPenjualan).Kurangi(refundTunai),
-                  tebal: true,
-                ),
-                const SizedBox(height: TokenJarak.jarak4),
-                Text(
-                  'Penjualan tunai bersih = uang tunai diterima dikurangi kembalian'
-                  '${refundTunai.BernilaiNol() ? '' : ', termasuk transaksi yang kemudian di-void'}.',
-                  style: teks.bodySmall,
-                ),
-              ],
-            ],
-          ),
+      aksi: [
+        for (final jenis in const [JenisMutasi.masuk, JenisMutasi.keluar, JenisMutasi.setoran])
+          OutlinedButton(onPressed: () => saatCatat(jenis), child: Text(LembarMutasiKas.AmbilJudul(jenis))),
+        // Cetak struk bagian 4 (§19.2): buka laci tanpa transaksi, selalu dicatat.
+        OutlinedButton.icon(
+          onPressed: () => saatCatat(LembarBukaLaci.kunciPanel),
+          icon: const Icon(Icons.point_of_sale),
+          label: const Text(LembarBukaLaci.judul),
         ),
-        const SizedBox(height: TokenJarak.jarak16),
-        Wrap(
-          spacing: TokenJarak.jarak12,
-          runSpacing: TokenJarak.jarak12,
-          children: [
-            for (final jenis in const [JenisMutasi.masuk, JenisMutasi.keluar, JenisMutasi.setoran])
-              SizedBox(
-                height: 56,
-                child: OutlinedButton(
-                  onPressed: () => saatCatat(jenis),
-                  child: Text(LembarMutasiKas.AmbilJudul(jenis)),
-                ),
+      ],
+      anak: [
+        DeretKartuAngka(
+          kartu: [
+            KartuAngka(
+              label: 'Kas awal',
+              ikon: Icons.account_balance_wallet_outlined,
+              nilai: TeksUang(Uang.Dari(shift.KasAwal)),
+            ),
+            KartuAngka(label: 'Kas masuk', ikon: Icons.south_west, nilai: TeksUang(Jumlahkan(JenisMutasi.masuk))),
+            KartuAngka(
+              label: 'Kas keluar & setoran',
+              ikon: Icons.north_east,
+              nilai: TeksUang(Jumlahkan(JenisMutasi.keluar).Tambah(Jumlahkan(JenisMutasi.setoran))),
+            ),
+            if (adaPenjualan)
+              KartuAngka(
+                label: 'Penjualan tunai bersih',
+                ikon: Icons.payments_outlined,
+                nilai: TeksUang(tunaiPenjualan),
               ),
-            // Cetak struk bagian 4 (§19.2): buka laci tanpa transaksi, selalu dicatat.
-            SizedBox(
-              height: 56,
-              child: OutlinedButton.icon(
-                onPressed: () => saatCatat(LembarBukaLaci.kunciPanel),
-                icon: const Icon(Icons.point_of_sale),
-                label: const Text(LembarBukaLaci.judul),
+            if (!refundTunai.BernilaiNol())
+              KartuAngka(
+                label: 'Refund tunai (void & retur)',
+                ikon: Icons.undo,
+                nilai: TeksUang(Uang.Nol().Kurangi(refundTunai)),
               ),
+            KartuAngka(
+              label: adaPenjualan ? 'Perkiraan kas di laci' : 'Kas di laci (tanpa penjualan)',
+              ikon: Icons.point_of_sale,
+              nilai: TeksUang(adaPenjualan ? perkiraan : kas),
+              tebal: true,
             ),
           ],
         ),
-        const SizedBox(height: TokenJarak.jarak24),
-        Text('Kas masuk, keluar & setoran', style: teks.titleMedium),
-        const SizedBox(height: TokenJarak.jarak8),
+        if (adaPenjualan) ...[
+          const SizedBox(height: TokenJarak.jarak4),
+          Text(
+            'Penjualan tunai bersih = uang tunai diterima dikurangi kembalian'
+            '${refundTunai.BernilaiNol() ? '' : ', termasuk transaksi yang kemudian di-void'}.',
+            style: teks.bodySmall,
+          ),
+        ],
+        const SizedBox(height: TokenJarak.jarak16),
+        Text('Kas masuk, keluar & setoran', style: teks.titleSmall),
+        const SizedBox(height: TokenJarak.jarak4),
         if (mutasi.isEmpty)
           Text(
             'Belum ada kas masuk atau keluar di shift ini.',
             style: teks.bodyMedium?.copyWith(color: warna.teksSekunder),
           )
         else
-          for (final m in mutasi)
-            DecoratedBox(
-              decoration: BoxDecoration(
-                border: Border(
-                  bottom: BorderSide(color: warna.garis, width: TokenJarak.tebalGaris),
-                ),
-              ),
-              child: ListTile(
-                contentPadding: EdgeInsets.zero,
-                minTileHeight: 56,
-                title: Text(m.NamaKategori ?? LembarMutasiKas.AmbilJudul(m.Jenis)),
-                subtitle: Text(
-                  [
-                    LembarMutasiKas.AmbilJudul(m.Jenis),
-                    if (m.Catatan != null) m.Catatan!,
-                    if (m.DisetujuiOleh != null) 'disetujui supervisor',
-                  ].join(' · '),
-                ),
-                trailing: TeksUang(
-                  m.Jenis == JenisMutasi.masuk ? Uang.Dari(m.Jumlah) : Uang.Nol().Kurangi(Uang.Dari(m.Jumlah)),
-                  gaya: TextStyle(color: m.Jenis == JenisMutasi.masuk ? warna.sukses : warna.teksUtama),
-                ),
-              ),
+          KotakPanel(
+            rapat: true,
+            anak: Column(
+              children: [
+                for (final (i, m) in mutasi.indexed)
+                  DecoratedBox(
+                    decoration: BoxDecoration(
+                      border: i == 0
+                          ? null
+                          : Border(
+                              top: BorderSide(color: warna.garis, width: TokenJarak.tebalGaris),
+                            ),
+                    ),
+                    child: ListTile(
+                      dense: true,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: TokenJarak.jarak12),
+                      minTileHeight: TokenJarak.targetSentuh,
+                      title: Text(m.NamaKategori ?? LembarMutasiKas.AmbilJudul(m.Jenis)),
+                      subtitle: Text(
+                        [
+                          LembarMutasiKas.AmbilJudul(m.Jenis),
+                          if (m.Catatan != null) m.Catatan!,
+                          if (m.DisetujuiOleh != null) 'disetujui supervisor',
+                        ].join(' · '),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      trailing: TeksUang(
+                        m.Jenis == JenisMutasi.masuk ? Uang.Dari(m.Jumlah) : Uang.Nol().Kurangi(Uang.Dari(m.Jumlah)),
+                        gaya: TextStyle(color: m.Jenis == JenisMutasi.masuk ? warna.sukses : warna.teksUtama),
+                      ),
+                    ),
+                  ),
+              ],
             ),
+          ),
       ],
-    );
-  }
-}
-
-class _BarisNilai extends StatelessWidget {
-  const _BarisNilai({required this.label, required this.nilai, this.tebal = false});
-
-  final String label;
-  final Uang nilai;
-  final bool tebal;
-
-  @override
-  Widget build(BuildContext context) {
-    final teks = Theme.of(context).textTheme;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: TokenJarak.jarak4),
-      child: Row(
-        children: [
-          Expanded(child: Text(label, style: tebal ? teks.titleMedium : teks.bodyMedium)),
-          TeksUang(nilai, gaya: tebal ? teks.titleMedium : teks.bodyMedium),
-        ],
-      ),
     );
   }
 }

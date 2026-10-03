@@ -34,11 +34,10 @@ class LayarStok extends ConsumerWidget {
 
     return IsiAreaKerja(
       judul: 'Stok',
-      lebarMaksimum: 840,
       anak: [
         if (jenisGudang.isNotEmpty && saatGudang != null) ...[
-          Text('Gudang', style: teks.titleMedium),
-          const SizedBox(height: TokenJarak.jarak8),
+          Text('Gudang', style: teks.titleSmall),
+          const SizedBox(height: TokenJarak.jarak4),
           Wrap(
             spacing: TokenJarak.jarak12,
             runSpacing: TokenJarak.jarak8,

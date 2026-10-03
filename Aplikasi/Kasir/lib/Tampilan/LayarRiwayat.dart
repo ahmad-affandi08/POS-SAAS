@@ -108,10 +108,63 @@ class LayarRiwayat extends ConsumerWidget {
 
     return IsiAreaKerja(
       judul: lampau ? 'Riwayat transaksi' : 'Riwayat transaksi hari ini',
-      lebarMaksimum: 840,
+      aksi: [
+        if (saatRetur != null)
+          OutlinedButton.icon(
+            onPressed: saatRetur,
+            icon: const Icon(Icons.assignment_return_outlined),
+            label: const Text('Retur dari struk'),
+          ),
+        if (saatAmbilPreOrder != null)
+          OutlinedButton.icon(
+            onPressed: saatAmbilPreOrder,
+            icon: const Icon(Icons.event_available_outlined),
+            label: const Text('Ambil pre-order'),
+          ),
+        if (saatPesananOnline != null)
+          OutlinedButton.icon(
+            onPressed: saatPesananOnline,
+            icon: const Icon(Icons.shopping_bag_outlined),
+            label: const Text('Pesanan toko online'),
+          ),
+        if (saatReservasi != null)
+          OutlinedButton.icon(
+            onPressed: saatReservasi,
+            icon: const Icon(Icons.event_note_outlined),
+            label: const Text('Reservasi hari ini'),
+          ),
+        if (saatServis != null)
+          OutlinedButton.icon(
+            onPressed: saatServis,
+            icon: const Icon(Icons.build_outlined),
+            label: const Text('Servis siap tagih'),
+          ),
+        if (saatCucian != null)
+          OutlinedButton.icon(
+            onPressed: saatCucian,
+            icon: const Icon(Icons.local_laundry_service_outlined),
+            label: const Text('Cucian'),
+          ),
+      ],
       anak: [
         // K-24: riwayat perangkat per tanggal (data lokal, offline) & ringkasan akhir hari outlet (server).
-        if (tanggal != null && hariIni != null) _NavigasiTanggal(tanggal: tanggal, hariIni: hariIni),
+        Wrap(
+          spacing: TokenJarak.jarak16,
+          runSpacing: TokenJarak.jarak4,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            if (tanggal != null && hariIni != null) _NavigasiTanggal(tanggal: tanggal, hariIni: hariIni),
+            Text(
+              daftar.isEmpty
+                  ? (lampau
+                        ? 'Tidak ada transaksi pada tanggal ini di perangkat ini.'
+                        : 'Belum ada transaksi hari ini di perangkat ini.')
+                  : '${dihitung.length} transaksi · ${total.FormatRupiah()}'
+                        '${jumlahVoid == 0 ? '' : ' · $jumlahVoid void'}',
+              style: teks.titleSmall,
+            ),
+          ],
+        ),
         if (riwayat.isLoading && riwayat.value == null) const LinearProgressIndicator(),
         if (riwayat.hasError)
           Builder(
@@ -120,77 +173,7 @@ class LayarRiwayat extends ConsumerWidget {
               return Text(pesanGagalMuat, style: TextStyle(color: warna.bahaya));
             },
           ),
-        Wrap(
-          spacing: TokenJarak.jarak12,
-          runSpacing: TokenJarak.jarak8,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: [
-            Text(
-              daftar.isEmpty
-                  ? (lampau
-                        ? 'Tidak ada transaksi pada tanggal ini di perangkat ini.'
-                        : 'Belum ada transaksi hari ini di perangkat ini.')
-                  : '${dihitung.length} transaksi · ${total.FormatRupiah()}'
-                        '${jumlahVoid == 0 ? '' : ' · $jumlahVoid void'}',
-              style: teks.titleMedium,
-            ),
-            if (saatRetur != null)
-              SizedBox(
-                height: TokenJarak.targetSentuh,
-                child: OutlinedButton.icon(
-                  onPressed: saatRetur,
-                  icon: const Icon(Icons.assignment_return_outlined),
-                  label: const Text('Retur dari struk'),
-                ),
-              ),
-            if (saatAmbilPreOrder != null)
-              SizedBox(
-                height: TokenJarak.targetSentuh,
-                child: OutlinedButton.icon(
-                  onPressed: saatAmbilPreOrder,
-                  icon: const Icon(Icons.event_available_outlined),
-                  label: const Text('Ambil pre-order'),
-                ),
-              ),
-            if (saatPesananOnline != null)
-              SizedBox(
-                height: TokenJarak.targetSentuh,
-                child: OutlinedButton.icon(
-                  onPressed: saatPesananOnline,
-                  icon: const Icon(Icons.shopping_bag_outlined),
-                  label: const Text('Pesanan toko online'),
-                ),
-              ),
-            if (saatReservasi != null)
-              SizedBox(
-                height: TokenJarak.targetSentuh,
-                child: OutlinedButton.icon(
-                  onPressed: saatReservasi,
-                  icon: const Icon(Icons.event_note_outlined),
-                  label: const Text('Reservasi hari ini'),
-                ),
-              ),
-            if (saatServis != null)
-              SizedBox(
-                height: TokenJarak.targetSentuh,
-                child: OutlinedButton.icon(
-                  onPressed: saatServis,
-                  icon: const Icon(Icons.build_outlined),
-                  label: const Text('Servis siap tagih'),
-                ),
-              ),
-            if (saatCucian != null)
-              SizedBox(
-                height: TokenJarak.targetSentuh,
-                child: OutlinedButton.icon(
-                  onPressed: saatCucian,
-                  icon: const Icon(Icons.local_laundry_service_outlined),
-                  label: const Text('Cucian'),
-                ),
-              ),
-          ],
-        ),
-        const SizedBox(height: TokenJarak.jarak12),
+        const SizedBox(height: TokenJarak.jarak8),
         if (daftar.isNotEmpty)
           Material(
             color: warna.permukaan,
@@ -214,9 +197,9 @@ class LayarRiwayat extends ConsumerWidget {
             ),
           ),
         if (retur.isNotEmpty) ...[
-          const SizedBox(height: TokenJarak.jarak24),
-          Text(lampau ? 'Retur' : 'Retur hari ini', style: teks.titleMedium),
-          const SizedBox(height: TokenJarak.jarak8),
+          const SizedBox(height: TokenJarak.jarak16),
+          Text(lampau ? 'Retur' : 'Retur hari ini', style: teks.titleSmall),
+          const SizedBox(height: TokenJarak.jarak4),
           Material(
             color: warna.permukaan,
             shape: RoundedRectangleBorder(
@@ -251,7 +234,7 @@ class _BarisRetur extends StatelessWidget {
     final r = riwayat.retur;
     final status = LayarRiwayat.AmbilStatus(riwayat.status);
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: TokenJarak.jarak16, vertical: TokenJarak.jarak12),
+      padding: const EdgeInsets.symmetric(horizontal: TokenJarak.jarak12, vertical: TokenJarak.jarak8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -304,8 +287,9 @@ class _BarisRiwayat extends ConsumerWidget {
       data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
       child: ExpansionTile(
         key: ValueKey(p.Uuid),
-        tilePadding: const EdgeInsets.symmetric(horizontal: TokenJarak.jarak16),
-        childrenPadding: const EdgeInsets.fromLTRB(TokenJarak.jarak16, 0, TokenJarak.jarak16, TokenJarak.jarak16),
+        dense: true,
+        tilePadding: const EdgeInsets.symmetric(horizontal: TokenJarak.jarak12),
+        childrenPadding: const EdgeInsets.fromLTRB(TokenJarak.jarak12, 0, TokenJarak.jarak12, TokenJarak.jarak12),
         title: Row(
           children: [
             Expanded(child: TeksKode(p.Nomor, gaya: teks.labelLarge)),
@@ -494,7 +478,7 @@ class _NavigasiTanggal extends ConsumerWidget {
     final paling = Geser(hariIni, -batasHari);
     void Atur(String baru) => notifier.Atur(baru == hariIni ? null : baru);
     return Padding(
-      padding: const EdgeInsets.only(bottom: TokenJarak.jarak12),
+      padding: EdgeInsets.zero,
       child: Wrap(
         spacing: TokenJarak.jarak8,
         runSpacing: TokenJarak.jarak8,
@@ -522,16 +506,13 @@ class _NavigasiTanggal extends ConsumerWidget {
               ),
             ],
           ),
-          SizedBox(
-            height: TokenJarak.targetSentuh,
-            child: OutlinedButton.icon(
-              onPressed: () => showDialog<void>(
-                context: context,
-                builder: (_) => _DialogRingkasanHarian(tanggal: tanggal),
-              ),
-              icon: const Icon(Icons.summarize_outlined),
-              label: const Text('Ringkasan outlet'),
+          TextButton.icon(
+            onPressed: () => showDialog<void>(
+              context: context,
+              builder: (_) => _DialogRingkasanHarian(tanggal: tanggal),
             ),
+            icon: const Icon(Icons.summarize_outlined),
+            label: const Text('Ringkasan outlet'),
           ),
         ],
       ),

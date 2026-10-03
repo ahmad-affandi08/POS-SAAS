@@ -64,7 +64,7 @@ void main() {
         await tester.tap(find.text('Printer belum diatur'));
         await Tunggu(tester);
         expect(find.text('Status sinkron'), findsOneWidget);
-        expect(find.text('Belum pernah sinkron dengan server dari perangkat ini.'), findsOneWidget);
+        expect(tester.widget<Text>(find.byKey(const ValueKey('SinkronTerakhir'))).data, 'Belum pernah');
         expect(find.textContaining('lebih dari 2 jam'), findsOneWidget);
         final daftar = find.byType(Scrollable).last;
         await tester.scrollUntilVisible(
@@ -75,11 +75,13 @@ void main() {
         expect(find.text('Tidak ada transaksi yang ditandai untuk diperiksa.'), findsOneWidget);
 
         online = true;
-        await tester.ensureVisible(find.widgetWithText(FilledButton, 'Kirim sekarang'));
+        // Tombol kirim ada di kepala halaman (sebaris judul): gulir kembali ke atas.
+        await tester.scrollUntilVisible(find.widgetWithText(FilledButton, 'Kirim sekarang'), -200, scrollable: daftar);
         await tester.tap(find.widgetWithText(FilledButton, 'Kirim sekarang'));
         await Tunggu(tester, const Duration(milliseconds: 900));
         await tester.scrollUntilVisible(find.byKey(const ValueKey('SinkronTerakhir')), -200, scrollable: daftar);
-        expect(find.textContaining('Sinkron terakhir:'), findsOneWidget);
+        expect(find.text('Sinkron terakhir'), findsOneWidget);
+        expect(tester.widget<Text>(find.byKey(const ValueKey('SinkronTerakhir'))).data, isNot('Belum pernah'));
         expect(find.textContaining('lebih dari 2 jam'), findsNothing);
         expect(find.textContaining('Jam perangkat lebih cepat 20 menit'), findsOneWidget);
         await tester.scrollUntilVisible(find.text(uuidJual), 200, scrollable: daftar);
