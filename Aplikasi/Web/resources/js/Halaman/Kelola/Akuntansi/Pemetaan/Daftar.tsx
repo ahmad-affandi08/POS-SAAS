@@ -2,6 +2,7 @@ import { router, usePage } from '@inertiajs/react';
 import { useState, type FormEvent } from 'react';
 
 import BidangOutlet from '@/Komponen/Formulir/BidangOutlet';
+import AksiHalaman from '@/Komponen/Kelola/AksiHalaman';
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import PesanHanyaLihat from '@/Komponen/Katalog/PesanHanyaLihat';
 import TabelData from '@/Komponen/TabelData/TabelData';
@@ -86,6 +87,7 @@ export default function HalamanPemetaanAkun({ Pemetaan, OpsiAkun, OpsiOutlet, Iz
     const galat = props.errors;
     const [form, AturForm] = useState<Formulir | null>(null);
     const [memproses, AturMemproses] = useState(false);
+    const [perbaiki, AturPerbaiki] = useState(false);
 
     const Simpan = (peristiwa: FormEvent) => {
         peristiwa.preventDefault();
@@ -161,6 +163,33 @@ export default function HalamanPemetaanAkun({ Pemetaan, OpsiAkun, OpsiOutlet, Iz
                 sudah diposting tidak berubah.
             </p>
             {Izin.Kelola ? null : <PesanHanyaLihat izin="akuntansi.kelola" objek="pemetaan akun" />}
+            {/* Audit kemudahan pakai #12: lengkapi peran yang belum dipetakan dari template sektor (aditif). */}
+            {Izin.Kelola &&
+            Izin.UbahSemuaOutlet &&
+            Pemetaan.some((p) => p.UuidOutlet === null && p.Status === 'BelumDipetakan') ? (
+                <AksiHalaman
+                    keterangan={
+                        <span className="text-keterangan text-teks-sekunder">Ada peran akun yang belum dipetakan.</span>
+                    }
+                >
+                    <Tombol
+                        onClick={() =>
+                            router.post(
+                                `${alamat}/perbaiki-otomatis`,
+                                {},
+                                {
+                                    preserveScroll: true,
+                                    onStart: () => AturPerbaiki(true),
+                                    onFinish: () => AturPerbaiki(false),
+                                },
+                            )
+                        }
+                        memproses={perbaiki}
+                    >
+                        Perbaiki otomatis
+                    </Tombol>
+                </AksiHalaman>
+            ) : null}
 
             <TabelData
                 id="akuntansi-pemetaan-akun"

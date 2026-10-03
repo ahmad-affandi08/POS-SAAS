@@ -207,7 +207,7 @@ describe('F-05a J-05.1 PostingJurnal (DesainF05a C.5)', function (): void {
         $galat = TangkapPelanggaranJurnal(fn () => BantuanJurnal::Posting(BantuanJurnal::DataStokAwal()));
 
         expect($galat->kode)->toBe('PemetaanAkunBelumAda')
-            ->and($galat->getMessage())->toBe('Akun untuk Ekuitas saldo awal belum dipetakan. Terapkan template sektor di Panduan awal atau minta Akuntan memetakan akun.')
+            ->and($galat->getMessage())->toBe('Akun untuk Ekuitas saldo awal belum dipetakan. Tekan "Perbaiki otomatis" di Akuntansi › Pemetaan akun atau minta Akuntan memetakan akun.')
             ->and($galat->detail)->toBe(['Kunci' => 'EkuitasSaldoAwal', 'Label' => 'Ekuitas saldo awal'])
             ->and(Jurnal::query()->count())->toBe(0);
     });

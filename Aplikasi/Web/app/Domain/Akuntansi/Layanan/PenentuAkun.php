@@ -28,7 +28,7 @@ final class PenentuAkun
         }
 
         $pesan = $hasil === null
-            ? "Akun untuk {$peran->AmbilLabel()} belum dipetakan. Terapkan template sektor di Panduan awal atau minta Akuntan memetakan akun."
+            ? "Akun untuk {$peran->AmbilLabel()} belum dipetakan. Tekan \"Perbaiki otomatis\" di Akuntansi › Pemetaan akun atau minta Akuntan memetakan akun."
             : "Akun {$hasil->Kode} {$hasil->Nama} yang dipetakan untuk {$peran->AmbilLabel()} bertipe {$hasil->Jenis->AmbilLabel()}, seharusnya {$peran->AmbilTipeAkun()->AmbilLabel()}. Minta Akuntan memperbaiki pemetaan akun.";
 
         throw new PelanggaranAturanBisnis(

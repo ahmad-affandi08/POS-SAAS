@@ -274,7 +274,7 @@ final class PostingStokAwal
 
             throw new PelanggaranAturanBisnis(
                 'PemetaanAkunBelumAda',
-                "Akun untuk {$label} belum dipetakan. Terapkan template sektor di Panduan awal atau minta Akuntan memetakan akun.",
+                "Akun untuk {$label} belum dipetakan. Tekan \"Perbaiki otomatis\" di Akuntansi › Pemetaan akun atau minta Akuntan memetakan akun.",
                 detail: ['PeranBelumDipetakan' => $kesiapan['PeranBelumDipetakan']],
             );
         }

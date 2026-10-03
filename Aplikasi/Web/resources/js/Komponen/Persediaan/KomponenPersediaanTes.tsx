@@ -182,14 +182,22 @@ describe('PanelKesiapanAkun & LabelStatusStokAwal', () => {
     beforeEach(() => AturHalamanUji());
     afterEach(() => cleanup());
 
-    it('akun siap: tidak menampilkan apa pun; belum siap: daftar akun & tautan Panduan awal', () => {
+    it('akun siap: tidak menampilkan apa pun; belum siap: daftar akun & "Perbaiki otomatis" (audit #12) mengirim POST', () => {
         const { container } = render(<PanelKesiapanAkun kesiapan={AkunSiap} />);
         expect(container.textContent).toBe('');
         cleanup();
 
         render(<PanelKesiapanAkun kesiapan={AkunBelumSiap} />);
         expect(screen.getByRole('alert').textContent).toContain('Ekuitas saldo awal');
-        expect(screen.getByRole('link', { name: 'Panduan awal' }).getAttribute('href')).toBe('/kelola/panduan-awal');
+        expect(screen.getByRole('link', { name: 'Pemetaan akun' }).getAttribute('href')).toBe(
+            '/kelola/akuntansi/pemetaan',
+        );
+        fireEvent.click(screen.getByRole('button', { name: 'Perbaiki otomatis' }));
+        expect(tiruanRouter.post).toHaveBeenCalledWith(
+            '/kelola/akuntansi/pemetaan/perbaiki-otomatis',
+            {},
+            expect.objectContaining({ preserveScroll: true }),
+        );
     });
 
     it('label status memakai teks server dan warna token sebagai penguat', () => {

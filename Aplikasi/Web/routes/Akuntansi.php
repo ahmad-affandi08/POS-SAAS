@@ -84,6 +84,8 @@ Route::middleware([SiapkanAuditTenant::class, $izin(IzinTenant::AkuntansiKelola)
     // F-13a: pemetaan akun (ubah & hapus override outlet).
     Route::put('/akuntansi/pemetaan', [PemetaanAkunKontroler::class, 'Simpan'])->name('kelola.akuntansi.pemetaan.simpan');
     Route::delete('/akuntansi/pemetaan', [PemetaanAkunKontroler::class, 'Hapus'])->name('kelola.akuntansi.pemetaan.hapus');
+    // Audit kemudahan pakai #12: lengkapi akun & pemetaan yang belum ada dari template sektor (aditif).
+    Route::post('/akuntansi/pemetaan/perbaiki-otomatis', [PemetaanAkunKontroler::class, 'PerbaikiOtomatis'])->middleware('throttle:10,1')->name('kelola.akuntansi.pemetaan.perbaiki-otomatis');
 
     // F-13a: transaksi kas & bank (halaman catat, simpan & pembalik).
     Route::get('/akuntansi/kas-bank/buat', [TransaksiKasBankKontroler::class, 'Buat'])->name('kelola.akuntansi.kas-bank.buat');
