@@ -306,6 +306,7 @@ Route::middleware(['auth:pengelola', PastikanPenggunaPengelola::class, WajibGant
         // P-08 Tagihan langganan & verifikasi transfer manual (§19.3: Keuangan & Super Admin).
         Route::middleware($izin(IzinPengelola::TagihanLihat))->group(function () use ($izin): void {
             Route::get('/tagihan', [TagihanKontroler::class, 'Daftar'])->name('pengelola.tagihan.daftar');
+            Route::get('/laporan-langganan', [TagihanKontroler::class, 'Laporan'])->name('pengelola.tagihan.laporan');
             Route::get('/tagihan/{tagihan}', [TagihanKontroler::class, 'Tampilkan'])->name('pengelola.tagihan.tampil');
             Route::get('/tagihan/pembayaran/{pembayaran}/bukti', [TagihanKontroler::class, 'LihatBukti'])->name('pengelola.tagihan.pembayaran.bukti');
             Route::middleware($izin(IzinPengelola::TagihanVerifikasi))->group(function (): void {

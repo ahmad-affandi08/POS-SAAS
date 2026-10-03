@@ -9,6 +9,7 @@ use App\Domain\Pengelola\Tagihan\Aksi\BukaBuktiPembayaran;
 use App\Domain\Pengelola\Tagihan\Aksi\TerimaPembayaranLangganan;
 use App\Domain\Pengelola\Tagihan\Aksi\TolakPembayaranLangganan;
 use App\Domain\Pengelola\Tagihan\Kueri\DaftarTagihanPlatform;
+use App\Domain\Pengelola\Tagihan\Kueri\LaporanLanggananPlatform;
 use App\Domain\Pengelola\TimInternal\Model\PenggunaPengelola;
 use App\Domain\Tenant\Enum\StatusTagihanLangganan;
 use App\Domain\Tenant\Kueri\TagihanLanggananTenant;
@@ -18,6 +19,7 @@ use App\Http\Kontroler\Pengelola\PelakuPengelola;
 use App\Http\Permintaan\Pengelola\Tagihan\TerimaPembayaranPermintaan;
 use App\Http\Permintaan\Pengelola\Tagihan\TolakPembayaranPermintaan;
 use App\Http\Respons\ResponsTabel;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -44,6 +46,38 @@ final class TagihanKontroler extends Kontroler
             'Ringkasan' => $this->kueri->HitungRingkasan(),
             'OpsiStatus' => array_map(fn (StatusTagihanLangganan $pilihan): array => ['Nilai' => $pilihan->value, 'Label' => $pilihan->AmbilLabel()], StatusTagihanLangganan::cases()),
         ]);
+    }
+
+    /**
+     * P-08 langkah 7 (PRD v4.09): MRR, ARR, churn, piutang & umur, pendapatan per paket/sektor. Periode bawaan bulan
+     * berjalan (WIB); tanggal tidak sah kembali ke bawaan, rentang paling panjang 366 hari.
+     */
+    public function Laporan(Request $permintaan, LaporanLanggananPlatform $laporan): Response
+    {
+        $hariIni = CarbonImmutable::now('Asia/Jakarta')->startOfDay();
+        $sampai = self::BacaTanggal($permintaan->query('sampai')) ?? $hariIni;
+        $dari = self::BacaTanggal($permintaan->query('dari')) ?? $sampai->startOfMonth();
+
+        if ($dari->greaterThan($sampai) || $dari->diffInDays($sampai) > 366) {
+            $dari = $sampai->startOfMonth();
+        }
+
+        return Inertia::render('Pengelola/Tagihan/Laporan', [
+            'Saring' => ['Dari' => $dari->toDateString(), 'Sampai' => $sampai->toDateString()],
+            'HariMasaTenggang' => (int) config('tagihan.HariMasaTenggang'),
+            ...$laporan->Ambil($dari->setTimezone('Asia/Jakarta'), $sampai->setTimezone('Asia/Jakarta')),
+        ]);
+    }
+
+    private static function BacaTanggal(mixed $nilai): ?CarbonImmutable
+    {
+        if (! is_string($nilai) || preg_match('/^\d{4}-\d{2}-\d{2}$/', $nilai) !== 1) {
+            return null;
+        }
+
+        $tanggal = CarbonImmutable::createFromFormat('!Y-m-d', $nilai, 'Asia/Jakarta');
+
+        return $tanggal instanceof CarbonImmutable && $tanggal->toDateString() === $nilai ? $tanggal : null;
     }
 
     public function Tampilkan(string $tagihan): Response
