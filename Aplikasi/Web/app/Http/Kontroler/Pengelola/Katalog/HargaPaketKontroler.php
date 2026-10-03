@@ -10,6 +10,7 @@ use App\Domain\Pengelola\Katalog\Aksi\SimpanDrafHargaPaket;
 use App\Domain\Pengelola\Katalog\Aksi\TinjauHargaPaket;
 use App\Domain\Pengelola\Katalog\Kueri\DaftarHargaPaket;
 use App\Domain\Pengelola\Katalog\Kueri\DaftarKatalog;
+use App\Domain\Pengelola\Referensi\Layanan\TinjauanDataMaster;
 use App\Domain\Tenant\Model\HargaPaket;
 use App\Domain\Tenant\Model\Paket;
 use App\Http\Kontroler\Kontroler;
@@ -40,7 +41,7 @@ final class HargaPaketKontroler extends Kontroler
     {
         $simpan->Jalankan($this->AmbilPelaku(), $paket, $permintaan->AmbilData());
 
-        return back()->with('Kilat', 'Draf harga disimpan. Ajukan untuk ditinjau Super Admin.');
+        return back()->with('Kilat', 'Draf harga disimpan. Ajukan untuk diterbitkan.');
     }
 
     public function Ubah(Paket $paket, HargaPaket $hargaPaket, SimpanHargaPaketPermintaan $permintaan, SimpanDrafHargaPaket $simpan): RedirectResponse
@@ -53,9 +54,10 @@ final class HargaPaketKontroler extends Kontroler
     public function Ajukan(Paket $paket, HargaPaket $hargaPaket, AjukanHargaPaket $ajukan): RedirectResponse
     {
         abort_unless($hargaPaket->IdPaket === $paket->Id, 404);
-        $ajukan->Jalankan($this->AmbilPelaku(), $hargaPaket);
+        $pelaku = $this->AmbilPelaku();
+        $ajukan->Jalankan($pelaku, $hargaPaket);
 
-        return back()->with('Kilat', 'Harga diajukan dan menunggu tinjauan.');
+        return back()->with('Kilat', TinjauanDataMaster::CekBebasTinjauan($pelaku) ? 'Harga terbit.' : 'Harga diajukan dan menunggu tinjauan.');
     }
 
     public function Tinjau(Paket $paket, HargaPaket $hargaPaket, TinjauDataMasterPermintaan $permintaan, TinjauHargaPaket $tinjau): RedirectResponse

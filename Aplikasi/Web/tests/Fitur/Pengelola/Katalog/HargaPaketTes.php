@@ -55,7 +55,7 @@ beforeEach(function (): void {
 });
 
 describe('Harga paket berversi (P-04, BR-P04.1, BR-P04.5)', function (): void {
-    it('Keuangan mengusulkan, Super Admin menerbitkan; penyusun tidak bisa menyetujui', function (): void {
+    it('Keuangan mengusulkan, Super Admin menerbitkan; Keuangan tidak bisa menyetujui; ajuan Super Admin langsung terbit (D-34)', function (): void {
         $keuangan = BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::Keuangan);
         $superAdminPenyusun = BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::SuperAdmin);
         $superAdmin = BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::SuperAdmin);
@@ -66,19 +66,22 @@ describe('Harga paket berversi (P-04, BR-P04.1, BR-P04.5)', function (): void {
 
         TinjauHarga($this, $keuangan, $harga)->assertForbidden();
 
-        // Super Admin yang ikut mengubah draf tidak boleh menyetujui.
+        TinjauHarga($this, $superAdmin, $harga)->assertSessionHasNoErrors();
+        expect($harga->refresh()->Status)->toBe(StatusDataMaster::Terbit);
+        $this->assertDatabaseHas('LogAuditPengelola', ['Aksi' => 'katalog.harga.terbit', 'IdObjek' => $harga->Id]);
+
+        // D-34: Super Admin tidak terikat tinjau-meninjau; draf yang ia ubah lalu ajukan sendiri langsung terbit.
         $draf = UsulkanHargaPro($this, $keuangan, '209000', '2027-01-01');
         TinjauHarga($this, $superAdmin, $draf, 'Tolak', 'Perbaiki harga tahunan');
         $pro = Paket::query()->where('Kode', 'PRO')->sole();
         MasukKatalog($this, $superAdminPenyusun)->put(BantuanPengelola::Url("/katalog/paket/{$pro->Uuid}/harga/{$draf->Uuid}"), [
             'HargaBulanan' => '209000', 'HargaTahunan' => '2006400', 'BerlakuMulai' => '2027-01-01', 'TerapkanKePelangganLama' => false,
         ])->assertSessionHasNoErrors();
-        $this->post(BantuanPengelola::Url("/katalog/paket/{$pro->Uuid}/harga/{$draf->Uuid}/ajukan"))->assertSessionHasNoErrors();
-        TinjauHarga($this, $superAdminPenyusun, $draf)->assertSessionHasErrors('Umum');
-
-        TinjauHarga($this, $superAdmin, $harga)->assertSessionHasNoErrors();
-        expect($harga->refresh()->Status)->toBe(StatusDataMaster::Terbit);
-        $this->assertDatabaseHas('LogAuditPengelola', ['Aksi' => 'katalog.harga.terbit', 'IdObjek' => $harga->Id]);
+        $this->post(BantuanPengelola::Url("/katalog/paket/{$pro->Uuid}/harga/{$draf->Uuid}/ajukan"))
+            ->assertSessionHasNoErrors()
+            ->assertSessionHas('Kilat', 'Harga terbit.');
+        expect($draf->refresh()->Status)->toBe(StatusDataMaster::Terbit)
+            ->and($harga->refresh()->BerlakuSampai?->toDateString())->toBe('2026-12-31');
     });
 
     it('harga baru mengakhiri harga lama; harga terbit tidak bisa diubah', function (): void {

@@ -16,7 +16,7 @@ import { DropdownMenuItem, DropdownMenuSeparator } from '@/Komponen/Ui/dropdown-
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import TataLetakPengelola from '@/TataLetak/TataLetakPengelola';
-import { IzinPengelola, PunyaIzin, type Pilihan, type PropsBersamaPengelola } from '@/Tipe/Pengelola';
+import { IzinPengelola, CekBebasTinjauan, PunyaIzin, type Pilihan, type PropsBersamaPengelola } from '@/Tipe/Pengelola';
 
 type HariLibur = {
     Uuid: string;
@@ -124,11 +124,11 @@ export default function HalamanHariLibur({
     );
     const adaDraf = HariLibur.some((hari) => hari.Status === 'Draf');
     const adaMenunggu = HariLibur.some((hari) => hari.Status === 'MenungguTinjauan');
+    const bebasTinjauan = CekBebasTinjauan(props.Pengguna);
     const bisaTinjau =
         bolehSetujui &&
         adaMenunggu &&
-        !IdPengajuMenunggu.includes(IdPengguna) &&
-        !PeninjauMenunggu.includes(IdPengguna);
+        (bebasTinjauan || (!IdPengajuMenunggu.includes(IdPengguna) && !PeninjauMenunggu.includes(IdPengguna)));
 
     const PilihTahun = (tahun: string) =>
         router.get('/referensi/hari-libur', { saring: { Tahun: tahun } }, { preserveState: false });
@@ -154,7 +154,11 @@ export default function HalamanHariLibur({
                     </div>
                 }
             >
-                {bolehAjukan && adaDraf ? <Tombol onClick={AjukanTahun}>Ajukan semua draf {Tahun}</Tombol> : null}
+                {bolehAjukan && adaDraf ? (
+                    <Tombol onClick={AjukanTahun}>
+                        {bebasTinjauan ? `Terbitkan semua draf ${Tahun}` : `Ajukan semua draf ${Tahun}`}
+                    </Tombol>
+                ) : null}
                 {bisaTinjau && !meninjau ? (
                     <Tombol onClick={() => AturMeninjau(true)}>Tinjau hari libur {Tahun}</Tombol>
                 ) : null}
@@ -226,7 +230,9 @@ export default function HalamanHariLibur({
                                   const bisaAjukanBatal =
                                       bolehAjukan && hari.Status === 'Terbit' && !hari.PembatalanMenunggu;
                                   const bisaTinjauBatal =
-                                      bolehSetujui && hari.PembatalanMenunggu && hari.IdPengajuBatal !== IdPengguna;
+                                      bolehSetujui &&
+                                      hari.PembatalanMenunggu &&
+                                      (bebasTinjauan || hari.IdPengajuBatal !== IdPengguna);
 
                                   return (
                                       <>

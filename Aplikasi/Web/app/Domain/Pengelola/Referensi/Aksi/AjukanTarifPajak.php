@@ -7,6 +7,7 @@ namespace App\Domain\Pengelola\Referensi\Aksi;
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Bersama\Status\StatusDataMaster;
 use App\Domain\Pajak\Model\TarifPajak;
+use App\Domain\Pengelola\Referensi\Enum\KeputusanTinjauan;
 use App\Domain\Pengelola\Referensi\Layanan\TinjauanDataMaster;
 use App\Domain\Pengelola\TimInternal\Layanan\PencatatAuditPengelola;
 use App\Domain\Pengelola\TimInternal\Model\PenggunaPengelola;
@@ -17,7 +18,10 @@ use Illuminate\Support\Facades\DB;
  */
 final class AjukanTarifPajak
 {
-    public function __construct(private readonly PencatatAuditPengelola $audit) {}
+    public function __construct(
+        private readonly PencatatAuditPengelola $audit,
+        private readonly TinjauTarifPajak $tinjau,
+    ) {}
 
     public function Jalankan(PenggunaPengelola $pelaku, TarifPajak $tarif): void
     {
@@ -50,6 +54,11 @@ final class AjukanTarifPajak
                 nilaiBaru: ['Status' => $tarif->Status->value, 'Putaran' => $tarif->PutaranTinjauan],
                 idPelaku: $pelaku->Id,
             );
+
+            // D-34: pengajuan Super Admin langsung terbit.
+            if (TinjauanDataMaster::CekBebasTinjauan($pelaku)) {
+                $this->tinjau->Jalankan($pelaku, $tarif, KeputusanTinjauan::Setuju, TinjauanDataMaster::CATATAN_TERBIT_LANGSUNG);
+            }
         });
     }
 }

@@ -6,6 +6,8 @@ namespace App\Domain\Pengelola\Referensi\Aksi;
 
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Bersama\Status\StatusDataMaster;
+use App\Domain\Pengelola\Referensi\Enum\KeputusanTinjauan;
+use App\Domain\Pengelola\Referensi\Layanan\TinjauanDataMaster;
 use App\Domain\Pengelola\TimInternal\Layanan\PencatatAuditPengelola;
 use App\Domain\Pengelola\TimInternal\Model\PenggunaPengelola;
 use App\Domain\Referensi\Model\HariLibur;
@@ -17,7 +19,10 @@ use Illuminate\Support\Facades\DB;
  */
 final class AjukanPembatalanHariLibur
 {
-    public function __construct(private readonly PencatatAuditPengelola $audit) {}
+    public function __construct(
+        private readonly PencatatAuditPengelola $audit,
+        private readonly TinjauPembatalanHariLibur $tinjau,
+    ) {}
 
     public function Jalankan(PenggunaPengelola $pelaku, HariLibur $hariLibur, string $alasan): void
     {
@@ -47,6 +52,11 @@ final class AjukanPembatalanHariLibur
                 alasan: $alasan,
                 idPelaku: $pelaku->Id,
             );
+
+            // D-34: pengajuan Super Admin langsung berlaku.
+            if (TinjauanDataMaster::CekBebasTinjauan($pelaku)) {
+                $this->tinjau->Jalankan($pelaku, $hariLibur, KeputusanTinjauan::Setuju, TinjauanDataMaster::CATATAN_TERBIT_LANGSUNG);
+            }
         });
     }
 }

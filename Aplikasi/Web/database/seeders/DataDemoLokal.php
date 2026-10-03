@@ -200,8 +200,11 @@ final class DataDemoLokal extends Seeder
             if ($harga !== null) {
                 $harga->update(['BerlakuMulai' => now('Asia/Jakarta')->toDateString()]);
                 $ajukanHarga->Jalankan($pengaju, $harga);
-                // BR-P04.5: penyetuju wajib berbeda dari penyusun/pengaju.
-                $tinjauHarga->Jalankan($peninjau, $harga, KeputusanTinjauan::Setuju, 'Disetujui untuk lingkungan demo lokal.');
+
+                // D-34: ajuan Super Admin langsung terbit; peninjau hanya dipakai bila pengaju bukan Super Admin.
+                if ($harga->refresh()->Status === StatusDataMaster::MenungguTinjauan) {
+                    $tinjauHarga->Jalankan($peninjau, $harga, KeputusanTinjauan::Setuju, 'Disetujui untuk lingkungan demo lokal.');
+                }
             }
 
             $ubahStatusPaket->Jalankan($pengaju, $paket->refresh(), StatusPaket::Aktif);
@@ -238,9 +241,10 @@ final class DataDemoLokal extends Seeder
                 $ajukanTarif->Jalankan($pengaju, $tarif);
             }
 
-            $status = StatusDataMaster::MenungguTinjauan;
+            // D-34: ajuan Super Admin langsung terbit; peninjau hanya dipakai untuk tarif yang masih menunggu.
+            $status = $tarif->refresh()->Status;
 
-            foreach ($daftarPeninjau as $peninjau) {
+            foreach ($status === StatusDataMaster::Terbit ? [] : $daftarPeninjau as $peninjau) {
                 try {
                     $status = $tinjauTarif->Jalankan($peninjau, $tarif->refresh(), KeputusanTinjauan::Setuju, 'Disetujui untuk lingkungan demo lokal.');
                 } catch (PelanggaranAturanBisnis) {

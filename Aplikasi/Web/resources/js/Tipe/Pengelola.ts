@@ -88,6 +88,11 @@ export function PunyaIzin(pengguna: PenggunaPengelola | null, izin: KunciIzinPen
     return pengguna?.Izin.includes(izin) ?? false;
 }
 
+/** D-34: Super Admin tidak terikat tinjau-meninjau (boleh meninjau ajuan sendiri; ajuannya langsung terbit). */
+export function CekBebasTinjauan(pengguna: PenggunaPengelola | null): boolean {
+    return pengguna?.KodePeran.includes('SuperAdmin') ?? false;
+}
+
 /** P-10: satu rilis aplikasi di halaman Rilis aplikasi. */
 export type RilisAplikasi = {
     Uuid: string;

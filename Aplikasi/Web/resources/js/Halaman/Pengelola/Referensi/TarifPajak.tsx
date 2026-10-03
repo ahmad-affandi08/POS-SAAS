@@ -20,7 +20,7 @@ import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import { FormatPersen } from '@/Pustaka/Format';
 import { FormatTanggal } from '@/Pustaka/FormatWaktu';
 import TataLetakPengelola from '@/TataLetak/TataLetakPengelola';
-import { IzinPengelola, PunyaIzin, type PropsBersamaPengelola } from '@/Tipe/Pengelola';
+import { IzinPengelola, CekBebasTinjauan, PunyaIzin, type PropsBersamaPengelola } from '@/Tipe/Pengelola';
 
 type Persetujuan = { Peninjau: string; IdPeninjau: number; Keputusan: 'Setuju' | 'Tolak'; Catatan: string | null };
 
@@ -147,12 +147,14 @@ export default function HalamanTarifPajak({ Tarif, JenisPajak, IdPengguna }: Pro
     const [ditinjau, AturDitinjau] = useState<Tarif | null>(null);
     const Ajukan = (tarif: Tarif) =>
         router.post(`/referensi/tarif-pajak/${tarif.Uuid}/ajukan`, {}, { preserveScroll: true });
+    const bebasTinjauan = CekBebasTinjauan(props.Pengguna);
     const BisaTinjau = (tarif: Tarif) =>
         bolehSetujui &&
         tarif.Status === 'MenungguTinjauan' &&
-        tarif.IdPengaju !== IdPengguna &&
-        !tarif.DaftarIdPenyusun.includes(IdPengguna) &&
-        !tarif.Persetujuan.some((item) => item.IdPeninjau === IdPengguna);
+        (bebasTinjauan ||
+            (tarif.IdPengaju !== IdPengguna &&
+                !tarif.DaftarIdPenyusun.includes(IdPengguna) &&
+                !tarif.Persetujuan.some((item) => item.IdPeninjau === IdPengguna)));
 
     return (
         <TataLetakPengelola judul="Referensi">
@@ -160,7 +162,7 @@ export default function HalamanTarifPajak({ Tarif, JenisPajak, IdPengguna }: Pro
             <Pemberitahuan jenis="info" judul="Aturan tarif pajak">
                 Tarif terbit tidak pernah diubah atau dihapus; koreksi dibuat sebagai tarif baru dengan tanggal berlaku
                 baru. Tarif nasional butuh 2 penyetuju, tarif daerah 1 penyetuju, dan pengaju tidak boleh menyetujui
-                drafnya sendiri.
+                drafnya sendiri. Super Admin tidak terikat aturan ini: ajuannya langsung terbit.
             </Pemberitahuan>
             {props.errors.Umum ? <Pemberitahuan jenis="bahaya">{props.errors.Umum}</Pemberitahuan> : null}
 
@@ -220,7 +222,7 @@ export default function HalamanTarifPajak({ Tarif, JenisPajak, IdPengguna }: Pro
                                                   Ubah draf
                                               </DropdownMenuItem>
                                               <DropdownMenuItem onSelect={() => Ajukan(tarif)}>
-                                                  Ajukan untuk ditinjau
+                                                  {bebasTinjauan ? 'Terbitkan tarif' : 'Ajukan untuk ditinjau'}
                                               </DropdownMenuItem>
                                           </>
                                       ) : null}

@@ -28,7 +28,7 @@
 
 **Aturan Bisnis:**
 - BR-P02.1 Tarif yang sudah terbit tidak pernah diedit atau dihapus. Koreksi = tarif baru.
-- BR-P02.2 Perubahan tarif nasional butuh **2 penyetuju berbeda**. Perubahan tarif daerah dan hari libur butuh **1 penyetuju**. Siapa pun yang pernah membuat, mengubah, atau mengajukan draf (penyusun) tidak boleh menyetujuinya. Satu penolakan mengembalikan data ke `Draf`.
+- BR-P02.2 Perubahan tarif nasional butuh **2 penyetuju berbeda**. Perubahan tarif daerah dan hari libur butuh **1 penyetuju**. Siapa pun yang pernah membuat, mengubah, atau mengajukan draf (penyusun) tidak boleh menyetujuinya. Satu penolakan mengembalikan data ke `Draf`. **Kecuali Super Admin (D-34, v4.10):** ajuannya langsung terbit dan ia boleh meninjau draf yang ia susun; satu persetujuannya mencukupi.
 - BR-P02.5 `BerlakuMulai` tarif tidak boleh di masa lalu saat diajukan maupun saat terbit (tarif harus sempat terkirim ke POS sebelum berlaku). Nilai awal tarif (misal PPN) dimuat dari file data sebagai draf, tidak pernah ditulis di kode.
 - BR-P02.6 Hari libur terbit tidak diubah. Pembatalan (misal cuti bersama dibatalkan pemerintah) diajukan dengan alasan dan ditinjau 1 penyetuju selain pengaju; bila disetujui statusnya `Dibatalkan` dan baris tetap tersimpan. Penggeseran = pembatalan + hari libur baru.
 - BR-P02.3 Tenant boleh **override** tarif daerah untuk outletnya (misal Perda baru belum masuk ke master) dengan konfirmasi dan catatan. Override terlihat di Platform Pengelola sebagai sinyal untuk memperbarui master.

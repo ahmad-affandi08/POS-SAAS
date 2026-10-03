@@ -11,6 +11,7 @@ use App\Domain\Pengelola\Referensi\Aksi\SimpanDrafHariLibur;
 use App\Domain\Pengelola\Referensi\Aksi\TinjauHariLiburTahun;
 use App\Domain\Pengelola\Referensi\Aksi\TinjauPembatalanHariLibur;
 use App\Domain\Pengelola\Referensi\Kueri\DaftarHariLibur;
+use App\Domain\Pengelola\Referensi\Layanan\TinjauanDataMaster;
 use App\Domain\Referensi\Enum\JenisHariLibur;
 use App\Domain\Referensi\Model\HariLibur;
 use App\Http\Kontroler\Kontroler;
@@ -66,9 +67,12 @@ final class HariLiburKontroler extends Kontroler
 
     public function Ajukan(int $tahun, AjukanHariLiburTahun $ajukan): RedirectResponse
     {
-        $jumlah = $ajukan->Jalankan($this->AmbilPelaku(), $tahun);
+        $pelaku = $this->AmbilPelaku();
+        $jumlah = $ajukan->Jalankan($pelaku, $tahun);
 
-        return back()->with('Kilat', "{$jumlah} hari libur tahun {$tahun} diajukan untuk ditinjau.");
+        return back()->with('Kilat', TinjauanDataMaster::CekBebasTinjauan($pelaku)
+            ? "{$jumlah} hari libur tahun {$tahun} terbit."
+            : "{$jumlah} hari libur tahun {$tahun} diajukan untuk ditinjau.");
     }
 
     public function Tinjau(int $tahun, TinjauDataMasterPermintaan $permintaan, TinjauHariLiburTahun $tinjau): RedirectResponse
@@ -82,9 +86,12 @@ final class HariLiburKontroler extends Kontroler
 
     public function AjukanPembatalan(HariLibur $hariLibur, AjukanPembatalanPermintaan $permintaan, AjukanPembatalanHariLibur $ajukan): RedirectResponse
     {
-        $ajukan->Jalankan($this->AmbilPelaku(), $hariLibur, $permintaan->string('Alasan')->toString());
+        $pelaku = $this->AmbilPelaku();
+        $ajukan->Jalankan($pelaku, $hariLibur, $permintaan->string('Alasan')->toString());
 
-        return back()->with('Kilat', "Pembatalan {$hariLibur->Nama} diajukan dan menunggu tinjauan.");
+        return back()->with('Kilat', TinjauanDataMaster::CekBebasTinjauan($pelaku)
+            ? "{$hariLibur->Nama} dibatalkan."
+            : "Pembatalan {$hariLibur->Nama} diajukan dan menunggu tinjauan.");
     }
 
     public function TinjauPembatalan(HariLibur $hariLibur, TinjauDataMasterPermintaan $permintaan, TinjauPembatalanHariLibur $tinjau): RedirectResponse

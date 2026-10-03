@@ -6,6 +6,7 @@ namespace App\Domain\Pengelola\Katalog\Aksi;
 
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Bersama\Status\StatusDataMaster;
+use App\Domain\Pengelola\Referensi\Enum\KeputusanTinjauan;
 use App\Domain\Pengelola\Referensi\Layanan\TinjauanDataMaster;
 use App\Domain\Pengelola\TimInternal\Layanan\PencatatAuditPengelola;
 use App\Domain\Pengelola\TimInternal\Model\PenggunaPengelola;
@@ -17,7 +18,10 @@ use Illuminate\Support\Facades\DB;
  */
 final class AjukanHargaPaket
 {
-    public function __construct(private readonly PencatatAuditPengelola $audit) {}
+    public function __construct(
+        private readonly PencatatAuditPengelola $audit,
+        private readonly TinjauHargaPaket $tinjau,
+    ) {}
 
     public function Jalankan(PenggunaPengelola $pelaku, HargaPaket $harga): void
     {
@@ -45,6 +49,11 @@ final class AjukanHargaPaket
                 nilaiBaru: ['Status' => StatusDataMaster::MenungguTinjauan->value, 'Putaran' => $harga->PutaranTinjauan],
                 idPelaku: $pelaku->Id,
             );
+
+            // D-34: pengajuan Super Admin langsung terbit.
+            if (TinjauanDataMaster::CekBebasTinjauan($pelaku)) {
+                $this->tinjau->Jalankan($pelaku, $harga, KeputusanTinjauan::Setuju, TinjauanDataMaster::CATATAN_TERBIT_LANGSUNG);
+            }
         });
     }
 }

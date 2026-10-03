@@ -7,6 +7,7 @@ namespace App\Domain\Pengelola\Referensi\Layanan;
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Pengelola\Referensi\Enum\KeputusanTinjauan;
 use App\Domain\Pengelola\Referensi\Model\PersetujuanDataMaster;
+use App\Domain\Pengelola\TimInternal\Enum\PeranPengelolaBawaan;
 use App\Domain\Pengelola\TimInternal\Model\PenggunaPengelola;
 use Illuminate\Database\UniqueConstraintViolationException;
 
@@ -16,9 +17,25 @@ use Illuminate\Database\UniqueConstraintViolationException;
  * - satu orang satu keputusan per putaran (juga dijaga indeks unik di database);
  * - hanya keputusan pada putaran yang sedang berjalan yang dihitung. Putaran naik setiap kali diajukan,
  *   sehingga persetujuan dari putaran yang ditolak tidak pernah terbawa.
+ *
+ * D-34 (keputusan pemilik produk, PRD v4.10): **Super Admin tidak terikat tinjau-meninjau.** Super Admin boleh
+ * meninjau data yang ia susun/ajukan sendiri, satu persetujuannya langsung mencukupi (juga untuk tarif nasional yang
+ * biasanya butuh dua penyetuju), dan pengajuan oleh Super Admin langsung terbit (`CekBebasTinjauan`, dipanggil aksi
+ * Ajukan). Peran lain tetap four-eyes. Setiap keputusan tetap tercatat di `PersetujuanDataMaster` dan log audit.
  */
 final class TinjauanDataMaster
 {
+    /** Nilai balik `CatatKeputusan` untuk persetujuan Super Admin: melampaui syarat jumlah penyetuju mana pun. */
+    public const PERSETUJUAN_PENUH = 1000;
+
+    public const CATATAN_TERBIT_LANGSUNG = 'Diterbitkan langsung oleh Super Admin (D-34).';
+
+    /** D-34: Super Admin tidak terikat tinjau-meninjau. */
+    public static function CekBebasTinjauan(PenggunaPengelola $pelaku): bool
+    {
+        return $pelaku->PunyaPeran(PeranPengelolaBawaan::SuperAdmin);
+    }
+
     /**
      * Menambahkan pelaku ke daftar penyusun data (tanpa duplikat).
      *
@@ -64,7 +81,9 @@ final class TinjauanDataMaster
         KeputusanTinjauan $keputusan,
         ?string $catatan,
     ): int {
-        if (in_array($peninjau->Id, $idPenyusun, true)) {
+        $bebas = self::CekBebasTinjauan($peninjau);
+
+        if (! $bebas && in_array($peninjau->Id, $idPenyusun, true)) {
             throw new PelanggaranAturanBisnis(
                 'BR-P02.2',
                 'Anda ikut menyusun atau mengajukan data ini, jadi tidak boleh meninjaunya. Minta anggota lain meninjau.',
@@ -96,6 +115,10 @@ final class TinjauanDataMaster
             ]);
         } catch (UniqueConstraintViolationException) {
             throw new PelanggaranAturanBisnis('BR-P02.2', $pesanSudah);
+        }
+
+        if ($bebas && $keputusan === KeputusanTinjauan::Setuju) {
+            return self::PERSETUJUAN_PENUH;
         }
 
         return $kueriPutaran()->where('Keputusan', KeputusanTinjauan::Setuju->value)->count();

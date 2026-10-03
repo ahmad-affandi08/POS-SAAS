@@ -6,6 +6,7 @@ use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Bersama\Status\StatusDataMaster;
 use App\Domain\Pengelola\Referensi\Aksi\SimpanDrafHariLibur;
 use App\Domain\Pengelola\Referensi\Data\DataHariLibur;
+use App\Domain\Pengelola\Referensi\Model\PersetujuanDataMaster;
 use App\Domain\Pengelola\Referensi\Surel\PengingatHariLibur;
 use App\Domain\Pengelola\TimInternal\Enum\PeranPengelolaBawaan;
 use App\Domain\Pengelola\TimInternal\Model\LogAuditPengelola;
@@ -54,13 +55,15 @@ describe('Hari libur (P-02, BR-P02.2)', function (): void {
             ->toBe(['Tahun Baru 2027 Masehi', 'Hari Kemerdekaan RI']);
     });
 
-    it('pengaju tidak boleh meninjau pengajuannya sendiri', function (): void {
+    it('D-34: Super Admin tidak terikat tinjau-meninjau: ajuan Super Admin langsung terbit', function (): void {
         $superAdmin = BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::SuperAdmin);
         BuatDrafLibur($this, $superAdmin, '2027-01-01', 'Tahun Baru');
-        MasukSebagaiPengelola($this, $superAdmin)->post(BantuanPengelola::Url('/referensi/hari-libur/tahun/2027/ajukan'));
+        MasukSebagaiPengelola($this, $superAdmin)->post(BantuanPengelola::Url('/referensi/hari-libur/tahun/2027/ajukan'))
+            ->assertSessionHasNoErrors()
+            ->assertSessionHas('Kilat', '1 hari libur tahun 2027 terbit.');
 
-        $this->post(BantuanPengelola::Url('/referensi/hari-libur/tahun/2027/tinjau'), ['Keputusan' => 'Setuju'])->assertSessionHasErrors('Umum');
-        expect(HariLibur::query()->sole()->Status)->toBe(StatusDataMaster::MenungguTinjauan);
+        expect(HariLibur::query()->sole()->Status)->toBe(StatusDataMaster::Terbit)
+            ->and(PersetujuanDataMaster::query()->sole()->IdPenggunaPengelola)->toBe($superAdmin->Id);
     });
 
     it('penolakan mengembalikan semua ke draf; hari libur terbit tidak bisa diubah atau dihapus', function (): void {
@@ -166,20 +169,20 @@ describe('Hari libur (P-02, BR-P02.2)', function (): void {
     it('BR-P02.6: pembatalan hari libur terbit lewat pengajuan dan tinjauan anggota lain', function (): void {
         $konten = BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::KontenLegal);
         $keuangan = BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::Keuangan);
-        $superAdmin = BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::SuperAdmin);
         BuatDrafLibur($this, $konten, '2027-12-26', 'Cuti bersama Natal');
         MasukSebagaiPengelola($this, $konten)->post(BantuanPengelola::Url('/referensi/hari-libur/tahun/2027/ajukan'));
         MasukSebagaiPengelola($this, $keuangan)->post(BantuanPengelola::Url('/referensi/hari-libur/tahun/2027/tinjau'), ['Keputusan' => 'Setuju']);
         $hari = HariLibur::query()->sole();
 
-        MasukSebagaiPengelola($this, $superAdmin)
+        MasukSebagaiPengelola($this, $konten)
             ->post(BantuanPengelola::Url("/referensi/hari-libur/{$hari->Uuid}/pembatalan"), ['Alasan' => 'SKB perubahan 2027'])
             ->assertSessionHasNoErrors();
         expect($hari->refresh()->Status)->toBe(StatusDataMaster::Terbit)
             ->and(app(HariLiburTerbit::class)->AmbilTahun(2027))->toHaveCount(1);
 
+        // Pengaju non-Super Admin tidak meninjau pembatalannya sendiri; Konten & Legal memang tidak ber-izin setujui.
         $this->post(BantuanPengelola::Url("/referensi/hari-libur/{$hari->Uuid}/pembatalan/tinjau"), ['Keputusan' => 'Setuju'])
-            ->assertSessionHasErrors('Umum');
+            ->assertForbidden();
         MasukSebagaiPengelola($this, $keuangan)
             ->post(BantuanPengelola::Url("/referensi/hari-libur/{$hari->Uuid}/pembatalan/tinjau"), ['Keputusan' => 'Setuju'])
             ->assertSessionHasNoErrors();
@@ -216,15 +219,29 @@ describe('Hari libur (P-02, BR-P02.2)', function (): void {
     });
 
     it('BR-P02.2: penyusun draf hari libur tidak boleh meninjau walau yang mengajukan orang lain', function (): void {
-        $penyusun = BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::SuperAdmin);
         $pengaju = BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::KontenLegal);
-        BuatDrafLibur($this, $penyusun, '2027-01-01', 'Tahun Baru');
+        $penyusun = BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::Keuangan);
+        BuatDrafLibur($this, $pengaju, '2027-01-01', 'Tahun Baru');
+        // Peninjau non-Super Admin yang ikut menyusun draf (misal lewat peran khusus) tetap tidak boleh meninjau.
+        HariLibur::query()->sole()->forceFill(['DaftarIdPenyusun' => [$pengaju->Id, $penyusun->Id]])->save();
         MasukSebagaiPengelola($this, $pengaju)->post(BantuanPengelola::Url('/referensi/hari-libur/tahun/2027/ajukan'))->assertSessionHasNoErrors();
 
         MasukSebagaiPengelola($this, $penyusun)
             ->post(BantuanPengelola::Url('/referensi/hari-libur/tahun/2027/tinjau'), ['Keputusan' => 'Setuju'])
             ->assertSessionHasErrors('Umum');
         expect(HariLibur::query()->sole()->Status)->toBe(StatusDataMaster::MenungguTinjauan);
+    });
+
+    it('D-34: Super Admin boleh meninjau ajuan yang ia ikut susun, dan satu persetujuannya cukup', function (): void {
+        $superAdmin = BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::SuperAdmin);
+        $pengaju = BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::KontenLegal);
+        BuatDrafLibur($this, $superAdmin, '2027-01-01', 'Tahun Baru');
+        MasukSebagaiPengelola($this, $pengaju)->post(BantuanPengelola::Url('/referensi/hari-libur/tahun/2027/ajukan'))->assertSessionHasNoErrors();
+
+        MasukSebagaiPengelola($this, $superAdmin)
+            ->post(BantuanPengelola::Url('/referensi/hari-libur/tahun/2027/tinjau'), ['Keputusan' => 'Setuju'])
+            ->assertSessionHasNoErrors();
+        expect(HariLibur::query()->sole()->Status)->toBe(StatusDataMaster::Terbit);
     });
 });
 

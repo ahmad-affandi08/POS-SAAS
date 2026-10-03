@@ -18,7 +18,7 @@ import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import { FormatRupiah } from '@/Pustaka/Format';
 import { FormatTanggal } from '@/Pustaka/FormatWaktu';
 import TataLetakPengelola from '@/TataLetak/TataLetakPengelola';
-import { IzinPengelola, PunyaIzin, type PropsBersamaPengelola } from '@/Tipe/Pengelola';
+import { IzinPengelola, CekBebasTinjauan, PunyaIzin, type PropsBersamaPengelola } from '@/Tipe/Pengelola';
 
 type Persetujuan = { Peninjau: string; IdPeninjau: number; Keputusan: 'Setuju' | 'Tolak'; Catatan: string | null };
 
@@ -106,12 +106,14 @@ export default function HalamanHargaPaket({ Paket, Harga, IdPengguna }: PropsHar
     const [ditinjau, AturDitinjau] = useState<Harga | null>(null);
     const alamat = `/katalog/paket/${Paket.Uuid}/harga`;
     const Ajukan = (harga: Harga) => router.post(`${alamat}/${harga.Uuid}/ajukan`, {}, { preserveScroll: true });
+    const bebasTinjauan = CekBebasTinjauan(props.Pengguna);
     const BisaTinjau = (harga: Harga) =>
         bolehSetujui &&
         harga.Status === 'MenungguTinjauan' &&
-        harga.IdPengaju !== IdPengguna &&
-        !harga.DaftarIdPenyusun.includes(IdPengguna) &&
-        !harga.Persetujuan.some((item) => item.IdPeninjau === IdPengguna);
+        (bebasTinjauan ||
+            (harga.IdPengaju !== IdPengguna &&
+                !harga.DaftarIdPenyusun.includes(IdPengguna) &&
+                !harga.Persetujuan.some((item) => item.IdPeninjau === IdPengguna)));
 
     return (
         <TataLetakPengelola judul={`Harga ${Paket.Nama}`} jejak={[{ label: 'Katalog paket', href: '/katalog/paket' }]}>
@@ -185,7 +187,7 @@ export default function HalamanHargaPaket({ Paket, Harga, IdPengguna }: PropsHar
                                                   Ubah usulan harga
                                               </DropdownMenuItem>
                                               <DropdownMenuItem onSelect={() => Ajukan(harga)}>
-                                                  Ajukan harga
+                                                  {bebasTinjauan ? 'Terbitkan harga' : 'Ajukan harga'}
                                               </DropdownMenuItem>
                                           </>
                                       ) : null}

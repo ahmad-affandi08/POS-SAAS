@@ -11,6 +11,7 @@ use App\Domain\Pengelola\Referensi\Aksi\AjukanTarifPajak;
 use App\Domain\Pengelola\Referensi\Aksi\SimpanDrafTarifPajak;
 use App\Domain\Pengelola\Referensi\Aksi\TinjauTarifPajak;
 use App\Domain\Pengelola\Referensi\Kueri\DaftarTarifPajak;
+use App\Domain\Pengelola\Referensi\Layanan\TinjauanDataMaster;
 use App\Http\Kontroler\Kontroler;
 use App\Http\Kontroler\Pengelola\PelakuPengelola;
 use App\Http\Permintaan\Pengelola\Referensi\SimpanTarifPajakPermintaan;
@@ -54,9 +55,10 @@ final class TarifPajakKontroler extends Kontroler
 
     public function Ajukan(TarifPajak $tarifPajak, AjukanTarifPajak $ajukan): RedirectResponse
     {
-        $ajukan->Jalankan($this->AmbilPelaku(), $tarifPajak);
+        $pelaku = $this->AmbilPelaku();
+        $ajukan->Jalankan($pelaku, $tarifPajak);
 
-        return back()->with('Kilat', 'Tarif pajak diajukan dan menunggu tinjauan.');
+        return back()->with('Kilat', TinjauanDataMaster::CekBebasTinjauan($pelaku) ? 'Tarif pajak terbit.' : 'Tarif pajak diajukan dan menunggu tinjauan.');
     }
 
     public function Tinjau(TarifPajak $tarifPajak, TinjauDataMasterPermintaan $permintaan, TinjauTarifPajak $tinjau): RedirectResponse

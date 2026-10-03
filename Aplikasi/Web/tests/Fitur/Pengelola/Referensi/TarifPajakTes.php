@@ -97,12 +97,15 @@ describe('Tarif pajak bertanggal (P-02, BR-P02.1, BR-P02.2)', function (): void 
         Event::assertDispatched(TarifPajakTerbit::class, fn (TarifPajakTerbit $peristiwa) => $peristiwa->idTarifPajak === $tarif->Id);
     });
 
-    it('BR-P02.2: pengaju tidak boleh menyetujui pengajuannya sendiri, walau Super Admin', function (): void {
+    it('D-34: Super Admin tidak terikat tinjau-meninjau: ajuan Super Admin langsung terbit, juga tarif nasional', function (): void {
+        Event::fake([TarifPajakTerbit::class]);
         $superAdmin = BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::SuperAdmin);
         $tarif = AjukanTarifBaru($this, $superAdmin);
 
-        Tinjau($this, $superAdmin, $tarif)->assertSessionHasErrors('Umum');
-        expect(PersetujuanDataMaster::query()->count())->toBe(0);
+        expect($tarif->Status)->toBe(StatusDataMaster::Terbit)
+            ->and(PersetujuanDataMaster::query()->sole()->IdPenggunaPengelola)->toBe($superAdmin->Id);
+        $this->assertDatabaseHas('LogAuditPengelola', ['Aksi' => 'referensi.tarif-pajak.ajukan', 'IdPenggunaPengelola' => $superAdmin->Id]);
+        Event::assertDispatched(TarifPajakTerbit::class);
     });
 
     it('BR-P02.2: tarif daerah terbit dengan 1 penyetuju', function (): void {
@@ -327,11 +330,13 @@ describe('Tarif pajak bertanggal (P-02, BR-P02.1, BR-P02.2)', function (): void 
     });
 
     it('BR-P02.2: penyusun draf tidak boleh menyetujui walau yang mengajukan orang lain', function (): void {
-        $penyusun = BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::SuperAdmin);
         $pengaju = BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::KontenLegal);
+        $penyusun = BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::Keuangan);
         $keuangan = BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::Keuangan);
-        SebagaiPengelola($this, $penyusun)->post(BantuanPengelola::Url('/referensi/tarif-pajak'), DataTarif())->assertSessionHasNoErrors();
+        SebagaiPengelola($this, $pengaju)->post(BantuanPengelola::Url('/referensi/tarif-pajak'), DataTarif())->assertSessionHasNoErrors();
         $tarif = TarifPajak::query()->sole();
+        // Peninjau non-Super Admin yang ikut menyusun draf (misal lewat peran khusus) tetap tidak boleh menyetujui.
+        $tarif->forceFill(['DaftarIdPenyusun' => [$penyusun->Id]])->save();
         SebagaiPengelola($this, $pengaju)->post(BantuanPengelola::Url("/referensi/tarif-pajak/{$tarif->Uuid}/ajukan"))->assertSessionHasNoErrors();
 
         Tinjau($this, $penyusun, $tarif)->assertSessionHasErrors('Umum');
@@ -339,6 +344,18 @@ describe('Tarif pajak bertanggal (P-02, BR-P02.1, BR-P02.2)', function (): void 
 
         expect($tarif->refresh()->DaftarIdPenyusun)->toEqualCanonicalizing([$penyusun->Id, $pengaju->Id])
             ->and(PersetujuanDataMaster::query()->count())->toBe(1);
+    });
+
+    it('D-34: Super Admin boleh menyetujui draf yang ia susun; satu persetujuannya cukup untuk tarif nasional', function (): void {
+        $superAdmin = BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::SuperAdmin);
+        $pengaju = BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::KontenLegal);
+        SebagaiPengelola($this, $superAdmin)->post(BantuanPengelola::Url('/referensi/tarif-pajak'), DataTarif())->assertSessionHasNoErrors();
+        $tarif = TarifPajak::query()->sole();
+        SebagaiPengelola($this, $pengaju)->post(BantuanPengelola::Url("/referensi/tarif-pajak/{$tarif->Uuid}/ajukan"))->assertSessionHasNoErrors();
+        expect($tarif->refresh()->Status)->toBe(StatusDataMaster::MenungguTinjauan);
+
+        Tinjau($this, $superAdmin, $tarif)->assertSessionHasNoErrors();
+        expect($tarif->refresh()->Status)->toBe(StatusDataMaster::Terbit);
     });
 
     it('BR-P02.5: seeder membaca tarif awal dari file data dan menolak file yang tidak valid', function (): void {

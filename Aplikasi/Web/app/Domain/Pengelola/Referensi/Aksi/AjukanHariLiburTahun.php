@@ -6,6 +6,7 @@ namespace App\Domain\Pengelola\Referensi\Aksi;
 
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Bersama\Status\StatusDataMaster;
+use App\Domain\Pengelola\Referensi\Enum\KeputusanTinjauan;
 use App\Domain\Pengelola\Referensi\Layanan\TinjauanDataMaster;
 use App\Domain\Pengelola\TimInternal\Layanan\PencatatAuditPengelola;
 use App\Domain\Pengelola\TimInternal\Model\PenggunaPengelola;
@@ -19,7 +20,10 @@ use Illuminate\Support\Facades\DB;
  */
 final class AjukanHariLiburTahun
 {
-    public function __construct(private readonly PencatatAuditPengelola $audit) {}
+    public function __construct(
+        private readonly PencatatAuditPengelola $audit,
+        private readonly TinjauHariLiburTahun $tinjau,
+    ) {}
 
     public function Jalankan(PenggunaPengelola $pelaku, int $tahun): int
     {
@@ -62,6 +66,11 @@ final class AjukanHariLiburTahun
                 nilaiBaru: ['Tahun' => $tahun, 'Jumlah' => $draf->count(), 'Putaran' => $putaran],
                 idPelaku: $pelaku->Id,
             );
+
+            // D-34: pengajuan Super Admin langsung terbit.
+            if (TinjauanDataMaster::CekBebasTinjauan($pelaku)) {
+                $this->tinjau->Jalankan($pelaku, $tahun, KeputusanTinjauan::Setuju, TinjauanDataMaster::CATATAN_TERBIT_LANGSUNG);
+            }
 
             return $draf->count();
         });

@@ -37,7 +37,6 @@ Format tiap butir: pertanyaan, pilihan yang tersedia, usulan agent, dan apa yang
 | # | Keputusan / tindakan | Catatan |
 |---|---|---|
 | K16 | Proteksi branch `main` + jadikan default | Pengaturan GitHub pemilik repo |
-| K17 | MySQL 8 atau MariaDB 11.8 di produksi | Lihat job CI `backend-mariadb` |
 | K18 | Backup DB & berkas + uji restore berkala | — |
 | K19 | Kunci unggah Android + Play App Signing | — |
 | K20 | Isi `SITUS_KUNCI_SIDIK` di produksi | — |
@@ -54,6 +53,8 @@ Format tiap butir: pertanyaan, pilihan yang tersedia, usulan agent, dan apa yang
 
 | # | Keputusan | Jawaban pemilik | Diterapkan |
 |---|---|---|---|
+| K17 | MySQL 8 atau MariaDB 11.8 di produksi | "hosting menggunakan mysql" (3 Okt 2026) | Tanpa perubahan kode (test & CI memakai MySQL 8) |
+| D-34 | Four-eyes data master untuk Super Admin | "untuk superadmin di konsol itu tidak berlaku tinjau meninjau" (3 Okt 2026) | PRD v4.10 |
 | K28 | Retur tanpa struk | "K28 Return pake PIN owner dan yang berhak" (3 Okt 2026) → pilihan (b): wajib PIN Pemilik atau pengguna ber-izin baru `penjualan.retur.tanpa-struk` (bawaan Pemilik & Admin), nilai = harga jual berlaku + pajak tarif berlaku, refund hanya tukar barang/deposit (tanpa uang tunai), hanya produk berstok biasa (bukan batch/seri), batas Rp 1.000.000 per outlet per hari (di atasnya tetap diterima + tinjauan) | PRD v4.01 (server & back-office), v4.02 (aplikasi Kasir) |
 | K6 | Refund di sisi gerbang pembayaran (QRIS/VA) saat retur/void | "K6 Manual dulu" (3 Okt 2026) → refund di dasbor gerbang dilakukan manual oleh toko; PAYOU mencatat refund retur/void (BR-09.2) seperti sekarang, tanpa panggilan API refund gerbang | PRD v4.01 (tanpa perubahan kode; perilaku F-09 yang ada) |
 | K30 | Modul Salesman: (a) nomor HP & alamat pelanggan di aplikasi salesman, (b) semua pelanggan vs penugasan, (c) izin salesman berubah setelah offline | "Berikan yang terbaik" (2 Okt 2026) → (a) nomor HP **penuh + alamat** (salesman perlu menghubungi & mendatangi toko; hanya untuk izin `salesman.kunjungan`, DB lokal terenkripsi K-7); (b) semua pelanggan aktif, penugasan menyusul bila diminta; (c) cukup log audit, draf tetap dikonfirmasi back-office | PRD v3.86 |
