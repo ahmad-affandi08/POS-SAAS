@@ -43,6 +43,7 @@ export default function HalamanDaftarPembayaran({ Pembayaran, OpsiStatus, OpsiPe
     return (
         <HalamanDaftarPembelian
             judul="Pembayaran hutang"
+            jejak={[{ label: 'Hutang pemasok', href: '/kelola/pembelian/hutang' }]}
             keterangan="Pembayaran ke pemasok dari akun kas atau bank. Satu pembayaran boleh melunasi beberapa faktur, penuh atau sebagian."
             izin={Izin}
             objek="pembayaran hutang"

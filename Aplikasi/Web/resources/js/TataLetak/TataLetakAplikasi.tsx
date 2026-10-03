@@ -107,7 +107,10 @@ const menuPersediaan: ItemMenu[] = [
 ];
 
 // F-04 fase 1: grup menu "Pembelian" (pembelian.kelola); pengaturan pembelian butuh pembelian.po.setujui.
+// Audit kemudahan pakai #14: belanja stok (beli tunai sekali simpan) paling sering dipakai toko kecil, jadi entri
+// pertama; riwayat pembayaran hutang dibuka dari halaman Hutang pemasok supaya grup tetap ≤ 7 sub-menu.
 const menuPembelian: ItemMenu[] = [
+    { label: 'Belanja stok', href: '/kelola/pembelian/belanja-stok', izin: IzinTenant.PembelianKelola },
     {
         label: 'Pesanan pembelian',
         href: '/kelola/pembelian/pesanan',
@@ -117,7 +120,6 @@ const menuPembelian: ItemMenu[] = [
     { label: 'Penerimaan barang', href: '/kelola/pembelian/penerimaan', izin: IzinTenant.PembelianKelola },
     { label: 'Faktur pembelian', href: '/kelola/pembelian/faktur', izin: IzinTenant.PembelianKelola },
     { label: 'Hutang pemasok', href: '/kelola/pembelian/hutang', izin: IzinTenant.PembelianKelola },
-    { label: 'Pembayaran hutang', href: '/kelola/pembelian/pembayaran', izin: IzinTenant.PembelianKelola },
     { label: 'Retur pembelian', href: '/kelola/pembelian/retur', izin: IzinTenant.PembelianKelola },
     { label: 'Pemasok', href: '/kelola/pembelian/pemasok', izin: IzinTenant.PembelianKelola },
 ];

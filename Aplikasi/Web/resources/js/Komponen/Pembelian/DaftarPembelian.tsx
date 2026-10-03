@@ -109,18 +109,21 @@ export function HalamanDaftarPembelian({
     keterangan,
     izin,
     objek,
+    jejak,
     children,
 }: {
     judul: string;
     keterangan: string;
     izin: IzinPembelian;
     objek: string;
+    /** Jalan kembali bila halaman tidak punya entri menu sendiri (misal Riwayat pembayaran → Hutang pemasok). */
+    jejak?: { label: string; href: string }[];
     children: ReactNode;
 }) {
     const { props } = usePage<PropsBersamaAplikasi>();
 
     return (
-        <TataLetakAplikasi judul={judul}>
+        <TataLetakAplikasi judul={judul} {...(jejak ? { jejak } : {})}>
             <p className="max-w-3xl text-isi text-teks-sekunder">{keterangan}</p>
             {!izin.Kelola ? <PesanHanyaLihat izin="pembelian.kelola" objek={objek} /> : null}
             <DaftarGalatServer galat={props.errors} />
