@@ -8,6 +8,7 @@ use App\Domain\Bersama\Peristiwa\PeristiwaIntegrasi;
 use App\Domain\Bersama\Tenant\KonteksTenant;
 use App\Domain\Integrasi\ApiPublik\Enum\PeristiwaWebhook;
 use App\Domain\Integrasi\ApiPublik\Layanan\PengantreWebhook;
+use App\Domain\Integrasi\ApiPublik\Model\WebhookTenant;
 use App\Domain\Katalog\Kueri\ProdukUntukApiPublik;
 use App\Domain\Pelanggan\Kueri\PelangganUntukApiPublik;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -45,6 +46,27 @@ final class AntrekanWebhookIntegrasi implements ShouldQueue
             PeristiwaWebhook::PelangganDibuat => $uuid === null ? null : ($this->pelanggan->Daftar(0, 1, $uuid)['Data'][0] ?? null),
             default => $data,
         };
+    }
+
+    /**
+     * Hanya diantrekan bila tenant punya webhook aktif yang melanggan peristiwa itu (v3.97): perubahan produk dari impor
+     * besar, form, atau data uji tidak membanjiri antrean untuk tenant yang tidak memakai webhook.
+     */
+    public function shouldQueue(PeristiwaIntegrasi $peristiwa): bool
+    {
+        if (PeristiwaWebhook::tryFrom($peristiwa->jenis) === null) {
+            return false;
+        }
+
+        $sebelumnya = $this->konteks->Ambil();
+        $this->konteks->Atur($peristiwa->idTenant);
+
+        try {
+            return WebhookTenant::query()->where('Aktif', true)->get()
+                ->contains(fn (WebhookTenant $w): bool => $w->CekBerlangganan($peristiwa->jenis));
+        } finally {
+            $sebelumnya === null ? $this->konteks->Kosongkan() : $this->konteks->Atur($sebelumnya);
+        }
     }
 
     public function handle(PeristiwaIntegrasi $peristiwa): void

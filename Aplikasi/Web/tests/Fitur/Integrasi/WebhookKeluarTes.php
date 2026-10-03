@@ -23,8 +23,10 @@ use App\Domain\Tenant\Enum\JenisOverride;
 use App\Domain\Tenant\Model\OverrideTenant;
 use App\Domain\Tenant\Model\Tenant;
 use Carbon\CarbonImmutable;
+use Illuminate\Events\CallQueuedListener;
 use Illuminate\Http\Client\Request as PermintaanHttp;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Queue;
 use Inertia\Testing\AssertableInertia;
 use Tests\Pendukung\Kasir\BantuanKasir;
 use Tests\Pendukung\Katalog\BantuanKatalog;
@@ -385,6 +387,30 @@ it('produk.diubah: sekali per perubahan nyata dari harga, arsip, dan pulihkan; s
     expect($kiriman)->toHaveCount(4)
         ->and($kiriman[2]->Muatan['Data']['Aktif'])->toBeFalse()
         ->and($kiriman[3]->Muatan['Data']['Aktif'])->toBeTrue();
+});
+
+it('penangan webhook integrasi hanya diantrekan bila tenant punya webhook aktif yang melanggan peristiwa itu', function (): void {
+    $t = BantuanKatalog::SiapkanTenantProduk('Toko Bangunan Sumber Rejeki Boyolali');
+    AktifkanFiturWebhook($t['Tenant']);
+    $antreanIntegrasi = fn (): int => Queue::pushed(CallQueuedListener::class, fn (CallQueuedListener $j): bool => $j->class === AntrekanWebhookIntegrasi::class)->count();
+    $simpan = fn (string $nama) => BantuanKatalog::MasukSebagai($this, $t['Tenant']->Id)
+        ->post('/kelola/produk', BantuanKatalog::IsiFormProduk($t['Pcs'], $t['KelompokPajak'], ['Nama' => $nama]))->assertSessionHasNoErrors();
+
+    // Belum ada webhook: produk baru tidak menambah tugas antrean.
+    Queue::fake();
+    $simpan('Paku Beton 7 cm (1 kg)');
+    expect($antreanIntegrasi())->toBe(0);
+
+    // Webhook yang tidak melanggan produk.diubah juga tidak.
+    DaftarkanWebhookUji($this, $t, ['pelanggan.dibuat']);
+    Queue::fake();
+    $simpan('Paku Beton 10 cm (1 kg)');
+    expect($antreanIntegrasi())->toBe(0);
+
+    DaftarkanWebhookUji($this, $t, ['produk.diubah'], 'https://gudang.contoh.co.id/payou-2');
+    Queue::fake();
+    $simpan('Paku Beton 12 cm (1 kg)');
+    expect($antreanIntegrasi())->toBe(1);
 });
 
 it('pelanggan.dibuat, shift.ditutup, stok.disesuaikan, PO disetujui, dan GRN diposting terkirim sesuai spesifikasi; hanya yang dilanggan', function (): void {
