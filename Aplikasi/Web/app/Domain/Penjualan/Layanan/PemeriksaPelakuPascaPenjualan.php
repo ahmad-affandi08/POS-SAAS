@@ -48,6 +48,10 @@ final class PemeriksaPelakuPascaPenjualan
 
     private static function Operasi(IzinTenant $izin): string
     {
-        return $izin === IzinTenant::PenjualanRetur ? 'retur' : 'void';
+        return match ($izin) {
+            IzinTenant::PenjualanRetur => 'retur',
+            IzinTenant::PenjualanReturTanpaStruk => 'retur tanpa struk',
+            default => 'void',
+        };
     }
 }

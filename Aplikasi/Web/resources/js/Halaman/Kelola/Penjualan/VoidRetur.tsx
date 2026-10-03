@@ -27,7 +27,13 @@ const kolom: KolomTabel<BarisVoidRetur>[] = [
                 </Link>
                 {b.Jenis === 'Retur' ? (
                     <span className="block text-label break-all text-teks-sekunder">
-                        Penjualan asal <span className="font-mono">{b.NomorPenjualan}</span>
+                        {b.TanpaStruk ? (
+                            'Tanpa struk'
+                        ) : (
+                            <>
+                                Penjualan asal <span className="font-mono">{b.NomorPenjualan}</span>
+                            </>
+                        )}
                     </span>
                 ) : null}
             </>

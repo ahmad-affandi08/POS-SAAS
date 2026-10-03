@@ -172,15 +172,21 @@ export default function HalamanDetailRetur({ Retur: r, Baris, Refund, MutasiStok
                             <span className="font-mono break-all">{r.Nomor}</span>
                         </Nilai>
                         <Nilai label="Penjualan asal">
-                            <Link
-                                href={`/kelola/penjualan/${r.UuidPenjualan}`}
-                                className="font-mono break-all text-brand underline"
-                            >
-                                {r.NomorPenjualan}
-                            </Link>
+                            {r.UuidPenjualan !== null && r.NomorPenjualan !== null ? (
+                                <Link
+                                    href={`/kelola/penjualan/${r.UuidPenjualan}`}
+                                    className="font-mono break-all text-brand underline"
+                                >
+                                    {r.NomorPenjualan}
+                                </Link>
+                            ) : (
+                                'Tanpa struk (disetujui dengan PIN)'
+                            )}
                         </Nilai>
                         <Nilai label="Waktu retur">{FormatTanggalWaktu(r.DibuatOfflinePada)}</Nilai>
-                        <Nilai label="Waktu penjualan">{FormatTanggalWaktu(r.WaktuPenjualan)}</Nilai>
+                        {r.WaktuPenjualan !== null ? (
+                            <Nilai label="Waktu penjualan">{FormatTanggalWaktu(r.WaktuPenjualan)}</Nilai>
+                        ) : null}
                         <Nilai label="Outlet">{r.NamaOutlet}</Nilai>
                         <Nilai label="Hari bisnis">{FormatTanggal(r.TanggalBisnis)}</Nilai>
                         <Nilai label="Kasir">{r.NamaKasir}</Nilai>

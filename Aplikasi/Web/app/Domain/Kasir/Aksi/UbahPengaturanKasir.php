@@ -71,6 +71,10 @@ final class UbahPengaturanKasir
             throw new PelanggaranAturanBisnis('ToleransiSelisihTidakValid', 'Toleransi selisih kas harus antara Rp 0 dan Rp 1 triliun.', 'ToleransiSelisihKas');
         }
 
+        if ($data->batasReturTanpaStrukHarian->BernilaiNegatif() || $data->batasReturTanpaStrukHarian->Bandingkan(Uang::Dari(self::BATAS_MAKSIMAL)) > 0) {
+            throw new PelanggaranAturanBisnis('BatasReturTanpaStrukTidakValid', 'Batas retur tanpa struk harus antara Rp 0 dan Rp 1 triliun.', 'BatasReturTanpaStrukHarian');
+        }
+
         if ($data->batasHariRetur < 0 || $data->batasHariRetur > DataPengaturanKasir::BATAS_HARI_RETUR_MAKSIMAL) {
             throw new PelanggaranAturanBisnis('BatasHariReturTidakValid', 'Batas hari retur harus antara 0 dan '.DataPengaturanKasir::BATAS_HARI_RETUR_MAKSIMAL.' hari.', 'BatasHariRetur');
         }
@@ -87,7 +91,7 @@ final class UbahPengaturanKasir
     }
 
     /**
-     * @return array{BatasKasKeluar: string, ShiftBersama: bool, BatasDiskonManual: string, BatasDiskonPenyetuju: string, PembulatanTunai: array{Kelipatan: int, Arah: string}|null, TutupShiftButa: bool, ToleransiSelisihKas: string, BatasHariRetur: int, BatasHariLewatJatuhTempo: int, BukaLaciPerluPin: bool}
+     * @return array{BatasKasKeluar: string, ShiftBersama: bool, BatasDiskonManual: string, BatasDiskonPenyetuju: string, PembulatanTunai: array{Kelipatan: int, Arah: string}|null, TutupShiftButa: bool, ToleransiSelisihKas: string, BatasHariRetur: int, BatasHariLewatJatuhTempo: int, BukaLaciPerluPin: bool, BatasReturTanpaStrukHarian: string}
      */
     private static function KeLarik(DataPengaturanKasir $data): array
     {
@@ -102,6 +106,7 @@ final class UbahPengaturanKasir
             'BatasHariRetur' => $data->batasHariRetur,
             'BatasHariLewatJatuhTempo' => $data->batasHariLewatJatuhTempo,
             'BukaLaciPerluPin' => $data->bukaLaciPerluPin,
+            'BatasReturTanpaStrukHarian' => $data->batasReturTanpaStrukHarian->KeString(),
         ];
     }
 }

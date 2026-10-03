@@ -178,6 +178,8 @@ export type BarisVoidRetur = {
     Nomor: string;
     NomorPenjualan: string;
     UuidPenjualan: string;
+    /** K28: retur tanpa struk (tanpa penjualan asal; NomorPenjualan kosong). */
+    TanpaStruk: boolean;
     Tautan: string;
     NamaOutlet: string;
     NamaKasir: string;
@@ -198,9 +200,11 @@ export type RingkasanRetur = {
     Nomor: string;
     LabelStatus: string;
     LabelMetodeRefund: string;
-    UuidPenjualan: string;
-    NomorPenjualan: string;
-    WaktuPenjualan: string;
+    /** K28: retur tanpa struk tidak punya penjualan asal (tiga kolom berikut null). */
+    TanpaStruk: boolean;
+    UuidPenjualan: string | null;
+    NomorPenjualan: string | null;
+    WaktuPenjualan: string | null;
     NamaOutlet: string;
     Perangkat: string;
     NamaKasir: string;

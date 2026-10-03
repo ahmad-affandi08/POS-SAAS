@@ -804,6 +804,7 @@ describe('F-07b data-awal', function (): void {
             'BatasHariRetur' => 7,
             'BatasHariLewatJatuhTempo' => 0,
             'BukaLaciPerluPin' => false,
+            'BatasReturTanpaStrukHarian' => '1000000.00',
             'PersetujuanJarakJauh' => false,
             // v3.55: barcode timbangan (bawaan mati).
             'BarcodeTimbangan' => ['Aktif' => false, 'Awalan' => ['27'], 'Nilai' => 'Berat'],

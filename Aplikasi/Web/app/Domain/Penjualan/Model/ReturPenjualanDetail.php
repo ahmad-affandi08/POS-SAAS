@@ -18,9 +18,10 @@ use LogicException;
  * @property string $Uuid
  * @property int $IdTenant
  * @property int $IdReturPenjualan
- * @property int $IdPenjualanDetail
+ * @property int|null $IdPenjualanDetail null hanya untuk retur tanpa struk (K28)
  * @property int $Urutan
  * @property int $IdProduk
+ * @property int|null $IdProdukSatuan
  * @property string $NamaProduk
  * @property string $Jumlah
  * @property string $JumlahDasar

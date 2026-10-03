@@ -22,6 +22,8 @@ use Brick\Math\BigDecimal;
  *   (BR-12.1, bawaan 0 = lewat jatuh tempo sehari pun butuh penyetuju).
  * - Cetak struk bagian 4 (PRD v1.87, §19.2): buka laci manual tanpa transaksi selalu dicatat; PIN penyetuju
  *   `kas.keluar.setujui` opsional (bawaan mati).
+ * - K28 (PRD v4.01): batas nilai retur tanpa struk per outlet per hari (bawaan Rp 1.000.000); di atasnya retur tetap
+ *   diterima tetapi menjadi tinjauan.
  */
 final readonly class DataPengaturanKasir
 {
@@ -40,12 +42,17 @@ final readonly class DataPengaturanKasir
 
     public const BATAS_HARI_LEWAT_JATUH_TEMPO_BAWAAN = 0;
 
+    public const BATAS_RETUR_TANPA_STRUK_HARIAN_BAWAAN = '1000000.00';
+
     public BigDecimal $batasDiskonManual;
 
     public BigDecimal $batasDiskonPenyetuju;
 
     /** F-11: |selisih| di atas nilai ini wajib alasan + penyetuju. */
     public Uang $toleransiSelisihKas;
+
+    /** K28: Σ retur tanpa struk outlet per tanggal bisnis di atas nilai ini menjadi tinjauan. */
+    public Uang $batasReturTanpaStrukHarian;
 
     /**
      * @param  array{Kelipatan: int, Arah: ArahPembulatan}|null  $pembulatanTunai
@@ -61,10 +68,12 @@ final readonly class DataPengaturanKasir
         public int $batasHariRetur = self::BATAS_HARI_RETUR_BAWAAN,
         public int $batasHariLewatJatuhTempo = self::BATAS_HARI_LEWAT_JATUH_TEMPO_BAWAAN,
         public bool $bukaLaciPerluPin = false,
+        ?Uang $batasReturTanpaStrukHarian = null,
     ) {
         $this->batasDiskonManual = BigDecimal::of($batasDiskonManual ?? self::BATAS_DISKON_MANUAL_BAWAAN)->toScale(2);
         $this->batasDiskonPenyetuju = BigDecimal::of($batasDiskonPenyetuju ?? self::BATAS_DISKON_PENYETUJU_BAWAAN)->toScale(2);
         $this->toleransiSelisihKas = $toleransiSelisihKas ?? Uang::Dari(self::TOLERANSI_SELISIH_KAS_BAWAAN);
+        $this->batasReturTanpaStrukHarian = $batasReturTanpaStrukHarian ?? Uang::Dari(self::BATAS_RETUR_TANPA_STRUK_HARIAN_BAWAAN);
     }
 
     /**

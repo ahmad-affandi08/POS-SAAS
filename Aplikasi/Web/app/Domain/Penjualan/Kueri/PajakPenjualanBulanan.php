@@ -8,6 +8,7 @@ use App\Domain\Bersama\Nilai\Uang;
 use App\Domain\Penjualan\Enum\StatusPenjualan;
 use App\Domain\Penjualan\Layanan\PembagiPajakRetur;
 use App\Domain\Penjualan\Model\PenjualanPajak;
+use App\Domain\Penjualan\Model\ReturPenjualan;
 use App\Domain\Penjualan\Model\ReturPenjualanDetail;
 use Brick\Math\BigDecimal;
 use Brick\Math\RoundingMode;
@@ -122,10 +123,6 @@ final class PajakPenjualanBulanan
                 'PenjualanDetail.SnapshotPajak AS Snapshot',
             ]);
 
-        if ($baris->isEmpty()) {
-            return [];
-        }
-
         $pajakDokumen = [];
 
         foreach (PenjualanPajak::query()->whereIn('IdPenjualan', $baris->pluck('IdPenjualan')->unique()->values()->all())->orderBy('Id')->get() as $p) {
@@ -151,6 +148,29 @@ final class PajakPenjualanBulanan
                 $ada = $hasil[$kunci] ?? ['IdOutlet' => (int) $b->IdOutlet, 'Bulan' => $bulan, 'Kode' => $kode, 'Tarif' => $tarif, 'Dpp' => Uang::Nol(), 'Pajak' => Uang::Nol()];
                 $ada['Dpp'] = $ada['Dpp']->Tambah($dpp);
                 $ada['Pajak'] = $ada['Pajak']->Tambah($pajak);
+                $hasil[$kunci] = $ada;
+            }
+        }
+
+        // K28: retur tanpa struk tidak punya penjualan asal; pajaknya dihitung ulang dari tarif berlaku saat retur dan
+        // disimpan per kode di `RincianPajak`.
+        $tanpaStruk = ReturPenjualan::query()
+            ->where('TanpaStruk', true)
+            ->whereNotNull('RincianPajak')
+            ->whereBetween('TanggalBisnis', $rentang)
+            ->when($idOutlet !== null, fn (Builder $k) => $k->whereIn('IdOutlet', $idOutlet ?? []))
+            ->orderBy('Id')
+            ->get(['IdOutlet', 'TanggalBisnis', 'RincianPajak']);
+
+        foreach ($tanpaStruk as $r) {
+            $bulan = $r->TanggalBisnis->format('Y-m');
+
+            foreach ($r->RincianPajak ?? [] as $p) {
+                $tarif = BigDecimal::of($p['Tarif'])->toScale(6)->__toString();
+                $kunci = self::Kunci($r->IdOutlet, $bulan, $p['Kode'], $tarif);
+                $ada = $hasil[$kunci] ?? ['IdOutlet' => $r->IdOutlet, 'Bulan' => $bulan, 'Kode' => $p['Kode'], 'Tarif' => $tarif, 'Dpp' => Uang::Nol(), 'Pajak' => Uang::Nol()];
+                $ada['Dpp'] = $ada['Dpp']->Tambah(Uang::Dari($p['Dpp']));
+                $ada['Pajak'] = $ada['Pajak']->Tambah(Uang::Dari($p['Jumlah']));
                 $hasil[$kunci] = $ada;
             }
         }

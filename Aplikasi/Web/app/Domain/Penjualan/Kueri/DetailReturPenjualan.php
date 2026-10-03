@@ -51,7 +51,8 @@ final class DetailReturPenjualan
             return null;
         }
 
-        $penjualan = Penjualan::query()->whereKey($r->IdPenjualanAsal)->firstOrFail();
+        // K28: retur tanpa struk tidak punya penjualan asal.
+        $penjualan = $r->IdPenjualanAsal === null ? null : Penjualan::query()->whereKey($r->IdPenjualanAsal)->firstOrFail();
         $detail = ReturPenjualanDetail::query()->where('IdReturPenjualan', $r->Id)->orderBy('Urutan')->get();
         $nama = $this->anggota->AmbilNama([$r->IdPengguna, $r->IdPenyetuju]);
         $gudang = $this->infoGudang->AmbilBanyak(array_values(array_unique(array_filter($detail->pluck('IdGudang')->all(), fn (mixed $id): bool => is_int($id)))));
@@ -62,9 +63,10 @@ final class DetailReturPenjualan
                 'Nomor' => $r->Nomor,
                 'LabelStatus' => $r->Status->AmbilLabel(),
                 'LabelMetodeRefund' => $r->MetodeRefund->AmbilLabel(),
-                'UuidPenjualan' => $penjualan->Uuid,
-                'NomorPenjualan' => $penjualan->Nomor,
-                'WaktuPenjualan' => $penjualan->DibuatOfflinePada->toIso8601String(),
+                'TanpaStruk' => $r->TanpaStruk,
+                'UuidPenjualan' => $penjualan?->Uuid,
+                'NomorPenjualan' => $penjualan?->Nomor,
+                'WaktuPenjualan' => $penjualan?->DibuatOfflinePada->toIso8601String(),
                 'NamaOutlet' => $this->outlet->AmbilRingkas([$r->IdOutlet])[0]['Nama'] ?? '',
                 'Perangkat' => $this->perangkat->AmbilLabel([$r->IdPerangkat])[$r->IdPerangkat] ?? '',
                 'NamaKasir' => $nama[$r->IdPengguna]['Nama'] ?? '',

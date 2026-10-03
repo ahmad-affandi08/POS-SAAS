@@ -39,7 +39,7 @@ export function NormalisasiMasukanPersen(teks: string): string {
 
 /**
  * Pengaturan kasir tenant: batas kas keluar tanpa persetujuan (BR-06.4), shift bersama (BR-06.2), batas diskon manual
- * kasir & penyetuju (BR-07.3), pembulatan tunai (BR-08.6), tutup shift buta & toleransi selisih kas (F-11), batas hari retur (F-09), serta batas hari lewat jatuh tempo (F-12). Berlaku di aplikasi kasir setelah data perangkat
+ * kasir & penyetuju (BR-07.3), pembulatan tunai (BR-08.6), tutup shift buta & toleransi selisih kas (F-11), batas hari retur (F-09), batas retur tanpa struk per hari (K28), serta batas hari lewat jatuh tempo (F-12). Berlaku di aplikasi kasir setelah data perangkat
  * diperbarui.
  */
 export default function HalamanPengaturanKasir({
@@ -54,6 +54,7 @@ export default function HalamanPengaturanKasir({
     BatasHariRetur,
     BatasHariLewatJatuhTempo,
     BukaLaciPerluPin,
+    BatasReturTanpaStrukHarian,
     BarcodeTimbangan,
 }: PropsPengaturanKasir) {
     const { props } = usePage<PropsBersamaAplikasi>();
@@ -71,6 +72,7 @@ export default function HalamanPengaturanKasir({
         hariRetur: String(BatasHariRetur),
         hariLewat: String(BatasHariLewatJatuhTempo),
         laciPin: BukaLaciPerluPin,
+        tanpaStruk: UbahKeMasukanUang(BatasReturTanpaStrukHarian),
     };
     const [batas, AturBatas] = useState(awal.batas);
     const [bersama, AturBersama] = useState(awal.bersama);
@@ -84,6 +86,7 @@ export default function HalamanPengaturanKasir({
     const [hariRetur, AturHariRetur] = useState(awal.hariRetur);
     const [hariLewat, AturHariLewat] = useState(awal.hariLewat);
     const [laciPin, AturLaciPin] = useState(awal.laciPin);
+    const [tanpaStruk, AturTanpaStruk] = useState(awal.tanpaStruk);
     const [memproses, AturMemproses] = useState(false);
     const berubah =
         batas !== awal.batas ||
@@ -96,6 +99,7 @@ export default function HalamanPengaturanKasir({
         hariRetur !== awal.hariRetur ||
         hariLewat !== awal.hariLewat ||
         laciPin !== awal.laciPin ||
+        tanpaStruk !== awal.tanpaStruk ||
         (bulatkan && (kelipatan !== awal.kelipatan || arah !== awal.arah));
     const opsiKelipatan = (kelipatanUmum.includes(kelipatan) ? kelipatanUmum : [...kelipatanUmum, kelipatan]).map(
         (nilai) => ({ Nilai: nilai, Label: FormatRupiah(nilai) }),
@@ -118,6 +122,7 @@ export default function HalamanPengaturanKasir({
                 BatasHariRetur: hariRetur === '' ? null : Number.parseInt(hariRetur, 10),
                 BatasHariLewatJatuhTempo: hariLewat === '' ? null : Number.parseInt(hariLewat, 10),
                 BukaLaciPerluPin: laciPin,
+                BatasReturTanpaStrukHarian: tanpaStruk,
             },
             { preserveScroll: true, onStart: () => AturMemproses(true), onFinish: () => AturMemproses(false) },
         );
@@ -139,6 +144,7 @@ export default function HalamanPengaturanKasir({
                     'BatasHariRetur',
                     'BatasHariLewatJatuhTempo',
                     'BukaLaciPerluPin',
+                    'BatasReturTanpaStrukHarian',
                 ]}
             />
             <form onSubmit={Simpan} aria-label="Pengaturan kasir" className="flex flex-col gap-4" noValidate>
@@ -260,6 +266,20 @@ export default function HalamanPengaturanKasir({
                         galat={galat.BatasHariRetur}
                         required
                     />
+                    <BidangUang
+                        label="Batas retur tanpa struk per hari per outlet"
+                        nilai={tanpaStruk}
+                        saatBerubah={AturTanpaStruk}
+                        galat={galat.BatasReturTanpaStrukHarian}
+                        required
+                    />
+                    <p className="text-keterangan text-teks-sekunder">
+                        Retur tanpa struk selalu butuh PIN pemilik atau pengguna berizin &quot;Menyetujui retur tanpa
+                        struk&quot;, dan hanya bisa dikembalikan sebagai tukar barang atau deposit pelanggan, tidak
+                        pernah uang tunai. Jika total retur tanpa struk di satu outlet hari itu melewati batas ini,
+                        returnya tetap tercatat dan masuk Kotak Tindakan untuk dicek. Isi 0 agar setiap retur tanpa
+                        struk dicek.
+                    </p>
                 </Panel>
                 <Panel
                     judul="Penjualan tempo"

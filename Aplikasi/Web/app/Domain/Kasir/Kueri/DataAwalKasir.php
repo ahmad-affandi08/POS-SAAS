@@ -97,6 +97,8 @@ final class DataAwalKasir
                 'BatasHariLewatJatuhTempo' => $pengaturan->batasHariLewatJatuhTempo,
                 // Cetak struk bagian 4: buka laci manual (tanpa transaksi) wajib PIN penyetuju kas.keluar.setujui.
                 'BukaLaciPerluPin' => $pengaturan->bukaLaciPerluPin,
+                // K28 (aditif): retur tanpa struk; aplikasi memperingatkan bila Σ hari ini melewati batas (server: tinjauan).
+                'BatasReturTanpaStrukHarian' => $pengaturan->batasReturTanpaStrukHarian->KeString(),
                 // X4 (aditif): tombol "Minta persetujuan jarak jauh" di dialog PIN penyetuju hanya bila fitur paket aktif.
                 'PersetujuanJarakJauh' => $this->fitur->CekAktif($perangkat->IdTenant, 'persetujuan.jarak-jauh'),
                 // v3.55 (aditif, §9.3): barcode timbangan EAN-13 `AA PPPPP NNNNN C` (berat gram atau harga Rupiah).

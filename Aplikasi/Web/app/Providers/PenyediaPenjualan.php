@@ -19,6 +19,7 @@ use App\Domain\Penjualan\Layanan\PenanganSinkronCatatKunjungan;
 use App\Domain\Penjualan\Layanan\PenanganSinkronIsiDeposit;
 use App\Domain\Penjualan\Layanan\PenanganSinkronKirimDapurPesananTerbuka;
 use App\Domain\Penjualan\Layanan\PenanganSinkronPindahBarisPesananTerbuka;
+use App\Domain\Penjualan\Layanan\PenanganSinkronReturTanpaStruk;
 use App\Domain\Penjualan\Layanan\PenanganSinkronTambahPesananTerbuka;
 use App\Domain\Penjualan\Layanan\PenanganSinkronUbahPesananTerbuka;
 use App\Domain\Penjualan\Layanan\PenanganSinkronVoidPenjualan;
@@ -37,6 +38,7 @@ final class PenyediaPenjualan extends ServiceProvider
             PenanganSinkronBuatPenjualan::class,
             PenanganSinkronVoidPenjualan::class,
             PenanganSinkronBuatReturPenjualan::class,
+            PenanganSinkronReturTanpaStruk::class,
             // F-07 mode meja fase 1: pesanan terbuka.
             PenanganSinkronBukaPesananTerbuka::class,
             PenanganSinkronTambahPesananTerbuka::class,

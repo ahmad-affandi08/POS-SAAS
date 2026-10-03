@@ -17,6 +17,7 @@ use App\Domain\Penjualan\Kalkulasi\DataBarisKalkulasi;
 use App\Domain\Penjualan\Kalkulasi\DataKalkulasi;
 use App\Domain\Penjualan\Kalkulasi\DataPajakKalkulasi;
 use App\Domain\Penjualan\Kalkulasi\DataPotongan;
+use App\Domain\Penjualan\Kalkulasi\HasilKalkulasi;
 use App\Domain\Penjualan\Kalkulasi\HasilPajakKalkulasi;
 use App\Domain\Penjualan\Kalkulasi\MesinKalkulasi;
 use Carbon\CarbonImmutable;
@@ -57,6 +58,42 @@ final class PenghitungGrosir
             return new HasilHitungGrosir(Uang::Nol(), Uang::Nol(), Uang::Nol(), Uang::Nol(), Uang::Nol());
         }
 
+        [$hasil, $pajakDokumen] = $this->HitungRinci($idOutlet, $kodeKota, $baris, $tanggal);
+        $ppn = $this->CariPpn($pajakDokumen);
+
+        // `MesinKalkulasi::subtotal` sudah BERSIH dari diskon baris. Dokumen grosir menampilkan Subtotal kotor lalu
+        // Diskon sebagai baris tersendiri (bentuk faktur Indonesia), jadi yang disimpan Σ bruto baris — kalau nilai
+        // bersih itu yang dipakai, diskonnya terbaca dua kali di dokumen dan jurnalnya tidak seimbang.
+        $subtotalKotor = Uang::Nol();
+
+        foreach ($hasil->baris as $satuHasil) {
+            $subtotalKotor = $subtotalKotor->Tambah($satuHasil->bruto);
+        }
+
+        return new HasilHitungGrosir(
+            subtotal: $subtotalKotor,
+            diskon: $hasil->totalDiskon,
+            // DPP = subtotal kotor − diskon, dikurangi pajak yang sudah termasuk harga bila harga inklusif.
+            dasarPengenaanPajak: $subtotalKotor->Kurangi($hasil->totalDiskon)
+                ->Kurangi($hasil->totalPajak->Kurangi($hasil->totalPajakEksklusif)),
+            pajak: $hasil->totalPajak,
+            total: $hasil->totalAkhir,
+            tarifPpn: $ppn === null ? null : (string) $ppn->tarif,
+            pengaliDppPembilang: $ppn?->pengaliDppPembilang,
+            pengaliDppPenyebut: $ppn?->pengaliDppPenyebut,
+            rincianPajak: array_map(fn (HasilPajakKalkulasi $p): Uang => $p->jumlah, $hasil->pajak),
+        );
+    }
+
+    /**
+     * Hasil mesin kalkulasi lengkap (per baris & per kode pajak) beserta tarif yang dipakai per kode. Dipakai juga
+     * retur tanpa struk (K28), yang butuh nilai & pajak per baris dengan aturan yang sama.
+     *
+     * @param  list<array{Jumlah: Kuantitas, HargaSatuan: Uang, Diskon: Uang, IdKelompokPajak: int|null, HargaTermasukPajak: bool|null}>  $baris
+     * @return array{0: HasilKalkulasi, 1: array<string, DataPajakKalkulasi>}
+     */
+    public function HitungRinci(int $idOutlet, ?string $kodeKota, array $baris, ?CarbonImmutable $tanggal = null): array
+    {
         $profil = $this->profilPajak->Ambil($idOutlet) ?? new DataProfilPajakOutlet(false, false, false, '0.00', false);
         $tanggal ??= CarbonImmutable::parse($this->tanggalBisnis->Hitung($idOutlet)->format('Y-m-d'));
         $pajakKelompok = $this->kelompokPajak->AmbilJenisPajakPerKelompok(
@@ -112,30 +149,8 @@ final class PenghitungGrosir
             )),
             pajak: array_values($pajakDokumen),
         ));
-        $ppn = $this->CariPpn($pajakDokumen);
 
-        // `MesinKalkulasi::subtotal` sudah BERSIH dari diskon baris. Dokumen grosir menampilkan Subtotal kotor lalu
-        // Diskon sebagai baris tersendiri (bentuk faktur Indonesia), jadi yang disimpan Σ bruto baris — kalau nilai
-        // bersih itu yang dipakai, diskonnya terbaca dua kali di dokumen dan jurnalnya tidak seimbang.
-        $subtotalKotor = Uang::Nol();
-
-        foreach ($hasil->baris as $satuHasil) {
-            $subtotalKotor = $subtotalKotor->Tambah($satuHasil->bruto);
-        }
-
-        return new HasilHitungGrosir(
-            subtotal: $subtotalKotor,
-            diskon: $hasil->totalDiskon,
-            // DPP = subtotal kotor − diskon, dikurangi pajak yang sudah termasuk harga bila harga inklusif.
-            dasarPengenaanPajak: $subtotalKotor->Kurangi($hasil->totalDiskon)
-                ->Kurangi($hasil->totalPajak->Kurangi($hasil->totalPajakEksklusif)),
-            pajak: $hasil->totalPajak,
-            total: $hasil->totalAkhir,
-            tarifPpn: $ppn === null ? null : (string) $ppn->tarif,
-            pengaliDppPembilang: $ppn?->pengaliDppPembilang,
-            pengaliDppPenyebut: $ppn?->pengaliDppPenyebut,
-            rincianPajak: array_map(fn (HasilPajakKalkulasi $p): Uang => $p->jumlah, $hasil->pajak),
-        );
+        return [$hasil, $pajakDokumen];
     }
 
     /**

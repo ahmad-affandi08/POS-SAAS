@@ -197,6 +197,8 @@ export type PropsPengaturanKasir = {
     BatasHariLewatJatuhTempo: number;
     /** Cetak struk bagian 4: buka laci manual wajib PIN penyetuju `kas.keluar.setujui` (bawaan mati). */
     BukaLaciPerluPin: boolean;
+    /** K28: string desimal; Σ retur tanpa struk outlet per hari di atasnya menjadi tinjauan (bawaan Rp 1.000.000). */
+    BatasReturTanpaStrukHarian: string;
     /** v3.55 (§9.3): barcode timbangan EAN-13 berawalan 21–29, nilai berat (gram) atau harga (Rupiah). */
     BarcodeTimbangan: BarcodeTimbangan;
 };

@@ -42,12 +42,18 @@ final class AgregatPenjualan
 
     private const RETUR = '(`ReturPenjualan`.`TotalNilai` - `ReturPenjualan`.`TotalPajak` - `ReturPenjualan`.`TotalBiayaLayanan`)';
 
+    /**
+     * Kanal retur = kanal penjualan asal; retur tanpa struk (K28) tidak punya penjualan asal dan terjadi di konter,
+     * jadi dihitung sebagai Bawa pulang.
+     */
+    private const KANAL_RETUR = "COALESCE(`asal`.`Kanal`, 'BawaPulang')";
+
     /** Dimensi pengelompokan: [kolom sisi penjualan, kolom sisi retur]. */
     private const DIMENSI = [
         'Tanggal' => ['`Penjualan`.`TanggalBisnis`', '`ReturPenjualan`.`TanggalBisnis`'],
         'Outlet' => ['`Penjualan`.`IdOutlet`', '`ReturPenjualan`.`IdOutlet`'],
         'Kasir' => ['`Penjualan`.`IdPengguna`', '`ReturPenjualan`.`IdPengguna`'],
-        'Kanal' => ['`Penjualan`.`Kanal`', '`asal`.`Kanal`'],
+        'Kanal' => ['`Penjualan`.`Kanal`', self::KANAL_RETUR],
     ];
 
     /** Alias kolom dimensi di hasil kueri. */
@@ -239,7 +245,7 @@ final class AgregatPenjualan
 
         $refund = ReturPenjualanPembayaran::query()
             ->join('ReturPenjualan', fn (JoinClause $j) => $j->on('ReturPenjualan.Id', '=', 'ReturPenjualanPembayaran.IdReturPenjualan')->on('ReturPenjualan.IdTenant', '=', 'ReturPenjualanPembayaran.IdTenant'))
-            ->join('Penjualan as asal', fn (JoinClause $j) => $j->on('asal.Id', '=', 'ReturPenjualan.IdPenjualanAsal')->on('asal.IdTenant', '=', 'ReturPenjualan.IdTenant'));
+            ->leftJoin('Penjualan as asal', fn (JoinClause $j) => $j->on('asal.Id', '=', 'ReturPenjualan.IdPenjualanAsal')->on('asal.IdTenant', '=', 'ReturPenjualan.IdTenant'));
         $this->TerapkanSaringRetur($refund, $saring);
         $refund = $refund
             ->selectRaw(self::PilihDimensi($kolomRetur))
@@ -544,7 +550,7 @@ final class AgregatPenjualan
 
         $retur = ReturPenjualanDetail::query()
             ->join('ReturPenjualan', fn (JoinClause $j) => $j->on('ReturPenjualan.Id', '=', 'ReturPenjualanDetail.IdReturPenjualan')->on('ReturPenjualan.IdTenant', '=', 'ReturPenjualanDetail.IdTenant'))
-            ->join('Penjualan as asal', fn (JoinClause $j) => $j->on('asal.Id', '=', 'ReturPenjualan.IdPenjualanAsal')->on('asal.IdTenant', '=', 'ReturPenjualan.IdTenant'))
+            ->leftJoin('Penjualan as asal', fn (JoinClause $j) => $j->on('asal.Id', '=', 'ReturPenjualan.IdPenjualanAsal')->on('asal.IdTenant', '=', 'ReturPenjualan.IdTenant'))
             ->when($cari !== '', fn (Builder $k) => $k->where('ReturPenjualanDetail.NamaProduk', 'like', $pola));
         $this->TerapkanSaringRetur($retur, $saring);
         $retur = $retur->selectRaw(
@@ -617,7 +623,7 @@ final class AgregatPenjualan
     private function KueriRetur(DataSaringLaporanPenjualan $saring): Builder
     {
         $kueri = ReturPenjualan::query()
-            ->join('Penjualan as asal', fn (JoinClause $j) => $j->on('asal.Id', '=', 'ReturPenjualan.IdPenjualanAsal')->on('asal.IdTenant', '=', 'ReturPenjualan.IdTenant'));
+            ->leftJoin('Penjualan as asal', fn (JoinClause $j) => $j->on('asal.Id', '=', 'ReturPenjualan.IdPenjualanAsal')->on('asal.IdTenant', '=', 'ReturPenjualan.IdTenant'));
         $this->TerapkanSaringRetur($kueri, $saring);
 
         return $kueri;
@@ -646,7 +652,7 @@ final class AgregatPenjualan
         $kueri->whereBetween('ReturPenjualan.TanggalBisnis', [$saring->dari->toDateString(), $saring->sampai->toDateString()])
             ->when($saring->idOutlet !== null, fn (Builder $k) => $k->whereIn('ReturPenjualan.IdOutlet', $saring->idOutlet ?? []))
             ->when($saring->idKasir !== null, fn (Builder $k) => $k->where('ReturPenjualan.IdPengguna', $saring->idKasir))
-            ->when($saring->kanal !== null, fn (Builder $k) => $k->where('asal.Kanal', $saring->kanal?->value));
+            ->when($saring->kanal !== null, fn (Builder $k) => $k->whereRaw(self::KANAL_RETUR.' = ?', [$saring->kanal?->value]));
     }
 
     /**

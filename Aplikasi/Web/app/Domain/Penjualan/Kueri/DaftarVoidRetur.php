@@ -64,8 +64,9 @@ final class DaftarVoidRetur
                 `VoidPenjualan`.`Nominal`, `VoidPenjualan`.`RefundTunai`, `VoidPenjualan`.`Alasan`,
                 TIMESTAMPDIFF(SECOND, `Penjualan`.`DibuatOfflinePada`, `VoidPenjualan`.`DivoidPada`) AS `JedaDetik`",
             );
+        // K28: retur tanpa struk tidak punya penjualan asal (leftJoin; NomorPenjualan kosong).
         $retur = ReturPenjualan::query()
-            ->join('Penjualan', fn ($j) => $j->on('Penjualan.Id', '=', 'ReturPenjualan.IdPenjualanAsal')->on('Penjualan.IdTenant', '=', 'ReturPenjualan.IdTenant'))
+            ->leftJoin('Penjualan', fn ($j) => $j->on('Penjualan.Id', '=', 'ReturPenjualan.IdPenjualanAsal')->on('Penjualan.IdTenant', '=', 'ReturPenjualan.IdTenant'))
             ->toBase()
             ->selectRaw(
                 "'".self::JENIS_RETUR."' AS `Jenis`, `ReturPenjualan`.`Id`, `ReturPenjualan`.`Uuid`, `ReturPenjualan`.`IdOutlet`,
@@ -124,6 +125,7 @@ final class DaftarVoidRetur
             'Nomor' => (string) $b->Nomor,
             'NomorPenjualan' => (string) $b->NomorPenjualan,
             'UuidPenjualan' => (string) $b->UuidPenjualan,
+            'TanpaStruk' => $b->Jenis === self::JENIS_RETUR && $b->UuidPenjualan === null,
             'Tautan' => $b->Jenis === self::JENIS_VOID ? '/kelola/penjualan/'.$b->UuidPenjualan : '/kelola/penjualan/retur/'.$b->Uuid,
             'NamaOutlet' => $outlet[(int) $b->IdOutlet] ?? '',
             'NamaKasir' => $nama[(int) $b->IdKasir]['Nama'] ?? '',

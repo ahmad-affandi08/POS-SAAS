@@ -59,6 +59,7 @@ const propsPengaturan: PropsPengaturanKasir = {
     BatasHariRetur: 7,
     BatasHariLewatJatuhTempo: 0,
     BukaLaciPerluPin: false,
+    BatasReturTanpaStrukHarian: '1000000.00',
     BarcodeTimbangan: { Aktif: false, Awalan: ['27'], Nilai: 'Berat' },
 };
 
@@ -351,6 +352,7 @@ describe('F-06 halaman kasir back-office', () => {
                 BatasHariRetur: 7,
                 BatasHariLewatJatuhTempo: 14,
                 BukaLaciPerluPin: true,
+                BatasReturTanpaStrukHarian: '1000000',
             },
             expect.anything(),
         );

@@ -37,6 +37,7 @@ final class AjukanPersetujuanJarakJauh
         IzinTenant::ShiftSelisihSetujui,
         IzinTenant::PenjualanVoid,
         IzinTenant::PenjualanRetur,
+        IzinTenant::PenjualanReturTanpaStruk,
         IzinTenant::PenjualanTempoSetujui,
     ];
 

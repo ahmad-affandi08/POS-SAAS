@@ -21,7 +21,10 @@ use LogicException;
  * @property int $Id
  * @property string $Uuid
  * @property int $IdTenant
- * @property int $IdPenjualanAsal
+ * @property int|null $IdPenjualanAsal null hanya untuk retur tanpa struk (K28)
+ * @property bool $TanpaStruk
+ * @property int|null $IdPelanggan
+ * @property list<array{Kode: string, Tarif: string, Dpp: string, Jumlah: string}>|null $RincianPajak
  * @property int $IdOutlet
  * @property int $IdShift
  * @property int $IdPerangkat
@@ -69,6 +72,8 @@ final class ReturPenjualan extends ModelDasar
             'RefundTunai' => 'decimal:2',
             'TotalHpp' => 'decimal:2',
             'PerluTinjauan' => 'boolean',
+            'TanpaStruk' => 'boolean',
+            'RincianPajak' => 'array',
             'DibuatOfflinePada' => 'datetime',
             'DiterimaPada' => 'datetime',
         ];
