@@ -10,7 +10,9 @@ import DialogFormulir from '@/Komponen/Tindakan/DialogFormulir';
 import { ItemAksiBaris } from '@/Komponen/Tindakan/MenuAksiBaris';
 import { Badge } from '@/Komponen/Ui/badge';
 import { Button } from '@/Komponen/Ui/button';
+import KotakCentang from '@/Komponen/Formulir/KotakCentang';
 import Tombol from '@/Komponen/Formulir/Tombol';
+import { LabelAkun, SaranAkun, useTampilKodeAkun } from '@/Pustaka/SaranAkun';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
 import type { PropsBersamaAplikasi } from '@/Tipe/Aplikasi';
 import type { BarisKategoriKas, JenisKategoriKas, PropsKategoriKas } from '@/Tipe/Kasir';
@@ -61,15 +63,30 @@ const opsiJenis = [
 export default function HalamanKategoriKas({ Kategori, OpsiAkun }: PropsKategoriKas) {
     const { props } = usePage<PropsBersamaAplikasi>();
     const galat = props.errors;
-    const [form, AturForm] = useState<{ uuid: string | null; isian: IsianKategori } | null>(null);
+    const [form, AturForm] = useState<{ uuid: string | null; isian: IsianKategori; akunManual: boolean } | null>(null);
     const [memproses, AturMemproses] = useState(false);
+    const [tampilKode, AturTampilKode] = useTampilKodeAkun();
+
+    /** Audit kemudahan pakai #15: akun jurnal disarankan dari nama kategori sampai pengguna memilihnya sendiri. */
+    const AturIsian = (ubah: Partial<IsianKategori>, akunManual?: boolean) => {
+        if (form === null) {
+            return;
+        }
+
+        const isian = { ...form.isian, ...ubah };
+        const manual = akunManual ?? form.akunManual;
+        const saran = manual ? null : SaranAkun(isian.Nama, OpsiAkun[isian.Jenis]);
+
+        AturForm({ ...form, isian: saran ? { ...isian, UuidAkun: saran.Uuid } : isian, akunManual: manual });
+    };
 
     const Buka = (kategori: BarisKategoriKas | null) =>
         AturForm({
             uuid: kategori?.Uuid ?? null,
             isian: kategori
                 ? { Nama: kategori.Nama, Jenis: kategori.Jenis, UuidAkun: kategori.UuidAkun ?? '' }
-                : { Nama: '', Jenis: 'Keluar', UuidAkun: '' },
+                : { Nama: '', Jenis: 'Keluar', UuidAkun: SaranAkun('', OpsiAkun.Keluar)?.Uuid ?? '' },
+            akunManual: kategori !== null,
         });
 
     const Simpan = (peristiwa: FormEvent) => {
@@ -161,7 +178,7 @@ export default function HalamanKategoriKas({ Kategori, OpsiAkun }: PropsKategori
                         <BidangTeks
                             label="Nama kategori"
                             nilai={form.isian.Nama}
-                            saatBerubah={(nilai) => AturForm({ ...form, isian: { ...form.isian, Nama: nilai } })}
+                            saatBerubah={(nilai) => AturIsian({ Nama: nilai })}
                             galat={galat.Nama}
                             maxLength={100}
                             required
@@ -172,26 +189,31 @@ export default function HalamanKategoriKas({ Kategori, OpsiAkun }: PropsKategori
                                 nilai={form.isian.Jenis}
                                 opsi={opsiJenis}
                                 saatBerubah={(nilai) =>
-                                    AturForm({
-                                        ...form,
-                                        isian: { ...form.isian, Jenis: nilai as JenisKategoriKas, UuidAkun: '' },
-                                    })
+                                    AturIsian({ Jenis: nilai as JenisKategoriKas, UuidAkun: '' }, false)
                                 }
                                 galat={galat.Jenis}
                                 required
                             />
                         ) : null}
                         <BidangPilihan
-                            label="Akun jurnal"
+                            label={form.isian.Jenis === 'Keluar' ? 'Dicatat sebagai biaya' : 'Dicatat sebagai'}
                             nilai={form.isian.UuidAkun}
                             kosong="Pilih akun"
                             opsi={OpsiAkun[form.isian.Jenis].map((a) => ({
                                 Nilai: a.Uuid,
-                                Label: `${a.Kode} ${a.Nama}`,
+                                Label: LabelAkun(a, tampilKode),
                             }))}
-                            saatBerubah={(nilai) => AturForm({ ...form, isian: { ...form.isian, UuidAkun: nilai } })}
+                            saatBerubah={(nilai) => AturIsian({ UuidAkun: nilai }, true)}
                             galat={galat.UuidAkun}
                             required
+                        />
+                        <p className="text-keterangan text-teks-sekunder">
+                            Dipilih otomatis dari nama kategori; ubah bila kurang pas.
+                        </p>
+                        <KotakCentang
+                            label="Tampilkan kode akun (untuk akuntan)"
+                            nilai={tampilKode}
+                            saatBerubah={AturTampilKode}
                         />
                         <div className="flex flex-wrap justify-end gap-2">
                             <Tombol type="button" varian="sekunder" onClick={() => AturForm(null)}>

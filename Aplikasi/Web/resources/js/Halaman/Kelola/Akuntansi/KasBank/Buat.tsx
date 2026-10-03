@@ -8,10 +8,12 @@ import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeksPanjang from '@/Komponen/Formulir/BidangTeksPanjang';
 import BidangUang from '@/Komponen/Formulir/BidangUang';
 import KartuFormulir from '@/Komponen/Formulir/KartuFormulir';
+import KotakCentang from '@/Komponen/Formulir/KotakCentang';
 import DaftarGalatServer from '@/Komponen/Katalog/DaftarGalatServer';
 import GrupRadio from '@/Komponen/Katalog/GrupRadio';
 import PemilihTanggal from '@/Komponen/Tanggal/PemilihTanggal';
 import Tombol from '@/Komponen/Formulir/Tombol';
+import { LabelAkun, useTampilKodeAkun } from '@/Pustaka/SaranAkun';
 import { TulisTanggal } from '@/Pustaka/Tanggal';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
 import type { JenisTransaksiKasBank, OpsiAkunKasBank, PropsBuatTransaksiKasBank, TipeAkun } from '@/Tipe/Akuntansi';
@@ -57,10 +59,25 @@ const aturanJenis: Record<
     },
 };
 
-function OpsiAkun(akun: OpsiAkunKasBank[], kasBank: boolean, lawan: TipeAkun[]) {
-    return akun
-        .filter((a) => (kasBank ? a.KasBank : !a.KasBank && lawan.includes(a.Jenis)))
-        .map((a) => ({ Nilai: a.Uuid, Label: `${a.Kode} ${a.Nama}` }));
+function SaringAkun(akun: OpsiAkunKasBank[], kasBank: boolean, lawan: TipeAkun[]) {
+    return akun.filter((a) => (kasBank ? a.KasBank : !a.KasBank && lawan.includes(a.Jenis)));
+}
+
+/** Audit kemudahan pakai #15: nama akun tanpa kode (kode hanya di mode akuntan). */
+function OpsiAkun(akun: OpsiAkunKasBank[], kasBank: boolean, lawan: TipeAkun[], tampilKode: boolean) {
+    return SaringAkun(akun, kasBank, lawan).map((a) => ({ Nilai: a.Uuid, Label: LabelAkun(a, tampilKode) }));
+}
+
+/** Akun kas/bank atau lawan yang hanya punya satu pilihan langsung terisi (aturan isi-otomatis v3.25). */
+function IsiAkunTunggal(akun: OpsiAkunKasBank[], jenis: JenisTransaksiKasBank) {
+    const aturan = aturanJenis[jenis];
+    const sumber = SaringAkun(akun, aturan.sumberKas, aturan.lawan);
+    const tujuan = SaringAkun(akun, aturan.tujuanKas, aturan.lawan);
+
+    return {
+        UuidAkunSumber: sumber.length === 1 ? (sumber[0]?.Uuid ?? '') : '',
+        UuidAkunTujuan: tujuan.length === 1 ? (tujuan[0]?.Uuid ?? '') : '',
+    };
 }
 
 type IsianTransaksi = {
@@ -93,14 +110,14 @@ export default function HalamanBuatTransaksiKasBank({
         Jenis: 'Pengeluaran',
         Tanggal: TulisTanggal(new Date()),
         UuidOutlet: WajibOutlet && OpsiOutlet.length === 1 ? (OpsiOutlet[0]?.Uuid ?? '') : '',
-        UuidAkunSumber: '',
-        UuidAkunTujuan: '',
+        ...IsiAkunTunggal(akun, 'Pengeluaran'),
         Jumlah: '',
         Keterangan: '',
         Lampiran: [],
         Ulangi: 'Tidak',
     }));
     const [memproses, AturMemproses] = useState(false);
+    const [tampilKode, AturTampilKode] = useTampilKodeAkun();
     const aturan = aturanJenis[isian.Jenis];
 
     const Ubah = (ubah: Partial<IsianTransaksi>) => AturIsian({ ...isian, ...ubah });
@@ -149,7 +166,10 @@ export default function HalamanBuatTransaksiKasBank({
                         nilai={isian.Jenis}
                         opsi={OpsiJenis}
                         saatBerubah={(nilai) =>
-                            Ubah({ Jenis: nilai as JenisTransaksiKasBank, UuidAkunSumber: '', UuidAkunTujuan: '' })
+                            Ubah({
+                                Jenis: nilai as JenisTransaksiKasBank,
+                                ...IsiAkunTunggal(akun, nilai as JenisTransaksiKasBank),
+                            })
                         }
                         galat={galat.Jenis}
                         required
@@ -166,7 +186,7 @@ export default function HalamanBuatTransaksiKasBank({
                         label={aturan.labelSumber}
                         nilai={isian.UuidAkunSumber}
                         kosong="Pilih akun"
-                        opsi={OpsiAkun(akun, aturan.sumberKas, aturan.lawan)}
+                        opsi={OpsiAkun(akun, aturan.sumberKas, aturan.lawan, tampilKode)}
                         saatBerubah={(nilai) => Ubah({ UuidAkunSumber: nilai })}
                         galat={galat.UuidAkunSumber}
                         required
@@ -175,10 +195,15 @@ export default function HalamanBuatTransaksiKasBank({
                         label={aturan.labelTujuan}
                         nilai={isian.UuidAkunTujuan}
                         kosong="Pilih akun"
-                        opsi={OpsiAkun(akun, aturan.tujuanKas, aturan.lawan)}
+                        opsi={OpsiAkun(akun, aturan.tujuanKas, aturan.lawan, tampilKode)}
                         saatBerubah={(nilai) => Ubah({ UuidAkunTujuan: nilai })}
                         galat={galat.UuidAkunTujuan}
                         required
+                    />
+                    <KotakCentang
+                        label="Tampilkan kode akun (untuk akuntan)"
+                        nilai={tampilKode}
+                        saatBerubah={AturTampilKode}
                     />
                     <BidangUang
                         label="Jumlah"

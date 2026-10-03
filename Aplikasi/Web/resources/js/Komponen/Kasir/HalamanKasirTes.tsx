@@ -280,7 +280,9 @@ describe('F-06 halaman kasir back-office', () => {
 
         fireEvent.click(screen.getByRole('button', { name: 'Tambah kategori kas' }));
         UbahNilai(screen.getByLabelText('Nama kategori'), 'Bayar parkir motor');
-        UbahNilai(screen.getByLabelText('Akun jurnal'), '01K5AKUN000000000000000001');
+        // Audit kemudahan pakai #15: akun dipilih otomatis dari nama kategori (tanpa kode akun).
+        expect(screen.getByLabelText('Dicatat sebagai biaya').textContent).toContain('Beban Lain-lain');
+        expect(screen.queryByText(/6-9000/)).toBeNull();
         fireEvent.click(screen.getByRole('button', { name: 'Simpan kategori' }));
 
         expect(tiruanRouter.post).toHaveBeenCalledWith(

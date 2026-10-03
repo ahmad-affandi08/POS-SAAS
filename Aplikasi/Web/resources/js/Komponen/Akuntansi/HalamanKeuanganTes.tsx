@@ -335,6 +335,27 @@ describe('F-13a kas & bank', () => {
         expect(screen.queryByRole('link', { name: 'Catat transaksi kas & bank' })).toBeNull();
     });
 
+    it('audit kemudahan pakai #15: nama akun tanpa kode, kas tunggal terisi otomatis, kode tampil di mode akuntan', () => {
+        window.history.replaceState({}, '', '/kelola/akuntansi/kas-bank/buat');
+        window.localStorage.removeItem('Akuntansi.TampilKodeAkun');
+        RenderUji(
+            <HalamanBuatTransaksiKasBank
+                {...propsBuatKasBank}
+                OpsiAkun={propsBuatKasBank.OpsiAkun.filter((a) => a.Uuid !== 'K2')}
+            />,
+        );
+        const formulir = screen.getByRole('form', { name: 'Formulir transaksi kas & bank' });
+        const sumber = within(formulir).getByRole('combobox', { name: 'Dibayar dari (kas/bank)' });
+
+        expect(sumber.textContent).toContain('Kas Outlet');
+        expect(sumber.textContent).not.toContain('1-1100');
+        fireEvent.click(within(formulir).getByRole('checkbox', { name: 'Tampilkan kode akun (untuk akuntan)' }));
+        expect(within(formulir).getByRole('combobox', { name: 'Dibayar dari (kas/bank)' }).textContent).toContain(
+            '1-1100 Kas Outlet',
+        );
+        window.localStorage.removeItem('Akuntansi.TampilKodeAkun');
+    });
+
     it('halaman catat: akun disaring per jenis (kas/bank vs lawan), outlet wajib, dikirim sebagai string desimal; Batal kembali ke daftar', () => {
         window.history.replaceState({}, '', '/kelola/akuntansi/kas-bank/buat');
         RenderUji(<HalamanBuatTransaksiKasBank {...propsBuatKasBank} />);
