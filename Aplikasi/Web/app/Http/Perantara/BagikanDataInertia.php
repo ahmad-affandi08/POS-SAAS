@@ -150,6 +150,13 @@ final class BagikanDataInertia extends Middleware
 
                 return app(PengumumanBerlaku::class)->AmbilUntuk(PlatformPengumuman::Web, $kodePaket, app(SektorOutletTenant::class)->AmbilKode(), null);
             },
+            // Audit kemudahan pakai #33 (D-38): menu modul khusus sektor (grosir, laundry, reservasi, apotek, …) hanya
+            // tampil bila ada outlet bersektor itu; kosong = sektor belum diketahui, semua menu tampil.
+            'SektorOutlet' => function () use ($pengguna): array {
+                return $pengguna instanceof Pengguna && app(KonteksTenant::class)->Ambil() !== null
+                    ? app(SektorOutletTenant::class)->AmbilKode()
+                    : [];
+            },
         ];
     }
 }

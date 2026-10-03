@@ -57,6 +57,8 @@ export type PropsBersamaAplikasi = {
     PengingatDuaFaktor?: boolean;
     /** P-10 PGL-19: banner pengumuman & pemeliharaan platform (kosong/absen di luar back-office). */
     PengumumanPlatform?: PengumumanPlatform[];
+    /** Audit #33: kode template sektor outlet tenant aktif (`FNB-RST`, `WHS-DST`, …); kosong = tidak diketahui. */
+    SektorOutlet?: string[];
     /** F-02: hak akses di tenant aktif (null di luar back-office). */
     Akses: { Pemilik: boolean; Izin: string[]; IzinNonaktif?: string[] } | null;
     /** D-23: fitur di luar paket (menu tetap tampil; klik = dialog naik paket / add-on). */

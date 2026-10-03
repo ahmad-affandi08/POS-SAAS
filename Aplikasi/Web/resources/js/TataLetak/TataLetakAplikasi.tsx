@@ -70,6 +70,10 @@ type ItemMenu = {
     ikon?: NamaIkonNavigasi;
     fitur?: string;
     pemisah?: boolean;
+    /** Audit #33: awalan kode sektor outlet yang memakai menu ini (mis. `WHS`, `SVC-LDR`); tanpa = semua sektor. */
+    sektor?: string[];
+    /** Audit #33: disembunyikan di "Mode sederhana" (tetap bisa dibuka lewat Ctrl+K). */
+    lanjutan?: boolean;
 };
 
 /** Menu utama bersub-menu: tampil bila ada sub-menu yang boleh dibuka; tautannya = sub-menu pertama yang boleh. */
@@ -97,13 +101,26 @@ const menuPersediaan: ItemMenu[] = [
         href: '/kelola/persediaan/transfer',
         izin: IzinTenant.PersediaanLihat,
         fitur: 'stok.transfer',
+        lanjutan: true,
     },
-    { label: 'Stok opname', href: '/kelola/persediaan/opname', izin: IzinTenant.PersediaanLihat, fitur: 'stok.opname' },
+    {
+        label: 'Stok opname',
+        href: '/kelola/persediaan/opname',
+        izin: IzinTenant.PersediaanLihat,
+        fitur: 'stok.opname',
+        lanjutan: true,
+    },
     { label: 'Penyesuaian stok', href: '/kelola/persediaan/penyesuaian', izin: IzinTenant.PersediaanLihat },
     // F-05e: order produksi (resep → bahan keluar, hasil masuk).
-    { label: 'Produksi', href: '/kelola/persediaan/produksi', izin: IzinTenant.PersediaanLihat },
+    { label: 'Produksi', href: '/kelola/persediaan/produksi', izin: IzinTenant.PersediaanLihat, lanjutan: true },
     // F-05f: bahan terbuang (waste) & food cost.
-    { label: 'Bahan terbuang', href: '/kelola/persediaan/bahan-terbuang', izin: IzinTenant.PersediaanLihat },
+    {
+        label: 'Bahan terbuang',
+        href: '/kelola/persediaan/bahan-terbuang',
+        izin: IzinTenant.PersediaanLihat,
+        sektor: ['FNB', 'RTL-BLD'],
+        lanjutan: true,
+    },
 ];
 
 // F-04 fase 1: grup menu "Pembelian" (pembelian.kelola); pengaturan pembelian butuh pembelian.po.setujui.
@@ -116,11 +133,12 @@ const menuPembelian: ItemMenu[] = [
         href: '/kelola/pembelian/pesanan',
         izin: IzinTenant.PembelianKelola,
         fitur: 'pembelian.po',
+        lanjutan: true,
     },
     { label: 'Penerimaan barang', href: '/kelola/pembelian/penerimaan', izin: IzinTenant.PembelianKelola },
-    { label: 'Faktur pembelian', href: '/kelola/pembelian/faktur', izin: IzinTenant.PembelianKelola },
+    { label: 'Faktur pembelian', href: '/kelola/pembelian/faktur', izin: IzinTenant.PembelianKelola, lanjutan: true },
     { label: 'Hutang pemasok', href: '/kelola/pembelian/hutang', izin: IzinTenant.PembelianKelola },
-    { label: 'Retur pembelian', href: '/kelola/pembelian/retur', izin: IzinTenant.PembelianKelola },
+    { label: 'Retur pembelian', href: '/kelola/pembelian/retur', izin: IzinTenant.PembelianKelola, lanjutan: true },
     { label: 'Pemasok', href: '/kelola/pembelian/pemasok', izin: IzinTenant.PembelianKelola },
 ];
 
@@ -131,9 +149,9 @@ const menuGrosir: ItemMenu[] = [
     { label: 'Faktur penjualan', href: '/kelola/grosir/faktur', izin: IzinTenant.GrosirKelola },
     { label: 'Retur grosir', href: '/kelola/grosir/retur', izin: IzinTenant.GrosirKelola },
     // Modul Salesman bagian 1: kunjungan & pesanan dari aplikasi salesman.
-    { label: 'Kunjungan salesman', href: '/kelola/grosir/kunjungan', izin: IzinTenant.GrosirKelola },
+    { label: 'Kunjungan salesman', href: '/kelola/grosir/kunjungan', izin: IzinTenant.GrosirKelola, lanjutan: true },
     // Modul Salesman bagian 3: kendaraan kanvas & rekap harian (muat, terjual, bongkar, setoran).
-    { label: 'Kanvas', href: '/kelola/grosir/kanvas', izin: IzinTenant.GrosirKelola },
+    { label: 'Kanvas', href: '/kelola/grosir/kanvas', izin: IzinTenant.GrosirKelola, lanjutan: true },
 ];
 
 // F-06: grup menu "Shift & kas" (pemantauan back-office; layar kasir ada di aplikasi Flutter): shift (laporan.penjualan.lihat), kategori kas (akuntansi.kelola), pengaturan (outlet.kelola).
@@ -180,8 +198,8 @@ const menuKaryawan: ItemMenu[] = [
         fitur: 'karyawan.komisi',
     },
     // F-18 bagian 3: kasbon, target penjualan.
-    { label: 'Kasbon', href: '/kelola/karyawan/kasbon', izin: IzinTenant.KaryawanLihat },
-    { label: 'Target penjualan', href: '/kelola/karyawan/target', izin: IzinTenant.KaryawanLihat },
+    { label: 'Kasbon', href: '/kelola/karyawan/kasbon', izin: IzinTenant.KaryawanLihat, lanjutan: true },
+    { label: 'Target penjualan', href: '/kelola/karyawan/target', izin: IzinTenant.KaryawanLihat, lanjutan: true },
     // F-18 bagian 3: rekap gaji bulanan (memuat gaji).
     { label: 'Rekap gaji', href: '/kelola/karyawan/gaji', izin: IzinTenant.KaryawanKelola },
 ];
@@ -204,12 +222,17 @@ const menuPenjualan: ItemMenu[] = [
     },
     { label: 'Shift kasir', href: '/kelola/kasir/shift', izin: IzinTenant.LaporanPenjualanLihat },
     // F-15: tutup harian (End of Day) per outlet.
-    { label: 'Tutup harian', href: '/kelola/kasir/tutup-harian', izin: IzinTenant.LaporanPenjualanLihat },
+    {
+        label: 'Tutup harian',
+        href: '/kelola/kasir/tutup-harian',
+        izin: IzinTenant.LaporanPenjualanLihat,
+        lanjutan: true,
+    },
     // F-12 bagian 2: pre-order & uang muka.
     { label: 'Pre-order', href: '/kelola/pre-order', izin: IzinTenant.LaporanPenjualanLihat },
     // F-07 mode service: reservasi layanan jasa per staf.
-    { label: 'Reservasi', href: '/kelola/reservasi', izin: IzinTenant.ReservasiKelola },
-    { label: 'Laundry', href: '/kelola/laundry', izin: IzinTenant.LaundryKelola },
+    { label: 'Reservasi', href: '/kelola/reservasi', izin: IzinTenant.ReservasiKelola, sektor: ['SVC'] },
+    { label: 'Laundry', href: '/kelola/laundry', izin: IzinTenant.LaundryKelola, sektor: ['SVC-LDR'] },
 ];
 
 // F-05a: grup menu "Akuntansi"; jurnal (baca saja) memakai laporan.keuangan.lihat (DesainF05a H-13).
@@ -265,7 +288,12 @@ const menuLaporan: ItemMenu[] = [
     { label: 'Laporan pajak', href: '/kelola/laporan/pajak', izin: IzinTenant.LaporanKeuanganLihat },
     { label: 'Laporan stok', href: '/kelola/laporan/stok', izin: IzinTenant.PersediaanLihat },
     // Apotek (§9.5): obat wajib resep & data pendukung SIPNAP.
-    { label: 'Laporan apotek', href: '/kelola/laporan/apotek', izin: IzinTenant.LaporanPenjualanLihat },
+    {
+        label: 'Laporan apotek',
+        href: '/kelola/laporan/apotek',
+        izin: IzinTenant.LaporanPenjualanLihat,
+        sektor: ['RTL-PHR'],
+    },
     { label: 'Laba rugi', href: '/kelola/akuntansi/laporan/laba-rugi', izin: IzinTenant.LaporanKeuanganLihat },
     {
         label: 'Neraca',
@@ -357,6 +385,8 @@ export const daftarMenu: (ItemMenu | GrupMenu)[] = [
         label: 'Grosir',
         href: '/kelola/grosir/pesanan',
         izin: IzinTenant.GrosirKelola,
+        sektor: ['WHS'],
+        lanjutan: true,
         ikon: 'Pengiriman',
         labelSub: 'Menu grosir',
         sub: menuGrosir,
@@ -381,6 +411,7 @@ export const daftarMenu: (ItemMenu | GrupMenu)[] = [
         label: 'Akuntansi',
         href: '/kelola/akuntansi/jurnal',
         izin: null,
+        lanjutan: true,
         ikon: 'Akuntansi',
         labelSub: 'Menu akuntansi',
         sub: menuAkuntansi,
@@ -601,9 +632,26 @@ export function CekMenuAktif(href: string, url: string): boolean {
 
 type MenuTerlihat = { menu: ItemMenu; labelSub: string | null; sub: ItemMenu[] };
 
-/** Menu utama yang boleh dilihat pemegang akses ini beserta sub-menunya; grup tanpa sub-menu boleh disembunyikan. */
-export function SaringMenuTerlihat(akses: PropsBersamaAplikasi['Akses']): MenuTerlihat[] {
-    const CekBoleh = (menu: ItemMenu) => menu.izin === null || PunyaIzinTenant(akses, menu.izin);
+/** Audit #33: menu bersektor tampil bila salah satu outlet memakai sektor berawalan itu; sektor kosong = semua tampil. */
+export function CekSesuaiSektor(menu: { sektor?: string[] }, sektorOutlet: string[]): boolean {
+    if (menu.sektor === undefined || sektorOutlet.length === 0) {
+        return true;
+    }
+    return menu.sektor.some((awalan) => sektorOutlet.some((kode) => kode === awalan || kode.startsWith(`${awalan}-`)));
+}
+
+/**
+ * Menu utama yang boleh dilihat pemegang akses ini beserta sub-menunya; grup tanpa sub-menu boleh disembunyikan.
+ * Audit #33: `sektorOutlet` menyaring menu khusus sektor; `sederhana` menyembunyikan menu `lanjutan`.
+ */
+export function SaringMenuTerlihat(
+    akses: PropsBersamaAplikasi['Akses'],
+    opsi: { sektorOutlet?: string[]; sederhana?: boolean } = {},
+): MenuTerlihat[] {
+    const CekBoleh = (menu: ItemMenu) =>
+        (menu.izin === null || PunyaIzinTenant(akses, menu.izin)) &&
+        CekSesuaiSektor(menu, opsi.sektorOutlet ?? []) &&
+        !(opsi.sederhana === true && menu.lanjutan === true);
 
     return daftarMenu.flatMap((menu): MenuTerlihat[] => {
         if (!CekBoleh(menu)) {
@@ -758,6 +806,17 @@ function BannerLangganan({ tenant, bolehBayar }: { tenant: TenantAktif; bolehBay
     return null;
 }
 
+const KunciModeSederhana = 'Navigasi.ModeSederhana';
+
+/** Audit #33: pilihan "Mode sederhana" disimpan per peramban; bawaan mati. */
+function BacaModeSederhana(): boolean {
+    try {
+        return window.localStorage.getItem(KunciModeSederhana) === '1';
+    } catch {
+        return false;
+    }
+}
+
 /**
  * Tata letak back-office tenant (/kelola): bilah menu samping shadcn/ui berbasis izin (bisa diciutkan menjadi ikon,
  * menjadi Sheet di layar sempit), bilah atas dengan remah roti & menu akun, lalu banner status dan isi halaman.
@@ -766,8 +825,19 @@ function BannerLangganan({ tenant, bolehBayar }: { tenant: TenantAktif; bolehBay
 export default function TataLetakAplikasi({ judul, jejak = [], children }: PropsTataLetak) {
     const { props, url } = usePage<PropsBersamaAplikasi>();
     const tenantAktif = props.TenantAktif;
-    const menuTerlihat = SaringMenuTerlihat(props.Akses);
-    const pencarian = SusunPencarian(menuTerlihat, props.Akses, props.Edisi);
+    const sektorOutlet = props.SektorOutlet ?? [];
+    const [sederhana, AturSederhana] = useState(BacaModeSederhana);
+    const menuTerlihat = SaringMenuTerlihat(props.Akses, { sektorOutlet, sederhana });
+    // Ctrl+K tetap menemukan menu lanjutan walau mode sederhana aktif.
+    const pencarian = SusunPencarian(SaringMenuTerlihat(props.Akses, { sektorOutlet }), props.Akses, props.Edisi);
+    const UbahSederhana = (aktif: boolean) => {
+        AturSederhana(aktif);
+        try {
+            window.localStorage.setItem(KunciModeSederhana, aktif ? '1' : '0');
+        } catch {
+            // Penyimpanan peramban tidak tersedia: pilihan hanya berlaku di halaman ini.
+        }
+    };
     const namaInduk = tenantAktif?.Nama ?? props.NamaAplikasi;
     const [mengirim, AturMengirim] = useState(false);
     // D-23: fitur di luar paket (gembok di menu) dan dialog penawarannya.
@@ -814,6 +884,19 @@ export default function TataLetakAplikasi({ judul, jejak = [], children }: Props
                                 </SidebarGroupContent>
                             </SidebarGroup>
                         </nav>
+                    ) : null}
+                    {tenantAktif && props.Akses ? (
+                        <div className="mt-auto px-4 pb-3 group-data-[collapsible=icon]:hidden">
+                            <label className="flex cursor-pointer items-center gap-2 text-keterangan text-sidebar-foreground">
+                                <input
+                                    type="checkbox"
+                                    checked={sederhana}
+                                    onChange={(peristiwa) => UbahSederhana(peristiwa.target.checked)}
+                                    className="size-4 accent-brand"
+                                />
+                                Mode sederhana (sembunyikan menu lanjutan)
+                            </label>
+                        </div>
                     ) : null}
                 </SidebarContent>
                 {/* D-27: Keamanan akun pindah ke menu akun di kanan atas, tempat orang mencarinya. */}

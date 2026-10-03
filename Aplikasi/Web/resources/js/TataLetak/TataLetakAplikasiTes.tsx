@@ -172,6 +172,32 @@ describe('TataLetakAplikasi: menu berbasis izin & banner langganan (F-00, §19.1
         expect(screen.queryByRole('navigation', { name: 'Menu produk' })).toBeNull();
     });
 
+    it('audit #33: menu khusus sektor disaring sektor outlet; mode sederhana menyembunyikan menu lanjutan', () => {
+        const akses = { Pemilik: true, Izin: [] };
+        const Label = (menu: ReturnType<typeof SaringMenuTerlihat>) => menu.map(({ menu: m }) => m.label);
+        const SubPenjualan = (menu: ReturnType<typeof SaringMenuTerlihat>) =>
+            (menu.find(({ menu: m }) => m.label === 'Penjualan & kasir')?.sub ?? []).map((m) => m.label);
+
+        // Sektor belum diketahui: semua tampil (perilaku lama).
+        expect(Label(SaringMenuTerlihat(akses))).toContain('Grosir');
+        // Kafe saja: grosir, laundry, reservasi tersembunyi.
+        const kafe = SaringMenuTerlihat(akses, { sektorOutlet: ['FNB-CAF'] });
+        expect(Label(kafe)).not.toContain('Grosir');
+        expect(SubPenjualan(kafe)).not.toContain('Laundry');
+        expect(SubPenjualan(kafe)).not.toContain('Reservasi');
+        // Distributor + laundry: grosir & laundry tampil.
+        const campur = SaringMenuTerlihat(akses, { sektorOutlet: ['WHS-DST', 'SVC-LDR'] });
+        expect(Label(campur)).toContain('Grosir');
+        expect(SubPenjualan(campur)).toContain('Laundry');
+        expect(SubPenjualan(campur)).toContain('Reservasi');
+        // Mode sederhana.
+        const sederhana = SaringMenuTerlihat(akses, { sederhana: true });
+        expect(Label(sederhana)).not.toContain('Akuntansi');
+        expect(Label(sederhana)).not.toContain('Grosir');
+        expect(SubPenjualan(sederhana)).not.toContain('Tutup harian');
+        expect(Label(sederhana)).toContain('Produk');
+    });
+
     it('klik label grup membuka/menutup sub-menu tanpa pindah halaman; chevron memutar saat terbuka', () => {
         propsHalaman = BuatProps({}, ['produk.lihat']);
         render(<TataLetakAplikasi judul="Beranda">isi</TataLetakAplikasi>);

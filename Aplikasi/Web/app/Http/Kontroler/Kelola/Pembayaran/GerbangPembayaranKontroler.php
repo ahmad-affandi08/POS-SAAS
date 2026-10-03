@@ -8,6 +8,7 @@ use App\Domain\Integrasi\Aksi\SimpanGerbangPembayaranTenant;
 use App\Domain\Integrasi\Aksi\UbahStatusGerbangPembayaranTenant;
 use App\Domain\Integrasi\Aksi\UjiGerbangPembayaranTenant;
 use App\Domain\Integrasi\Kueri\HalamanGerbangPembayaranTenant;
+use App\Domain\Penjualan\Aksi\SiapkanMetodeQrisDinamis;
 use App\Http\Kontroler\Kelola\DasarKelolaKontroler;
 use App\Http\Permintaan\Kelola\Pembayaran\SimpanGerbangPembayaranPermintaan;
 use Illuminate\Http\RedirectResponse;
@@ -43,11 +44,15 @@ final class GerbangPembayaranKontroler extends DasarKelolaKontroler
             : to_route('kelola.pembayaran.gerbang')->withErrors(['Umum' => "Koneksi gagal. {$hasil->pesan}"]);
     }
 
-    public function Aktifkan(UbahStatusGerbangPembayaranTenant $ubah): RedirectResponse
+    public function Aktifkan(UbahStatusGerbangPembayaranTenant $ubah, SiapkanMetodeQrisDinamis $siapkanMetode): RedirectResponse
     {
         $ubah->Jalankan(true);
+        // Audit kemudahan pakai #24: metode bayar QRIS ikut dibuat bila belum ada, jadi kasir langsung bisa memakainya.
+        $metode = $siapkanMetode->Jalankan();
 
-        return to_route('kelola.pembayaran.gerbang')->with('Kilat', 'Gerbang pembayaran aktif. Kasir sudah bisa memakai QRIS dinamis.');
+        return to_route('kelola.pembayaran.gerbang')->with('Kilat', $metode === null
+            ? 'QRIS tersambung. Kasir sudah bisa menerima pembayaran QRIS.'
+            : "QRIS tersambung. Pilihan bayar \"{$metode->Nama}\" sudah ditambahkan ke kasir.");
     }
 
     public function Nonaktifkan(UbahStatusGerbangPembayaranTenant $ubah): RedirectResponse

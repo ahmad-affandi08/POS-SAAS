@@ -42,8 +42,8 @@ kali, persetujuan jarak jauh tetap); butir 3 (tautan unduh) ditunda. Butir seles
 | 20 ✓ v4.40 | Back-office | Pembelian tempo tanpa PO butuh penerimaan + faktur (nomor faktur wajib) + pembayaran | "Bayar nanti (tempo X hari)" di penerimaan → faktur otomatis, nomor opsional | Agent |
 | 21 ✓ v4.40 | Back-office | Harga beli tidak terisi otomatis di PO/penerimaan (`AturanPembelian.ts:43`) | Isi harga beli terakhir per pemasok | Agent |
 | 22 ✓ v4.40 | Back-office | Penyesuaian stok masuk wajib "Harga modal" per baris (`Penyesuaian/Form.tsx:342`) | Isi otomatis HPP rata-rata, bisa diubah | Agent |
-| 23 | Awal | Pajak/PKP ditanya di 3–4 tempat dengan DPP, PBJT, NITKU; warung non-PKP tetap lewat halaman Pajak | Satu pertanyaan PKP di Profil; lewati langkah Pajak bila non-PKP & bukan F&B; NITKU/DPP di "Lanjutan" | Agent |
-| 24 | Awal | QRIS dinamis: dua tempat + jargon (MDR, Lingkungan, kredensial, callback) | Wizard "Hubungkan QRIS" yang sekaligus membuat metode QRIS | Agent |
+| 23 ✓ v4.43 | Awal | Pajak/PKP ditanya di 3–4 tempat dengan DPP, PBJT, NITKU; warung non-PKP tetap lewat halaman Pajak | Satu pertanyaan PKP di Profil; lewati langkah Pajak bila non-PKP & bukan F&B; NITKU/DPP di "Lanjutan" | Agent |
+| 24 ✓ v4.43 | Awal | QRIS dinamis: dua tempat + jargon (MDR, Lingkungan, kredensial, callback) | Wizard "Hubungkan QRIS" yang sekaligus membuat metode QRIS | Agent |
 | 25 ✓ v4.40 | Kasir | PIN supervisor: pilih nama dulu, tiap void/retur/batal item meja per item (`DialogPinSupervisor`) | Supervisor tunggal terpilih otomatis; persetujuan berlaku beberapa menit; batal beberapa item satu PIN | Disetujui D-38: void & retur tetap PIN tiap kali; lainnya boleh persetujuan berlaku sementara |
 | 26 ✓ v4.39 | Kasir | Kunci layar 5 menit walau keranjang berisi / menunggu QRIS (`RuangKerja.dart:271`) | Tidak mengunci saat transaksi berjalan; bawaan 15 menit | Agent |
 | 27 ✓ v4.40 | Kasir | Alasan void/retur/selisih diketik bebas, batas minimum tidak seragam | Chip alasan siap pakai + "Lainnya" | Agent |
@@ -52,7 +52,7 @@ kali, persetujuan jarak jauh tetap); butir 3 (tautan unduh) ditunda. Butir seles
 | 30 ✓ v4.41 | Kasir | Istilah: Void, Laporan X/Z, Kanal, Marketplace, Antrean kirim, approval EDC, pre-order/DP; kode teknis di layar Sinkron | Bahasa sehari-hari; label lengkap untuk semua jenis outbox | Agent |
 | 31 ✓ v4.41 | Kasir | Absen terpisah dari masuk kasir (dua kali PIN, ±17 ketukan); absen keluar harus keluar dulu | Tawarkan absen masuk saat masuk pertama hari itu & absen keluar di Laporan tutup shift | Agent |
 | 32 ✓ v4.39 | Kasir | Mode latihan bisa dinyalakan siapa pun tanpa PIN → penjualan sungguhan bisa hilang | Wajib PIN supervisor + peringatan di tombol Bayar | Agent |
-| 33 | Semua | Menu samping 12 entri + 58 sub-menu tanpa saring sektor; banyak gembok | Saring per sektor & fitur aktif; "Mode sederhana" untuk paket kecil | Disetujui D-38 (anggaran navigasi D-27) |
+| 33 ✓ v4.43 | Semua | Menu samping 12 entri + 58 sub-menu tanpa saring sektor; banyak gembok | Saring per sektor & fitur aktif; "Mode sederhana" untuk paket kecil | Disetujui D-38 (anggaran navigasi D-27) |
 | 34 ✓ v4.42 | Awal | Tiga cara menambah orang (undang, tambah langsung, karyawan) + 58 izin & 11 peran | Satu "Tambah staf"; 3–4 peran ringkas; izin rinci di "Sesuaikan" | Agent |
 
 ## Gelombang 3 — sisa (Sedang–Rendah)

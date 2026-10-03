@@ -10,6 +10,7 @@ use App\Domain\PanduanAwal\Aksi\SiapkanOtomatisPanduan;
 use App\Domain\PanduanAwal\Aksi\SimpanProfilUsaha;
 use App\Domain\PanduanAwal\Aksi\TandaiLangkahPanduan;
 use App\Domain\PanduanAwal\Aksi\TerapkanTemplateSektor;
+use App\Domain\PanduanAwal\Data\DataPajakPanduan;
 use App\Domain\PanduanAwal\Data\HasilPenerapanTemplate;
 use App\Domain\PanduanAwal\Enum\LangkahPanduan;
 use App\Domain\PanduanAwal\Enum\StatusLangkahPanduan;
@@ -89,9 +90,20 @@ final class PanduanAwalKontroler extends DasarPanduanAwalKontroler
         ]);
     }
 
-    public function TerapkanSektor(TerapkanTemplateSektorPermintaan $permintaan, TerapkanTemplateSektor $terapkan): RedirectResponse
+    public function TerapkanSektor(TerapkanTemplateSektorPermintaan $permintaan, TerapkanTemplateSektor $terapkan, UsulanPajak $usulan, KonfirmasiPajakPanduan $konfirmasi): RedirectResponse
     {
         $hasil = $terapkan->Jalankan($this->OutletPanduan(), $permintaan->string('KodeTemplate')->toString(), $permintaan->AmbilSektorLain());
+
+        // Audit kemudahan pakai #23: usaha bukan PKP yang tidak diusulkan memungut pajak daerah/biaya layanan (umumnya
+        // non-F&B) tidak perlu melihat langkah Pajak: usulan langsung disimpan dan bisa diubah di Pengaturan › Pajak.
+        $pajak = $usulan->Ambil($this->OutletPanduanRingkas());
+        $nilai = $pajak['Nilai'];
+
+        if (! $pajak['Pkp'] && ! $pajak['SudahDikonfirmasi'] && ! $nilai['PungutPbjt'] && ! $nilai['BiayaLayananAktif']) {
+            $konfirmasi->Jalankan($this->OutletPanduan(), new DataPajakPanduan(false, false, '0', $nilai['HargaTermasukPajak']));
+
+            return redirect()->route('kelola.panduan-awal.produk')->with('Kilat', self::PesanPenerapan($hasil).' Usaha Anda bukan PKP dan tidak memungut pajak daerah, jadi langkah Pajak dilewati otomatis (bisa diubah di Pengaturan › Pajak).');
+        }
 
         return redirect()->route('kelola.panduan-awal.pajak')->with('Kilat', self::PesanPenerapan($hasil));
     }

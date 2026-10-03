@@ -33,6 +33,28 @@ export function IsiAwalPengaturan(
     );
 }
 
+/** Audit kemudahan pakai #24: langkah menghubungkan QRIS tanpa istilah teknis, ditandai selesai menurut status. */
+export function LangkahQris(gerbang: PropsGerbangPembayaran['Gerbang']): { Teks: string; Selesai: boolean }[] {
+    return [
+        {
+            Teks: 'Daftar akun merchant di salah satu penyedia (misalnya Midtrans atau Xendit), lalu salin kunci dari dasbornya.',
+            Selesai: gerbang !== null,
+        },
+        {
+            Teks: 'Pilih penyedia, tempel kuncinya di bawah, lalu klik "Simpan akun merchant".',
+            Selesai: gerbang !== null,
+        },
+        {
+            Teks: 'Klik "Uji koneksi" untuk memastikan kunci benar.',
+            Selesai: gerbang?.StatusUji === 'Berhasil' || gerbang?.Aktif === true,
+        },
+        {
+            Teks: 'Klik "Aktifkan gerbang", lalu salin URL webhook ke dasbor penyedia agar pembayaran terkonfirmasi otomatis.',
+            Selesai: gerbang?.Aktif === true,
+        },
+    ];
+}
+
 function KredensialKosong(penyedia: OpsiPenyediaGerbang | undefined): Record<string, string> {
     return Object.fromEntries((penyedia?.BidangKredensial ?? []).map((b) => [b.Kunci, '']));
 }
@@ -107,10 +129,20 @@ export default function HalamanGerbangPembayaran({
     return (
         <TataLetakAplikasi judul="Gerbang pembayaran">
             <div className="grid gap-4">
-                <Pemberitahuan jenis="info" judul="Dana langsung ke rekening toko">
-                    Pembayaran QRIS dinamis memakai akun merchant milik toko Anda sendiri, sehingga uang pelanggan
-                    langsung masuk ke rekening toko tanpa melewati PAYOU. Biaya MDR QRIS mengikuti ketentuan Bank
-                    Indonesia dan ditagih penyedia kepada toko.
+                <Pemberitahuan jenis="info" judul="Hubungkan QRIS dalam 4 langkah">
+                    <ol className="mt-1 grid list-decimal gap-1 pl-5" aria-label="Langkah menghubungkan QRIS">
+                        {LangkahQris(Gerbang).map((langkah) => (
+                            <li key={langkah.Teks} className={langkah.Selesai ? 'text-teks-sekunder line-through' : ''}>
+                                {langkah.Teks}
+                                {langkah.Selesai ? ' (selesai)' : ''}
+                            </li>
+                        ))}
+                    </ol>
+                    <p className="mt-2">
+                        Uang pelanggan langsung masuk ke rekening toko Anda, tidak lewat PAYOU. Pilihan bayar
+                        &quot;QRIS&quot; di kasir dibuat otomatis saat QRIS diaktifkan. Biaya MDR mengikuti ketentuan
+                        Bank Indonesia dan ditagih penyedia ke toko.
+                    </p>
                 </Pemberitahuan>
                 {galatUmum ? <Pemberitahuan jenis="bahaya">{galatUmum}</Pemberitahuan> : null}
 

@@ -12,7 +12,9 @@ use App\Domain\Katalog\Model\Satuan;
 use App\Domain\Organisasi\Model\Outlet;
 use App\Domain\Pajak\Model\KelompokPajak;
 use App\Domain\Pajak\Model\KelompokPajakDetail;
+use App\Domain\PanduanAwal\Enum\LangkahPanduan;
 use App\Domain\PanduanAwal\Enum\StatusTemplateSektor;
+use App\Domain\PanduanAwal\Model\ProgresPanduanAwal;
 use App\Domain\PanduanAwal\Model\TemplateSektor;
 use App\Domain\PanduanAwal\Model\TemplateSektorVersi;
 use App\Domain\Penjualan\Model\MetodePembayaran;
@@ -231,6 +233,19 @@ describe('F-01 langkah 2: terapkan template sektor', function (): void {
 
         BantuanPanduanAwal::Masuk($this, $pemilik, $tenant)->post('/kelola/panduan-awal/sektor', ['KodeTemplate' => 'FNB-CAF'])
             ->assertSessionHas('Kilat', 'Template sudah diterapkan, tidak ada data baru.');
+    });
+
+    it('audit #23: retail bukan PKP tanpa pajak daerah melewati langkah Pajak otomatis; F&B tetap ke langkah Pajak', function (): void {
+        BantuanPanduanAwal::TerbitkanTemplate('RTL-GEN');
+        ['Tenant' => $tenant, 'Pemilik' => $pemilik] = BantuanPanduanAwal::BuatTenant();
+
+        BantuanPanduanAwal::Masuk($this, $pemilik, $tenant)->post('/kelola/panduan-awal/sektor', ['KodeTemplate' => 'RTL-GEN'])
+            ->assertSessionHasNoErrors()
+            ->assertRedirect('/kelola/panduan-awal/produk');
+
+        BantuanOrganisasi::AturKonteks($tenant->Id);
+        $progres = ProgresPanduanAwal::query()->sole();
+        expect($progres->AmbilLangkahWajibBelumSelesai())->not->toContain(LangkahPanduan::Pajak);
     });
 
     it('§25 no. 16a: kunci lama PiutangSettlement/Waste di versi terbit dibaca sebagai PiutangPencairan/SusutPersediaan', function (): void {

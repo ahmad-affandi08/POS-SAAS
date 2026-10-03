@@ -12,6 +12,8 @@ use App\Domain\Integrasi\Model\KatalogGerbangPembayaran;
 use App\Domain\Organisasi\Enum\PeranTenantBawaan;
 use App\Domain\Pengelola\TimInternal\Enum\PeranPengelolaBawaan;
 use App\Domain\Pengelola\TimInternal\Model\LogAuditPengelola;
+use App\Domain\Penjualan\Enum\JenisMetodePembayaran;
+use App\Domain\Penjualan\Model\MetodePembayaran;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Inertia\Testing\AssertableInertia;
@@ -111,6 +113,33 @@ describe('v2.06 gerbang pembayaran milik toko', function (): void {
         expect(json_encode($audit->NilaiBaru))->not->toContain(KUNCI_MIDTRANS_TOKO)
             ->and($audit->NilaiBaru['KredensialDiganti'])->toBe(['KunciServer'])
             ->and(LogAudit::query()->whereIn('Peristiwa', ['gerbang-pembayaran.uji', 'gerbang-pembayaran.aktifkan'])->count())->toBe(2);
+    });
+
+    it('audit kemudahan pakai #24: aktifkan gerbang membuat pilihan bayar QRIS dinamis sekali; metode yang sudah ada tidak diubah', function (): void {
+        $toko = TokoGerbang();
+        SimpanMidtransToko($this, $toko);
+        GerbangToko($toko)->forceFill(['StatusUji' => StatusUjiGerbang::Berhasil])->save();
+
+        MasukToko($this, $toko)->post('/kelola/pembayaran/gerbang/aktifkan')
+            ->assertSessionHasNoErrors()
+            ->assertSessionHas('Kilat', 'QRIS tersambung. Pilihan bayar "QRIS" sudah ditambahkan ke kasir.');
+        BantuanOrganisasi::AturKonteks($toko['Tenant']->Id);
+        $metode = MetodePembayaran::query()->where('Jenis', JenisMetodePembayaran::QrisDinamis->value)->sole();
+        expect($metode->Nama)->toBe('QRIS')->and($metode->Aktif)->toBeTrue()
+            ->and(MetodePembayaran::query()->where('Jenis', JenisMetodePembayaran::Tunai->value)->exists())->toBeTrue();
+
+        // Toko menonaktifkan pilihan QRIS lalu menyambung ulang gerbang: tidak dibuat kembar, tidak diaktifkan diam-diam.
+        $metode->update(['Aktif' => false]);
+        MasukToko($this, $toko)->post('/kelola/pembayaran/gerbang/nonaktifkan')->assertSessionHasNoErrors();
+        MasukToko($this, $toko)->post('/kelola/pembayaran/gerbang/aktifkan')->assertSessionHasNoErrors();
+        BantuanOrganisasi::AturKonteks($toko['Tenant']->Id);
+        expect(MetodePembayaran::query()->where('Jenis', JenisMetodePembayaran::QrisDinamis->value)->count())->toBe(1)
+            ->and($metode->refresh()->Aktif)->toBeFalse();
+
+        // Isolasi tenant: toko lain tidak ikut mendapat metode.
+        $lain = TokoGerbang('Warung Sate Pak Kumis Klaten');
+        BantuanOrganisasi::AturKonteks($lain['Tenant']->Id);
+        expect(MetodePembayaran::query()->where('Jenis', JenisMetodePembayaran::QrisDinamis->value)->exists())->toBeFalse();
     });
 
     it('ubah isian → Belum diuji & nonaktif; kosongkan kredensial = dipertahankan; ganti penyedia wajib kredensial baru', function (): void {

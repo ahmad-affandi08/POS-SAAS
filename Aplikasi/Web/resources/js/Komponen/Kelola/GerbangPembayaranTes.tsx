@@ -2,7 +2,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { useState, type ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import HalamanGerbangPembayaran from '@/Halaman/Kelola/Pembayaran/Gerbang';
+import HalamanGerbangPembayaran, { LangkahQris } from '@/Halaman/Kelola/Pembayaran/Gerbang';
 import { PilihOpsi } from '@/Pengujian/InteraksiPilihan';
 import type { GerbangPembayaranTenant, OpsiPenyediaGerbang } from '@/Tipe/Pembayaran';
 
@@ -106,7 +106,8 @@ describe('Gerbang pembayaran toko (v2.06)', () => {
     it('belum terhubung: pilih Xendit mengganti bidang kredensial lalu isian terkirim', () => {
         render(<HalamanGerbangPembayaran Gerbang={null} DaftarPenyedia={penyedia} DaftarLingkungan={lingkungan} />);
 
-        expect(screen.getByText('Dana langsung ke rekening toko')).toBeTruthy();
+        expect(screen.getByText('Hubungkan QRIS dalam 4 langkah')).toBeTruthy();
+        expect(screen.queryByText(/\(selesai\)/)).toBeNull();
         expect(screen.getByLabelText(/Server key/, { selector: 'input' })).toBeTruthy();
         PilihOpsi(screen.getByRole('combobox', { name: 'Penyedia' }), 'Xendit');
         expect(screen.queryByLabelText(/Server key/)).toBeNull();
@@ -159,5 +160,17 @@ describe('Gerbang pembayaran toko (v2.06)', () => {
         );
         expect(screen.getByText(/sedang tidak tersedia dari platform/)).toBeTruthy();
         expect((screen.getByRole('button', { name: 'Aktifkan gerbang' }) as HTMLButtonElement).disabled).toBe(true);
+    });
+
+    it('#24 langkah QRIS ditandai selesai mengikuti status gerbang', () => {
+        expect(LangkahQris(null).map((l) => l.Selesai)).toEqual([false, false, false, false]);
+        expect(LangkahQris(Gerbang()).map((l) => l.Selesai)).toEqual([true, true, false, false]);
+        expect(LangkahQris(Gerbang({ StatusUji: 'Berhasil' })).map((l) => l.Selesai)).toEqual([
+            true,
+            true,
+            true,
+            false,
+        ]);
+        expect(LangkahQris(Gerbang({ StatusUji: 'Berhasil', Aktif: true })).every((l) => l.Selesai)).toBe(true);
     });
 });
