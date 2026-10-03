@@ -18,7 +18,7 @@ final class InfoLisensiPerintah extends Command
 
     public function handle(LisensiBerlaku $lisensiBerlaku): int
     {
-        $this->line('Edisi: '.EdisiAplikasi::AmbilBerjalan()->value);
+        $this->line('Edisi: '.EdisiAplikasi::AmbilBerjalan()->value.(EdisiAplikasi::CekTerkunci() ? ' (terkunci saat rilis)' : ''));
         $lisensi = $lisensiBerlaku->Ambil();
 
         if ($lisensi === null) {

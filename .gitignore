@@ -23,3 +23,5 @@ coverage/
 # D-35: kunci privat penerbit & berkas lisensi pembeli tidak pernah masuk repo.
 *.kunci
 *.lisensi
+# D-36: penanda edisi terkunci hanya ditulis paket rilis PAYOU Mandiri, tidak pernah di repo.
+Aplikasi/Web/bootstrap/EdisiTerkunci.php

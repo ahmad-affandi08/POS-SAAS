@@ -21,6 +21,12 @@ enum EdisiAplikasi: string
         return is_string($nilai) ? self::tryFrom($nilai) ?? self::Saas : self::Saas;
     }
 
+    /** D-36: edisi ditanam saat build paket PAYOU Mandiri (`bootstrap/EdisiTerkunci.php`), `.env` diabaikan. */
+    public static function CekTerkunci(): bool
+    {
+        return config('lisensi.EdisiTerkunci') === true;
+    }
+
     public static function CekLisensi(): bool
     {
         return self::AmbilBerjalan() === self::Lisensi;

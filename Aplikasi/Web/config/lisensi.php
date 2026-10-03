@@ -10,9 +10,18 @@ declare(strict_types=1);
  * - `KunciPublik`: kunci publik Ed25519 penerbit lisensi PAYOU (base64), dibuat sekali dengan `lisensi:buat-kunci`.
  *   Sengaja ditulis di berkas ini, bukan `.env`: kunci publik bukan rahasia dan ikut dirilis bersama kode. Kunci
  *   privatnya TIDAK PERNAH masuk repo, server pembeli, maupun log; hanya dipakai `lisensi:terbitkan` di mesin PAYOU.
+ *
+ * D-36 edisi terkunci: paket rilis PAYOU Mandiri (CI) menulis `bootstrap/EdisiTerkunci.php` berisi `return 'Lisensi';`.
+ * Berkas itu menang atas `.env`, jadi pembeli tidak bisa beralih ke edisi SaaS (konsol, tenant tanpa batas) hanya dengan
+ * mengubah `EDISI`. Berkas penanda tidak pernah ada di repo (`.gitignore`); repo & rilis SaaS tetap membaca `.env`.
  */
+$berkasTerkunci = __DIR__.'/../bootstrap/EdisiTerkunci.php';
+$edisiTerkunci = is_file($berkasTerkunci) ? require $berkasTerkunci : null;
+
 return [
-    'Edisi' => env('EDISI', 'Saas'),
+    'Edisi' => is_string($edisiTerkunci) ? $edisiTerkunci : env('EDISI', 'Saas'),
+
+    'EdisiTerkunci' => is_string($edisiTerkunci),
 
     'KunciPublik' => '',
 ];

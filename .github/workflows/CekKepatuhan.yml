@@ -223,6 +223,21 @@ jobs:
           tar -czf "../../${NAMA}.tar.gz" -C "$STAGE" .
           cd ../..
           sha256sum "${NAMA}.tar.gz" > "${NAMA}.tar.gz.sha256"
+      # D-36: paket PAYOU Mandiri untuk pembeli lisensi = artefak yang sama, edisi Lisensi ditanam (`.env` EDISI
+      # diabaikan) dan rute konsol Platform Pengelola tidak ikut. Tanpa rute itu edisi SaaS bahkan tidak bisa boot.
+      - name: Paket PAYOU Mandiri (edisi Lisensi terkunci) + checksum
+        run: |
+          cd ../..
+          NAMA="payou-mandiri-${GITHUB_SHA}"
+          STAGE="$(mktemp -d)/payou"
+          mkdir -p "$STAGE"
+          tar -xzf "payou-web-${GITHUB_SHA}.tar.gz" -C "$STAGE"
+          printf "<?php\n\ndeclare(strict_types=1);\n\nreturn 'Lisensi';\n" > "$STAGE/bootstrap/EdisiTerkunci.php"
+          rm "$STAGE/routes/Pengelola.php"
+          sed -i 's/^EDISI=.*/# Edisi terkunci di paket ini (bootstrap\/EdisiTerkunci.php); EDISI tidak dibaca./' "$STAGE/.env.example"
+          php -r '$c = require "'"$STAGE"'/config/lisensi.php"; exit($c["Edisi"] === "Lisensi" && $c["EdisiTerkunci"] === true ? 0 : 1);'
+          tar -czf "${NAMA}.tar.gz" -C "$STAGE" .
+          sha256sum "${NAMA}.tar.gz" > "${NAMA}.tar.gz.sha256"
       - uses: actions/upload-artifact@v4
         with:
           name: payou-web-${{ github.sha }}
@@ -230,6 +245,13 @@ jobs:
             payou-web-${{ github.sha }}.tar.gz
             payou-web-${{ github.sha }}.tar.gz.sha256
           retention-days: 30
+      - uses: actions/upload-artifact@v4
+        with:
+          name: payou-mandiri-${{ github.sha }}
+          path: |
+            payou-mandiri-${{ github.sha }}.tar.gz
+            payou-mandiri-${{ github.sha }}.tar.gz.sha256
+          retention-days: 90
 
       # Hosting payou.id tanpa Node (Panduan/PasangDiHosting.md langkah 5), jadi public/build harus
       # dibangun di luar server. Artefak Actions di atas kedaluwarsa 30 hari dan hanya bisa diunduh

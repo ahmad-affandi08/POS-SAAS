@@ -1,6 +1,6 @@
-# Memasang PAYOU Edisi Lisensi di Server Pembeli
+# Memasang PAYOU Mandiri (Edisi Lisensi) di Server Pembeli
 
-Panduan untuk pembeli lisensi PAYOU (D-35, PRD §13.10): dashboard toko dipasang di **server dan domain milik
+Panduan untuk pembeli lisensi **PAYOU Mandiri** (D-35, D-36, PRD §13.10): dashboard toko dipasang di **server dan domain milik
 pembeli sendiri**. Satu lisensi = satu usaha, semua fitur, berlaku selamanya. Tidak ada konsol pengelola, situs
 pemasaran, pendaftaran publik, maupun tagihan langganan.
 
@@ -14,16 +14,19 @@ domain**. Bagian di bawah hanya menuliskan yang berbeda.
 | Server | PHP 8.3+ dengan ekstensi `gd`, `sodium`, `pdo_mysql`, `mbstring`, `intl`, `zip`; Composer; cron tiap menit |
 | Basis data | MySQL 8 (disarankan) atau MariaDB 11.8 |
 | Domain | Satu domain/subdomain dengan SSL, misal `kasir.tokoanda.com`, **sama persis** dengan yang tertulis di berkas lisensi |
-| Dari PAYOU | Berkas lisensi `*.lisensi` (nomor, nama pemegang, domain, batas outlet/perangkat/pengguna) dan paket rilis |
+| Dari PAYOU | Berkas lisensi `*.lisensi` (nomor, nama pemegang, domain, batas outlet/perangkat/pengguna) dan paket rilis `payou-mandiri-….tar.gz` (+ `.sha256`) |
+
+Paket PAYOU Mandiri sudah terkunci di edisi Lisensi: isian `EDISI` di `.env` tidak dibaca. Lisensi berlaku selamanya;
+pembaruan rilis, berkas tarif pajak & hari libur, dan dukungan gratis 1 tahun sejak lisensi terbit, sesudahnya lewat
+pemeliharaan tahunan (opsional). Tanpa pemeliharaan, toko tetap berjalan dengan rilis terakhir yang dimiliki.
 
 ## 1. Pasang kode & `.env`
 
-Ikuti `PasangDiHosting.md` langkah 0–3 (kode di luar `public_html`, buat database, `composer install --no-dev`,
-`.env`). Bedanya di `.env`:
+Periksa checksum (`sha256sum -c payou-mandiri-….tar.gz.sha256`), ekstrak paket di luar `public_html`, lalu ikuti
+`PasangDiHosting.md` langkah 0–3 (buat database, `.env`; `vendor/` sudah ada di paket). Bedanya di `.env`:
 
 ```
 APP_URL=https://kasir.tokoanda.com      # domain di berkas lisensi
-EDISI=Lisensi
 DOMAIN_PEMASARAN=                        # kosongkan
 DOMAIN_TENANT=                           # kosongkan
 ```
@@ -128,7 +131,11 @@ usaha tidak disentuh; hanya batas/domain yang berubah. Untuk pindah domain, gant
 - Pembeli adalah penyelenggara sistem elektronik untuk tokonya sendiri: kebijakan privasi, persetujuan pelanggan
   (UU PDP), dan kewajiban pajak (e-Faktur/Coretax) menjadi tanggung jawab pembeli.
 
-## Untuk PAYOU: menerbitkan lisensi
+## Untuk PAYOU: paket rilis & menerbitkan lisensi
+
+Paket pembeli diambil dari artefak CI `payou-mandiri-{sha}` (job `rilis` di `main`, disimpan 90 hari), **bukan**
+artefak `payou-web-{sha}` yang tidak terkunci.
+
 
 Sekali saja, di komputer pemilik produk (bukan server): `php artisan lisensi:buat-kunci ~/payou-lisensi.kunci`,
 tempel kunci publik yang dicetak ke `Aplikasi/Web/config/lisensi.php`, commit, dan cadangkan berkas kunci privat.

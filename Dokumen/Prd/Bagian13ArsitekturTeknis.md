@@ -598,4 +598,6 @@ Selain PAYOU yang kita jalankan sebagai SaaS, **dashboard bisa dijual sekali bel
 
 **Integrasi dari back-office (v4.16):** Owner edisi Lisensi mengatur email, WhatsApp, dan penyimpanan berkas di Pengaturan › **Email & WhatsApp server** (`/kelola/pengaturan/integrasi-server`, izin `integrasi.api.kelola`, rute & butirnya hanya ada di edisi Lisensi): simpan → **Uji & aktifkan** → Nonaktifkan, kredensial tidak pernah dikirim balik. Back-office memanggil kontrak `Lisensi\Kontrak\PengaturIntegrasiServer` (pelaksana di domain Pengelola, diikat di penyedia layanan) karena kode tenant tidak boleh memakai domain Pengelola; jejaknya di log audit tenant `integrasi.server.*`. Pola yang sama dipakai `PasangLisensi` untuk data bawaan (`Lisensi\Kontrak\PenyiapDataBawaan`).
 
-**Belum:** rilis khusus pembeli yang mengunci edisi saat build (menunggu keputusan pemilik produk).
+**PAYOU Mandiri (D-36, v4.17):** nama jual edisi `Lisensi` (edisi `Saas` dijual sebagai **PAYOU Cloud**). Pembeli menerima artefak CI `payou-mandiri-{sha}.tar.gz`: sama dengan artefak web, ditambah `bootstrap/EdisiTerkunci.php` yang membuat `config/lisensi.php` mengabaikan `.env` `EDISI`, dan tanpa `routes/Pengelola.php`. Penanda tidak pernah ada di repo. Lisensi berlaku selamanya; pembaruan rilis, berkas tarif pajak & hari libur, dan dukungan gratis 1 tahun sejak terbit, sesudahnya pemeliharaan tahunan opsional.
+
+**Belum:** pencatatan masa pembaruan per lisensi di berkas lisensi (saat ini dicatat di kontrak; rilis tidak menolak pembaruan).

@@ -55,6 +55,24 @@ describe('Edisi SaaS menolak jalan pintas edisi Lisensi (D-35)', function (): vo
         expect(fn () => app(PengaturIntegrasiServer::class)->AmbilDaftar())->toThrow(PelanggaranAturanBisnis::class);
     });
 
+    it('D-36: penanda edisi terkunci paket PAYOU Mandiri menang atas EDISI di .env; repo tidak membawanya', function (): void {
+        $berkas = base_path('bootstrap/EdisiTerkunci.php');
+        expect(is_file($berkas))->toBeFalse()
+            ->and(config('lisensi.EdisiTerkunci'))->toBeFalse();
+
+        file_put_contents($berkas, "<?php\n\ndeclare(strict_types=1);\n\nreturn 'Lisensi';\n");
+
+        try {
+            $konfigurasi = require config_path('lisensi.php');
+        } finally {
+            unlink($berkas);
+        }
+
+        expect(env('EDISI'))->toBe('Saas')
+            ->and($konfigurasi['Edisi'])->toBe('Lisensi')
+            ->and($konfigurasi['EdisiTerkunci'])->toBeTrue();
+    });
+
     it('QR aktivasi perangkat tetap berisi kode saja', function (): void {
         expect(PembuatQrKodeAktivasi::AmbilIsi('AB12CD34'))->toBe('AB12CD34');
     });
