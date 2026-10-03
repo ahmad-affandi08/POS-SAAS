@@ -68,8 +68,7 @@ void main() {
 
     await Ketuk(tester, find.widgetWithText(FilledButton, 'Bayar'));
     await Ketuk(tester, find.widgetWithText(ChoiceChip, 'Tunai'));
-    await Ketuk(tester, find.widgetWithText(OutlinedButton, 'Uang pas'));
-    await Ketuk(tester, find.text('Selesaikan pembayaran'));
+    await Ketuk(tester, find.widgetWithText(FilledButton, 'Uang pas'));
     await Ketuk(tester, find.text('Transaksi baru'));
     await tester.pump(const Duration(milliseconds: 400));
     await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 50)));

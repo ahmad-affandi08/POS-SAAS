@@ -83,8 +83,7 @@ void main() {
     await tester.sendKeyEvent(LogicalKeyboardKey.f8);
     await Tunggu(tester);
     await Ketuk(find.widgetWithText(ChoiceChip, 'Tunai'));
-    await Ketuk(find.widgetWithText(OutlinedButton, 'Uang pas'));
-    await Ketuk(find.widgetWithText(FilledButton, 'Selesaikan pembayaran'));
+    await Ketuk(find.widgetWithText(FilledButton, 'Uang pas'));
     expect(find.text('Pembayaran berhasil'), findsOneWidget);
     await Ketuk(find.widgetWithText(OutlinedButton, 'Kirim struk'));
     expect(find.byType(DialogKirimStruk), findsOneWidget);

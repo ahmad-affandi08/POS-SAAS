@@ -177,7 +177,7 @@ void main() {
 
       await Ketuk(tester, find.widgetWithText(ChoiceChip, 'Tunai'));
       expect(find.text('Tagihan tunai'), findsOneWidget);
-      expect(find.widgetWithText(OutlinedButton, 'Uang pas'), findsOneWidget);
+      expect(find.widgetWithText(FilledButton, 'Uang pas'), findsOneWidget);
       await Ketuk(tester, find.widgetWithText(OutlinedButton, 'Rp 100.000'));
       expect(find.text('Kembalian'), findsOneWidget);
       expect(find.text('Rp 39.500'), findsOneWidget);
@@ -241,8 +241,7 @@ void main() {
 
       await Ketuk(tester, find.widgetWithText(FilledButton, 'Bayar'));
       await Ketuk(tester, find.widgetWithText(ChoiceChip, 'Tunai'));
-      await Ketuk(tester, find.widgetWithText(OutlinedButton, 'Uang pas'));
-      await Ketuk(tester, find.widgetWithText(FilledButton, 'Selesaikan pembayaran'));
+      await Ketuk(tester, find.widgetWithText(FilledButton, 'Uang pas'));
       expect(find.text('Pembayaran berhasil'), findsOneWidget);
 
       final outbox = await AmbilOutboxPenjualan(tester, u);
@@ -252,6 +251,31 @@ void main() {
       await Lepas(tester, u);
     },
   );
+
+  testWidgets('audit kemudahan pakai: bayar tunai 2 ketukan (Tunai terpilih otomatis, Uang pas menyelesaikan); '
+      'pindai barang di layar berhasil langsung memulai transaksi baru', (tester) async {
+    final u = await MasukJual(tester, ukuran: ukuranDesktop);
+    await Ketuk(tester, Ubin('Americano Panas'));
+
+    await Ketuk(tester, find.widgetWithText(FilledButton, 'Bayar'));
+    expect(find.text('Tagihan tunai'), findsOneWidget, reason: 'Tunai sudah terpilih tanpa diketuk.');
+    await Ketuk(tester, find.widgetWithText(FilledButton, 'Uang pas'));
+    await Tunggu(tester);
+    expect(find.text('Pembayaran berhasil'), findsOneWidget);
+    final jual = (await AmbilOutboxPenjualan(tester, u)).single;
+    expect((jual['Ringkasan']! as Map<String, Object?>)['Kembalian'], '0.00');
+
+    // Layar berhasil menutupi katalog; pindaian barang pembeli berikutnya langsung memulai transaksi baru.
+    for (final karakter in UuidUji.barcodeAmericano.split('')) {
+      await tester.sendKeyEvent(LogicalKeyboardKey(karakter.codeUnitAt(0)));
+    }
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await Tunggu(tester);
+    expect(find.text('Pembayaran berhasil'), findsNothing);
+    expect(find.text('Keranjang · 1 item'), findsOneWidget, reason: 'Produk masuk ke transaksi baru.');
+    expect(tester.takeException(), isNull);
+    await Lepas(tester, u);
+  });
 
   testWidgets('pilihan wajib & opsional lewat panel item; produk induk varian ditolak dengan pesan jelas', (
     tester,
@@ -370,8 +394,7 @@ void main() {
     expect(find.text('Sisa'), findsOneWidget);
     expect(find.text('Rp 7.500'), findsOneWidget);
     await Ketuk(tester, find.widgetWithText(ChoiceChip, 'Tunai'));
-    await Ketuk(tester, find.widgetWithText(OutlinedButton, 'Uang pas'));
-    await Ketuk(tester, find.widgetWithText(FilledButton, 'Selesaikan pembayaran'));
+    await Ketuk(tester, find.widgetWithText(FilledButton, 'Uang pas'));
     await Tunggu(tester);
     expect(find.text('Pembayaran berhasil'), findsOneWidget);
 

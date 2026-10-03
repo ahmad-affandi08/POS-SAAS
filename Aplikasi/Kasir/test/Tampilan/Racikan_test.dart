@@ -100,8 +100,7 @@ void main() {
       await Ketuk(tester, find.widgetWithText(FilledButton, 'Bayar').first);
       expect(find.text('Penyerahan obat'), findsNothing, reason: 'Racikan obat bebas tidak butuh resep.');
       await Ketuk(tester, find.widgetWithText(ChoiceChip, 'Tunai'));
-      await Ketuk(tester, find.widgetWithText(OutlinedButton, 'Uang pas'));
-      await Ketuk(tester, find.widgetWithText(FilledButton, 'Selesaikan pembayaran'));
+      await Ketuk(tester, find.widgetWithText(FilledButton, 'Uang pas'));
       expect(find.text('Pembayaran berhasil'), findsOneWidget);
 
       final jual = (await tester.runAsync(() => u.db.select(u.db.outbox).get()))!

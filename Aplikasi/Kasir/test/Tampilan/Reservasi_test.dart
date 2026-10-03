@@ -89,8 +89,7 @@ void main() {
       expect(find.text('Melayani reservasi RS/2026/09/0001'), findsOneWidget);
       expect(find.widgetWithText(OutlinedButton, 'Jadikan pre-order (bayar DP)'), findsNothing);
       await Ketuk(find.widgetWithText(ChoiceChip, 'Tunai'));
-      await Ketuk(find.widgetWithText(OutlinedButton, 'Uang pas'));
-      await Ketuk(find.widgetWithText(FilledButton, 'Selesaikan pembayaran'));
+      await Ketuk(find.widgetWithText(FilledButton, 'Uang pas'));
       expect(find.text('Pembayaran berhasil'), findsOneWidget);
 
       final jual = (await tester.runAsync(() => u.db.select(u.db.outbox).get()))!

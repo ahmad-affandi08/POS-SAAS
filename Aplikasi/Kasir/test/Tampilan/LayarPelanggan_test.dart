@@ -70,8 +70,7 @@ void main() {
       expect(layar.isi.last.pesan, 'Silakan lakukan pembayaran');
 
       await Ketuk(tester, find.widgetWithText(ChoiceChip, 'Tunai'));
-      await Ketuk(tester, find.widgetWithText(OutlinedButton, 'Uang pas'));
-      await Ketuk(tester, find.widgetWithText(FilledButton, 'Selesaikan pembayaran'));
+      await Ketuk(tester, find.widgetWithText(FilledButton, 'Uang pas'));
       final selesai = layar.isi.last;
       expect(selesai.keadaan, KeadaanLayarPelanggan.Selesai);
       expect(selesai.labelTotal, 'Kembalian');

@@ -138,7 +138,6 @@ void main() {
     await Ketuk(tester, TombolUtamaBayar());
     await Ketuk(tester, find.widgetWithText(ChoiceChip, 'Tunai'));
     await Ketuk(tester, find.text('Uang pas'));
-    await Ketuk(tester, TombolUtamaBayar());
     expect(find.text('Pembayaran berhasil'), findsOneWidget);
 
     final jual = (await Outbox(tester, u, 'Penjualan.Buat')).single;

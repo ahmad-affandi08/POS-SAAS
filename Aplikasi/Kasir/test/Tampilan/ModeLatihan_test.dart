@@ -63,8 +63,7 @@ void main() {
       );
       await Ketuk(find.widgetWithText(FilledButton, 'Bayar'));
       await Ketuk(find.widgetWithText(ChoiceChip, 'Tunai'));
-      await Ketuk(find.widgetWithText(OutlinedButton, 'Uang pas'));
-      await Ketuk(find.widgetWithText(FilledButton, 'Selesaikan pembayaran'));
+      await Ketuk(find.widgetWithText(FilledButton, 'Uang pas'));
       expect(find.text('Latihan selesai'), findsOneWidget);
       expect(find.textContaining('tidak disimpan, tidak dikirim, dan tidak dicetak'), findsOneWidget);
       expect(await tester.runAsync(() => u.db.select(u.db.penjualan).get()), isEmpty);

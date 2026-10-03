@@ -68,8 +68,7 @@ void main() {
     }
     await Ketuk(tester, find.widgetWithText(FilledButton, 'Bayar').last);
     await Ketuk(tester, find.widgetWithText(ChoiceChip, 'Tunai'));
-    await Ketuk(tester, find.widgetWithText(OutlinedButton, 'Uang pas'));
-    await Ketuk(tester, find.widgetWithText(FilledButton, 'Selesaikan pembayaran'));
+    await Ketuk(tester, find.widgetWithText(FilledButton, 'Uang pas'));
     expect(find.text('Pembayaran berhasil'), findsOneWidget);
   }
 

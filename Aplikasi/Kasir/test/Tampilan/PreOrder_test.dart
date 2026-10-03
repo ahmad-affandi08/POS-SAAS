@@ -142,8 +142,7 @@ void main() {
         expect(find.widgetWithText(OutlinedButton, 'Jadikan pre-order (bayar DP)'), findsNothing);
 
         await Ketuk(tester, find.widgetWithText(ChoiceChip, 'Tunai'));
-        await Ketuk(tester, find.widgetWithText(OutlinedButton, 'Uang pas'));
-        await Ketuk(tester, find.widgetWithText(FilledButton, 'Selesaikan pembayaran'));
+        await Ketuk(tester, find.widgetWithText(FilledButton, 'Uang pas'));
         expect(find.text('Pembayaran berhasil'), findsOneWidget);
 
         final jual = (await Outbox(tester, u, 'Penjualan.Buat')).single;

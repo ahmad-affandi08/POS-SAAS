@@ -187,6 +187,13 @@ class _LayarJualState extends ConsumerState<LayarJual> {
       (_, bawaan) => ref.read(penyediaKeranjang.notifier).AturKanalBawaan(bawaan),
       fireImmediately: true,
     );
+    // Audit kemudahan pakai: pilihan kursus hanya berlaku untuk pesanan yang sedang dibuka. Ganti/tutup pesanan meja
+    // mengembalikannya ke "tanpa kursus", supaya pesanan meja berikutnya tidak ikut tertahan dan tetap sampai ke dapur.
+    ref.listenManual(penyediaKeranjang.select((d) => d.pesananMeja?.uuid), (lama, baru) {
+      if (lama != baru && _kursusBaru != null && mounted) {
+        setState(() => _kursusBaru = null);
+      }
+    });
   }
 
   @override
@@ -393,6 +400,7 @@ class _LayarJualState extends ConsumerState<LayarJual> {
       _kunciCekHarga.currentState?.Tampilkan(kode);
       return;
     }
+    _TutupLayarSelesai();
     _JalankanPindai(() => _ProsesKode(kode));
   }
 
@@ -440,7 +448,16 @@ class _LayarJualState extends ConsumerState<LayarJual> {
     _TambahProduk(hasil.produk, satuan: hasil.satuan, jumlah: pengali.CekMenunggu ? pengali.jumlah : null);
   }
 
+  /// Audit kemudahan pakai: memindai atau mengetuk produk saat layar "Pembayaran berhasil" tampil langsung memulai
+  /// transaksi baru (tanpa ketukan "Transaksi baru"), kecuali selesai menagih pesanan meja (kembali ke denah meja).
+  void _TutupLayarSelesai() {
+    if ((_panel == _JenisPanel.Selesai || _panel == _JenisPanel.PreOrderSelesai) && !_selesaiPesanan) {
+      _TransaksiBaru();
+    }
+  }
+
   void _TambahProduk(ProdukJual produk, {SatuanJual? satuan, Kuantitas? jumlah}) {
+    _TutupLayarSelesai();
     // K-9: induk varian membuka pemilih varian (ukuran × warna); induk tanpa varian aktif tetap ditolak dengan pesan.
     if (produk.indukVarian && (ref.read(penyediaKatalog).value?.AmbilVarian(produk.uuid).isNotEmpty ?? false)) {
       setState(() {
@@ -703,6 +720,7 @@ class _LayarJualState extends ConsumerState<LayarJual> {
               kursus: kursus,
             );
         ref.read(penyediaKeranjang.notifier).Ganti(draf.Salin(baris: const []));
+        setState(() => _kursusBaru = null);
         _TampilPesan('Item $kursus ${konteks.AmbilJudul()} disimpan & ditahan.', galat: false);
         unawaited(ref.read(penyediaSesi.notifier).Sinkronkan());
         _FokusAkar();
@@ -731,6 +749,9 @@ class _LayarJualState extends ConsumerState<LayarJual> {
       } else {
         ref.read(penyediaKeranjang.notifier).Ganti(draf.Salin(baris: const []));
         _TampilPesan('Pesanan ${konteks.AmbilJudul()} dikirim ke dapur.', galat: false);
+      }
+      if (mounted && _kursusBaru != null) {
+        setState(() => _kursusBaru = null);
       }
       unawaited(ref.read(penyediaSesi.notifier).Sinkronkan());
       // Cetak struk bagian 4c: tiket per stasiun yang punya printer di perangkat ini; gagal cetak tidak membatalkan.

@@ -175,6 +175,18 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
           _PilihMetode(k!, platform);
         }
       });
+      return;
+    }
+    // Audit kemudahan pakai: Tunai langsung terpilih (kasus paling sering), jadi kasir cukup mengetuk "Uang pas" atau
+    // nominal pecahan; metode lain tetap satu ketukan di chip metode.
+    final tunai = k?.metodePembayaran.where((m) => m.Jenis == JenisMetodeBayar.tunai).firstOrNull;
+    if (tunai != null && !_entri.any((p) => p.CekTunai())) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        // Hanya bila masih ada yang harus dibayar (tukar barang/uang muka bisa sudah melunasi semuanya).
+        if (mounted && _metode == null && _HitungSisa(k!, tunai).Bandingkan(Uang.Nol()) > 0) {
+          _PilihMetode(k, tunai);
+        }
+      });
     }
   }
 
@@ -607,7 +619,25 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
           spacing: TokenJarak.jarak8,
           runSpacing: TokenJarak.jarak8,
           children: [
-            Tombol('Uang pas', tagihan),
+            // Audit kemudahan pakai: "Uang pas" langsung menyelesaikan pembayaran (Bayar → Uang pas = 2 ketukan),
+            // kecuali sedang membagi tagihan per orang (porsi tamu diisi dulu).
+            if (_bagi?.porsi == null || _tamuTerakhir)
+              SizedBox(
+                height: TokenJarak.targetSentuh,
+                child: FilledButton(
+                  onPressed: _sibuk
+                      ? null
+                      : () {
+                          // Uang diterima = tagihan dibulatkan ke rupiah utuh, lalu langsung diterapkan.
+                          MasukanUang.Isi(_nominal, Uang.Dari(tagihan.KeDesimal().ceil().toString()));
+                          _galat = null;
+                          unawaited(_Terapkan(k));
+                        },
+                  child: const Text('Uang pas'),
+                ),
+              )
+            else
+              Tombol('Uang pas', tagihan),
             for (final p in HitungPecahanCepat(tagihan)) Tombol(p.FormatRupiah(), p),
           ],
         ),

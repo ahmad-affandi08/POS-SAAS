@@ -201,8 +201,7 @@ void main() {
       await Ketuk(tester, Ubin('Croissant Mentega Prancis Isi Cokelat Lumer Ukuran Jumbo'));
       await Ketuk(tester, find.widgetWithText(FilledButton, 'Bayar').last);
       await Ketuk(tester, find.widgetWithText(ChoiceChip, 'Tunai'));
-      await Ketuk(tester, find.widgetWithText(OutlinedButton, 'Uang pas'));
-      await Ketuk(tester, find.text('Selesaikan pembayaran'));
+      await Ketuk(tester, find.widgetWithText(FilledButton, 'Uang pas'));
       expect(find.text('Pembayaran berhasil'), findsOneWidget);
       expect(tester.takeException(), isNull);
       final outbox = await Outbox(tester, u);

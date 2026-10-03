@@ -119,8 +119,7 @@ void main() {
       expect(find.text('Menagih pesanan online ON/SLB/260930-0001'), findsOneWidget);
       expect(find.text('Uang muka (DP)'), findsOneWidget);
       await Ketuk(tester, find.widgetWithText(ChoiceChip, 'Tunai'));
-      await Ketuk(tester, find.widgetWithText(OutlinedButton, 'Uang pas'));
-      await Ketuk(tester, find.widgetWithText(FilledButton, 'Selesaikan pembayaran'));
+      await Ketuk(tester, find.widgetWithText(FilledButton, 'Uang pas'));
       expect(find.text('Pembayaran berhasil'), findsOneWidget);
 
       final jual = (await Outbox(tester, u, 'Penjualan.Buat')).single;
@@ -150,8 +149,7 @@ void main() {
 
     await Ketuk(tester, find.widgetWithText(FilledButton, 'Bayar').first);
     await Ketuk(tester, find.widgetWithText(ChoiceChip, 'Tunai'));
-    await Ketuk(tester, find.widgetWithText(OutlinedButton, 'Uang pas'));
-    await Ketuk(tester, find.widgetWithText(FilledButton, 'Selesaikan pembayaran'));
+    await Ketuk(tester, find.widgetWithText(FilledButton, 'Uang pas'));
     expect(find.text('Pembayaran berhasil'), findsOneWidget);
 
     final jual = (await Outbox(tester, u, 'Penjualan.Buat')).single;

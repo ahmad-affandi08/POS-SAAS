@@ -160,8 +160,7 @@ void main() {
     await Ketuk(tester, find.widgetWithText(FilledButton, 'Bayar'));
     expect(u.server.permintaan.any((p) => p.url.path.endsWith('/kunci-bayar')), isTrue);
     await Ketuk(tester, find.widgetWithText(ChoiceChip, 'Tunai'));
-    await Ketuk(tester, find.widgetWithText(OutlinedButton, 'Uang pas'));
-    await Ketuk(tester, find.widgetWithText(FilledButton, 'Selesaikan pembayaran'));
+    await Ketuk(tester, find.widgetWithText(FilledButton, 'Uang pas'));
     await Tunggu(tester);
     expect(find.text('Pembayaran berhasil'), findsOneWidget);
 
@@ -253,6 +252,9 @@ void main() {
       expect(find.text('Kirim Utama · 1 item'), findsOneWidget);
       expect((await AmbilOutbox(tester, u)).where((o) => o.jenis == 'PesananTerbuka.KirimDapur'), isEmpty);
       expect(tester.takeException(), isNull);
+      // Pilihan kursus tidak menempel: item berikutnya kembali langsung dikirim ke dapur, bukan ikut ditahan.
+      expect(find.widgetWithText(OutlinedButton, 'Tahan Utama'), findsNothing);
+      expect(find.widgetWithText(OutlinedButton, 'Kirim ke dapur'), findsOneWidget);
 
       await Ketuk(tester, find.text('Kirim Utama · 1 item'));
       expect(find.text('Utama T-01 dikirim ke dapur.'), findsOneWidget);

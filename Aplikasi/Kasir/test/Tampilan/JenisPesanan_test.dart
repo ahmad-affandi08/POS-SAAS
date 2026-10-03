@@ -73,8 +73,7 @@ void main() {
   Future<void> Bayar(WidgetTester tester) async {
     await Ketuk(tester, find.widgetWithText(FilledButton, 'Bayar').last);
     await Ketuk(tester, find.widgetWithText(ChoiceChip, 'Tunai'));
-    await Ketuk(tester, find.widgetWithText(OutlinedButton, 'Uang pas'));
-    await Ketuk(tester, find.text('Selesaikan pembayaran'));
+    await Ketuk(tester, find.widgetWithText(FilledButton, 'Uang pas'));
     expect(find.text('Pembayaran berhasil'), findsOneWidget);
   }
 

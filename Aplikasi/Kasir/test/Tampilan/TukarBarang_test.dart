@@ -108,8 +108,7 @@ void main() {
         // dibulatkan ke rupiah utuh (Rp 10.667, kembalian 33 sen).
         expect(find.text('Rp 33.333,33'), findsWidgets);
         await Ketuk(tester, find.widgetWithText(ChoiceChip, 'Tunai'));
-        await Ketuk(tester, find.widgetWithText(OutlinedButton, 'Uang pas'));
-        await Ketuk(tester, find.text('Selesaikan pembayaran'));
+        await Ketuk(tester, find.widgetWithText(FilledButton, 'Uang pas'));
         expect(find.text('Pembayaran berhasil'), findsOneWidget);
         expect(find.textContaining('Retur tukar barang RJ/'), findsOneWidget);
         expect(tester.takeException(), isNull);

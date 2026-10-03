@@ -90,8 +90,7 @@ void main() {
       expect(find.text('Tamu terakhir membayar sisa Rp 14.668'), findsOneWidget);
 
       await Ketuk(tester, find.widgetWithText(ChoiceChip, 'Tunai'));
-      await Ketuk(tester, find.widgetWithText(OutlinedButton, 'Uang pas'));
-      await Ketuk(tester, find.widgetWithText(FilledButton, 'Selesaikan pembayaran'));
+      await Ketuk(tester, find.widgetWithText(FilledButton, 'Uang pas'));
       expect(find.text('Pembayaran berhasil'), findsOneWidget);
       expect(tester.takeException(), isNull);
 
@@ -119,8 +118,7 @@ void main() {
     expect(find.text('Bagi per nominal · tamu 2'), findsOneWidget);
 
     await Ketuk(tester, find.widgetWithText(ChoiceChip, 'Tunai'));
-    await Ketuk(tester, find.widgetWithText(OutlinedButton, 'Uang pas'));
-    await Ketuk(tester, find.widgetWithText(FilledButton, 'Selesaikan pembayaran'));
+    await Ketuk(tester, find.widgetWithText(FilledButton, 'Uang pas'));
     expect(find.text('Pembayaran berhasil'), findsOneWidget);
     final pembayaran = ((await AmbilPenjualan(tester, u))['Pembayaran']! as List<Object?>).cast<Map<String, Object?>>();
     expect(pembayaran.single['Jumlah'], '44000.00');
