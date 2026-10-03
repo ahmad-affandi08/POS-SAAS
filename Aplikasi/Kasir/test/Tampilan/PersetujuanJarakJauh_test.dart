@@ -119,9 +119,9 @@ void main() {
     await tester.tap(find.text('Minta persetujuan jarak jauh'));
     await Tunggu(tester, const Duration(seconds: 8));
     expect(find.text('Ditolak Pak Harto: Galon masih ada stok di gudang'), findsOneWidget);
-    expect(find.widgetWithText(OutlinedButton, 'Budi Santoso'), findsOneWidget);
+    expect(find.text('PIN Budi Santoso'), findsOneWidget);
 
-    await tester.tap(find.widgetWithText(OutlinedButton, 'Budi Santoso'));
+    await PilihPenyetuju(tester, 'Budi Santoso');
     await tester.pump();
     await KetikPin(tester, KasusPin(1)['Pin']! as String);
     await Tunggu(tester, const Duration(seconds: 1));

@@ -437,9 +437,9 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
     if (alasan.isEmpty || _penyetujuTempo != null || widget.kasir.PunyaIzin(IzinKasir.penjualanTempoSetujui)) {
       return true;
     }
-    final staf = await showDialog<StafLokal>(
-      context: context,
-      builder: (_) => DialogPinSupervisor(
+    final staf = await MintaPenyetujuSementara(
+      context,
+      DialogPinSupervisor(
         izin: IzinKasir.penjualanTempoSetujui,
         pesan: 'Tempo ${pelanggan.nama} perlu persetujuan: ${alasan.join('; ')}. Pilih penyetuju.',
         judul: 'Penjualan tempo ${pelanggan.nama}',

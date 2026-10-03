@@ -208,6 +208,7 @@ export default function HalamanFormPesanan({
                         baris={baris}
                         saatBerubah={AturBaris}
                         uuidGudang={gudang === '' ? null : gudang}
+                        uuidPemasok={pemasok === '' ? null : pemasok}
                         pelacakan={false}
                         periksa={periksa}
                         galatServer={galat}

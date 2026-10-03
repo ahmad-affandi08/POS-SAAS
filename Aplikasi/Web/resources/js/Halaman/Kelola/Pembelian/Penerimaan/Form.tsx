@@ -79,6 +79,11 @@ export function PeriksaBarisDariPesanan(baris: BarisPesananUntukPenerimaan, isia
  * F-04 fase 1: penerimaan barang (dari PO / tanpa PO) dan belanja stok (sekali simpan: penerimaan + faktur +
  * pembayaran lunas). Stok bertambah saat disimpan; nilai & HPP dihitung server.
  */
+/** Tempo pembayaran belanja stok 0–365 hari (sama dengan batas server). */
+function CekTerminValid(termin: string): boolean {
+    return /^\d{1,3}$/.test(termin) && Number(termin) <= 365;
+}
+
 export default function HalamanFormPenerimaan({
     Mode,
     Pesanan,
@@ -95,6 +100,9 @@ export default function HalamanFormPenerimaan({
     const [pemasok, AturPemasok] = useState('');
     const [gudang, AturGudang] = useState(Pesanan?.UuidGudang ?? '');
     const [akun, AturAkun] = useState(OpsiAkun[0]?.Uuid ?? '');
+    // Audit kemudahan pakai #20: belanja dibayar nanti (tempo) = penerimaan + faktur belum dibayar, tanpa akun kas.
+    const [bayarNanti, AturBayarNanti] = useState(false);
+    const [termin, AturTermin] = useState('30');
     const [tanggal, AturTanggal] = useState(Pesanan?.TanggalPenerimaan ?? HariIni);
     const [nomor, AturNomor] = useState('');
     const [ongkir, AturOngkir] = useState('');
@@ -161,7 +169,8 @@ export default function HalamanFormPenerimaan({
         } else {
             adaGalat =
                 gudang === '' ||
-                (belanja && akun === '') ||
+                (belanja && !bayarNanti && akun === '') ||
+                (belanja && bayarNanti && (pemasok === '' || !CekTerminValid(termin))) ||
                 baris.length === 0 ||
                 baris.some((b) => Object.keys(PeriksaBaris(b, { wajibHarga: true, pelacakan: true })).length > 0);
             dataBaris = baris.map((b) => SusunMasukanBaris(b, true));
@@ -175,7 +184,8 @@ export default function HalamanFormPenerimaan({
             UuidPesananPembelian: Pesanan?.Uuid ?? null,
             UuidPemasok: Pesanan ? null : pemasok === '' ? null : pemasok,
             UuidGudang: Pesanan ? null : gudang,
-            UuidAkun: belanja ? akun : null,
+            UuidAkun: belanja && !bayarNanti ? akun : null,
+            ...(belanja ? { BayarNanti: bayarNanti, TerminHari: bayarNanti ? Number(termin) : null } : {}),
             Tanggal: tanggal,
             [belanja ? 'NomorNota' : 'NomorSuratJalan']: nomor === '' ? null : nomor,
             Ongkir: ongkir === '' ? '0' : ongkir,
@@ -196,7 +206,7 @@ export default function HalamanFormPenerimaan({
         <TataLetakAplikasi judul={judul}>
             <p className="max-w-3xl text-isi text-teks-sekunder">
                 {belanja
-                    ? 'Untuk belanja tunai sehari-hari: sekali simpan mencatat barang masuk, faktur, dan pembayaran lunas dari akun kas/bank.'
+                    ? 'Untuk belanja sehari-hari: sekali simpan mencatat barang masuk dan fakturnya. Bayar sekarang = lunas dari akun kas/bank; bayar nanti = hutang ke pemasok.'
                     : 'Stok bertambah saat penerimaan disimpan. Harga, diskon, dan ongkos kirim menjadi dasar HPP; PPN masukan yang dapat dikreditkan tidak masuk HPP.'}
             </p>
             <DaftarGalatServer
@@ -205,6 +215,7 @@ export default function HalamanFormPenerimaan({
                     'UuidPemasok',
                     'UuidGudang',
                     'UuidAkun',
+                    'TerminHari',
                     'Tanggal',
                     'NomorSuratJalan',
                     'NomorNota',
@@ -244,20 +255,43 @@ export default function HalamanFormPenerimaan({
                                     }
                                 />
                                 <BidangPilihan
-                                    label={belanja ? 'Pemasok (opsional)' : 'Pemasok'}
+                                    label={belanja && !bayarNanti ? 'Pemasok (opsional)' : 'Pemasok'}
                                     nilai={pemasok}
-                                    kosong={belanja ? 'Tanpa pemasok' : 'Pilih pemasok'}
+                                    kosong={belanja && !bayarNanti ? 'Tanpa pemasok' : 'Pilih pemasok'}
                                     opsi={OpsiPemasok.filter((p) => p.Aktif).map((p) => ({
                                         Nilai: p.Uuid,
                                         Label: p.Nama,
                                         Keterangan: p.Kode,
                                     }))}
-                                    saatBerubah={AturPemasok}
-                                    galat={galat.UuidPemasok}
+                                    saatBerubah={(nilai) => {
+                                        AturPemasok(nilai);
+                                        const dipilih = OpsiPemasok.find((p) => p.Uuid === nilai);
+                                        if (dipilih && dipilih.TerminHari > 0) {
+                                            AturTermin(String(dipilih.TerminHari));
+                                        }
+                                    }}
+                                    required={belanja && bayarNanti}
+                                    galat={
+                                        galat.UuidPemasok ??
+                                        (periksa && belanja && bayarNanti && pemasok === ''
+                                            ? 'Pilih pemasok untuk belanja yang dibayar nanti.'
+                                            : undefined)
+                                    }
                                 />
                             </>
                         )}
                         {belanja ? (
+                            <BidangPilihan
+                                label="Pembayaran"
+                                nilai={bayarNanti ? 'Nanti' : 'Sekarang'}
+                                opsi={[
+                                    { Nilai: 'Sekarang', Label: 'Bayar sekarang (lunas)' },
+                                    { Nilai: 'Nanti', Label: 'Bayar nanti (tempo)' },
+                                ]}
+                                saatBerubah={(nilai) => AturBayarNanti(nilai === 'Nanti')}
+                            />
+                        ) : null}
+                        {belanja && !bayarNanti ? (
                             <BidangPilihan
                                 label="Dibayar dari akun"
                                 nilai={akun}
@@ -266,6 +300,20 @@ export default function HalamanFormPenerimaan({
                                 saatBerubah={AturAkun}
                                 required
                                 galat={galat.UuidAkun ?? (periksa && akun === '' ? 'Pilih akun kas/bank.' : undefined)}
+                            />
+                        ) : null}
+                        {belanja && bayarNanti ? (
+                            <BidangTeks
+                                label="Tempo (hari)"
+                                nilai={termin}
+                                saatBerubah={(nilai) => AturTermin(nilai.replace(/\D/g, '').slice(0, 3))}
+                                inputMode="numeric"
+                                required
+                                keterangan="Hutang tercatat di halaman Hutang dengan jatuh tempo sejak tanggal terima."
+                                galat={
+                                    galat.TerminHari ??
+                                    (periksa && !CekTerminValid(termin) ? 'Isi tempo 0–365 hari.' : undefined)
+                                }
                             />
                         ) : null}
                         <PemilihTanggal
@@ -411,6 +459,7 @@ export default function HalamanFormPenerimaan({
                                 baris={baris}
                                 saatBerubah={AturBaris}
                                 uuidGudang={gudang === '' ? null : gudang}
+                                uuidPemasok={pemasok === '' ? null : pemasok}
                                 pelacakan
                                 periksa={periksa}
                                 galatServer={galat}

@@ -73,7 +73,7 @@ void main() {
     await tester.enterText(find.widgetWithText(TextField, 'Alasan retur'), 'Salah ukuran, tukar dengan yang lain');
     await Ketuk(tester, find.text('Tukar barang'));
     await Ketuk(tester, find.widgetWithText(FilledButton, 'Pilih barang pengganti'));
-    await tester.tap(find.widgetWithText(OutlinedButton, 'Budi Santoso'));
+    await PilihPenyetuju(tester, 'Budi Santoso');
     await tester.pump();
     await KetikPin(tester, KasusPin(1)['Pin']! as String);
     await Tunggu(tester, const Duration(seconds: 1));

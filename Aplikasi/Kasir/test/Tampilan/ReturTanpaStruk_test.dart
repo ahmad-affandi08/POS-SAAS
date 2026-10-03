@@ -99,7 +99,7 @@ void main() {
   }
 
   Future<void> SetujuiBudi(WidgetTester tester) async {
-    await tester.tap(find.widgetWithText(OutlinedButton, 'Budi Santoso'));
+    await PilihPenyetuju(tester, 'Budi Santoso');
     await tester.pump();
     await KetikPin(tester, KasusPin(1)['Pin']! as String);
     await Tunggu(tester, const Duration(seconds: 1));
@@ -171,7 +171,7 @@ void main() {
     await Ketuk(tester, find.text('Ani Rahmawati'));
     await Ketuk(tester, find.byKey(const ValueKey('SimpanReturTanpaStruk')));
     expect(find.textContaining('Belum ada pemilik atau pengguna berizin'), findsOneWidget);
-    expect(find.widgetWithText(OutlinedButton, 'Budi Santoso'), findsNothing);
+    expect(find.text('PIN Budi Santoso'), findsNothing);
     expect(await Outbox(tester, u), isEmpty);
     await Lepas(tester, u);
   });

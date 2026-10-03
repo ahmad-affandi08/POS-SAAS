@@ -14,7 +14,7 @@ import HalamanFormPesanan from '@/Halaman/Kelola/Pembelian/Pesanan/Form';
 import HalamanFormRetur, { PeriksaBarisRetur } from '@/Halaman/Kelola/Pembelian/Retur/Form';
 import { AturHalamanUji, RenderUji, tiruanRouter } from '@/Komponen/Katalog/TiruanInertia';
 import { BuatHasilTabel, GudangUtama, NamaPanjang } from '@/Komponen/Persediaan/DataUjiPersediaan';
-import { UbahNilai } from '@/Pengujian/InteraksiPilihan';
+import { PilihOpsi, UbahNilai } from '@/Pengujian/InteraksiPilihan';
 import type {
     BarisDetailPenerimaan,
     BarisPesananUntukPenerimaan,
@@ -401,6 +401,32 @@ describe('Halaman pembelian (F-04 fase 1)', () => {
             }),
             expect.anything(),
         );
+    });
+
+    it('belanja stok bayar nanti: tanpa akun kas, pemasok wajib, tempo terisi dari termin pemasok (audit #20)', () => {
+        RenderUji(
+            <HalamanFormPenerimaan
+                Mode="BelanjaStok"
+                Pesanan={null}
+                OpsiPemasok={[{ ...Pemasok, TerminHari: 14 }]}
+                OpsiGudang={[GudangUtama]}
+                OpsiAkun={[{ Uuid: '01J9AKN0000000000000000001', Kode: '1-1100', Nama: 'Kas Toko' }]}
+                HariIni="2026-09-30"
+                Lampiran={{ Ekstensi: ['pdf', 'jpg'], UkuranMaksimalKb: 5120 }}
+                MaksimalBaris={500}
+            />,
+        );
+        expect(screen.getByRole('combobox', { name: 'Dibayar dari akun' })).toBeTruthy();
+        PilihOpsi(screen.getByRole('combobox', { name: 'Pembayaran' }), 'Nanti');
+        expect(screen.queryByRole('combobox', { name: 'Dibayar dari akun' })).toBeNull();
+        expect((screen.getByLabelText(/Tempo \(hari\)/) as HTMLInputElement).value).toBe('30');
+
+        fireEvent.click(screen.getByRole('button', { name: 'Simpan belanja stok' }));
+        expect(screen.getByText('Pilih pemasok untuk belanja yang dibayar nanti.')).toBeTruthy();
+        expect(tiruanRouter.post).not.toHaveBeenCalled();
+
+        PilihOpsi(screen.getByRole('combobox', { name: /Pemasok/ }), Pemasok.Uuid);
+        expect((screen.getByLabelText(/Tempo \(hari\)/) as HTMLInputElement).value).toBe('14');
     });
 
     it('faktur: harga faktur berbeda tampil sebagai selisih; simpan mengirim harga per baris', () => {

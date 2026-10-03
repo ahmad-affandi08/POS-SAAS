@@ -2,9 +2,12 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:inti/Inti.dart';
+import 'package:kasir/Aplikasi/Penyedia.dart';
+import 'package:kasir/Domain/Sesi/StafLokal.dart';
 import 'package:kasir/Tampilan/LayarJual.dart';
 import 'package:kasir/Tampilan/RuangKerja/RuangKerja.dart';
 import 'package:sistem_desain/SistemDesain.dart';
@@ -319,7 +322,7 @@ void main() {
 
     expect(find.text('Persetujuan supervisor'), findsOneWidget);
     expect(find.textContaining('Diskon ini di atas 10%'), findsOneWidget);
-    await Ketuk(tester, find.widgetWithText(OutlinedButton, 'Budi Santoso'));
+    await PilihPenyetuju(tester, 'Budi Santoso');
     await KetikPin(tester, KasusPin(1)['Pin']! as String);
     await Tunggu(tester);
 
@@ -367,13 +370,54 @@ void main() {
     // Di bawah batas manual 10% pun tetap diarahkan ke PIN penyetuju, bukan ditolak.
     expect(find.text('Persetujuan supervisor'), findsOneWidget);
     expect(find.textContaining('Diskon manual perlu persetujuan'), findsOneWidget);
-    await Ketuk(tester, find.widgetWithText(OutlinedButton, 'Budi Santoso'));
+    await PilihPenyetuju(tester, 'Budi Santoso');
     await KetikPin(tester, KasusPin(1)['Pin']! as String);
     await Tunggu(tester);
 
     expect(find.byType(PanelTugas), findsNothing);
     expect(find.textContaining('Diskon 5%'), findsOneWidget);
     await Lepas(tester, u);
+  });
+
+  testWidgets('audit #25: penyetuju tunggal terpilih otomatis; persetujuan diskon berlaku sementara untuk kasir sama', (
+    tester,
+  ) async {
+    final u = await MasukJual(tester);
+
+    await Ketuk(tester, Ubin('Croissant Mentega Prancis Isi Cokelat Lumer Ukuran Jumbo'));
+    await Ketuk(tester, find.descendant(of: find.byType(BarisKeranjang), matching: find.textContaining('Croissant')));
+    await tester.enterText(find.widgetWithText(TextField, 'Diskon (%)'), '20');
+    await Ketuk(tester, find.widgetWithText(FilledButton, 'Simpan perubahan'));
+    // Hanya Budi yang berhak menyetujui diskon: papan PIN-nya langsung tampil tanpa memilih nama.
+    expect(find.text('PIN Budi Santoso'), findsOneWidget);
+    expect(find.widgetWithText(OutlinedButton, 'Budi Santoso'), findsNothing);
+    await KetikPin(tester, KasusPin(1)['Pin']! as String);
+    await Tunggu(tester);
+    expect(find.textContaining('Diskon 20%'), findsOneWidget);
+
+    // Diskon berikutnya dalam 5 menit: tidak ditanya PIN lagi, penyetuju tetap Budi.
+    await Ketuk(tester, find.descendant(of: find.byType(BarisKeranjang), matching: find.textContaining('Croissant')));
+    await tester.enterText(find.widgetWithText(TextField, 'Diskon (%)'), '15');
+    await Ketuk(tester, find.widgetWithText(FilledButton, 'Simpan perubahan'));
+    expect(find.text('Persetujuan supervisor'), findsNothing);
+    expect(find.textContaining('Diskon 15%'), findsOneWidget);
+    await Lepas(tester, u);
+  });
+
+  test('audit #25: persetujuan sementara kedaluwarsa setelah 5 menit dan tidak berlaku untuk kasir lain', () {
+    var sekarang = DateTime(2026, 10, 3, 9);
+    final wadah = ProviderContainer(overrides: [penyediaJam.overrideWithValue(() => sekarang)]);
+    addTearDown(wadah.dispose);
+    const budi = StafLokal(uuid: 'S2', nama: 'Budi Santoso', pemilik: false, izin: ['penjualan.diskon.setujui']);
+    final sementara = wadah.read(penyediaPersetujuanSementara.notifier);
+
+    sementara.Catat('penjualan.diskon.setujui', budi, 'S1');
+    expect(sementara.Ambil('penjualan.diskon.setujui', 'S1')?.uuid, 'S2');
+    expect(sementara.Ambil('penjualan.diskon.setujui', 'S3'), isNull, reason: 'Kasir lain tetap minta PIN.');
+    expect(sementara.Ambil('penjualan.tempo.setujui', 'S1'), isNull, reason: 'Izin lain tidak ikut.');
+
+    sekarang = sekarang.add(const Duration(minutes: 5));
+    expect(sementara.Ambil('penjualan.diskon.setujui', 'S1'), isNull);
   });
 
   testWidgets('BR-08.1 split: EDC dengan nomor approval lalu sisa tunai', (tester) async {

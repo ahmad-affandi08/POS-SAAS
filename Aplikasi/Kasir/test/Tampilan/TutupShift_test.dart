@@ -117,10 +117,12 @@ void main() {
     await Ketuk(tester, find.text('Tutup shift sekarang'));
     expect(find.text('Tulis alasan selisih minimal 5 huruf.'), findsOneWidget);
 
-    await tester.enterText(find.widgetWithText(TextField, 'Alasan selisih'), 'Uang kembalian salah hitung');
+    // Audit kemudahan pakai #27: alasan siap pakai cukup diketuk.
+    await Ketuk(tester, find.widgetWithText(ChoiceChip, 'Salah hitung kembalian'));
+    expect(find.widgetWithText(TextField, 'Salah hitung kembalian'), findsOneWidget);
     await Ketuk(tester, find.text('Tutup shift sekarang'));
     expect(find.text('Persetujuan supervisor'), findsOneWidget);
-    await tester.tap(find.widgetWithText(OutlinedButton, 'Budi Santoso'));
+    await PilihPenyetuju(tester, 'Budi Santoso');
     await tester.pump();
     await KetikPin(tester, KasusPin(1)['Pin']! as String);
     await Tunggu(tester, const Duration(seconds: 1));
@@ -128,7 +130,7 @@ void main() {
     expect(find.text('Laporan Z · shift ditutup'), findsOneWidget);
     expect(find.text('−Rp 25.000 (kurang)'), findsOneWidget);
     final data = (await OutboxTutup(tester, u)).single;
-    expect(data['Alasan'], 'Uang kembalian salah hitung');
+    expect(data['Alasan'], 'Salah hitung kembalian');
     expect(data['UuidPenyetuju'], '01K5STAF000000000000000002');
     expect(data['Ringkasan'], {'KasSeharusnya': '455000.00', 'Selisih': '-25000.00'});
     await Lepas(tester, u);
@@ -214,7 +216,7 @@ void main() {
       await tester.enterText(find.byKey(const ValueKey('AlasanBukaUlang')), 'Salah tekan, pelanggan masih antre');
       await Ketuk(tester, find.widgetWithText(FilledButton, 'Lanjut'));
       expect(find.text('Persetujuan supervisor'), findsOneWidget);
-      await tester.tap(find.widgetWithText(OutlinedButton, 'Budi Santoso'));
+      await PilihPenyetuju(tester, 'Budi Santoso');
       await tester.pump();
       await KetikPin(tester, KasusPin(1)['Pin']! as String);
       await Tunggu(tester, const Duration(seconds: 1));

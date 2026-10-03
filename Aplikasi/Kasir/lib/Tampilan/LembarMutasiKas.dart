@@ -258,6 +258,40 @@ class _PilihanKategori extends StatelessWidget {
   }
 }
 
+/// Audit kemudahan pakai #25 (D-38): minta penyetuju dengan persetujuan berlaku sementara. Bila penyetuju yang sama
+/// sudah memasukkan PIN untuk izin ini dalam [PersetujuanSementara.berlaku] terakhir (kasir sama, penyetuju masih
+/// ber-izin), langsung dipakai tanpa dialog. Hanya untuk diskon & tempo; void/retur/kas/laci tetap [showDialog] biasa.
+Future<StafLokal?> MintaPenyetujuSementara(BuildContext context, DialogPinSupervisor dialog) async {
+  final wadah = ProviderScope.containerOf(context, listen: false);
+  final kasir = wadah.read(penyediaSesi).kasir;
+  final kunci = dialog.hanyaPemilik ? 'Pemilik' : dialog.izin;
+  final sementara = wadah.read(penyediaPersetujuanSementara.notifier);
+  if (kasir != null) {
+    final tersimpan = sementara.Ambil(kunci, kasir.uuid);
+    final masihBerizin = (wadah.read(penyediaStaf).value ?? const <StafLokal>[]).any(
+      (s) => s.uuid == tersimpan?.uuid && (dialog.hanyaPemilik ? s.pemilik : s.PunyaIzin(dialog.izin)),
+    );
+    if (tersimpan != null && masihBerizin) {
+      return tersimpan;
+    }
+  }
+  return showDialog<StafLokal>(
+    context: context,
+    builder: (_) => DialogPinSupervisor(
+      izin: dialog.izin,
+      pesan: dialog.pesan,
+      hanyaPemilik: dialog.hanyaPemilik,
+      judul: dialog.judul,
+      nilai: dialog.nilai,
+      rincian: dialog.rincian,
+      judulDialog: dialog.judulDialog,
+      pesanKosong: dialog.pesanKosong,
+      bolehJarakJauh: dialog.bolehJarakJauh,
+      saatPinBerhasil: kasir == null ? null : (staf) => sementara.Catat(kunci, staf, kasir.uuid),
+    ),
+  );
+}
+
 /// Pilih penyetuju lalu masukkan PIN-nya. Hasil = staf yang lolos PIN. Bawaan untuk kas keluar (BR-06.4, izin
 /// `kas.keluar.setujui`); dipakai juga untuk diskon di atas batas (BR-07.3, izin `penjualan.diskon.setujui`, atau hanya
 /// Pemilik lewat [hanyaPemilik]).
@@ -265,6 +299,8 @@ class _PilihanKategori extends StatelessWidget {
 /// X4: bila fitur persetujuan jarak jauh aktif, kasir bisa memilih "Minta persetujuan jarak jauh": permintaan
 /// ([judul], [pesan], [nilai], [rincian]) dikirim ke Aplikasi Owner lalu dialog menunggu keputusan; disetujui = hasil
 /// dialog adalah penyetuju itu, ditolak/kedaluwarsa = alasan tampil dan kasir bisa kembali memilih PIN.
+///
+/// Audit kemudahan pakai #25: bila hanya satu staf yang berhak, ia langsung terpilih (papan PIN tampil seketika).
 class DialogPinSupervisor extends ConsumerStatefulWidget {
   const DialogPinSupervisor({
     super.key,
@@ -277,6 +313,7 @@ class DialogPinSupervisor extends ConsumerStatefulWidget {
     this.judulDialog = 'Persetujuan supervisor',
     this.pesanKosong,
     this.bolehJarakJauh = true,
+    this.saatPinBerhasil,
   });
 
   final String izin;
@@ -299,6 +336,9 @@ class DialogPinSupervisor extends ConsumerStatefulWidget {
   /// False = tombol persetujuan jarak jauh (X4) tidak ditawarkan, misal penyerahan obat keras yang wajib dilakukan
   /// apoteker di tempat.
   final bool bolehJarakJauh;
+
+  /// Dipanggil setelah PIN penyetuju benar (bukan persetujuan jarak jauh), misalnya untuk [MintaPenyetujuSementara].
+  final ValueChanged<StafLokal>? saatPinBerhasil;
 
   @override
   ConsumerState<DialogPinSupervisor> createState() => _DialogPinSupervisorState();
@@ -340,17 +380,14 @@ class _DialogPinSupervisorState extends ConsumerState<DialogPinSupervisor> {
     super.dispose();
   }
 
-  Future<void> _Periksa(String pin) async {
-    final staf = _dipilih;
-    if (staf == null) {
-      return;
-    }
+  Future<void> _Periksa(StafLokal staf, String pin) async {
     setState(() {
       _sibuk = true;
       _galat = null;
     });
     try {
       final hasil = await ref.read(penyediaLayananMasuk).Masuk(staf, pin);
+      widget.saatPinBerhasil?.call(hasil);
       if (mounted) {
         Navigator.of(context).pop(hasil);
       }
@@ -449,6 +486,14 @@ class _DialogPinSupervisorState extends ConsumerState<DialogPinSupervisor> {
         .toList();
     final warna = TokenWarna.AmbilDari(context);
     final menunggu = _menunggu;
+    final dipilih = _dipilih ?? (supervisor.length == 1 ? supervisor.single : null);
+    final tombolJarakJauh = _jarakJauhTersedia && widget.bolehJarakJauh
+        ? FilledButton.tonalIcon(
+            onPressed: _sibuk ? null : () => unawaited(_MintaJarakJauh()),
+            icon: const Icon(Icons.phone_iphone),
+            label: const Text('Minta persetujuan jarak jauh'),
+          )
+        : null;
     // Tepi dialog diperkecil agar papan PIN (3 × 96dp) muat di layar 360dp tanpa terpotong.
     return AlertDialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: TokenJarak.jarak16, vertical: TokenJarak.jarak24),
@@ -473,7 +518,7 @@ class _DialogPinSupervisorState extends ConsumerState<DialogPinSupervisor> {
                   ),
                 ],
               )
-            : _dipilih == null
+            : dipilih == null
             ? Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -493,14 +538,7 @@ class _DialogPinSupervisorState extends ConsumerState<DialogPinSupervisor> {
                       padding: const EdgeInsets.symmetric(vertical: 4),
                       child: OutlinedButton(onPressed: () => setState(() => _dipilih = s), child: Text(s.nama)),
                     ),
-                  if (_jarakJauhTersedia && widget.bolehJarakJauh) ...[
-                    const SizedBox(height: 8),
-                    FilledButton.tonalIcon(
-                      onPressed: _sibuk ? null : () => unawaited(_MintaJarakJauh()),
-                      icon: const Icon(Icons.phone_iphone),
-                      label: const Text('Minta persetujuan jarak jauh'),
-                    ),
-                  ],
+                  if (tombolJarakJauh != null) ...[const SizedBox(height: 8), tombolJarakJauh],
                   if (_galat != null) ...[
                     const SizedBox(height: 8),
                     Text(_galat!, style: TextStyle(color: warna.bahaya)),
@@ -510,9 +548,24 @@ class _DialogPinSupervisorState extends ConsumerState<DialogPinSupervisor> {
             : Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text('PIN ${_dipilih!.nama}'),
+                  Text('PIN ${dipilih.nama}'),
                   const SizedBox(height: 8),
-                  PapanPin(saatSelesai: _Periksa, sibuk: _sibuk, pesanGalat: _galat),
+                  PapanPin(saatSelesai: (pin) => _Periksa(dipilih, pin), sibuk: _sibuk, pesanGalat: _galat),
+                  // Terpilih otomatis: alasan persetujuan di bawah papan PIN supaya tombol angka tetap muat di 360dp.
+                  if (_dipilih == null) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      widget.pesan,
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(color: warna.teksSekunder),
+                    ),
+                  ],
+                  if (_dipilih == null && tombolJarakJauh != null) ...[const SizedBox(height: 8), tombolJarakJauh],
+                  if (_dipilih != null && supervisor.length > 1)
+                    TextButton(
+                      onPressed: _sibuk ? null : () => setState(() => _dipilih = null),
+                      child: const Text('Pilih penyetuju lain'),
+                    ),
                 ],
               ),
       ),

@@ -9,6 +9,7 @@ use App\Domain\Bersama\Dokumen\Enum\StatusDokumenTerposting;
 use App\Domain\Bersama\Tabel\Data\DataPermintaanTabel;
 use App\Domain\Pembelian\Aksi\BatalkanPenerimaanBarang;
 use App\Domain\Pembelian\Aksi\SimpanBelanjaStok;
+use App\Domain\Pembelian\Aksi\SimpanBelanjaStokTempo;
 use App\Domain\Pembelian\Aksi\TerimaBarang;
 use App\Domain\Pembelian\Kueri\DaftarDokumenPembelian;
 use App\Domain\Pembelian\Kueri\DaftarPemasok;
@@ -102,9 +103,16 @@ final class PenerimaanBarangKontroler extends DasarPembelianKontroler
         ]);
     }
 
-    public function SimpanBelanja(SimpanPenerimaanBarangPermintaan $permintaan, SimpanBelanjaStok $simpan): RedirectResponse
+    public function SimpanBelanja(SimpanPenerimaanBarangPermintaan $permintaan, SimpanBelanjaStok $simpan, SimpanBelanjaStokTempo $simpanTempo): RedirectResponse
     {
         $gudang = $this->CariGudangBoleh((string) $permintaan->AmbilUuidGudang());
+
+        if ($permintaan->CekBayarNanti()) {
+            $grn = $simpanTempo->Jalankan($permintaan->AmbilDataBelanja($gudang->id, $this->Pelaku()->Id), $permintaan->AmbilTerminHari());
+
+            return to_route('kelola.pembelian.penerimaan.detail', ['penerimaan' => $grn->Uuid])->with('Kilat', "Belanja stok {$grn->Nomor} dicatat: stok bertambah dan hutang ke pemasok tercatat di halaman Hutang.");
+        }
+
         $grn = $simpan->Jalankan($permintaan->AmbilDataBelanja($gudang->id, $this->Pelaku()->Id));
 
         return to_route('kelola.pembelian.penerimaan.detail', ['penerimaan' => $grn->Uuid])->with('Kilat', "Belanja stok {$grn->Nomor} dicatat: stok bertambah dan kas/bank berkurang.");

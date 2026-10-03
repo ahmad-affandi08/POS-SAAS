@@ -146,7 +146,7 @@ void main() {
     await tester.enterText(find.widgetWithText(TextField, 'Alasan'), 'Tamu ganti menu');
     await Ketuk(tester, find.widgetWithText(FilledButton, 'Batalkan item'));
     expect(find.text('Persetujuan supervisor'), findsOneWidget);
-    await Ketuk(tester, find.widgetWithText(OutlinedButton, 'Budi Santoso'));
+    await PilihPenyetuju(tester, 'Budi Santoso');
     await KetikPin(tester, KasusPin(1)['Pin']! as String);
     await Tunggu(tester);
     expect(find.text('Croissant Mentega Prancis Isi Cokelat Lumer Ukuran Jumbo dibatalkan.'), findsOneWidget);

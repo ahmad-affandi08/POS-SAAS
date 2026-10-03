@@ -585,6 +585,58 @@ describe('Kelola/Persediaan/Penyesuaian (F-05b, §19.2)', () => {
         );
     });
 
+    it('form: arah Tambah stok mengisi harga modal dari HPP rata-rata (audit kemudahan pakai #22)', async () => {
+        vi.stubGlobal(
+            'fetch',
+            vi.fn().mockResolvedValue({
+                ok: true,
+                status: 200,
+                json: () =>
+                    Promise.resolve({
+                        Data: [
+                            {
+                                Uuid: '01J9PRD0000000000000000001',
+                                Nama: 'Minyak Goreng Sawit 2 L',
+                                Sku: 'MYK-2L',
+                                Jenis: 'Stok',
+                                Pelacakan: 'Tidak',
+                                SimbolSatuan: 'pcs',
+                                BolehDesimal: false,
+                                SaldoDiGudang: '12.0000',
+                                HppRataRata: '31250.000000',
+                                StokAwalSudahAda: true,
+                            },
+                        ],
+                    }),
+            }),
+        );
+        RenderUji(
+            <HalamanFormPenyesuaianStok
+                Mode="Buat"
+                Penyesuaian={null}
+                OpsiGudang={[GudangUtama]}
+                OpsiAlasan={[{ Nilai: 'Lainnya', Label: 'Lainnya', BolehMasuk: true, WajibKeterangan: true }]}
+                HariIni="2026-09-24"
+                BatasBaris={500}
+                WajibKedaluwarsaBatch
+            />,
+        );
+        PilihOpsi(screen.getByRole('combobox', { name: 'Alasan' }), 'Lainnya');
+        await waitFor(() => expect(document.querySelector('[data-slot="popover-content"]')).toBeNull());
+        fireEvent.click(screen.getByRole('combobox', { name: 'Tambah produk' }));
+        const cari = screen.getByPlaceholderText('Cari nama, SKU, atau barcode');
+        fireEvent.change(cari, { target: { value: 'minyak' } });
+        await waitFor(() => expect(screen.getByRole('option', { name: /Minyak Goreng/ })).toBeTruthy());
+        fireEvent.keyDown(cari, { key: 'Enter' });
+
+        PilihOpsi(screen.getByRole('combobox', { name: 'Arah Minyak Goreng Sawit 2 L' }), 'Masuk');
+        const hpp = screen.getByRole<HTMLInputElement>('textbox', {
+            name: 'Harga modal Minyak Goreng Sawit 2 L',
+        });
+        expect(hpp.value).toBe('31.250');
+        expect(screen.getByText('Diisi dari HPP rata-rata saat ini Rp 31.250; boleh diubah.')).toBeTruthy();
+    });
+
     it('pengaturan: ubah batas persetujuan dikirim bersama pengaturan lain', () => {
         AturHalamanUji({}, '/kelola/persediaan/pengaturan');
         RenderUji(

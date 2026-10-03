@@ -9,6 +9,7 @@ import '../Domain/GalatKasir.dart';
 import '../Domain/Sesi/StafLokal.dart';
 import '../Domain/Shift/LayananBukaLaci.dart';
 import 'LembarMutasiKas.dart';
+import 'Komponen/PilihanAlasan.dart';
 
 /// Cetak struk bagian 4 (POS-17, §19.2): buka laci kas tanpa transaksi. Alasan wajib; PIN supervisor diminta bila
 /// pengaturan tenant mewajibkannya. Laci dibuka lewat printer lalu dicatat (outbox `Laci.Buka`) dan tampil di detail
@@ -107,6 +108,11 @@ class _LembarBukaLaciState extends ConsumerState<LembarBukaLaci> {
             style: teks.bodyMedium?.copyWith(color: warna.teksSekunder),
           ),
           const SizedBox(height: TokenJarak.jarak12),
+          PilihanAlasan(
+            pengendali: _alasan,
+            pilihan: PilihanAlasan.bukaLaci,
+            saatDipilih: () => setState(() => _galat = null),
+          ),
           TextField(
             controller: _alasan,
             autofocus: true,

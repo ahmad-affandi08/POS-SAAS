@@ -14,6 +14,7 @@ import '../../Domain/Penjualan/LayananVoidPenjualan.dart';
 import '../../Domain/Sesi/StafLokal.dart';
 import '../Komponen/FormatWaktu.dart';
 import '../LembarMutasiKas.dart';
+import '../Komponen/PilihanAlasan.dart';
 
 /// Formulir void transaksi (Rincian F-09 fase 1) di dalam `PanelTugas` ruang kerja: ringkasan transaksi, pengembalian
 /// yang harus dilakukan (tunai dari laci, non-tunai manual), alasan, lalu PIN penyetuju ber-izin `penjualan.void`
@@ -199,6 +200,7 @@ class _LembarVoidState extends ConsumerState<LembarVoid> {
       const SizedBox(height: TokenJarak.jarak4),
       ...ringkasRefund,
       const SizedBox(height: TokenJarak.jarak12),
+      PilihanAlasan(pengendali: _alasan, pilihan: PilihanAlasan.voidPenjualan),
       TextField(
         controller: _alasan,
         maxLength: 255,

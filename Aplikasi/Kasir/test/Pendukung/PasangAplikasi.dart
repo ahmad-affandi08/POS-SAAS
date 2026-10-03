@@ -196,3 +196,14 @@ class KameraBuktiTiruan implements KameraBukti {
     return foto;
   }
 }
+
+/// Pilih penyetuju di `DialogPinSupervisor`. Bila hanya satu staf yang berhak, ia sudah terpilih otomatis (audit
+/// kemudahan pakai #25) dan papan PIN-nya langsung tampil; yang dipastikan di sini adalah papan PIN [nama].
+Future<void> PilihPenyetuju(WidgetTester tester, String nama) async {
+  final tombol = find.widgetWithText(OutlinedButton, nama);
+  if (tombol.evaluate().isNotEmpty) {
+    await tester.tap(tombol.first);
+    await tester.pump();
+  }
+  expect(find.text('PIN $nama'), findsOneWidget);
+}

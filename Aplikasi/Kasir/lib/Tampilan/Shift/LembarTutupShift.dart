@@ -14,6 +14,7 @@ import '../../Domain/Shift/LayananTutupShift.dart';
 import '../Komponen/MasukanUang.dart';
 import '../LembarMutasiKas.dart';
 import 'KartuLaporanShift.dart';
+import '../Komponen/PilihanAlasan.dart';
 
 /// Formulir tutup shift (Rincian F-11) di dalam `PanelTugas` ruang kerja. Kasir menghitung kas laci (total atau per
 /// pecahan) dan opsional total non-tunai per metode (slip EDC/QRIS). Tutup buta (`TutupShiftButa`): kas seharusnya
@@ -292,6 +293,7 @@ class _LembarTutupShiftState extends ConsumerState<LembarTutupShift> {
             ),
           if (pratinjau != null && tampilkanSistem && pratinjau.butuhPersetujuan) ...[
             const SizedBox(height: TokenJarak.jarak12),
+            PilihanAlasan(pengendali: _alasan, pilihan: PilihanAlasan.selisihShift),
             TextField(
               controller: _alasan,
               maxLength: 255,

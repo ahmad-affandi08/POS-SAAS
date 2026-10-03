@@ -18,7 +18,7 @@ import PemilihProdukStok, { type ProdukStokTerpilih } from '@/Komponen/Persediaa
 import { BuatUlid } from '@/Komponen/Persediaan/UlidKlien';
 import PemilihTanggal from '@/Komponen/Tanggal/PemilihTanggal';
 import { Button } from '@/Komponen/Ui/button';
-import { FormatJumlahStok, FormatLabelGudang } from '@/Pustaka/FormatPersediaan';
+import { FormatHppSatuan, FormatJumlahStok, FormatLabelGudang } from '@/Pustaka/FormatPersediaan';
 import { AmbilTandaDesimal, CekDesimalValid } from '@/Pustaka/HitungDesimal';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
 import type { PropsBersamaAplikasi } from '@/Tipe/Aplikasi';
@@ -26,7 +26,8 @@ import type { AlasanPenyesuaian, BarisFormPenyesuaianStok, PropsFormPenyesuaianS
 
 const alamat = '/kelola/persediaan/penyesuaian';
 
-type BarisForm = BarisFormPenyesuaianStok & { Kunci: string; SaldoDiGudang: string | null };
+// Audit kemudahan pakai #22: HPP rata-rata gudang (dari pencarian produk) mengisi harga modal saat arah Tambah stok.
+type BarisForm = BarisFormPenyesuaianStok & { Kunci: string; SaldoDiGudang: string | null; HppRataRata: string | null };
 
 let nomorKunci = 0;
 
@@ -89,7 +90,7 @@ export default function HalamanFormPenyesuaianStok({
         (Penyesuaian?.Baris ?? []).map((b) => {
             nomorKunci += 1;
 
-            return { ...b, Kunci: `ps-${String(nomorKunci)}`, SaldoDiGudang: null };
+            return { ...b, Kunci: `ps-${String(nomorKunci)}`, SaldoDiGudang: null, HppRataRata: null };
         }),
     );
     const [periksa, AturPeriksa] = useState(false);
@@ -121,6 +122,7 @@ export default function HalamanFormPenyesuaianStok({
                 BolehDesimal: p.BolehDesimal,
                 Pelacakan: p.Pelacakan,
                 SaldoDiGudang: p.SaldoDiGudang,
+                HppRataRata: p.HppRataRata,
                 Arah: 'Keluar',
                 Jumlah: p.Pelacakan === 'Seri' ? '1' : '',
                 HppSatuan: null,
@@ -207,6 +209,7 @@ export default function HalamanFormPenyesuaianStok({
                                     lama.map((b) => ({
                                         ...b,
                                         SaldoDiGudang: null,
+                                        HppRataRata: null,
                                         UuidBatchStok: null,
                                         UuidNomorSeri: null,
                                     })),
@@ -321,7 +324,7 @@ export default function HalamanFormPenyesuaianStok({
                                             saatBerubah={(nilai) =>
                                                 Ubah(b.Kunci, {
                                                     Arah: nilai === 'Masuk' ? 'Masuk' : 'Keluar',
-                                                    HppSatuan: null,
+                                                    HppSatuan: nilai === 'Masuk' ? b.HppRataRata : null,
                                                     UuidBatchStok: null,
                                                     UuidNomorSeri: null,
                                                     NomorBatch: null,
@@ -347,6 +350,11 @@ export default function HalamanFormPenyesuaianStok({
                                                 nilai={b.HppSatuan ?? ''}
                                                 saatBerubah={(hpp) => Ubah(b.Kunci, { HppSatuan: hpp })}
                                                 simbolSatuan={b.SimbolSatuan}
+                                                keterangan={
+                                                    b.HppRataRata !== null
+                                                        ? `Diisi dari HPP rata-rata saat ini ${FormatHppSatuan(b.HppRataRata)}; boleh diubah.`
+                                                        : undefined
+                                                }
                                                 required
                                             />
                                         ) : null}

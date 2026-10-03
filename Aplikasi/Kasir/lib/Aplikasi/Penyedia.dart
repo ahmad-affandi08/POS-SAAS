@@ -100,6 +100,34 @@ class ModeLatihan extends Notifier<bool> {
 
 final penyediaModeLatihan = NotifierProvider<ModeLatihan, bool>(ModeLatihan.new);
 
+/// Audit kemudahan pakai #25 (D-38): persetujuan PIN supervisor untuk diskon & tempo berlaku sementara
+/// ([berlaku]) bagi kasir yang sama, supaya transaksi beruntun tidak meminta PIN berulang. Void, retur, kas keluar,
+/// buka laci, shift, dan obat keras **tidak** memakai ini (tetap PIN setiap kali). Hanya di memori; hilang saat aplikasi
+/// ditutup.
+class PersetujuanSementara extends Notifier<Map<String, ({StafLokal staf, String uuidKasir, DateTime sampai})>> {
+  static const Duration berlaku = Duration(minutes: 5);
+
+  @override
+  Map<String, ({StafLokal staf, String uuidKasir, DateTime sampai})> build() => const {};
+
+  void Catat(String kunci, StafLokal staf, String uuidKasir) =>
+      state = {...state, kunci: (staf: staf, uuidKasir: uuidKasir, sampai: ref.read(penyediaJam)().add(berlaku))};
+
+  /// Penyetuju yang masih berlaku untuk [kunci] & kasir [uuidKasir] (null bila tidak ada/kedaluwarsa/kasir lain).
+  StafLokal? Ambil(String kunci, String uuidKasir) {
+    final catatan = state[kunci];
+    if (catatan == null || catatan.uuidKasir != uuidKasir || !ref.read(penyediaJam)().isBefore(catatan.sampai)) {
+      return null;
+    }
+    return catatan.staf;
+  }
+}
+
+final penyediaPersetujuanSementara =
+    NotifierProvider<PersetujuanSementara, Map<String, ({StafLokal staf, String uuidKasir, DateTime sampai})>>(
+      PersetujuanSementara.new,
+    );
+
 /// K-21: log lokal & laporan galat (null bila folder aplikasi tidak tersedia, misalnya di test widget).
 final penyediaLogLokal = Provider<LogLokal?>((ref) {
   final folder = ref.watch(penyediaFolderAplikasi);

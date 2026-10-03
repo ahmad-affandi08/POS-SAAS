@@ -89,7 +89,7 @@ void main() {
   Future<void> SetujuiBudi(WidgetTester tester) async {
     expect(find.text('Persetujuan supervisor'), findsOneWidget);
     expect(find.widgetWithText(OutlinedButton, 'Rina Wulandari'), findsNothing, reason: 'Rina tanpa penjualan.void.');
-    await tester.tap(find.widgetWithText(OutlinedButton, 'Budi Santoso'));
+    await PilihPenyetuju(tester, 'Budi Santoso');
     await tester.pump();
     await KetikPin(tester, KasusPin(1)['Pin']! as String);
     await Tunggu(tester, const Duration(seconds: 1));

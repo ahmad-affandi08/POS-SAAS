@@ -101,7 +101,7 @@ void main() {
       await Ketuk(tester, find.widgetWithText(FilledButton, 'PIN apoteker'));
       expect(find.text('PIN apoteker'), findsWidgets);
       expect(find.text('Minta persetujuan jarak jauh'), findsNothing);
-      await Ketuk(tester, find.widgetWithText(OutlinedButton, 'apt. Dewi Anggraini'));
+      await PilihPenyetuju(tester, 'apt. Dewi Anggraini');
       await KetikPin(tester, KasusPin(2)['Pin']! as String);
       await Tunggu(tester);
       expect(find.text('Diserahkan apoteker apt. Dewi Anggraini.'), findsOneWidget);

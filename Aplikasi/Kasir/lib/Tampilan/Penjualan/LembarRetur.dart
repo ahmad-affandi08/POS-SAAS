@@ -21,6 +21,7 @@ import '../Komponen/FormatAngka.dart';
 import '../Komponen/MasukanUang.dart';
 import '../LembarMutasiKas.dart';
 import 'LembarReturTanpaStruk.dart';
+import '../Komponen/PilihanAlasan.dart';
 
 /// Cara refund retur fase 1: tunai dari laci shift aktif, transfer manual, atau keduanya.
 /// Cara refund retur. `Tukar` (K-11): nilai barang yang diretur membayar barang pengganti di layar Jual.
@@ -535,6 +536,7 @@ class _LembarReturState extends ConsumerState<LembarRetur> {
             saatKondisi: (kondisi) => setState(() => _kondisi[b.uuid] = kondisi),
           ),
         const SizedBox(height: TokenJarak.jarak12),
+        PilihanAlasan(pengendali: _alasan, pilihan: PilihanAlasan.retur),
         TextField(
           controller: _alasan,
           maxLength: 255,

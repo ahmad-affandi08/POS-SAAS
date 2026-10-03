@@ -10,6 +10,7 @@ import '../../Domain/GalatKasir.dart';
 import '../../Domain/Meja/LayananPesananMeja.dart';
 import '../../Domain/Sesi/StafLokal.dart';
 import '../LembarMutasiKas.dart';
+import '../Komponen/PilihanAlasan.dart';
 
 /// Isian header pesanan: jumlah tamu & label (nama pemesan/nomor antre).
 class IsianPesanan {
@@ -117,18 +118,26 @@ Future<String?> TanyaAlasan(
   required String pesan,
   required String labelTombol,
   required bool wajib,
+  List<String> pilihan = PilihanAlasan.batalPesanan,
 }) => showDialog<String>(
   context: context,
-  builder: (_) => _DialogAlasan(judul: judul, pesan: pesan, labelTombol: labelTombol, wajib: wajib),
+  builder: (_) => _DialogAlasan(judul: judul, pesan: pesan, labelTombol: labelTombol, wajib: wajib, pilihan: pilihan),
 );
 
 class _DialogAlasan extends StatefulWidget {
-  const _DialogAlasan({required this.judul, required this.pesan, required this.labelTombol, required this.wajib});
+  const _DialogAlasan({
+    required this.judul,
+    required this.pesan,
+    required this.labelTombol,
+    required this.wajib,
+    required this.pilihan,
+  });
 
   final String judul;
   final String pesan;
   final String labelTombol;
   final bool wajib;
+  final List<String> pilihan;
 
   @override
   State<_DialogAlasan> createState() => _DialogAlasanState();
@@ -165,6 +174,12 @@ class _DialogAlasanState extends State<_DialogAlasan> {
           children: [
             Text(widget.pesan),
             const SizedBox(height: TokenJarak.jarak16),
+            if (widget.pilihan.isNotEmpty)
+              PilihanAlasan(
+                pengendali: _alasan,
+                pilihan: widget.pilihan,
+                saatDipilih: () => setState(() => _galat = null),
+              ),
             TextField(
               controller: _alasan,
               autofocus: true,

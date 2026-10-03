@@ -164,6 +164,8 @@ export type ProdukPembelian = {
     SimbolSatuan: string;
     BolehDesimal: boolean;
     Satuan: SatuanPembelian[];
+    /** Audit kemudahan pakai #21: harga per satuan beli dari penerimaan terakhir (null = belum pernah diterima). */
+    HargaBeliTerakhir?: { Harga: string; Konversi: string; Tanggal: string; DariPemasokIni: boolean } | null;
 };
 export type BarisIsianBebas = {
     Kunci: string;

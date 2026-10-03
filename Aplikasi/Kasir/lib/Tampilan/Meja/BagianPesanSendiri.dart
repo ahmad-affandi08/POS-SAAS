@@ -70,6 +70,7 @@ class _BagianPesanSendiriState extends ConsumerState<BagianPesanSendiri> {
       pesan: 'Alasan ditampilkan ke tamu di HP-nya, misalnya "Menu habis" atau "Salah meja".',
       labelTombol: 'Tolak pesanan',
       wajib: true,
+      pilihan: const ['Menu habis', 'Salah meja', 'Dapur sudah tutup'],
     );
     if (alasan == null || !mounted) {
       return;

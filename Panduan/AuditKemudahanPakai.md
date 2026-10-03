@@ -39,14 +39,14 @@ kali, persetujuan jarak jauh tetap); butir 3 (tautan unduh) ditunda. Butir seles
 |---|---|---|---|---|
 | 18 | Back-office | Varian: harga/barcode beda harus dibuka satu per satu (`PembuatVarian.tsx`, `Produk/Detail.tsx`) | Tabel kombinasi bisa diedit di formulir produk + "isi sama untuk semua" | Agent |
 | 19 | Back-office | Tidak ada aksi massal di halaman mana pun walau `TabelData` mendukung | Produk (kategori, harga %, arsip, tampil di POS), hutang/piutang (bayar terpilih) | Agent |
-| 20 | Back-office | Pembelian tempo tanpa PO butuh penerimaan + faktur (nomor faktur wajib) + pembayaran | "Bayar nanti (tempo X hari)" di penerimaan → faktur otomatis, nomor opsional | Agent |
-| 21 | Back-office | Harga beli tidak terisi otomatis di PO/penerimaan (`AturanPembelian.ts:43`) | Isi harga beli terakhir per pemasok | Agent |
-| 22 | Back-office | Penyesuaian stok masuk wajib "Harga modal" per baris (`Penyesuaian/Form.tsx:342`) | Isi otomatis HPP rata-rata, bisa diubah | Agent |
+| 20 ✓ v4.40 | Back-office | Pembelian tempo tanpa PO butuh penerimaan + faktur (nomor faktur wajib) + pembayaran | "Bayar nanti (tempo X hari)" di penerimaan → faktur otomatis, nomor opsional | Agent |
+| 21 ✓ v4.40 | Back-office | Harga beli tidak terisi otomatis di PO/penerimaan (`AturanPembelian.ts:43`) | Isi harga beli terakhir per pemasok | Agent |
+| 22 ✓ v4.40 | Back-office | Penyesuaian stok masuk wajib "Harga modal" per baris (`Penyesuaian/Form.tsx:342`) | Isi otomatis HPP rata-rata, bisa diubah | Agent |
 | 23 | Awal | Pajak/PKP ditanya di 3–4 tempat dengan DPP, PBJT, NITKU; warung non-PKP tetap lewat halaman Pajak | Satu pertanyaan PKP di Profil; lewati langkah Pajak bila non-PKP & bukan F&B; NITKU/DPP di "Lanjutan" | Agent |
 | 24 | Awal | QRIS dinamis: dua tempat + jargon (MDR, Lingkungan, kredensial, callback) | Wizard "Hubungkan QRIS" yang sekaligus membuat metode QRIS | Agent |
-| 25 | Kasir | PIN supervisor: pilih nama dulu, tiap void/retur/batal item meja per item (`DialogPinSupervisor`) | Supervisor tunggal terpilih otomatis; persetujuan berlaku beberapa menit; batal beberapa item satu PIN | Disetujui D-38: void & retur tetap PIN tiap kali; lainnya boleh persetujuan berlaku sementara |
+| 25 ✓ v4.40 | Kasir | PIN supervisor: pilih nama dulu, tiap void/retur/batal item meja per item (`DialogPinSupervisor`) | Supervisor tunggal terpilih otomatis; persetujuan berlaku beberapa menit; batal beberapa item satu PIN | Disetujui D-38: void & retur tetap PIN tiap kali; lainnya boleh persetujuan berlaku sementara |
 | 26 ✓ v4.39 | Kasir | Kunci layar 5 menit walau keranjang berisi / menunggu QRIS (`RuangKerja.dart:271`) | Tidak mengunci saat transaksi berjalan; bawaan 15 menit | Agent |
-| 27 | Kasir | Alasan void/retur/selisih diketik bebas, batas minimum tidak seragam | Chip alasan siap pakai + "Lainnya" | Agent |
+| 27 ✓ v4.40 | Kasir | Alasan void/retur/selisih diketik bebas, batas minimum tidak seragam | Chip alasan siap pakai + "Lainnya" | Agent |
 | 28 ✓ v4.39 | Kasir | Hitung pecahan hanya +/- (37 lembar = 37 ketukan, `HitungPecahan.dart`) | Jumlah bisa diketik + tombol +10 | Agent |
 | 29 | Kasir | Item meja tersimpan: ketuk langsung tawarkan batal, +/- ditolak | "+" membuat baris baru yang sama; ketuk buka rincian | Agent |
 | 30 | Kasir | Istilah: Void, Laporan X/Z, Kanal, Marketplace, Antrean kirim, approval EDC, pre-order/DP; kode teknis di layar Sinkron | Bahasa sehari-hari; label lengkap untuk semua jenis outbox | Agent |

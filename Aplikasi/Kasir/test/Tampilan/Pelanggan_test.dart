@@ -257,7 +257,7 @@ void main() {
     expect(find.text('Perlu PIN penyetuju: piutang Rp 27.500 melebihi limit Rp 20.000.'), findsOneWidget);
     await Ketuk(tester, find.widgetWithText(FilledButton, 'Selesaikan pembayaran'));
     expect(find.text('Persetujuan supervisor'), findsOneWidget);
-    await Ketuk(tester, find.widgetWithText(OutlinedButton, 'Budi Santoso'));
+    await PilihPenyetuju(tester, 'Budi Santoso');
     await KetikPin(tester, KasusPin(1)['Pin']! as String);
     await Tunggu(tester);
     expect(find.text('Pembayaran berhasil'), findsOneWidget);

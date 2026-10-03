@@ -17,6 +17,7 @@ import '../../Domain/Sesi/StafLokal.dart';
 import '../Komponen/FormatAngka.dart';
 import '../LembarMutasiKas.dart';
 import '../Struk/BagianCetakDokumen.dart';
+import '../Komponen/PilihanAlasan.dart';
 
 /// Cara refund retur tanpa struk (K28): tidak pernah uang tunai/transfer.
 enum CaraRefundTanpaStruk { Tukar, Deposit }
@@ -434,6 +435,7 @@ class _LembarReturTanpaStrukState extends ConsumerState<LembarReturTanpaStruk> {
             saatHapus: () => _Hapus(i),
           ),
       const SizedBox(height: TokenJarak.jarak12),
+      PilihanAlasan(pengendali: _alasan, pilihan: PilihanAlasan.retur),
       TextField(
         controller: _alasan,
         maxLength: 255,

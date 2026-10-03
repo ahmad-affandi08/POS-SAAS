@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Permintaan\Kelola\Pembelian;
 
+use App\Domain\Pembelian\Aksi\SimpanBelanjaStokTempo;
 use App\Domain\Pembelian\Data\DataBarisPenerimaanBarang;
 use App\Domain\Pembelian\Data\DataBelanjaStok;
 use App\Domain\Pembelian\Data\DataPenerimaanBarang;
@@ -29,6 +30,9 @@ final class SimpanPenerimaanBarangPermintaan extends FormRequest
             'UuidPemasok' => ['nullable', 'string', 'ulid'],
             'UuidGudang' => ['nullable', 'string', 'ulid', 'required_without:UuidPesananPembelian'],
             'UuidAkun' => ['nullable', 'string', 'ulid'],
+            // Audit kemudahan pakai #20: belanja stok dibayar nanti (tempo) = penerimaan + faktur belum dibayar.
+            'BayarNanti' => ['nullable', 'boolean'],
+            'TerminHari' => ['nullable', 'integer', 'min:0', 'max:'.SimpanBelanjaStokTempo::MAKS_TERMIN],
             'Tanggal' => ['required', 'date_format:Y-m-d'],
             'NomorSuratJalan' => ['nullable', 'string', 'max:60'],
             'NomorNota' => ['nullable', 'string', 'max:60'],
@@ -100,6 +104,16 @@ final class SimpanPenerimaanBarangPermintaan extends FormRequest
             $this->AmbilLampiran(),
             $idPengguna,
         );
+    }
+
+    public function CekBayarNanti(): bool
+    {
+        return (bool) $this->validated('BayarNanti', false);
+    }
+
+    public function AmbilTerminHari(): int
+    {
+        return (int) ($this->validated('TerminHari') ?? 0);
     }
 
     private function AmbilTanggal(): CarbonImmutable

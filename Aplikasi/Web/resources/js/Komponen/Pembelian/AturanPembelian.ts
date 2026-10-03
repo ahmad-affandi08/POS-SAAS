@@ -25,9 +25,14 @@ export function BuatKunciBaris(): string {
     return `baris-${String(nomorKunci)}`;
 }
 
-/** Baris isian baru dari produk terpilih; satuan beli bawaan (bila ada) terpilih. */
+/**
+ * Baris isian baru dari produk terpilih; satuan beli bawaan (bila ada) terpilih. Audit kemudahan pakai #21: harga
+ * terisi dari penerimaan terakhir bila satuannya (konversi sama) tersedia; tetap bisa diubah.
+ */
 export function BuatBarisDariProduk(produk: ProdukPembelian): BarisIsianBebas {
-    const bawaan = produk.Satuan.find((s) => s.DefaultBeli);
+    const terakhir = produk.HargaBeliTerakhir ?? null;
+    const satuanTerakhir = terakhir ? produk.Satuan.find((s) => SamaDesimal(s.Konversi, terakhir.Konversi)) : undefined;
+    const bawaan = satuanTerakhir ?? produk.Satuan.find((s) => s.DefaultBeli);
 
     return {
         Kunci: BuatKunciBaris(),
@@ -40,12 +45,25 @@ export function BuatBarisDariProduk(produk: ProdukPembelian): BarisIsianBebas {
         Satuan: produk.Satuan,
         UuidProdukSatuan: bawaan?.Uuid ?? null,
         Jumlah: '',
-        Harga: '',
+        Harga: terakhir && (satuanTerakhir || SamaDesimal(terakhir.Konversi, '1')) ? RapikanHarga(terakhir.Harga) : '',
         Diskon: '',
         NomorBatch: '',
         TanggalKedaluwarsa: '',
         NomorSeri: [],
     };
+}
+
+/** Dua desimal string bernilai sama ("12.0000" = "12"). */
+function SamaDesimal(a: string, b: string): boolean {
+    const Rapi = (x: string) => (x.includes('.') ? x.replace(/0+$/, '').replace(/\.$/, '') : x);
+    return Rapi(a) === Rapi(b);
+}
+
+/** Harga dari server ("31250.0000") ke isian uang 2 desimal tanpa nol berlebih ("31250"). */
+function RapikanHarga(harga: string): string {
+    const [bulat = '0', pecahan = ''] = harga.split('.');
+    const dua = pecahan.slice(0, 2).replace(/0+$/, '');
+    return dua === '' ? bulat : `${bulat}.${dua}`;
 }
 
 /** Konversi satuan terpilih ke satuan dasar ("1" bila satuan dasar). */
@@ -185,11 +203,19 @@ export function AmbilJenisUmur(umur: string | null): 'sukses' | 'peringatan' | '
 }
 
 /** URL cari produk pembelian (produk berstok + satuan beli). */
-export function BuatUrlCariProdukPembelian(kata: string, uuidGudang: string | null): string {
+export function BuatUrlCariProdukPembelian(
+    kata: string,
+    uuidGudang: string | null,
+    uuidPemasok?: string | null,
+): string {
     const parameter = new URLSearchParams({ kata, batas: '20' });
 
     if (uuidGudang) {
         parameter.set('gudang', uuidGudang);
+    }
+
+    if (uuidPemasok) {
+        parameter.set('pemasok', uuidPemasok);
     }
 
     return `/kelola/pembelian/produk/cari?${parameter.toString()}`;

@@ -45,9 +45,9 @@ Future<HasilPersetujuanDiskon> PastikanDiskonDisetujui(
   final batasManual = FormatAngka.FormatPersen(k.batasDiskonManual.toString());
   final batasPenyetuju = FormatAngka.FormatPersen(k.batasDiskonPenyetuju.toString());
   final berizinManual = kasir.PunyaIzin(IzinKasir.penjualanDiskonManual);
-  final staf = await showDialog<StafLokal>(
-    context: context,
-    builder: (_) => DialogPinSupervisor(
+  final staf = await MintaPenyetujuSementara(
+    context,
+    DialogPinSupervisor(
       izin: IzinKasir.penjualanDiskonSetujui,
       hanyaPemilik: hanyaPemilik,
       pesan: hanyaPemilik

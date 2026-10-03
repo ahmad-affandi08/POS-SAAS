@@ -29,6 +29,8 @@ type PropsIsianBarisPembelian = {
     baris: BarisIsianBebas[];
     saatBerubah: (baris: BarisIsianBebas[]) => void;
     uuidGudang: string | null;
+    /** Pemasok dokumen: harga beli terakhir dari pemasok ini diutamakan (audit kemudahan pakai #21). */
+    uuidPemasok?: string | null;
     /** Tampilkan isian batch/kedaluwarsa & nomor seri (penerimaan, belanja stok). */
     pelacakan: boolean;
     /** Tampilkan pemeriksaan lokal (setelah tombol simpan ditekan). */
@@ -50,6 +52,7 @@ export default function IsianBarisPembelian({
     baris,
     saatBerubah,
     uuidGudang,
+    uuidPemasok = null,
     pelacakan,
     periksa,
     galatServer,
@@ -65,7 +68,7 @@ export default function IsianBarisPembelian({
             <PemilihProdukStok
                 label="Tambah produk"
                 uuidGudang={uuidGudang}
-                buatUrl={BuatUrlCariProdukPembelian}
+                buatUrl={(kata, gudang) => BuatUrlCariProdukPembelian(kata, gudang, uuidPemasok)}
                 saatPilih={(produk) =>
                     saatBerubah([...baris, BuatBarisDariProduk(produk as unknown as ProdukPembelian)])
                 }
@@ -74,7 +77,7 @@ export default function IsianBarisPembelian({
                 keterangan={
                     penuh
                         ? `Batas ${maksimal.toLocaleString('id-ID')} baris per dokumen tercapai.`
-                        : 'Hanya produk yang punya stok. Harga per satuan yang dipilih (misal per dus).'
+                        : 'Hanya produk yang punya stok. Harga per satuan yang dipilih (misal per dus); terisi dari pembelian terakhir bila ada.'
                 }
             />
             {galatServer.Baris ? <GalatBidang>{galatServer.Baris}</GalatBidang> : null}
