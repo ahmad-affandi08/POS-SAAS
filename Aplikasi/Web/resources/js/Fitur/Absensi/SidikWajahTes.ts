@@ -29,7 +29,7 @@ describe('Sidik wajah absensi web', () => {
         expect(NilaiWajah([], true)).toEqual({ Lolos: false, Alasan: 'TidakAdaWajah' });
         expect(NilaiWajah([asli, asli], true)).toEqual({ Lolos: false, Alasan: 'BanyakWajah' });
         expect(NilaiWajah([{ ...asli, real: 0.2 }], true)).toEqual({ Lolos: false, Alasan: 'BukanWajahAsli' });
-        expect(NilaiWajah([{ ...asli, live: undefined }], true)).toEqual({ Lolos: false, Alasan: 'BukanWajahAsli' });
+        expect(NilaiWajah([{ real: 0.9, embedding: [0.1] }], true)).toEqual({ Lolos: false, Alasan: 'BukanWajahAsli' });
         expect(NilaiWajah([asli], false)).toEqual({ Lolos: false, Alasan: 'BelumKedip' });
         expect(NilaiWajah([{ ...asli, embedding: [] }], true)).toEqual({ Lolos: false, Alasan: 'SidikKosong' });
         expect(NilaiWajah([asli], true)).toEqual({ Lolos: true });

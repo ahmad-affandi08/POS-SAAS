@@ -30,6 +30,7 @@ Route::middleware(SiapkanAuditTenant::class)->group(function () use ($izin): voi
     Route::put('/outlet/{outlet}', [OutletKontroler::class, 'Ubah'])->middleware($izin(IzinTenant::OutletKelola))->name('kelola.outlet.ubah');
     Route::post('/outlet/{outlet}/arsipkan', [OutletKontroler::class, 'Arsipkan'])->middleware($izin(IzinTenant::OutletKelola))->name('kelola.outlet.arsipkan');
     Route::post('/outlet/{outlet}/jenis-pesanan', [OutletKontroler::class, 'AturJenisPesanan'])->middleware($izin(IzinTenant::OutletKelola))->name('kelola.outlet.jenis-pesanan');
+    Route::post('/outlet/{outlet}/lokasi-absensi', [OutletKontroler::class, 'AturLokasiAbsensi'])->middleware($izin(IzinTenant::OutletKelola))->name('kelola.outlet.lokasi-absensi');
     Route::post('/outlet/{outlet}/pulihkan', [OutletKontroler::class, 'Pulihkan'])->middleware($izin(IzinTenant::OutletKelola))->name('kelola.outlet.pulihkan');
 
     Route::post('/outlet/{outlet}/gudang', [GudangKontroler::class, 'Simpan'])->middleware($izin(IzinTenant::OutletKelola))->name('kelola.gudang.simpan');

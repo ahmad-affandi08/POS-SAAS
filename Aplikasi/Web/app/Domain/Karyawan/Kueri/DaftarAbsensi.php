@@ -119,6 +119,11 @@ final class DaftarAbsensi
                 'Sumber' => $a->Sumber,
                 'Dikoreksi' => $a->DikoreksiPada !== null,
                 'AlasanKoreksi' => $a->AlasanKoreksi,
+                // F-18 bagian 4 (D-37): absen dari HP pribadi — jarak ke outlet & kemiripan wajah (tanpa koordinat).
+                'JarakMasukMeter' => $a->JarakMasukMeter,
+                'JarakKeluarMeter' => $a->JarakKeluarMeter,
+                'KemiripanWajahMasuk' => $a->KemiripanWajahMasuk,
+                'KemiripanWajahKeluar' => $a->KemiripanWajahKeluar,
             ];
         })->all());
     }

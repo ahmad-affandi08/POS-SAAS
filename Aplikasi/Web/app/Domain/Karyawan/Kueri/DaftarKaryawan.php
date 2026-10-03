@@ -9,6 +9,7 @@ use App\Domain\Bersama\Tabel\Layanan\PenerapKueriTabel;
 use App\Domain\Bersama\Tenant\KonteksTenant;
 use App\Domain\Karyawan\Enum\StatusKaryawan;
 use App\Domain\Karyawan\Model\Karyawan;
+use App\Domain\Karyawan\Model\WajahKaryawan;
 use App\Domain\Organisasi\Kueri\DaftarAnggota;
 use App\Domain\Organisasi\Kueri\PetaUuidOutlet;
 use Illuminate\Database\Eloquent\Builder;
@@ -74,6 +75,12 @@ final class DaftarKaryawan
             $pengguna[$a['Id']] = $a;
         }
 
+        // F-18 bagian 4 (D-37): status absen HP per karyawan (tautan ada? wajah terakhir).
+        $wajah = WajahKaryawan::query()
+            ->whereIn('IdKaryawan', $baris->pluck('Id')->all())
+            ->orderBy('Id')
+            ->get(['IdKaryawan', 'Status'])
+            ->keyBy('IdKaryawan');
         $outlet = [];
 
         foreach ($this->outlet->AmbilRingkas() as $o) {
@@ -92,6 +99,8 @@ final class DaftarKaryawan
             'NamaOutlet' => $k->IdOutlet === null ? null : ($outlet[$k->IdOutlet]['Nama'] ?? null),
             'Status' => $k->Status->value,
             'LabelStatus' => $k->Status->AmbilLabel(),
+            'TautanAbsen' => $k->HashTokenAbsen !== null,
+            'StatusWajah' => $wajah->get($k->Id)?->Status->value,
         ])->all());
     }
 }

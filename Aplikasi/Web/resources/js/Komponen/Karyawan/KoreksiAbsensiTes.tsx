@@ -31,6 +31,10 @@ function BarisUji(ubah: Partial<BarisAbsensi> = {}): BarisAbsensi {
         Sumber: 'Pos',
         Dikoreksi: false,
         AlasanKoreksi: null,
+        JarakMasukMeter: null,
+        JarakKeluarMeter: null,
+        KemiripanWajahMasuk: null,
+        KemiripanWajahKeluar: null,
         ...ubah,
     };
 }

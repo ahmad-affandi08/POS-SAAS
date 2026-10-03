@@ -26,6 +26,10 @@ export const KunciKueri = {
     Impor: {
         Status: (uuid: string) => ['Impor', 'Status', uuid] as const,
     },
+    // F-18 bagian 4 (D-37): panel absen dari HP (tautan pribadi & wajah terdaftar) satu karyawan.
+    Karyawan: {
+        AbsenHp: (uuid: string) => ['Karyawan', 'AbsenHp', uuid] as const,
+    },
     // F-05a: pemilih produk stok awal (GET /kelola/persediaan/produk/cari), polling status posting & impor stok awal.
     Persediaan: {
         CariProduk: (kata: string, uuidGudang: string | null) =>

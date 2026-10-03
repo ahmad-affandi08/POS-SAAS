@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Domain\Organisasi\Enum\IzinTenant;
+use App\Http\Kontroler\Kelola\Karyawan\AbsenHpKaryawanKontroler;
 use App\Http\Kontroler\Kelola\Karyawan\AbsensiKontroler;
 use App\Http\Kontroler\Kelola\Karyawan\JadwalKerjaKontroler;
 use App\Http\Kontroler\Kelola\Karyawan\KaryawanKontroler;
@@ -45,6 +46,13 @@ Route::middleware([SiapkanAuditTenant::class, $izin(IzinTenant::KaryawanLihat)])
         Route::put('/{karyawan}', [KaryawanKontroler::class, 'Perbarui'])->where('karyawan', $ulid)->name('kelola.karyawan.perbarui');
         Route::post('/{karyawan}/nonaktifkan', [KaryawanKontroler::class, 'Nonaktifkan'])->where('karyawan', $ulid)->name('kelola.karyawan.nonaktifkan');
         Route::post('/{karyawan}/aktifkan', [KaryawanKontroler::class, 'Aktifkan'])->where('karyawan', $ulid)->name('kelola.karyawan.aktifkan');
+        // F-18 bagian 4 (D-37): absen HP pribadi lewat web — tautan pribadi & wajah terdaftar.
+        Route::get('/{karyawan}/absen-hp', [AbsenHpKaryawanKontroler::class, 'Tampilkan'])->where('karyawan', $ulid)->name('kelola.karyawan.absen-hp');
+        Route::post('/{karyawan}/tautan-absen', [AbsenHpKaryawanKontroler::class, 'BuatTautan'])->where('karyawan', $ulid)->name('kelola.karyawan.tautan-absen.buat');
+        Route::delete('/{karyawan}/tautan-absen', [AbsenHpKaryawanKontroler::class, 'CabutTautan'])->where('karyawan', $ulid)->name('kelola.karyawan.tautan-absen.cabut');
+        Route::post('/{karyawan}/wajah/tinjau', [AbsenHpKaryawanKontroler::class, 'Tinjau'])->where('karyawan', $ulid)->name('kelola.karyawan.wajah.tinjau');
+        Route::delete('/{karyawan}/wajah', [AbsenHpKaryawanKontroler::class, 'HapusWajah'])->where('karyawan', $ulid)->name('kelola.karyawan.wajah.hapus');
+        Route::get('/{karyawan}/wajah/foto/{indeks}', [AbsenHpKaryawanKontroler::class, 'Foto'])->where(['karyawan' => $ulid, 'indeks' => '[0-9]'])->name('kelola.karyawan.wajah.foto');
         Route::put('/jadwal', [JadwalKerjaKontroler::class, 'Simpan'])->name('kelola.karyawan.jadwal.simpan');
         Route::post('/jadwal/salin', [JadwalKerjaKontroler::class, 'Salin'])->name('kelola.karyawan.jadwal.salin');
         Route::get('/komisi/buat', [KomisiKontroler::class, 'Buat'])->name('kelola.karyawan.komisi.buat');

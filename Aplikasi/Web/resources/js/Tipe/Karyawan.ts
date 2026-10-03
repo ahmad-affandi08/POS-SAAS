@@ -18,6 +18,25 @@ export type BarisKaryawan = {
     NamaOutlet: string | null;
     Status: StatusKaryawan;
     LabelStatus: string;
+    /** F-18 bagian 4 (D-37): sudah punya tautan absen HP; status wajah terdaftar terakhir. */
+    TautanAbsen: boolean;
+    StatusWajah: StatusWajahKaryawan | null;
+};
+
+export type StatusWajahKaryawan = 'Menunggu' | 'Disetujui' | 'Ditolak';
+
+/** Isi panel "Absen dari HP" (`GET /kelola/karyawan/{uuid}/absen-hp`). */
+export type AbsenHpKaryawan = {
+    Tautan: string | null;
+    TautanDibuatPada: string | null;
+    Wajah: {
+        Status: StatusWajahKaryawan;
+        Label: string;
+        JumlahFoto: number;
+        AlasanTolak: string | null;
+        DibuatPada: string | null;
+        DitinjauPada: string | null;
+    } | null;
 };
 
 export type PropsDaftarKaryawan = {
@@ -66,10 +85,15 @@ export type BarisAbsensi = {
     LabelStatus: string;
     AdaSwafotoMasuk: boolean;
     AdaSwafotoKeluar: boolean;
-    /** v3.34: `Pos` (absen dari kasir) atau `Manual` (dicatat pengelola). */
-    Sumber: 'Pos' | 'Manual';
+    /** v3.34: `Pos` (absen dari kasir) atau `Manual` (dicatat pengelola); v4.21 `Web` = HP pribadi (D-37). */
+    Sumber: 'Pos' | 'Manual' | 'Web';
     Dikoreksi: boolean;
     AlasanKoreksi: string | null;
+    /** Absen dari HP: jarak ke outlet (meter) & kemiripan wajah (0–1, teks desimal). */
+    JarakMasukMeter: number | null;
+    JarakKeluarMeter: number | null;
+    KemiripanWajahMasuk: string | null;
+    KemiripanWajahKeluar: string | null;
 };
 
 export type PropsAbsensi = {

@@ -12,6 +12,7 @@ use App\Domain\Karyawan\Enum\StatusWajahKaryawan;
 use App\Domain\Karyawan\Model\Absensi;
 use App\Domain\Karyawan\Model\Karyawan;
 use App\Domain\Karyawan\Model\WajahKaryawan;
+use App\Domain\Organisasi\Enum\PeranTenantBawaan;
 use App\Domain\Tenant\Kueri\ProfilTenant;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Storage;
@@ -195,4 +196,72 @@ it('PWA: manifest per tautan (cakupan hanya halaman absen ini) dan service worke
         ->and($sw->getContent())->toContain('/model-wajah/')->not->toContain('@verbatim');
 
     $this->get(substr($alamat, 0, -40).str_repeat('B', 40).'/manifest')->assertNotFound();
+});
+
+it('back-office absen HP: tautan dibuat ulang & dicabut, panel tanpa sidik wajah, tinjau lewat HTTP, foto hanya karyawan.kelola', function (): void {
+    [$k, $karyawan, $alamat] = SiapkanAbsensiWeb($this, wajahDisetujui: false);
+    $this->postJson("{$alamat}/wajah", ['SidikWajah' => [SidikWajahUji(), SidikWajahUji(), SidikWajahUji()], 'Foto' => [SwafotoAbsenWebUji(), SwafotoAbsenWebUji(), SwafotoAbsenWebUji()], 'Persetujuan' => true])->assertCreated();
+    $panel = "/kelola/karyawan/{$karyawan->Uuid}";
+
+    BantuanOrganisasi::Masuk($this, $k['Pemilik'], $k['Tenant']->Id);
+    $isi = $this->getJson("{$panel}/absen-hp")->assertOk()
+        ->assertJsonPath('Wajah.Status', 'Menunggu')
+        ->assertJsonPath('Wajah.JumlahFoto', 3)
+        ->assertJsonMissingPath('Wajah.SidikWajah');
+    expect($isi->json('Tautan'))->toEndWith(substr($alamat, -40));
+    $this->get("{$panel}/wajah/foto/0")->assertOk()->assertHeader('Content-Type', 'image/jpeg');
+
+    $this->post("{$panel}/wajah/tinjau", ['Setujui' => false, 'Alasan' => ''])->assertSessionHasErrors('Alasan');
+    $this->post("{$panel}/wajah/tinjau", ['Setujui' => true])->assertSessionHasNoErrors();
+    BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+    expect(WajahKaryawan::query()->sole()->Status)->toBe(StatusWajahKaryawan::Disetujui);
+
+    $this->post("{$panel}/tautan-absen")->assertSessionHasNoErrors();
+    $this->get($alamat)->assertNotFound();
+    $this->delete("{$panel}/tautan-absen")->assertSessionHasNoErrors();
+    BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+    expect($karyawan->refresh()->HashTokenAbsen)->toBeNull();
+
+    $this->delete("{$panel}/wajah")->assertSessionHasNoErrors();
+    BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+    expect(WajahKaryawan::query()->count())->toBe(0);
+
+    // Pemegang karyawan.lihat saja (Supervisor) tidak boleh melihat foto wajah maupun panel.
+    $supervisor = BantuanOrganisasi::TambahAnggota($k['Tenant']->Id, PeranTenantBawaan::Supervisor);
+    BantuanOrganisasi::Masuk($this, $supervisor, $k['Tenant']->Id);
+    $this->getJson("{$panel}/absen-hp")->assertForbidden();
+    $this->get("{$panel}/wajah/foto/0")->assertForbidden();
+
+    // Karyawan tenant lain = 404.
+    $lain = BantuanPenjualan::Siapkan($this, 'Toko Lain Panel');
+    BantuanOrganisasi::Masuk($this, $lain['Pemilik'], $lain['Tenant']->Id);
+    $this->getJson("{$panel}/absen-hp")->assertNotFound();
+});
+
+it('lokasi absensi outlet: simpan titik & radius (dinormalkan 7 desimal), validasi, hapus titik; rekap absensi memuat jarak', function (): void {
+    [$k, , $alamat] = SiapkanAbsensiWeb($this);
+    $outlet = "/kelola/outlet/{$k['Outlet']->Uuid}";
+    BantuanOrganisasi::Masuk($this, $k['Pemilik'], $k['Tenant']->Id);
+
+    $this->post("{$outlet}/lokasi-absensi", ['Lintang' => '-7.55612', 'Bujur' => '110.83', 'RadiusAbsensiMeter' => 150])->assertSessionHasNoErrors();
+    BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+    $baris = $k['Outlet']->refresh();
+    expect($baris->Lintang)->toBe('-7.5561200')->and($baris->Bujur)->toBe('110.8300000')->and($baris->RadiusAbsensiMeter)->toBe(150);
+
+    $this->post("{$outlet}/lokasi-absensi", ['Lintang' => '-7.5', 'Bujur' => null, 'RadiusAbsensiMeter' => 100])->assertSessionHasErrors('Lintang');
+    $this->post("{$outlet}/lokasi-absensi", ['Lintang' => '-97.5', 'Bujur' => '110', 'RadiusAbsensiMeter' => 100])->assertSessionHasErrors('Lintang');
+    $this->post("{$outlet}/lokasi-absensi", ['Lintang' => '-7.5', 'Bujur' => '110', 'RadiusAbsensiMeter' => 5])->assertSessionHasErrors('RadiusAbsensiMeter');
+    $this->get($outlet)->assertInertia(fn (AssertableInertia $h) => $h->where('LokasiAbsensi.RadiusMeter', 150));
+
+    $this->post("{$outlet}/lokasi-absensi", ['Lintang' => '-7.5560000', 'Bujur' => '110.8310000', 'RadiusAbsensiMeter' => 100])->assertSessionHasNoErrors();
+    $this->postJson("{$alamat}/masuk", KirimanAbsenWebUji())->assertOk();
+    BantuanOrganisasi::Masuk($this, $k['Pemilik'], $k['Tenant']->Id);
+    $this->getJson('/kelola/karyawan/absensi')->assertOk()
+        ->assertJsonPath('Data.0.Sumber', 'Web')
+        ->assertJsonPath('Data.0.JarakMasukMeter', 55)
+        ->assertJsonPath('Data.0.KemiripanWajahMasuk', '1.0000');
+
+    $this->post("{$outlet}/lokasi-absensi", ['Lintang' => null, 'Bujur' => null, 'RadiusAbsensiMeter' => 100])->assertSessionHasNoErrors();
+    BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+    expect($k['Outlet']->refresh()->Lintang)->toBeNull();
 });

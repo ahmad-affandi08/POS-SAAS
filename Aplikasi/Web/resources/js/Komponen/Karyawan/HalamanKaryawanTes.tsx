@@ -123,6 +123,8 @@ describe('Halaman karyawan (F-18)', () => {
             NamaOutlet: null,
             Status: 'Aktif',
             LabelStatus: 'Aktif',
+            TautanAbsen: false,
+            StatusWajah: null,
         };
         RenderUji(
             <HalamanDaftarKaryawan
@@ -169,6 +171,10 @@ describe('Halaman karyawan (F-18)', () => {
             Sumber: 'Pos',
             Dikoreksi: false,
             AlasanKoreksi: null,
+            JarakMasukMeter: null,
+            JarakKeluarMeter: null,
+            KemiripanWajahMasuk: null,
+            KemiripanWajahKeluar: null,
         };
         RenderUji(
             <HalamanAbsensi

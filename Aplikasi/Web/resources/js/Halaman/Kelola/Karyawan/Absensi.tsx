@@ -134,6 +134,13 @@ const kolom: KolomTabel<BarisAbsensi>[] = [
         cell: ({ row: { original: a } }) => (
             <span className="flex flex-col items-start gap-1">
                 <LabelStatus jenis={JenisStatus(a.Status)} teks={a.LabelStatus} />
+                {a.Sumber === 'Web' ? (
+                    <span className="text-keterangan text-teks-sekunder">
+                        Dari HP · {a.JarakMasukMeter ?? '—'} m dari outlet
+                        {a.JarakKeluarMeter !== null ? ` (keluar ${String(a.JarakKeluarMeter)} m)` : ''} · wajah{' '}
+                        {a.KemiripanWajahMasuk ?? '—'}
+                    </span>
+                ) : null}
                 {a.Sumber === 'Manual' || a.Dikoreksi ? (
                     <span className="text-keterangan text-teks-sekunder" title={a.AlasanKoreksi ?? undefined}>
                         {a.Sumber === 'Manual' ? 'Dicatat manual' : 'Dikoreksi'}

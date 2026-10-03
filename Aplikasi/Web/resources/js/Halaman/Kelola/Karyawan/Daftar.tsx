@@ -3,6 +3,7 @@ import { useState } from 'react';
 
 import AksiHalaman from '@/Komponen/Kelola/AksiHalaman';
 import FormulirKaryawan, { AlamatKaryawan } from '@/Komponen/Karyawan/FormulirKaryawan';
+import PanelAbsenHp, { JenisLabelWajah } from '@/Komponen/Karyawan/PanelAbsenHp';
 import PesanHanyaLihat from '@/Komponen/Katalog/PesanHanyaLihat';
 import TabelData from '@/Komponen/TabelData/TabelData';
 import type { KolomTabel } from '@/Komponen/TabelData/Tipe';
@@ -46,7 +47,7 @@ function BuatKolom(lihatGaji: boolean): KolomTabel<BarisKaryawan>[] {
             header: 'Akun POS',
             enableSorting: false,
             meta: { label: 'Akun POS', prioritas: 'penting' },
-            cell: ({ row }) => row.original.NamaPengguna ?? 'Tanpa akun (tidak bisa absen)',
+            cell: ({ row }) => row.original.NamaPengguna ?? 'Tanpa akun (absen lewat HP)',
         },
         ...(lihatGaji
             ? [
@@ -60,6 +61,29 @@ function BuatKolom(lihatGaji: boolean): KolomTabel<BarisKaryawan>[] {
                   },
               ]
             : []),
+        {
+            id: 'AbsenHp',
+            header: 'Absen dari HP',
+            enableSorting: false,
+            meta: { label: 'Absen dari HP', prioritas: 'rendah' },
+            cell: ({ row: { original: k } }) =>
+                k.TautanAbsen || k.StatusWajah ? (
+                    <LabelStatus
+                        jenis={JenisLabelWajah(k.StatusWajah)}
+                        teks={
+                            k.StatusWajah === 'Disetujui'
+                                ? 'Siap'
+                                : k.StatusWajah === 'Menunggu'
+                                  ? 'Wajah menunggu persetujuan'
+                                  : k.StatusWajah === 'Ditolak'
+                                    ? 'Wajah ditolak'
+                                    : 'Belum daftar wajah'
+                        }
+                    />
+                ) : (
+                    <span className="text-teks-sekunder">Belum ada tautan</span>
+                ),
+        },
         {
             id: 'Status',
             header: 'Status',
@@ -78,6 +102,7 @@ function BuatKolom(lihatGaji: boolean): KolomTabel<BarisKaryawan>[] {
 /** F-18 EMP-01: daftar karyawan; tambah (halaman penuh), ubah (panel), nonaktifkan & aktifkan. */
 export default function HalamanDaftarKaryawan({ Karyawan, OpsiPengguna, OpsiOutlet, Izin }: PropsDaftarKaryawan) {
     const [ubah, AturUbah] = useState<BarisKaryawan | null>(null);
+    const [absenHp, AturAbsenHp] = useState<BarisKaryawan | null>(null);
     const tombol = Izin.Kelola ? (
         <Button asChild>
             <Link href={`${AlamatKaryawan}/buat`}>Tambah karyawan</Link>
@@ -87,8 +112,8 @@ export default function HalamanDaftarKaryawan({ Karyawan, OpsiPengguna, OpsiOutl
     return (
         <TataLetakAplikasi judul="Karyawan">
             <p className="max-w-3xl text-isi text-teks-sekunder">
-                Karyawan dijadwalkan per outlet dan absen masuk/keluar di aplikasi kasir dengan PIN akunnya. Karyawan
-                tanpa akun tetap bisa dijadwalkan, tetapi tidak bisa absen di POS.
+                Karyawan dijadwalkan per outlet dan absen masuk/keluar di aplikasi kasir dengan PIN akunnya, atau dari
+                HP pribadi lewat tautan absen (wajah + lokasi outlet), termasuk karyawan tanpa akun.
             </p>
             {Izin.Kelola ? (
                 <AksiHalaman>{tombol}</AksiHalaman>
@@ -128,6 +153,7 @@ export default function HalamanDaftarKaryawan({ Karyawan, OpsiPengguna, OpsiOutl
                               <ItemAksiBaris
                                   aksi={[
                                       { label: 'Ubah karyawan', saatPilih: () => AturUbah(k) },
+                                      { label: 'Absen dari HP', saatPilih: () => AturAbsenHp(k) },
                                       k.Status === 'Aktif'
                                           ? {
                                                 label: 'Nonaktifkan karyawan',
@@ -158,6 +184,8 @@ export default function HalamanDaftarKaryawan({ Karyawan, OpsiPengguna, OpsiOutl
                     judul: 'Belum ada karyawan. Tambahkan di sini; staf yang absen di aplikasi kasir juga tercatat otomatis.',
                 }}
             />
+
+            {absenHp !== null ? <PanelAbsenHp karyawan={absenHp} saatTutup={() => AturAbsenHp(null)} /> : null}
 
             {ubah !== null ? (
                 <FormulirKaryawan

@@ -143,6 +143,7 @@ describe('Kelola/Outlet (F-02 langkah 1, TabelData D-16)', () => {
                 BentukMeja={[]}
                 PesanSendiri={{ FiturAktif: false, Aktif: false }}
                 JenisPesanan={jenisPesananOtomatis}
+                LokasiAbsensi={{ Lintang: null, Bujur: null, RadiusMeter: 100 }}
             />,
         );
 
@@ -189,6 +190,7 @@ describe('Kelola/Outlet (F-02 langkah 1, TabelData D-16)', () => {
                 BentukMeja={[]}
                 PesanSendiri={{ FiturAktif: false, Aktif: false }}
                 JenisPesanan={jenisPesananOtomatis}
+                LokasiAbsensi={{ Lintang: null, Bujur: null, RadiusMeter: 100 }}
             />,
         );
 
@@ -249,6 +251,7 @@ describe('Kelola/Outlet (F-02 langkah 1, TabelData D-16)', () => {
                 BentukMeja={bentuk}
                 PesanSendiri={{ FiturAktif: true, Aktif: false }}
                 JenisPesanan={jenisPesananOtomatis}
+                LokasiAbsensi={{ Lintang: null, Bujur: null, RadiusMeter: 100 }}
             />,
         );
 
@@ -275,6 +278,7 @@ describe('Kelola/Outlet (F-02 langkah 1, TabelData D-16)', () => {
                 BentukMeja={bentuk}
                 PesanSendiri={{ FiturAktif: true, Aktif: false }}
                 JenisPesanan={jenisPesananOtomatis}
+                LokasiAbsensi={{ Lintang: null, Bujur: null, RadiusMeter: 100 }}
             />,
         );
         expect(screen.getByText('Mode meja tidak aktif')).toBeTruthy();

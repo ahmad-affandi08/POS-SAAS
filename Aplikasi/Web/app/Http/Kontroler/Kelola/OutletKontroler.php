@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Kontroler\Kelola;
 
 use App\Domain\Organisasi\Aksi\AturJenisPesananOutlet;
+use App\Domain\Organisasi\Aksi\AturLokasiAbsensiOutlet;
 use App\Domain\Organisasi\Aksi\SimpanOutlet;
 use App\Domain\Organisasi\Aksi\UbahStatusOutlet;
 use App\Domain\Organisasi\Enum\BentukMeja;
@@ -23,6 +24,7 @@ use App\Domain\Referensi\Kueri\WilayahKota;
 use App\Domain\Tenant\Layanan\PastikanBatasPaket;
 use App\Domain\Tenant\Layanan\PemeriksaFiturTenant;
 use App\Http\Permintaan\Kelola\AturJenisPesananOutletPermintaan;
+use App\Http\Permintaan\Kelola\AturLokasiAbsensiOutletPermintaan;
 use App\Http\Permintaan\Kelola\SimpanOutletPermintaan;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
@@ -89,6 +91,16 @@ final class OutletKontroler extends DasarKelolaKontroler
         return back()->with('Kilat', "Jenis pesanan kasir {$baris->Nama} disimpan. Perangkat kasir memakainya setelah memuat ulang data.");
     }
 
+    /** F-18 bagian 4 (D-37): titik lokasi & radius absensi web outlet. */
+    public function AturLokasiAbsensi(string $outlet, AturLokasiAbsensiOutletPermintaan $permintaan, AturLokasiAbsensiOutlet $atur): RedirectResponse
+    {
+        $baris = $atur->Jalankan($this->CariOutlet($outlet), $permintaan->AmbilLintang(), $permintaan->AmbilBujur(), $permintaan->integer('RadiusAbsensiMeter'));
+
+        return back()->with('Kilat', $baris->Lintang === null
+            ? "Titik lokasi {$baris->Nama} dihapus. Absen dari HP tidak bisa di outlet ini."
+            : "Lokasi absensi {$baris->Nama} disimpan (radius {$baris->RadiusAbsensiMeter} m).");
+    }
+
     public function Detail(string $outlet, WilayahKota $wilayahKota, MejaOutlet $mejaOutlet, PenjagaModeMeja $modeMeja, PemeriksaFiturTenant $fitur, JenisPesananOutlet $jenisPesanan): Response
     {
         $baris = $this->CariOutlet($outlet);
@@ -135,6 +147,12 @@ final class OutletKontroler extends DasarKelolaKontroler
             'JenisPesanan' => [
                 ...$jenisPesanan->Ambil($baris),
                 'Pilihan' => array_map(fn (JenisPesanan $j): array => ['Nilai' => $j->value, 'Label' => $j->AmbilLabel()], JenisPesanan::cases()),
+            ],
+            // F-18 bagian 4 (D-37): titik lokasi & radius absensi web.
+            'LokasiAbsensi' => [
+                'Lintang' => $baris->Lintang === null ? null : (string) $baris->Lintang,
+                'Bujur' => $baris->Bujur === null ? null : (string) $baris->Bujur,
+                'RadiusMeter' => $baris->RadiusAbsensiMeter,
             ],
             // F-17: pesan sendiri QR meja (sakelar outlet + fitur paket `kanal.self-order`).
             'PesanSendiri' => [
