@@ -53,6 +53,8 @@ use LogicException;
  * @property Carbon|null $PeriodeSelesai
  * @property Carbon|null $MulaiLanggananPaket
  * @property string|null $RefGateway
+ * @property string|null $PengingatTerakhir tahap pengingat terakhir yang dikirim (`TahapPengingatTagihan`)
+ * @property Carbon|null $PengingatTerakhirPada
  * @property int|null $IdPenggunaPembuat
  * @property Carbon|null $DibuatPada
  * @property-read Paket $Paket
@@ -65,7 +67,7 @@ final class TagihanLangganan extends ModelDasar
     /** Kolom yang boleh berubah setelah terbit. */
     public const KOLOM_BOLEH_BERUBAH = [
         'Status', 'DibayarPada', 'DibatalkanPada', 'AlasanBatal', 'PeriodeMulai', 'PeriodeSelesai', 'MulaiLanggananPaket',
-        'RefGateway', self::UPDATED_AT,
+        'RefGateway', 'PengingatTerakhir', 'PengingatTerakhirPada', self::UPDATED_AT,
     ];
 
     protected $table = 'TagihanLangganan';
@@ -88,6 +90,8 @@ final class TagihanLangganan extends ModelDasar
         'PeriodeSelesai' => null,
         'MulaiLanggananPaket' => null,
         'RefGateway' => null,
+        'PengingatTerakhir' => null,
+        'PengingatTerakhirPada' => null,
         'IdPenggunaPembuat' => null,
     ];
 
@@ -158,6 +162,7 @@ final class TagihanLangganan extends ModelDasar
             'PeriodeMulai' => 'datetime',
             'PeriodeSelesai' => 'datetime',
             'MulaiLanggananPaket' => 'date',
+            'PengingatTerakhirPada' => 'datetime',
         ];
     }
 }
