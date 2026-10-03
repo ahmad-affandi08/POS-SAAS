@@ -100,6 +100,18 @@ php artisan optimize
 php artisan up
 ```
 
+## 7a. Tarif pajak & hari libur baru
+
+Saat tarif pajak berubah atau pemerintah menetapkan/membatalkan hari libur, PAYOU membagikan berkas data master
+(`payou-data-master-AAAA-BB-HH.json`). Jalankan:
+
+```
+php artisan lisensi:impor-data-master /path/ke/payou-data-master.json
+```
+
+Aman dijalankan berulang: data yang sudah ada dilewati. Tarif lama tidak diubah, hanya ditutup tanggal berlakunya saat
+tarif penggantinya terbit.
+
 ## 8. Menambah outlet/perangkat atau pindah domain
 
 Minta berkas lisensi baru ke PAYOU, lalu jalankan `php artisan lisensi:pasang /path/ke/berkas-baru.lisensi`. Data
@@ -123,3 +135,6 @@ Per pembeli:
 php artisan lisensi:terbitkan --nomor=PAYOU-L-2026-0001 --pemegang="PT Toko Anda" --domain=kasir.tokoanda.com \
   --batas-outlet=3 --batas-perangkat=5 --kunci-privat=~/payou-lisensi.kunci --keluaran=tokoanda.lisensi
 ```
+
+Berkas data master untuk pembeli (dijalankan di server SaaS PAYOU, berisi tarif & hari libur yang sudah terbit di
+konsol): `php artisan lisensi:ekspor-data-master storage/app/payou-data-master.json`.

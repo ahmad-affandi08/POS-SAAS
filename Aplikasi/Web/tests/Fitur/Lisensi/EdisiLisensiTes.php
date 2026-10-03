@@ -23,6 +23,7 @@ use App\Domain\Pengelola\Integrasi\Enum\PenyediaIntegrasi;
 use App\Domain\Pengelola\Integrasi\Model\KonfigurasiIntegrasi;
 use App\Domain\Pengelola\Katalog\Aksi\SiapkanKatalogBawaan;
 use App\Domain\Pengelola\TimInternal\Enum\PeranPengelolaBawaan;
+use App\Domain\Referensi\Model\HariLibur;
 use App\Domain\Referensi\Model\SatuanStandar;
 use App\Domain\Tenant\Enum\JenisOverride;
 use App\Domain\Tenant\Enum\StatusLangganan;
@@ -106,6 +107,46 @@ describe('Edisi Lisensi (D-35)', function (): void {
         $this->artisan('lisensi:siapkan-data')->expectsOutputToContain('0 tarif pajak & 0 template sektor baru')->assertSuccessful();
         expect(TarifPajak::query()->count())->toBe(1)
             ->and(TemplateSektorVersi::query()->where('Status', StatusTemplateSektor::Terbit->value)->count())->toBe($templateTerbit);
+    });
+
+    it('impor data master PAYOU: tarif sama dilewati, tarif baru mengakhiri yang lama, hari libur & pembatalan; idempoten', function (): void {
+        app(PasangLisensi::class)->Jalankan(BantuanLisensi::Berkas(), 'Kopi Nusantara', PemilikLisensiUji());
+        $paket = [
+            'Format' => 1,
+            'DibuatPada' => '2026-10-03T00:00:00Z',
+            'TarifPajak' => [
+                ['KodeJenisPajak' => 'Ppn', 'Tarif' => '12.000000', 'PengaliDppPembilang' => 11, 'PengaliDppPenyebut' => 12, 'KodeWilayah' => null, 'BiayaLayananMasukDpp' => false, 'BerlakuMulai' => '2025-01-01', 'NomorDasarHukum' => 'PMK 131 Tahun 2024', 'TautanDasarHukum' => null],
+                ['KodeJenisPajak' => 'Ppn', 'Tarif' => '13', 'PengaliDppPembilang' => 1, 'PengaliDppPenyebut' => 1, 'KodeWilayah' => null, 'BiayaLayananMasukDpp' => false, 'BerlakuMulai' => '2030-01-01', 'NomorDasarHukum' => 'PMK uji', 'TautanDasarHukum' => null],
+            ],
+            'HariLibur' => [
+                ['Tanggal' => '2026-08-17', 'Nama' => 'Hari Kemerdekaan RI', 'Jenis' => 'Nasional', 'NomorDasarHukum' => null, 'Dibatalkan' => false],
+                ['Tanggal' => '2026-12-24', 'Nama' => 'Cuti Bersama Natal', 'Jenis' => 'CutiBersama', 'NomorDasarHukum' => null, 'Dibatalkan' => false],
+            ],
+        ];
+        $berkas = tempnam(sys_get_temp_dir(), 'data');
+        file_put_contents($berkas, json_encode($paket));
+
+        $this->artisan('lisensi:impor-data-master', ['berkas' => $berkas])
+            ->expectsOutputToContain('Tarif pajak baru: 1 (sudah ada/dilewati: 1). Hari libur baru: 2, dibatalkan: 0.')
+            ->assertSuccessful();
+
+        $tarif = TarifPajak::query()->orderBy('BerlakuMulai')->get();
+        expect($tarif)->toHaveCount(2)
+            ->and($tarif[0]->BerlakuSampai?->toDateString())->toBe('2029-12-31')
+            ->and($tarif[1]->Status)->toBe(StatusDataMaster::Terbit);
+
+        $paket['HariLibur'][1]['Dibatalkan'] = true;
+        file_put_contents($berkas, json_encode($paket));
+        $this->artisan('lisensi:impor-data-master', ['berkas' => $berkas])
+            ->expectsOutputToContain('Tarif pajak baru: 0 (sudah ada/dilewati: 2). Hari libur baru: 0, dibatalkan: 1.')
+            ->assertSuccessful();
+
+        file_put_contents($berkas, '{"Format": 9}');
+        $this->artisan('lisensi:impor-data-master', ['berkas' => $berkas])->expectsOutputToContain('formatnya tidak dikenal')->assertFailed();
+        unlink($berkas);
+
+        expect(HariLibur::query()->where('Nama', 'Cuti Bersama Natal')->sole()->Status)->toBe(StatusDataMaster::Dibatalkan)
+            ->and(TarifPajak::query()->count())->toBe(2);
     });
 
     it('fitur: semua fitur katalog aktif, batas outlet/perangkat/pengguna dari lisensi, batas lain tak terbatas', function (): void {
