@@ -563,3 +563,29 @@ Aturan:
 - Konsol *Situs pemasaran → Artikel* (`/situs/artikel`, TabelData server; cari judul/alamat/kategori, saring status & kategori): *Tulis artikel* membuat draf dari judul lalu membuka editor (isi + pratinjau langsung). *Terbitkan* ditolak bila isi kosong; artikel terbit langsung berubah saat disimpan (tanpa draf terpisah, beda dengan halaman). *Tarik ke draf* membuat alamatnya 404; artikel terbit harus ditarik dulu sebelum dihapus. Gambar yang dipakai sampul artikel tidak bisa dihapus dari pustaka. Semua aksi tercatat di log audit (`situs.artikel.*`).
 - Publik (domain pemasaran; dari domain tenant dialihkan): `/blog` (12 per halaman `?halaman=`, chip kategori `?kategori=`, keadaan kosong) dan `/blog/{slug}` (jejak Blog › kategori, penulis & tanggal, sampul, ringkasan, isi, "Baca juga" 3 artikel terbaru sekategori). Hanya artikel `Terbit` yang tampil. SEO: judul = `JudulSeo` atau "Judul · nama situs", deskripsi = `DeskripsiSeo` → ringkasan → deskripsi umum, gambar = sampul → gambar bagikan umum, kanonik `payou.id/blog/{slug}`, `og:type article`, `article:published_time`, JSON-LD `BlogPosting`. `/peta-situs` memuat `/blog` dan semua artikel terbit (`lastmod` = diubah).
 - Jalur `blog` & `prospek` dicadangkan (`AturanSlugSitus::TERLARANG`).
+
+### 13.10 Edisi Lisensi (D-35)
+
+Selain PAYOU yang kita jalankan sebagai SaaS, **dashboard bisa dijual sekali beli** dan dipasang pembeli di server & domainnya sendiri. Satu kode, dua edisi, dipilih `.env` `EDISI` (`config/lisensi.php`):
+
+| | Edisi `Saas` (bawaan) | Edisi `Lisensi` |
+|---|---|---|
+| Domain | `payou.id` pemasaran, `dashboard.payou.id` tenant, `consol.payou.id` pengelola (D-20) | Satu domain milik pembeli, tertulis di berkas lisensi |
+| Usaha | Banyak tenant, pendaftaran publik F-00 | **Satu usaha**, dibuat saat `lisensi:pasang`; `/daftar` tidak ada |
+| Platform Pengelola, situs pemasaran, blog, portal pengembang | Ada | Tidak didaftarkan; `/` langsung ke `/masuk` |
+| Langganan, tagihan, trial, tiket bantuan ke PAYOU | Ada (P-04, P-08, P-09) | Tidak ada: rute tidak didaftarkan, jadwalnya tidak berjalan, menu disembunyikan lewat `Akses.IzinNonaktif` (juga untuk Pemilik) |
+| Fitur | Sesuai paket + add-on + override | **Semua fitur** di katalog `Fitur` (termasuk fitur rilis berikutnya) |
+| Batas | Paket | Dari berkas lisensi: `BatasOutlet`, `BatasPerangkatPerOutlet`, `BatasPengguna` (kosong = tak terbatas); batas lain tak terbatas |
+| Masa berlaku | Periode langganan | **Selamanya** (sekali beli), tanpa pemeriksaan ke server PAYOU |
+
+**Berkas lisensi** (`DataLisensi`): JSON `{"Format": 1, "Data": {Nomor, NamaPemegang, Domain, BatasOutlet, BatasPerangkatPerOutlet, BatasPengguna, DiterbitkanPada}, "TandaTangan"}` ditandatangani **Ed25519** (libsodium) atas JSON kanonik `Data` (urutan kunci tetap). Verifikasi sepenuhnya offline dengan kunci publik penerbit yang ditulis di `config/lisensi.php` (bukan `.env`, karena bukan rahasia dan ikut rilis). Kunci privat hanya ada di mesin PAYOU, tidak pernah di repo, server produksi, server pembeli, maupun log.
+
+**Perintah:**
+- `lisensi:buat-kunci {berkas}` (sekali, di mesin pemilik produk): kunci privat ditulis ke berkas di luar repo (0600), kunci publik dicetak untuk ditempel ke `config/lisensi.php`.
+- `lisensi:terbitkan --nomor --pemegang --domain [--batas-outlet --batas-perangkat --batas-pengguna] --kunci-privat --keluaran`: berkas lisensi diverifikasi ulang dengan kunci publik terpasang sebelum ditulis.
+- `lisensi:pasang {berkas}` (server pembeli): pemasangan pertama meminta nama usaha + Owner (kata sandi tersembunyi) lalu membuat tenant lewat `SiapkanTenantLisensi` (Owner terverifikasi, outlet & gudang bawaan, Tunai, panduan awal wajib, langganan paket internal `LISENSI` Aktif tanpa periode berakhir, tanpa persetujuan dokumen legal platform karena pembeli sendiri penyelenggaranya). Menjalankannya lagi dengan berkas baru **mengganti** lisensi (tambah outlet/perangkat, pindah domain) tanpa menyentuh data usaha. Riwayat pemasangan di tabel `LisensiTerpasang` (baris terbaru berlaku).
+- `lisensi:info`: edisi & lisensi yang berlaku.
+
+**Penegakan:** perantara global `WajibLisensiSah` menjawab **503** untuk semua permintaan (web, API POS & Pemilik, webhook, halaman publik toko) bila belum ada lisensi sah atau host permintaan bukan domain lisensi; `/sehat` selalu lolos. Berkas tersimpan diverifikasi ulang tiap dibaca, sehingga mengubah baris `LisensiTerpasang` langsung di basis data tidak menambah batas apa pun. Kode PHP terbaca oleh pembeli, jadi perlindungan utamanya adalah **kontrak lisensi**; pemeriksaan teknis mencegah salah pakai dan penyalinan biasa, bukan pembajakan yang disengaja.
+
+**Belum (bagian berikutnya):** data master platform tanpa konsol (tarif pajak & hari libur terbit, template sektor, katalog penyedia integrasi), pengaturan penyedia email/WhatsApp oleh Owner, aplikasi Kasir/Pemilik yang menunjuk server pembeli, dan panduan instalasi.

@@ -1,13 +1,15 @@
-import { Link, useForm } from '@inertiajs/react';
+import { Link, useForm, usePage } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import KotakCentang from '@/Komponen/Formulir/KotakCentang';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import TataLetakAutentikasi from '@/TataLetak/TataLetakAutentikasi';
+import type { PropsBersamaAplikasi } from '@/Tipe/Aplikasi';
 
 /** Masuk back-office tenant. */
 export default function HalamanMasuk() {
+    const { props } = usePage<PropsBersamaAplikasi>();
     const formulir = useForm({ Email: '', KataSandi: '', Ingat: false });
 
     const Kirim = (peristiwa: FormEvent) => {
@@ -47,12 +49,15 @@ export default function HalamanMasuk() {
                 <Tombol type="submit" memproses={formulir.processing}>
                     Masuk
                 </Tombol>
-                <p className="text-keterangan text-teks-sekunder">
-                    Belum punya akun?{' '}
-                    <Link href="/daftar" className="font-semibold text-brand underline">
-                        Daftar gratis
-                    </Link>
-                </p>
+                {/* D-35: edisi Lisensi tanpa pendaftaran publik; akun dibuat Owner dari menu Pengguna. */}
+                {props.Edisi === 'Lisensi' ? null : (
+                    <p className="text-keterangan text-teks-sekunder">
+                        Belum punya akun?{' '}
+                        <Link href="/daftar" className="font-semibold text-brand underline">
+                            Daftar gratis
+                        </Link>
+                    </p>
+                )}
             </form>
         </TataLetakAutentikasi>
     );

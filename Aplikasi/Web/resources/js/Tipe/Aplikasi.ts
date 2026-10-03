@@ -45,6 +45,8 @@ export type TenantAktif = {
 
 export type PropsBersamaAplikasi = {
     NamaAplikasi: string;
+    /** D-35: `Lisensi` = dashboard dipasang pembeli sendiri (tanpa pendaftaran, langganan, tiket bantuan PAYOU). */
+    Edisi?: 'Saas' | 'Lisensi';
     /** D-20: alamat situs pemasaran (absolut bila domain pemasaran terpisah, selain itu `/`). */
     UrlPemasaran?: string;
     Kilat: string | null;
@@ -54,7 +56,7 @@ export type PropsBersamaAplikasi = {
     /** P-10 PGL-19: banner pengumuman & pemeliharaan platform (kosong/absen di luar back-office). */
     PengumumanPlatform?: PengumumanPlatform[];
     /** F-02: hak akses di tenant aktif (null di luar back-office). */
-    Akses: { Pemilik: boolean; Izin: string[] } | null;
+    Akses: { Pemilik: boolean; Izin: string[]; IzinNonaktif?: string[] } | null;
     /** D-23: fitur di luar paket (menu tetap tampil; klik = dialog naik paket / add-on). */
     FiturPaket?: FiturPaket | null;
     errors: Record<string, string>;

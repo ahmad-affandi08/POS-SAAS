@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Http\Perantara;
 
 use App\Domain\Bersama\Tenant\KonteksTenant;
+use App\Domain\Lisensi\Enum\EdisiAplikasi;
+use App\Domain\Organisasi\Enum\IzinTenant;
 use App\Domain\Organisasi\Kueri\AksesPengguna;
 use App\Domain\Organisasi\Kueri\KeanggotaanPengguna;
 use App\Domain\Organisasi\Kueri\PemilikTenant;
@@ -49,6 +51,8 @@ final class BagikanDataInertia extends Middleware
         return [
             ...parent::share($request),
             'NamaAplikasi' => config('app.name'),
+            // D-35: edisi Lisensi menyembunyikan pendaftaran, langganan, dan tiket bantuan di antarmuka.
+            'Edisi' => EdisiAplikasi::AmbilBerjalan()->value,
             // D-20: logo di halaman masuk/daftar menuju situs pemasaran (bisa host lain).
             'UrlPemasaran' => ArahkanDomainAplikasi::BuatUrlPemasaran('/'),
             'Kilat' => fn () => $request->session()->get('Kilat'),
@@ -106,7 +110,13 @@ final class BagikanDataInertia extends Middleware
                 $idTenant = app(KonteksTenant::class)->Ambil();
                 $akses = $pengguna instanceof Pengguna && $idTenant !== null ? app(AksesPengguna::class)->Ambil($idTenant, $pengguna->Id) : null;
 
-                return $akses === null ? null : ['Pemilik' => $akses['Pemilik'], 'Izin' => $akses['Izin']];
+                // D-35: izin yang halamannya tidak ada di edisi Lisensi (langganan & tiket bantuan PAYOU) dimatikan
+                // juga untuk Pemilik, supaya menu, Pengaturan, dan Ctrl+K tidak menautkan ke halaman 404.
+                $nonaktif = EdisiAplikasi::CekLisensi()
+                    ? [IzinTenant::LanggananKelola->value, IzinTenant::BantuanTiketLihat->value, IzinTenant::BantuanTiketKelola->value]
+                    : [];
+
+                return $akses === null ? null : ['Pemilik' => $akses['Pemilik'], 'Izin' => array_values(array_diff($akses['Izin'], $nonaktif)), 'IzinNonaktif' => $nonaktif];
             },
             // D-23: fitur di luar paket tetap tampil di menu; klik = dialog naik paket / add-on (hanya UX).
             'FiturPaket' => function () use ($pengguna): ?array {

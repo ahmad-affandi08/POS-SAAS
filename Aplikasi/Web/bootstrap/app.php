@@ -8,6 +8,7 @@ use App\Http\Perantara\ArahkanDomainAplikasi;
 use App\Http\Perantara\AutentikasiPemilik;
 use App\Http\Perantara\AutentikasiPerangkat;
 use App\Http\Perantara\PasangHeaderKeamanan;
+use App\Http\Perantara\WajibLisensiSah;
 use App\Http\Perantara\Pengelola\SiapkanSesiPengelola;
 use App\Http\Respons\GalatApi;
 use Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests;
@@ -52,6 +53,9 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // Audit F-14: header keamanan (CSP dasar, HSTS, nosniff, Referrer-Policy, Permissions-Policy) di semua respons.
         $middleware->append(PasangHeaderKeamanan::class);
+
+        // D-35 edisi Lisensi: tanpa lisensi sah untuk domain ini, semua permintaan dijawab 503 (no-op di edisi SaaS).
+        $middleware->append(WajibLisensiSah::class);
 
         // API POS: perangkat dikenali sebelum batas laju dihitung, agar limiter `pos-*` memakai kunci per perangkat.
         $middleware->prependToPriorityList(before: ThrottleRequests::class, prepend: AutentikasiPerangkat::class);

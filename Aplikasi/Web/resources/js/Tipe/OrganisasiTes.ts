@@ -22,6 +22,14 @@ describe('Izin tenant untuk menu (UX saja, server tetap penentu)', () => {
         expect(PunyaIzinTenant({ Pemilik: false, Izin: ['outlet.lihat'] }, IzinTenant.OutletKelola)).toBe(false);
         expect(PunyaIzinTenant(null, IzinTenant.OutletLihat)).toBe(false);
     });
+
+    it('D-35: izin nonaktif edisi Lisensi (langganan, bantuan) mati juga untuk Pemilik', () => {
+        const akses = { Pemilik: true, Izin: [], IzinNonaktif: ['langganan.kelola', 'bantuan.tiket.lihat'] };
+
+        expect(PunyaIzinTenant(akses, IzinTenant.LanggananKelola)).toBe(false);
+        expect(PunyaIzinTenant(akses, IzinTenant.BantuanTiketLihat)).toBe(false);
+        expect(PunyaIzinTenant(akses, IzinTenant.OutletKelola)).toBe(true);
+    });
 });
 
 describe('Izin panduan awal F-01 (sama dengan IzinTenant::PanduanAwalKelola di Backend)', () => {

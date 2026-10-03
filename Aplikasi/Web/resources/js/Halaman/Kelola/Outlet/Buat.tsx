@@ -1,8 +1,8 @@
-import { Link, router, usePage } from '@inertiajs/react';
+import { router, usePage } from '@inertiajs/react';
 
 import DaftarGalatServer from '@/Komponen/Katalog/DaftarGalatServer';
 import FormOutlet, { type IsianOutlet } from '@/Komponen/Kelola/FormOutlet';
-import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
+import PemberitahuanBatasOutlet from '@/Komponen/Kelola/PemberitahuanBatasOutlet';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
 import type { PropsBersamaAplikasi } from '@/Tipe/Aplikasi';
 import { CekBatasPenuh, FormatBatas, type PropsBuatOutlet } from '@/Tipe/Organisasi';
@@ -40,15 +40,7 @@ export default function HalamanBuatOutlet({ Merek, Kota, BatasOutlet }: PropsBua
                 <span className="font-semibold text-teks-utama">{FormatBatas(BatasOutlet, 'outlet')}</span>. Setiap
                 outlet baru langsung mendapat lokasi stok Toko.
             </p>
-            {CekBatasPenuh(BatasOutlet) ? (
-                <Pemberitahuan jenis="info" judul="Batas outlet paket sudah tercapai">
-                    Tingkatkan paket atau tambah add-on outlet di{' '}
-                    <Link href="/kelola/langganan" className="font-semibold text-brand underline">
-                        menu Langganan
-                    </Link>
-                    . Outlet yang diarsipkan tidak dihitung.
-                </Pemberitahuan>
-            ) : null}
+            {CekBatasPenuh(BatasOutlet) ? <PemberitahuanBatasOutlet /> : null}
             <FormOutlet
                 uuid={null}
                 awal={awal}

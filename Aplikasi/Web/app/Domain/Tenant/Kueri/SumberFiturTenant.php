@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace App\Domain\Tenant\Kueri;
 
+use App\Domain\Lisensi\Enum\EdisiAplikasi;
+use App\Domain\Lisensi\Kueri\LisensiBerlaku;
 use App\Domain\Tenant\Data\SumberFitur;
 use App\Domain\Tenant\Enum\JenisOverride;
+use App\Domain\Tenant\Model\Fitur;
 use App\Domain\Tenant\Model\Langganan;
 use App\Domain\Tenant\Model\OverrideTenant;
 use App\Domain\Tenant\Model\Paket;
@@ -19,12 +22,17 @@ use Illuminate\Support\Carbon;
  * Modul outlet (F-01, BR-01.3) diisi bila outlet disebut: kunci `OutletFitur` aktif outlet itu, atau null (tanpa
  * batasan) bila outlet belum punya baris sama sekali. Flag fitur (P-10) dari `FlagFiturTenant`; add-on (F-19) belum
  * tersedia.
+ *
+ * D-35 edisi Lisensi: semua fitur di katalog aktif (termasuk fitur yang ditambahkan rilis berikutnya) dan batas
+ * outlet/perangkat/pengguna diambil dari berkas lisensi yang berlaku; batas lain tak terbatas. Tanpa lisensi sah,
+ * tidak ada fitur dan semua batas nol (permintaan HTTP pun sudah ditolak `WajibLisensiSah`).
  */
 final class SumberFiturTenant
 {
     public function __construct(
         private readonly FiturOutlet $fiturOutlet,
         private readonly FlagFiturTenant $flagFitur,
+        private readonly LisensiBerlaku $lisensiBerlaku,
     ) {}
 
     /**
@@ -53,14 +61,40 @@ final class SumberFiturTenant
             }
         }
 
+        [$fiturPaket, $batasPaket] = EdisiAplikasi::CekLisensi()
+            ? $this->AmbilDariLisensi()
+            : [$paket?->AmbilKunciFitur() ?? [], $paket?->AmbilBatas() ?? array_fill_keys(Paket::KOLOM_BATAS, 0)];
+
         return new SumberFitur(
-            fiturPaket: $paket?->AmbilKunciFitur() ?? [],
-            batasPaket: $paket?->AmbilBatas() ?? array_fill_keys(Paket::KOLOM_BATAS, 0),
+            fiturPaket: $fiturPaket,
+            batasPaket: $batasPaket,
             overrideFitur: array_values(array_unique($overrideFitur)),
             overrideBatas: $overrideBatas,
             modulOutletAktif: $idOutlet === null ? null : $this->fiturOutlet->AmbilKunciAktifAtauNull($idTenant, $idOutlet),
             flagFitur: $this->flagFitur->Ambil($idTenant, $paket?->Id),
         );
+    }
+
+    /**
+     * @return array{0: list<string>, 1: array<string, int|null>}
+     */
+    private function AmbilDariLisensi(): array
+    {
+        $lisensi = $this->lisensiBerlaku->Ambil();
+
+        if ($lisensi === null) {
+            return [[], array_fill_keys(Paket::KOLOM_BATAS, 0)];
+        }
+
+        $batas = array_fill_keys(Paket::KOLOM_BATAS, null);
+        $batas['BatasOutlet'] = $lisensi->batasOutlet;
+        $batas['BatasPerangkatPerOutlet'] = $lisensi->batasPerangkatPerOutlet;
+        $batas['BatasPengguna'] = $lisensi->batasPengguna;
+
+        /** @var list<string> $fitur */
+        $fitur = Fitur::query()->orderBy('Kunci')->pluck('Kunci')->all();
+
+        return [$fitur, $batas];
     }
 
     /**

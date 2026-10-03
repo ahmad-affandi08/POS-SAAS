@@ -2,38 +2,44 @@
 
 declare(strict_types=1);
 
+use App\Domain\Lisensi\Enum\EdisiAplikasi;
+use Illuminate\Console\Scheduling\Event;
 use Illuminate\Support\Facades\Schedule;
 
 /*
  * Jadwal tugas. Di Hostinger dijalankan oleh cron `* * * * * php artisan schedule:run` (PRD §14).
  */
 
+// D-35: tugas milik Platform Pengelola & tagihan langganan hanya dijadwalkan di edisi SaaS. Di edisi Lisensi tugasnya
+// tetap terdaftar sebagai perintah (bisa dijalankan manual) tetapi tidak pernah berjalan sendiri.
+$jadwalSaas = static fn (string $perintah): Event => Schedule::command($perintah)->when(static fn (): bool => ! EdisiAplikasi::CekLisensi());
+
 // BR-P02.4: pengingat hari libur tahun berikutnya (aktif mulai 1 November sampai terbit).
-Schedule::command('pengelola:ingatkan-hari-libur')->dailyAt('08:00')->timezone('Asia/Jakarta');
+$jadwalSaas('pengelola:ingatkan-hari-libur')->dailyAt('08:00')->timezone('Asia/Jakarta');
 
 // BR-P05.3: uji koneksi integrasi aktif setiap jam; alert ke Teknis saat baru gagal.
-Schedule::command('pengelola:uji-integrasi')->hourly()->withoutOverlapping();
+$jadwalSaas('pengelola:uji-integrasi')->hourly()->withoutOverlapping();
 
 // BR-00.3: trial yang berakhir turun ke paket Gratis.
-Schedule::command('tenant:akhiri-trial')->hourly()->withoutOverlapping();
+$jadwalSaas('tenant:akhiri-trial')->hourly()->withoutOverlapping();
 
 // P-08: tagihan lewat jatuh tempo, langganan Tertunggak lalu Ditangguhkan setelah masa tenggang.
-Schedule::command('tagihan:proses-tunggakan')->hourly()->withoutOverlapping();
+$jadwalSaas('tagihan:proses-tunggakan')->hourly()->withoutOverlapping();
 
 // P-08 (v4.06): pembayaran langganan gerbang tanpa notifikasi webhook ditanyakan statusnya ke gerbang.
-Schedule::command('tagihan:rekonsiliasi-gerbang')->everyFifteenMinutes()->withoutOverlapping();
+$jadwalSaas('tagihan:rekonsiliasi-gerbang')->everyFifteenMinutes()->withoutOverlapping();
 
 // P-08 (v4.04): tagihan perpanjangan otomatis H-7 + pengingat H-7/H-3/H0/H+3 ke Owner, di jam kerja.
-Schedule::command('tagihan:terbitkan-perpanjangan')->dailyAt('08:20')->timezone('Asia/Jakarta')->withoutOverlapping();
+$jadwalSaas('tagihan:terbitkan-perpanjangan')->dailyAt('08:20')->timezone('Asia/Jakarta')->withoutOverlapping();
 
 // BR-P06.5: pengumuman versi materiil dokumen legal ke Owner selama masa pengumuman (sekali per versi per pengguna).
 // v1.98 HCL: daftar kompatibilitas perangkat dari hasil Wizard Uji Perangkat.
-Schedule::command('pengelola:segarkan-kompatibilitas')->dailyAt('02:30')->timezone('Asia/Jakarta')->withoutOverlapping();
+$jadwalSaas('pengelola:segarkan-kompatibilitas')->dailyAt('02:30')->timezone('Asia/Jakarta')->withoutOverlapping();
 
-Schedule::command('tenant:umumkan-dokumen-legal')->dailyAt('09:00')->timezone('Asia/Jakarta')->withoutOverlapping();
+$jadwalSaas('tenant:umumkan-dokumen-legal')->dailyAt('09:00')->timezone('Asia/Jakarta')->withoutOverlapping();
 
 // P-11 BR-P11.1: detak scheduler tiap menit + pemeriksaan alert operasional (scheduler, antrean, backup).
-Schedule::command('pengelola:detak')->everyMinute()->withoutOverlapping();
+$jadwalSaas('pengelola:detak')->everyMinute()->withoutOverlapping();
 
 // P-11 (§14.4): worker antrean database dijalankan scheduler tiap menit di Hostinger (tanpa proses daemon).
 Schedule::command('queue:work --stop-when-empty --max-time=50')->everyMinute()->withoutOverlapping();
@@ -42,7 +48,7 @@ Schedule::command('queue:work --stop-when-empty --max-time=50')->everyMinute()->
 Schedule::command('integrasi:kirim-webhook')->everyMinute()->withoutOverlapping();
 
 // P-09: tiket selesai yang tidak dibuka lagi dalam 7 hari ditutup otomatis.
-Schedule::command('pengelola:tutup-tiket-selesai')->dailyAt('01:00')->timezone('Asia/Jakarta')->withoutOverlapping();
+$jadwalSaas('pengelola:tutup-tiket-selesai')->dailyAt('01:00')->timezone('Asia/Jakarta')->withoutOverlapping();
 
 // F-05a (DesainF05a C.9): pemeriksaan malam SaldoStok = Σ MutasiStok, rantai mutasi, lapisan FIFO, batch & seri (keluar 1 bila berbeda).
 Schedule::command('persediaan:bangun-ulang-saldo --periksa')->dailyAt('02:30')->timezone('Asia/Jakarta')->withoutOverlapping();
@@ -90,7 +96,7 @@ Schedule::command('bengkel:kirim-pengingat-servis')->dailyAt('09:10')->timezone(
 Schedule::command('reservasi:kirim-pengingat')->hourlyAt(5)->withoutOverlapping();
 
 // Situs pemasaran bagian B: retensi data prospek (UU PDP).
-Schedule::command('situs:bersihkan-prospek')->dailyAt('03:30')->timezone('Asia/Jakarta')->withoutOverlapping();
+$jadwalSaas('situs:bersihkan-prospek')->dailyAt('03:30')->timezone('Asia/Jakarta')->withoutOverlapping();
 
 // Audit P0 F-02: tagihan QRIS dinamis yang hasil pembuatannya di gerbang tidak pasti direkonsiliasi (bukan dihapus).
 Schedule::command('penjualan:rekonsiliasi-qris')->everyTenMinutes()->withoutOverlapping();

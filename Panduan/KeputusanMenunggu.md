@@ -54,6 +54,7 @@ Format tiap butir: pertanyaan, pilihan yang tersedia, usulan agent, dan apa yang
 | # | Keputusan | Jawaban pemilik | Diterapkan |
 |---|---|---|---|
 | K17 | MySQL 8 atau MariaDB 11.8 di produksi | "hosting menggunakan mysql" (3 Okt 2026) | Tanpa perubahan kode (test & CI memakai MySQL 8) |
+| D-35 | Dashboard dijual sebagai lisensi pasang sendiri | "mereka beli dashboardnya aja, pasang di server mereka sendiri, domain mereka sendiri" + satu usaha, semua fitur, berkas bertanda tangan offline, "sekali beli selamanya" (3 Okt 2026) | PRD v4.12 (bagian 1); data master, integrasi, aplikasi & panduan instalasi menyusul |
 | D-34 | Four-eyes data master untuk Super Admin | "untuk superadmin di konsol itu tidak berlaku tinjau meninjau" (3 Okt 2026) | PRD v4.10 |
 | K28 | Retur tanpa struk | "K28 Return pake PIN owner dan yang berhak" (3 Okt 2026) → pilihan (b): wajib PIN Pemilik atau pengguna ber-izin baru `penjualan.retur.tanpa-struk` (bawaan Pemilik & Admin), nilai = harga jual berlaku + pajak tarif berlaku, refund hanya tukar barang/deposit (tanpa uang tunai), hanya produk berstok biasa (bukan batch/seri), batas Rp 1.000.000 per outlet per hari (di atasnya tetap diterima + tinjauan) | PRD v4.01 (server & back-office), v4.02 (aplikasi Kasir) |
 | K6 | Refund di sisi gerbang pembayaran (QRIS/VA) saat retur/void | "K6 Manual dulu" (3 Okt 2026) → refund di dasbor gerbang dilakukan manual oleh toko; PAYOU mencatat refund retur/void (BR-09.2) seperti sekarang, tanpa panggilan API refund gerbang | PRD v4.01 (tanpa perubahan kode; perilaku F-09 yang ada) |

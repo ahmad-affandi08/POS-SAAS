@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Domain\Lisensi\Enum\EdisiAplikasi;
 use App\Domain\Organisasi\Enum\IzinTenant;
 use App\Domain\Organisasi\Kueri\MejaPesanSendiri;
 use App\Domain\Pelanggan\Layanan\TautanBerhentiLangganan;
@@ -52,51 +53,62 @@ use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Session\Middleware\AuthenticateSession;
 use Illuminate\Support\Facades\Route;
 
+// D-35 edisi Lisensi (dashboard dipasang pembeli di server & domainnya sendiri): tanpa Platform Pengelola, situs
+// pemasaran, pendaftaran publik, langganan, maupun tiket bantuan ke PAYOU. Hanya dashboard tenant & halaman publik toko.
+$saas = ! EdisiAplikasi::CekLisensi();
+
 // Platform Pengelola di subdomain sendiri (PRD §13.8). Didaftarkan lebih dulu agar menang atas rute tenant.
-Route::domain(config('pengelola.Domain'))
-    ->middleware([BagikanDataInertiaPengelola::class, CatatAuditPengelola::class])
-    ->group(base_path('routes/Pengelola.php'));
+if ($saas) {
+    Route::domain(config('pengelola.Domain'))
+        ->middleware([BagikanDataInertiaPengelola::class, CatatAuditPengelola::class])
+        ->group(base_path('routes/Pengelola.php'));
+}
 
 $izin = static fn (IzinTenant $izin): string => WajibIzinTenant::class.':'.$izin->value;
 
-// D-21 Situs pemasaran: gambar pustaka dilayani di semua host (juga tampil di editor konsol); peta situs XML untuk mesin
-// pencari (didaftarkan di Google Search Console). robots.txt berkas statis di public/.
-Route::get('/gambar-situs/{gambarSitus}', [SitusKontroler::class, 'Gambar'])
-    ->where('gambarSitus', '[0-9A-HJKMNP-TV-Z]{26}')
-    ->middleware('throttle:300,1')
-    ->name('situs.gambar');
-Route::get('/peta-situs', [SitusKontroler::class, 'PetaSitus'])->middleware(ArahkanDomainAplikasi::class)->name('situs.peta');
+if ($saas) {
+    // D-21 Situs pemasaran: gambar pustaka dilayani di semua host (juga tampil di editor konsol); peta situs XML untuk mesin
+    // pencari (didaftarkan di Google Search Console). robots.txt berkas statis di public/.
+    Route::get('/gambar-situs/{gambarSitus}', [SitusKontroler::class, 'Gambar'])
+        ->where('gambarSitus', '[0-9A-HJKMNP-TV-Z]{26}')
+        ->middleware('throttle:300,1')
+        ->name('situs.gambar');
+    Route::get('/peta-situs', [SitusKontroler::class, 'PetaSitus'])->middleware(ArahkanDomainAplikasi::class)->name('situs.peta');
 
-// D-21 beranda situs pemasaran (halaman berblok dari konsol, bundle `Situs.tsx`).
-Route::middleware([TolakDomainPengelola::class, ArahkanDomainAplikasi::class, BagikanDataSitus::class])->group(function (): void {
-    Route::get('/', [SitusKontroler::class, 'Beranda'])->name('beranda');
-    Route::get('/pratinjau-situs/{halamanSitus}', [SitusKontroler::class, 'Pratinjau'])
-        ->where('halamanSitus', '[0-9A-HJKMNP-TV-Z]{26}')
-        // Tanda tangan relatif: konsol menandatangani jalur lalu memasang domain pemasaran (D-20).
-        ->middleware('signed:relative')
-        ->name('situs.pratinjau');
-    // Bagian B: formulir kontak/minta demo (perangkap bot + batas per nomor di Aksi).
-    Route::post('/prospek', [ProspekSitusKontroler::class, 'Kirim'])->middleware('throttle:5,1')->name('situs.prospek.kirim');
-    // Bagian B2: blog (artikel terbit dari konsol).
-    Route::get('/blog', [SitusKontroler::class, 'Blog'])->name('situs.blog.daftar');
-    Route::get('/blog/{slugArtikel}', [SitusKontroler::class, 'Artikel'])->where('slugArtikel', ArtikelSitus::POLA_SLUG)->name('situs.blog.artikel');
-    // X7 bagian 3: portal dokumentasi pengembang (Open API v1 + webhook; spesifikasi di public/pengembang/openapi-v1.json).
-    Route::get('/pengembang', [PengembangKontroler::class, 'Tampilkan'])->name('situs.pengembang');
-    // P-06 dokumen legal publik. D-28: ikut shell & bundle situs, jadi ada kepala, kaki, dan jalan kembali.
-    Route::get('/legal/{jenis}', [DokumenLegalPublikKontroler::class, 'Tampilkan'])->name('legal.tampil');
-});
+    // D-21 beranda situs pemasaran (halaman berblok dari konsol, bundle `Situs.tsx`).
+    Route::middleware([TolakDomainPengelola::class, ArahkanDomainAplikasi::class, BagikanDataSitus::class])->group(function (): void {
+        Route::get('/', [SitusKontroler::class, 'Beranda'])->name('beranda');
+        Route::get('/pratinjau-situs/{halamanSitus}', [SitusKontroler::class, 'Pratinjau'])
+            ->where('halamanSitus', '[0-9A-HJKMNP-TV-Z]{26}')
+            // Tanda tangan relatif: konsol menandatangani jalur lalu memasang domain pemasaran (D-20).
+            ->middleware('signed:relative')
+            ->name('situs.pratinjau');
+        // Bagian B: formulir kontak/minta demo (perangkap bot + batas per nomor di Aksi).
+        Route::post('/prospek', [ProspekSitusKontroler::class, 'Kirim'])->middleware('throttle:5,1')->name('situs.prospek.kirim');
+        // Bagian B2: blog (artikel terbit dari konsol).
+        Route::get('/blog', [SitusKontroler::class, 'Blog'])->name('situs.blog.daftar');
+        Route::get('/blog/{slugArtikel}', [SitusKontroler::class, 'Artikel'])->where('slugArtikel', ArtikelSitus::POLA_SLUG)->name('situs.blog.artikel');
+        // X7 bagian 3: portal dokumentasi pengembang (Open API v1 + webhook; spesifikasi di public/pengembang/openapi-v1.json).
+        Route::get('/pengembang', [PengembangKontroler::class, 'Tampilkan'])->name('situs.pengembang');
+        // P-06 dokumen legal publik. D-28: ikut shell & bundle situs, jadi ada kepala, kaki, dan jalan kembali.
+        Route::get('/legal/{jenis}', [DokumenLegalPublikKontroler::class, 'Tampilkan'])->name('legal.tampil');
+    });
 
-// D-21 halaman situs pemasaran (`/fitur`, `/solusi/kafe-resto`, …). Didaftarkan sebelum rute `/{slugTenant}` (toko
-// online F-17) karena pola regex keduanya sama; `ValidatorHalamanSitus` membuat rute ini hanya cocok untuk slug yang
-// memang halaman situs terbit, sehingga slug tenant tetap jatuh ke toko online dan jalur sistem tidak tertutup.
-Route::middleware([TolakDomainPengelola::class, ArahkanDomainAplikasi::class, BagikanDataSitus::class])
-    ->get('/{slugHalaman}', [SitusKontroler::class, 'Halaman'])
-    ->where('slugHalaman', AturanSlugSitus::POLA)
-    ->name(ValidatorHalamanSitus::NAMA_RUTE);
+    // D-21 halaman situs pemasaran (`/fitur`, `/solusi/kafe-resto`, …). Didaftarkan sebelum rute `/{slugTenant}` (toko
+    // online F-17) karena pola regex keduanya sama; `ValidatorHalamanSitus` membuat rute ini hanya cocok untuk slug yang
+    // memang halaman situs terbit, sehingga slug tenant tetap jatuh ke toko online dan jalur sistem tidak tertutup.
+    Route::middleware([TolakDomainPengelola::class, ArahkanDomainAplikasi::class, BagikanDataSitus::class])
+        ->get('/{slugHalaman}', [SitusKontroler::class, 'Halaman'])
+        ->where('slugHalaman', AturanSlugSitus::POLA)
+        ->name(ValidatorHalamanSitus::NAMA_RUTE);
+} else {
+    // D-35: alamat utama server pembeli langsung ke halaman masuk dashboard.
+    Route::get('/', fn () => redirect()->route('masuk'))->name('beranda');
+}
 
 // Rute back-office (/kelola/...) dan web publik ditambahkan per flow (PRD §13.6, D-06). D-20: domain pemasaran hanya
 // melayani situs pemasaran, legal, dan kompatibilitas perangkat; sisanya dialihkan ke domain tenant.
-Route::middleware([TolakDomainPengelola::class, ArahkanDomainAplikasi::class, BagikanDataInertia::class])->group(function () use ($izin): void {
+Route::middleware([TolakDomainPengelola::class, ArahkanDomainAplikasi::class, BagikanDataInertia::class])->group(function () use ($izin, $saas): void {
     // POS-11 struk digital publik (kode = tenant basis-36 . Uuid penjualan).
     Route::get('/s/{kodeStruk}', [StrukDigitalKontroler::class, 'Tampilkan'])
         ->where('kodeStruk', KodeStrukDigital::POLA)
@@ -117,9 +129,11 @@ Route::middleware([TolakDomainPengelola::class, ArahkanDomainAplikasi::class, Ba
         ->name('publik.kompatibilitas-perangkat');
 
     // F-00 Registrasi & autentikasi tenant.
-    Route::middleware('guest:web')->group(function (): void {
-        Route::get('/daftar', [PendaftaranKontroler::class, 'Tampilkan'])->name('daftar');
-        Route::post('/daftar', [PendaftaranKontroler::class, 'Daftar'])->middleware('throttle:pendaftaran')->name('daftar.kirim');
+    Route::middleware('guest:web')->group(function () use ($saas): void {
+        if ($saas) {
+            Route::get('/daftar', [PendaftaranKontroler::class, 'Tampilkan'])->name('daftar');
+            Route::post('/daftar', [PendaftaranKontroler::class, 'Daftar'])->middleware('throttle:pendaftaran')->name('daftar.kirim');
+        }
         Route::get('/masuk', [SesiKontroler::class, 'TampilkanMasuk'])->name('masuk');
         Route::post('/masuk', [SesiKontroler::class, 'Masuk'])->name('masuk.kirim');
 
@@ -143,7 +157,7 @@ Route::middleware([TolakDomainPengelola::class, ArahkanDomainAplikasi::class, Ba
         ->name('verifikasi-email');
 
     // Auth tenant: AuthenticateSession mengakhiri sesi lain setelah kata sandi diatur ulang (BR-00.9).
-    Route::middleware(['auth:web', AuthenticateSession::class])->group(function () use ($izin): void {
+    Route::middleware(['auth:web', AuthenticateSession::class])->group(function () use ($izin, $saas): void {
         Route::post('/keluar', [SesiKontroler::class, 'Keluar'])->name('keluar');
         // D-22: ganti kata sandi (wajib bila kata sandi awal dibuat admin tenant) sebelum memilih usaha.
         Route::get('/ganti-kata-sandi', [KataSandiKontroler::class, 'Tampilkan'])->name('kata-sandi.ganti');
@@ -154,7 +168,7 @@ Route::middleware([TolakDomainPengelola::class, ArahkanDomainAplikasi::class, Ba
 
         // Auth tenant: persetujuan ulang dokumen legal (BR-P06.5) lalu 2FA wajib (BR-00.8), setelah tenant aktif diketahui.
         // F-00: saat langganan Ditangguhkan, perubahan data ditolak kecuali langganan, keamanan, bantuan, dan legal.
-        Route::middleware([WajibGantiKataSandiTenant::class, IdentifikasiTenantSesi::class, WajibPersetujuanLegal::class, WajibDuaFaktorTenant::class, BatasiTenantDitangguhkan::class, WajibPanduanAwal::class])->prefix('kelola')->group(function () use ($izin): void {
+        Route::middleware([WajibGantiKataSandiTenant::class, IdentifikasiTenantSesi::class, WajibPersetujuanLegal::class, WajibDuaFaktorTenant::class, BatasiTenantDitangguhkan::class, WajibPanduanAwal::class])->prefix('kelola')->group(function () use ($izin, $saas): void {
             Route::get('/', [BerandaKelolaKontroler::class, 'Beranda'])->name('kelola.beranda');
             // D-23 C: Kotak Tindakan (butir disaring izin & outlet; menandai dicek butuh `tindakan.tinjau`).
             Route::get('/tindakan', [TindakanKontroler::class, 'Daftar'])->name('kelola.tindakan.daftar');
@@ -162,19 +176,22 @@ Route::middleware([TolakDomainPengelola::class, ArahkanDomainAplikasi::class, Ba
             // D-23 D: berlangganan ringkasan pagi Kotak Tindakan lewat email (pilihan pribadi tiap pengguna).
             Route::put('/tindakan/ringkasan-whatsapp', [TindakanKontroler::class, 'UbahRingkasanWhatsapp'])->middleware(SiapkanAuditTenant::class)->name('kelola.tindakan.ringkasan-whatsapp');
 
-            Route::middleware(SiapkanAuditTenant::class)->group(function () use ($izin): void {
-                // Langganan & tagihan (pembayaran online via gerbang billing). Izin `langganan.kelola` khusus Pemilik (§19.1).
-                Route::middleware($izin(IzinTenant::LanggananKelola))->group(function (): void {
-                    Route::get('/langganan', [LanggananKontroler::class, 'Tampilkan'])->name('kelola.langganan.tampil');
-                    Route::post('/langganan/tagihan', [LanggananKontroler::class, 'BuatTagihan'])->name('kelola.langganan.tagihan.buat');
-                    // D-23: minta add-on dari dialog fitur terkunci (menjadi tiket dukungan).
-                    Route::post('/langganan/addon', [LanggananKontroler::class, 'MintaAddon'])->middleware('throttle:10,1')->name('kelola.langganan.addon.minta');
-                    Route::get('/langganan/tagihan/{tagihan}', [LanggananKontroler::class, 'TampilkanTagihan'])->name('kelola.langganan.tagihan.tampil');
-                    // BR-P08.11: buat transaksi Snap di gerbang billing platform. Dibatasi laju karena setiap klik
-                    // membuat satu transaksi di Midtrans.
-                    Route::post('/langganan/tagihan/{tagihan}/bayar-online', [LanggananKontroler::class, 'BayarOnline'])->middleware('throttle:10,1')->name('kelola.langganan.tagihan.bayar-online');
-                    Route::post('/langganan/tagihan/{tagihan}/batalkan', [LanggananKontroler::class, 'Batalkan'])->name('kelola.langganan.tagihan.batalkan');
-                });
+            Route::middleware(SiapkanAuditTenant::class)->group(function () use ($izin, $saas): void {
+                // D-35: edisi Lisensi dibeli sekali, tanpa langganan & tagihan.
+                if ($saas) {
+                    // Langganan & tagihan (pembayaran online via gerbang billing). Izin `langganan.kelola` khusus Pemilik (§19.1).
+                    Route::middleware($izin(IzinTenant::LanggananKelola))->group(function (): void {
+                        Route::get('/langganan', [LanggananKontroler::class, 'Tampilkan'])->name('kelola.langganan.tampil');
+                        Route::post('/langganan/tagihan', [LanggananKontroler::class, 'BuatTagihan'])->name('kelola.langganan.tagihan.buat');
+                        // D-23: minta add-on dari dialog fitur terkunci (menjadi tiket dukungan).
+                        Route::post('/langganan/addon', [LanggananKontroler::class, 'MintaAddon'])->middleware('throttle:10,1')->name('kelola.langganan.addon.minta');
+                        Route::get('/langganan/tagihan/{tagihan}', [LanggananKontroler::class, 'TampilkanTagihan'])->name('kelola.langganan.tagihan.tampil');
+                        // BR-P08.11: buat transaksi Snap di gerbang billing platform. Dibatasi laju karena setiap klik
+                        // membuat satu transaksi di Midtrans.
+                        Route::post('/langganan/tagihan/{tagihan}/bayar-online', [LanggananKontroler::class, 'BayarOnline'])->middleware('throttle:10,1')->name('kelola.langganan.tagihan.bayar-online');
+                        Route::post('/langganan/tagihan/{tagihan}/batalkan', [LanggananKontroler::class, 'Batalkan'])->name('kelola.langganan.tagihan.batalkan');
+                    });
+                }
 
                 // Auth tenant: keamanan akun (2FA) dan persetujuan ulang dokumen legal (BR-00.8, BR-P06.5).
                 Route::get('/keamanan', [KeamananAkunKontroler::class, 'Tampilkan'])->name('kelola.keamanan');
@@ -183,19 +200,22 @@ Route::middleware([TolakDomainPengelola::class, ArahkanDomainAplikasi::class, Ba
                 Route::get('/persetujuan-legal', [PersetujuanLegalKontroler::class, 'Tampilkan'])->name('kelola.persetujuan-legal');
                 Route::post('/persetujuan-legal', [PersetujuanLegalKontroler::class, 'Setujui'])->name('kelola.persetujuan-legal.setujui');
 
-                // P-09 Bantuan (tiket dukungan). Parameter tiket = Uuid, dicari lewat MilikTenant di kueri (bukan route
-                // model binding, yang berjalan sebelum tenant aktif ditetapkan).
-                Route::middleware($izin(IzinTenant::BantuanTiketLihat))->group(function (): void {
-                    Route::get('/bantuan', [BantuanKontroler::class, 'Daftar'])->name('kelola.bantuan.daftar');
-                    Route::get('/bantuan/{tiketDukungan}/lampiran/{lampiran}', [BantuanKontroler::class, 'UnduhLampiran'])->name('kelola.bantuan.lampiran');
-                });
-                Route::middleware($izin(IzinTenant::BantuanTiketKelola))->group(function (): void {
-                    Route::get('/bantuan/buat', [BantuanKontroler::class, 'Buat'])->name('kelola.bantuan.buat');
-                    Route::post('/bantuan', [BantuanKontroler::class, 'Simpan'])->middleware('throttle:10,1')->name('kelola.bantuan.simpan');
-                    Route::post('/bantuan/{tiketDukungan}/balasan', [BantuanKontroler::class, 'Balas'])->middleware('throttle:30,1')->name('kelola.bantuan.balas');
-                    Route::post('/bantuan/{tiketDukungan}/selesaikan', [BantuanKontroler::class, 'Selesaikan'])->name('kelola.bantuan.selesaikan');
-                });
-                Route::get('/bantuan/{tiketDukungan}', [BantuanKontroler::class, 'Tampilkan'])->middleware($izin(IzinTenant::BantuanTiketLihat))->name('kelola.bantuan.tampil');
+                // D-35: tiket bantuan diterima Platform Pengelola PAYOU, yang tidak ada di edisi Lisensi.
+                if ($saas) {
+                    // P-09 Bantuan (tiket dukungan). Parameter tiket = Uuid, dicari lewat MilikTenant di kueri (bukan route
+                    // model binding, yang berjalan sebelum tenant aktif ditetapkan).
+                    Route::middleware($izin(IzinTenant::BantuanTiketLihat))->group(function (): void {
+                        Route::get('/bantuan', [BantuanKontroler::class, 'Daftar'])->name('kelola.bantuan.daftar');
+                        Route::get('/bantuan/{tiketDukungan}/lampiran/{lampiran}', [BantuanKontroler::class, 'UnduhLampiran'])->name('kelola.bantuan.lampiran');
+                    });
+                    Route::middleware($izin(IzinTenant::BantuanTiketKelola))->group(function (): void {
+                        Route::get('/bantuan/buat', [BantuanKontroler::class, 'Buat'])->name('kelola.bantuan.buat');
+                        Route::post('/bantuan', [BantuanKontroler::class, 'Simpan'])->middleware('throttle:10,1')->name('kelola.bantuan.simpan');
+                        Route::post('/bantuan/{tiketDukungan}/balasan', [BantuanKontroler::class, 'Balas'])->middleware('throttle:30,1')->name('kelola.bantuan.balas');
+                        Route::post('/bantuan/{tiketDukungan}/selesaikan', [BantuanKontroler::class, 'Selesaikan'])->name('kelola.bantuan.selesaikan');
+                    });
+                    Route::get('/bantuan/{tiketDukungan}', [BantuanKontroler::class, 'Tampilkan'])->middleware($izin(IzinTenant::BantuanTiketLihat))->name('kelola.bantuan.tampil');
+                }
             });
 
             // F-02 Setup organisasi: outlet, lokasi stok, merek, pengguna & peran, log audit.

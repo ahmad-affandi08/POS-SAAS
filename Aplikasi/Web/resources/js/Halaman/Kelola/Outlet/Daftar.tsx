@@ -4,6 +4,7 @@ import { useState, type FormEvent } from 'react';
 import AksiHalaman from '@/Komponen/Kelola/AksiHalaman';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import Tombol from '@/Komponen/Formulir/Tombol';
+import PemberitahuanBatasOutlet from '@/Komponen/Kelola/PemberitahuanBatasOutlet';
 import TabelData from '@/Komponen/TabelData/TabelData';
 import type { KolomTabel } from '@/Komponen/TabelData/Tipe';
 import DialogFormulir from '@/Komponen/Tindakan/DialogFormulir';
@@ -11,7 +12,6 @@ import MenuAksiBaris from '@/Komponen/Tindakan/MenuAksiBaris';
 import { Button } from '@/Komponen/Ui/button';
 import { Card } from '@/Komponen/Ui/card';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
-import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
 import type { PropsBersamaAplikasi } from '@/Tipe/Aplikasi';
 import {
@@ -119,15 +119,7 @@ export default function HalamanDaftarOutlet({ Outlet, Merek, BatasOutlet }: Prop
                 ) : null}
             </AksiHalaman>
 
-            {bolehKelola && penuh ? (
-                <Pemberitahuan jenis="info" judul="Batas outlet paket sudah tercapai">
-                    Tingkatkan paket atau tambah add-on outlet di{' '}
-                    <Link href="/kelola/langganan" className="font-semibold text-brand underline">
-                        menu Langganan
-                    </Link>
-                    . Outlet yang diarsipkan tidak dihitung.
-                </Pemberitahuan>
-            ) : null}
+            {bolehKelola && penuh ? <PemberitahuanBatasOutlet /> : null}
 
             <TabelData
                 id="organisasi-outlet"

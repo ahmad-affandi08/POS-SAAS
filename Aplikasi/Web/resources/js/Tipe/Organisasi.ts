@@ -69,7 +69,12 @@ export type KunciIzinTenant = (typeof IzinTenant)[keyof typeof IzinTenant];
 
 /** Hanya untuk menampilkan/menyembunyikan menu & tombol. Server tetap penentu (WajibIzinTenant). */
 export function PunyaIzinTenant(akses: PropsBersamaAplikasi['Akses'], izin: KunciIzinTenant): boolean {
-    return akses !== null && (akses.Pemilik || akses.Izin.includes(izin));
+    // D-35: izin yang halamannya tidak ada di edisi ini (langganan & bantuan di edisi Lisensi) mati juga bagi Pemilik.
+    if (akses === null || (akses.IzinNonaktif ?? []).includes(izin)) {
+        return false;
+    }
+
+    return akses.Pemilik || akses.Izin.includes(izin);
 }
 
 export type Pilihan = { Nilai: string; Label: string };
