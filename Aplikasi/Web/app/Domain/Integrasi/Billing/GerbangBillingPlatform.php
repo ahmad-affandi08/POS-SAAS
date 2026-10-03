@@ -7,6 +7,8 @@ namespace App\Domain\Integrasi\Billing;
 use App\Domain\Bersama\Nilai\Uang;
 use App\Domain\Integrasi\GerbangPembayaran\GalatGerbang;
 use App\Domain\Integrasi\GerbangPembayaran\StatusPembayaranGerbang;
+use Carbon\CarbonImmutable;
+use DateTimeInterface;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Response;
 use Illuminate\Http\Request;
@@ -28,6 +30,10 @@ final class GerbangBillingPlatform
     private const URL_SANDBOX = 'https://app.sandbox.midtrans.com';
 
     private const URL_PRODUKSI = 'https://app.midtrans.com';
+
+    private const URL_API_SANDBOX = 'https://api.sandbox.midtrans.com';
+
+    private const URL_API_PRODUKSI = 'https://api.midtrans.com';
 
     /** Batas bayar satu transaksi Snap; setelahnya tenant membuat transaksi baru dari tagihan yang sama. */
     public const MENIT_KEDALUWARSA = 60;
@@ -151,6 +157,64 @@ final class GerbangBillingPlatform
             status: self::PetakanStatus($statusAsli, (string) $permintaan->input('fraud_status')),
             jumlah: $jumlah,
             idTransaksi: (string) $permintaan->input('transaction_id'),
+            statusAsli: $statusAsli,
+        );
+    }
+
+    /**
+     * Rekonsiliasi (P-08, v4.06): tanyakan status satu transaksi ke API status Midtrans
+     * (`GET /v2/{order_id}/status`), untuk pembayaran yang notifikasi webhook-nya tidak pernah tiba. Hasilnya dibentuk
+     * sama dengan notifikasi webhook supaya diproses jalur yang sama (`TerimaNotifikasiBillingLangganan`).
+     *
+     * - Transaksi tidak ada di Midtrans (popup Snap dibuka tetapi tidak pernah dipilih cara bayarnya) dan sudah lewat
+     *   `MENIT_KEDALUWARSA` sejak `$dibuatPada` = `Kedaluwarsa`; sebelum itu = `Menunggu`.
+     * - Gagal menghubungi gerbang, respons tak terbaca, atau gerbang belum aktif = null (dicoba lagi putaran berikutnya).
+     */
+    public function CekStatus(string $nomorPesanan, DateTimeInterface $dibuatPada): ?NotifikasiBilling
+    {
+        $bagian = NomorPesananBilling::Urai($nomorPesanan);
+
+        if (! $this->CekAktif() || $bagian === null) {
+            return null;
+        }
+
+        try {
+            $respons = Http::timeout(15)->acceptJson()
+                ->withBasicAuth($this->KunciServer(), '')
+                ->get(($this->CekSandbox() ? self::URL_API_SANDBOX : self::URL_API_PRODUKSI).'/v2/'.rawurlencode($nomorPesanan).'/status');
+        } catch (ConnectionException) {
+            return null;
+        }
+
+        $kodeStatus = (string) $respons->json('status_code');
+
+        if ($respons->status() === 404 || $kodeStatus === '404') {
+            $lewat = $dibuatPada->getTimestamp() + (self::MENIT_KEDALUWARSA + 15) * 60 < CarbonImmutable::now()->getTimestamp();
+
+            return new NotifikasiBilling(
+                nomorPesanan: $nomorPesanan,
+                idTenant: $bagian['IdTenant'],
+                uuidPembayaran: $bagian['Uuid'],
+                status: $lewat ? StatusPembayaranGerbang::Kedaluwarsa : StatusPembayaranGerbang::Menunggu,
+                jumlah: '0',
+                idTransaksi: '',
+                statusAsli: $lewat ? 'expire' : 'pending',
+            );
+        }
+
+        $statusAsli = $respons->json('transaction_status');
+
+        if (! $respons->successful() || ! is_string($statusAsli) || $statusAsli === '' || $respons->json('order_id') !== $nomorPesanan) {
+            return null;
+        }
+
+        return new NotifikasiBilling(
+            nomorPesanan: $nomorPesanan,
+            idTenant: $bagian['IdTenant'],
+            uuidPembayaran: $bagian['Uuid'],
+            status: self::PetakanStatus($statusAsli, (string) $respons->json('fraud_status')),
+            jumlah: (string) $respons->json('gross_amount'),
+            idTransaksi: (string) $respons->json('transaction_id'),
             statusAsli: $statusAsli,
         );
     }

@@ -20,6 +20,9 @@ Schedule::command('tenant:akhiri-trial')->hourly()->withoutOverlapping();
 // P-08: tagihan lewat jatuh tempo, langganan Tertunggak lalu Ditangguhkan setelah masa tenggang.
 Schedule::command('tagihan:proses-tunggakan')->hourly()->withoutOverlapping();
 
+// P-08 (v4.06): pembayaran langganan gerbang tanpa notifikasi webhook ditanyakan statusnya ke gerbang.
+Schedule::command('tagihan:rekonsiliasi-gerbang')->everyFifteenMinutes()->withoutOverlapping();
+
 // P-08 (v4.04): tagihan perpanjangan otomatis H-7 + pengingat H-7/H-3/H0/H+3 ke Owner, di jam kerja.
 Schedule::command('tagihan:terbitkan-perpanjangan')->dailyAt('08:20')->timezone('Asia/Jakarta')->withoutOverlapping();
 
