@@ -149,7 +149,7 @@ void main() {
     }
     await tester.tap(find.byTooltip('Tambah Rp 50.000'));
     await Tunggu(tester);
-    expect(find.widgetWithText(TextField, '450000'), findsOneWidget);
+    expect(find.widgetWithText(TextField, '450.000'), findsOneWidget);
     expect(find.text('−Rp 5.000 (kurang)'), findsOneWidget);
     expect(find.text('Alasan selisih'), findsNothing);
 

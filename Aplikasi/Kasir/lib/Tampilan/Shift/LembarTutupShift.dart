@@ -96,7 +96,7 @@ class _LembarTutupShiftState extends ConsumerState<LembarTutupShift> {
   void _UbahPecahan(int nominal, int jumlahBaru) {
     setState(() {
       _pecahan[nominal] = jumlahBaru;
-      _kasAktual.text = HitungPecahan.HitungTotal(_pecahan).KeDesimal().toBigInt().toString();
+      MasukanUang.Isi(_kasAktual, HitungPecahan.HitungTotal(_pecahan));
     });
     unawaited(_PerbaruiLangsung());
   }

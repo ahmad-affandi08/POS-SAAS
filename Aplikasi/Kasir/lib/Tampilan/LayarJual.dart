@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mesin_kasir/MesinKasir.dart';
 import 'package:sistem_desain/SistemDesain.dart';
 
+import 'Komponen/MasukanUang.dart';
 import '../Aplikasi/Penyedia.dart';
 import '../Data/PesananMeja.dart';
 import '../Data/RepositoriKasir.dart';
@@ -924,7 +925,7 @@ class _LayarJualState extends ConsumerState<LayarJual> {
       return;
     }
     try {
-      final ongkir = teks.isEmpty ? Uang.Nol() : Uang.Dari(teks);
+      final ongkir = MasukanUang.UraiTeks(teks) ?? Uang.Nol();
       ref
           .read(penyediaKeranjang.notifier)
           .Ganti(ref.read(penyediaLayananPenjualan).AturOngkir(ref.read(penyediaKeranjang), ongkir));
@@ -2071,7 +2072,7 @@ class _DialogOngkir extends StatefulWidget {
 
 class _DialogOngkirState extends State<_DialogOngkir> {
   late final TextEditingController _ongkir = TextEditingController(
-    text: widget.awal.BernilaiNol() ? '' : widget.awal.KeDesimal().truncate().toString(),
+    text: widget.awal.BernilaiNol() ? '' : MasukanUang.FormatTeks(widget.awal),
   );
 
   @override
@@ -2092,8 +2093,9 @@ class _DialogOngkirState extends State<_DialogOngkir> {
           controller: _ongkir,
           autofocus: true,
           keyboardType: TextInputType.number,
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(9)],
-          decoration: const InputDecoration(labelText: 'Ongkir (Rp)', prefixText: 'Rp ', border: OutlineInputBorder()),
+          inputFormatters: [MasukanUang.pemformat],
+          textAlign: TextAlign.right,
+          decoration: const InputDecoration(labelText: 'Ongkir', prefixText: 'Rp ', border: OutlineInputBorder()),
           onSubmitted: (_) => Navigator.of(context).pop(_ongkir.text.trim()),
         ),
         const SizedBox(height: TokenJarak.jarak8),

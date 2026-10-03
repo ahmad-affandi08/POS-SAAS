@@ -238,7 +238,7 @@ void main() {
 
     await KetikPin(tester, KasusPin(0)['Pin']! as String);
     expect(find.byType(PanelTugas), findsOneWidget);
-    expect(find.widgetWithText(TextField, '75000'), findsOneWidget);
+    expect(find.widgetWithText(TextField, '75.000'), findsOneWidget);
     await Lepas(tester, u);
   });
 

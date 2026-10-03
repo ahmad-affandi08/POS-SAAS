@@ -88,7 +88,7 @@ void main() {
       await Tunggu(tester);
       expect(find.text('Racikan berisi obat bebas terbatas.'), findsOneWidget);
       // Harga saran: jasa harga terbuka (0) + paracetamol 2 × 5.000 + CTM 1 × 3.500.
-      expect(find.widgetWithText(TextField, '13500'), findsOneWidget);
+      expect(find.widgetWithText(TextField, '13.500'), findsOneWidget);
 
       await Ketuk(tester, find.widgetWithText(FilledButton, 'Tambah racikan ke keranjang'));
       expect(find.byType(PanelRacikan), findsNothing);

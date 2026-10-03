@@ -25,7 +25,7 @@ class DialogHargaTerbuka extends StatefulWidget {
 class _DialogHargaTerbukaState extends State<DialogHargaTerbuka> {
   late final TextEditingController _harga = TextEditingController(
     text: switch (widget.saran) {
-      final s? when !s.BernilaiNol() => s.KeDesimal().truncate().toString(),
+      final s? when !s.BernilaiNol() => MasukanUang.FormatTeks(s),
       _ => '',
     },
   );

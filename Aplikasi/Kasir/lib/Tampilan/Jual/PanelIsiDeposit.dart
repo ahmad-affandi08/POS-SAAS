@@ -1,11 +1,11 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mesin_kasir/MesinKasir.dart';
 import 'package:sistem_desain/SistemDesain.dart';
 
+import '../Komponen/MasukanUang.dart';
 import '../../Aplikasi/Penyedia.dart';
 import '../../Data/BasisData/BasisDataKasir.dart';
 import '../../Domain/GalatKasir.dart';
@@ -99,7 +99,7 @@ class _PanelIsiDepositState extends ConsumerState<PanelIsiDeposit> {
           .read(penyediaLayananDeposit)
           .Isi(
             pelanggan: widget.pelanggan,
-            jumlah: Uang.Dari(teks),
+            jumlah: MasukanUang.UraiTeks(teks) ?? Uang.Nol(),
             metode: metode,
             kasir: widget.kasir,
             k: k,
@@ -192,7 +192,7 @@ class _PanelIsiDepositState extends ConsumerState<PanelIsiDeposit> {
             TextField(
               controller: _jumlah,
               keyboardType: TextInputType.number,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(11)],
+              inputFormatters: [MasukanUang.pemformat],
               textAlign: TextAlign.right,
               style: const TextStyle(fontFeatures: [FontFeature.tabularFigures()]),
               onChanged: (_) => setState(() => _galat = null),
@@ -216,7 +216,7 @@ class _PanelIsiDepositState extends ConsumerState<PanelIsiDeposit> {
                     onPressed: _sibuk
                         ? null
                         : () => setState(() {
-                            _jumlah.text = '$n';
+                            MasukanUang.Isi(_jumlah, Uang.Dari('$n'));
                             _galat = null;
                           }),
                   ),

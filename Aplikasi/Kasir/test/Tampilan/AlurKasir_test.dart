@@ -54,7 +54,7 @@ void main() {
     await tester.tap(find.byTooltip('Tambah Rp 100.000'));
     await tester.tap(find.byTooltip('Tambah Rp 50.000'));
     await tester.pump();
-    expect(find.widgetWithText(TextField, '250000'), findsOneWidget);
+    expect(find.widgetWithText(TextField, '250.000'), findsOneWidget);
 
     // Daftar pecahan yang terbuka membuat formulir lebih tinggi dari layar: gulir dulu seperti kasir sungguhan.
     await tester.ensureVisible(find.text('Buka shift'));

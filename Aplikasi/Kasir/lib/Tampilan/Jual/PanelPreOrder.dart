@@ -1,11 +1,11 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mesin_kasir/MesinKasir.dart';
 import 'package:sistem_desain/SistemDesain.dart';
 
+import '../Komponen/MasukanUang.dart';
 import '../../Aplikasi/Penyedia.dart';
 import '../../Data/BasisData/BasisDataKasir.dart';
 import '../../Domain/GalatKasir.dart';
@@ -88,7 +88,7 @@ class _PanelPreOrderState extends ConsumerState<PanelPreOrder> {
             k: k,
             kasir: widget.kasir,
             tanggalAmbil: TulisTanggal(_tanggalAmbil),
-            uangMuka: Uang.Dari(teks),
+            uangMuka: MasukanUang.UraiTeks(teks) ?? Uang.Nol(),
             metode: metode,
             referensi: _referensi.text,
             catatan: _catatan.text,
@@ -166,7 +166,7 @@ class _PanelPreOrderState extends ConsumerState<PanelPreOrder> {
           TextField(
             controller: _uangMuka,
             keyboardType: TextInputType.number,
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(13)],
+            inputFormatters: [MasukanUang.pemformat],
             textAlign: TextAlign.right,
             style: const TextStyle(fontFeatures: [FontFeature.tabularFigures()]),
             onChanged: (_) => setState(() => _galat = null),

@@ -97,7 +97,7 @@ class _LayarBukaShiftState extends ConsumerState<LayarBukaShift> {
 
   void _UbahPecahan(int nominal, int jumlahBaru) => setState(() {
     _pecahan[nominal] = jumlahBaru;
-    _kasAwal.text = HitungPecahan.HitungTotal(_pecahan).KeDesimal().toBigInt().toString();
+    MasukanUang.Isi(_kasAwal, HitungPecahan.HitungTotal(_pecahan));
   });
 
   Future<void> _Buka() async {

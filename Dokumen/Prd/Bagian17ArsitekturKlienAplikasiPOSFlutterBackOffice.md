@@ -831,6 +831,7 @@ Setiap layar/komponen wajib punya desain untuk keadaan berikut sebelum dianggap 
 - **Konkret dengan angka dan nama:** "Stok Kopi Susu tinggal 3", "3 transaksi belum terkirim".
 - **Tanpa emoji, tanpa seru berlebihan, tanpa "Oops!"**.
 - **Format Indonesia:** Rupiah `Rp 1.250.000`, tanggal `22 Sep 2026` (tampilan) atau `22/09/2026` (tabel), jam `14.32`, zona waktu outlet (WIB/WITA/WIT) bila relevan.
+- **Isian uang juga berformat Rupiah saat diketik (v3.99):** di aplikasi Kasir setiap isian nominal memakai `MasukanUang` / `MasukanUang.pemformat` — awalan `Rp`, titik ribuan otomatis (`1250000` tampil `1.250.000`), Rupiah bulat, rata kanan, angka tabular; nilai dibaca lewat `MasukanUang.AmbilNilai`/`UraiTeks` (bukan `Uang.Dari(teks)` langsung) dan diisi program lewat `MasukanUang.Isi`.
 - **Glosarium istilah UI** mengikuti kamus §13.7.1 (misal "Pemasok", bukan campuran "Supplier/Vendor/Pemasok").
 
 #### 17.6.8 Visualisasi Data

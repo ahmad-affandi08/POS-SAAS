@@ -10,6 +10,7 @@ import '../../Domain/Penjualan/AturanApotek.dart';
 import '../../Domain/Penjualan/LayananPenjualan.dart';
 import '../../Domain/Penjualan/Racikan.dart';
 import '../../Domain/Persediaan/LayananGudang.dart';
+import '../Komponen/MasukanUang.dart';
 
 /// Apotek bagian 4 (§9.5): apoteker menyusun obat racikan (puyer, kapsul, salep) dari beberapa obat di katalog
 /// perangkat, lalu menambahkannya ke keranjang sebagai satu baris jasa racik. Stok obat komponennya dikurangi server
@@ -104,7 +105,7 @@ class _PanelRacikanState extends ConsumerState<PanelRacikan> {
           _SusunKomponen(),
           tierPelanggan: ref.read(penyediaKeranjang).pelanggan?.kodeTier,
         );
-    _harga.text = saran.harga.KeDesimal().truncate().toBigInt().toString();
+    MasukanUang.Isi(_harga, saran.harga);
   }
 
   void _Tambah(ProdukJual produk) {
@@ -313,9 +314,13 @@ class _PanelRacikanState extends ConsumerState<PanelRacikan> {
           TextField(
             controller: _harga,
             keyboardType: TextInputType.number,
+            inputFormatters: [MasukanUang.pemformat],
+            textAlign: TextAlign.right,
+            style: const TextStyle(fontFeatures: [FontFeature.tabularFigures()]),
             onChanged: (_) => _hargaDiketik = true,
             decoration: InputDecoration(
-              labelText: 'Harga racikan (Rp)',
+              labelText: 'Harga racikan',
+              prefixText: 'Rp ',
               helperText: _hargaDiketik ? 'Harga diketik' : 'Saran: jasa racik + harga obat',
               border: const OutlineInputBorder(),
             ),

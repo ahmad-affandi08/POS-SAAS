@@ -7,6 +7,7 @@ import 'package:klien_api/KlienApi.dart';
 import 'package:mesin_kasir/MesinKasir.dart';
 import 'package:sistem_desain/SistemDesain.dart';
 
+import '../Komponen/MasukanUang.dart';
 import '../../Aplikasi/Penyedia.dart';
 import '../../Data/BasisData/BasisDataKasir.dart';
 import '../../Domain/GalatKasir.dart';
@@ -231,12 +232,14 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
       _bank.clear();
       final sisa = _HitungSisa(k, metode);
       final porsiRata = _bagi?.porsi != null && !_tamuTerakhir;
-      _nominal.text =
-          (metode.Jenis == JenisMetodeBayar.tunai && !porsiRata) ||
-              _bagi?.perNominal == true ||
-              sisa.Bandingkan(Uang.Nol()) <= 0
-          ? ''
-          : _AmbilTagihanTamu(sisa).KeDesimal().ceil().toString();
+      MasukanUang.Isi(
+        _nominal,
+        (metode.Jenis == JenisMetodeBayar.tunai && !porsiRata) ||
+                _bagi?.perNominal == true ||
+                sisa.Bandingkan(Uang.Nol()) <= 0
+            ? null
+            : Uang.Dari(_AmbilTagihanTamu(sisa).KeDesimal().ceil().toString()),
+      );
     });
     if (metode.Jenis == JenisMetodeBayar.deposit) {
       unawaited(_MuatSaldoDeposit(k));
@@ -264,7 +267,10 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
         if (_metode?.Jenis == JenisMetodeBayar.deposit) {
           final sisa = _HitungSisa(k, _metode);
           final pakai = saldo.Bandingkan(sisa) < 0 ? saldo : sisa;
-          _nominal.text = pakai.Bandingkan(Uang.Nol()) <= 0 ? '' : pakai.KeDesimal().floor().toString();
+          MasukanUang.Isi(
+            _nominal,
+            pakai.Bandingkan(Uang.Nol()) <= 0 ? null : Uang.Dari(pakai.KeDesimal().floor().toString()),
+          );
         }
       });
     } on GalatKasir catch (galat) {
@@ -279,8 +285,7 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
   }
 
   Uang? _AmbilNominal() {
-    final teks = _nominal.text.trim();
-    return teks.isEmpty ? null : Uang.Dari(teks);
+    return MasukanUang.AmbilNilai(_nominal);
   }
 
   String? _SusunReferensi(BarisMetodePembayaran metode) {
@@ -572,7 +577,7 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
       height: TokenJarak.targetSentuh,
       child: OutlinedButton(
         onPressed: () => setState(() {
-          _nominal.text = nilai.KeDesimal().ceil().toString();
+          MasukanUang.Isi(_nominal, Uang.Dari(nilai.KeDesimal().ceil().toString()));
           _galat = null;
         }),
         child: Text(label),
@@ -605,7 +610,7 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
         TextField(
           controller: _nominal,
           keyboardType: TextInputType.number,
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(13)],
+          inputFormatters: [MasukanUang.pemformat],
           textAlign: TextAlign.right,
           style: teks.titleMedium?.copyWith(fontFeatures: const [FontFeature.tabularFigures()]),
           onChanged: (_) => setState(() => _galat = null),
@@ -619,7 +624,8 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
         const SizedBox(height: TokenJarak.jarak8),
         PapanAngka(
           saatTekan: (tombol) => setState(() {
-            _nominal.text = PapanAngka.Terapkan(_nominal.text, tombol);
+            final digit = PapanAngka.Terapkan(_nominal.text.replaceAll('.', ''), tombol);
+            MasukanUang.Isi(_nominal, digit.isEmpty ? null : Uang.Dari(digit));
             _galat = null;
           }),
         ),
@@ -723,7 +729,7 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
         TextField(
           controller: _nominal,
           keyboardType: TextInputType.number,
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(13)],
+          inputFormatters: [MasukanUang.pemformat],
           textAlign: TextAlign.right,
           style: const TextStyle(fontFeatures: [FontFeature.tabularFigures()]),
           onChanged: (_) => setState(() => _galat = null),

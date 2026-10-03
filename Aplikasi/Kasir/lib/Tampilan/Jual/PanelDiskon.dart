@@ -14,6 +14,7 @@ import '../../Domain/Penjualan/LayananPenjualan.dart';
 import '../../Domain/Penjualan/LayananVoucher.dart';
 import '../../Domain/Sesi/StafLokal.dart';
 import '../Komponen/FormatAngka.dart';
+import '../Komponen/MasukanUang.dart';
 import '../LembarMutasiKas.dart';
 
 /// Hasil pemeriksaan persetujuan diskon.
@@ -91,7 +92,7 @@ class _IsianDiskonState extends State<IsianDiskon> {
         ? ''
         : widget.awal!.persen != null
         ? FormatAngka.FormatDesimal(widget.awal!.persen!)
-        : widget.awal!.jumlah!.KeDesimal().truncate().toString(),
+        : MasukanUang.FormatTeks(widget.awal!.jumlah!),
   );
 
   @override
@@ -101,14 +102,28 @@ class _IsianDiskonState extends State<IsianDiskon> {
   }
 
   void _Kabarkan() {
-    final desimal = FormatAngka.UraiDesimal(_nilai.text);
-    if (desimal == null || desimal <= Decimal.zero) {
-      widget.saatBerubah(null);
+    if (!_persen) {
+      final jumlah = MasukanUang.AmbilNilai(_nilai);
+      widget.saatBerubah(jumlah == null || jumlah.BernilaiNol() ? null : DiskonManual.DariJumlah(jumlah));
       return;
     }
-    widget.saatBerubah(
-      _persen ? DiskonManual.DariPersen(desimal) : DiskonManual.DariJumlah(Uang.DariDesimal(desimal.truncate())),
-    );
+    final desimal = FormatAngka.UraiDesimal(_nilai.text);
+    widget.saatBerubah(desimal == null || desimal <= Decimal.zero ? null : DiskonManual.DariPersen(desimal));
+  }
+
+  /// Nominal berformat ribuan (`15.000`), persen berkoma desimal (`12,5`): teks diubah saat berganti mode.
+  void _GantiMode(bool persen) {
+    if (persen == _persen) {
+      return;
+    }
+    if (persen) {
+      final jumlah = MasukanUang.AmbilNilai(_nilai);
+      _nilai.text = jumlah == null ? '' : FormatAngka.FormatDesimal(jumlah.KeDesimal());
+    } else {
+      final desimal = FormatAngka.UraiDesimal(_nilai.text);
+      MasukanUang.Isi(_nilai, desimal == null ? null : Uang.DariDesimal(desimal.truncate()));
+    }
+    setState(() => _persen = persen);
   }
 
   @override
@@ -122,15 +137,17 @@ class _IsianDiskonState extends State<IsianDiskon> {
         ],
         selected: {_persen},
         onSelectionChanged: (pilihan) {
-          setState(() => _persen = pilihan.first);
+          _GantiMode(pilihan.first);
           _Kabarkan();
         },
       ),
       const SizedBox(height: TokenJarak.jarak12),
       TextField(
         controller: _nilai,
-        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-        inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')), LengthLimitingTextInputFormatter(13)],
+        keyboardType: TextInputType.numberWithOptions(decimal: _persen),
+        inputFormatters: _persen
+            ? [FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')), LengthLimitingTextInputFormatter(13)]
+            : [MasukanUang.pemformat],
         textAlign: TextAlign.right,
         style: const TextStyle(fontFeatures: [FontFeature.tabularFigures()]),
         onChanged: (_) => _Kabarkan(),

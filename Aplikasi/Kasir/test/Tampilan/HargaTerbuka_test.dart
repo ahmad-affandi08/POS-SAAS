@@ -88,7 +88,7 @@ void main() {
           )
           .controller!
           .text,
-      '50000',
+      '50.000',
     );
     await tester.tap(find.widgetWithText(TextButton, 'Batal'));
     await Tunggu(tester);
