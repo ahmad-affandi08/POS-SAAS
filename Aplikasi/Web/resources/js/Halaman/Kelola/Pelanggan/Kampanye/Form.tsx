@@ -49,8 +49,8 @@ export default function HalamanFormKampanye({
     const { props } = usePage<PropsBersamaAplikasi>();
     const galat = props.errors;
     const [nama, AturNama] = useState(Kampanye?.Nama ?? '');
-    const [kanal, AturKanal] = useState<KanalKampanye>(Kampanye?.Kanal ?? (KanalAktif.Whatsapp ? 'Whatsapp' : 'Email'));
-    const [judul, AturJudul] = useState(Kampanye?.Judul ?? '');
+    // D-33: kampanye hanya lewat WhatsApp; draf email lama diubah ke WhatsApp saat disimpan.
+    const [kanal, AturKanal] = useState<KanalKampanye>('Whatsapp');
     const [isi, AturIsi] = useState(Kampanye?.Isi ?? 'Halo {nama}, ');
     const [rfm, AturRfm] = useState<string[]>(Kampanye?.Segmen.Rfm ?? []);
     const [tier, AturTier] = useState<string[]>(Kampanye?.Segmen.UuidTier ?? []);
@@ -73,7 +73,7 @@ export default function HalamanFormKampanye({
 
     const Simpan = (peristiwa: FormEvent) => {
         peristiwa.preventDefault();
-        const data = { Nama: nama, Kanal: kanal, Judul: kanal === 'Email' ? judul : null, Isi: isi, Segmen: segmen };
+        const data = { Nama: nama, Kanal: kanal, Judul: null, Isi: isi, Segmen: segmen };
         const opsi = { preserveScroll: true, onStart: () => AturMemproses(true), onFinish: () => AturMemproses(false) };
 
         if (Kampanye) {
@@ -110,9 +110,8 @@ export default function HalamanFormKampanye({
                     </div>
                     {!KanalAktif[kanal] ? (
                         <Pemberitahuan jenis="peringatan">
-                            {kanal === 'Whatsapp'
-                                ? 'Pengiriman WhatsApp belum aktif untuk usaha ini. Draf tetap bisa disimpan, tetapi belum bisa dikirim.'
-                                : 'Pengiriman email belum aktif. Draf tetap bisa disimpan, tetapi belum bisa dikirim.'}
+                            Pengiriman WhatsApp belum aktif untuk usaha ini. Draf tetap bisa disimpan, tetapi belum bisa
+                            dikirim.
                         </Pemberitahuan>
                     ) : null}
                 </Panel>
@@ -169,7 +168,7 @@ export default function HalamanFormKampanye({
                                 </span>{' '}
                                 akan menerima pesan ini
                                 {pratinjau.data.TanpaKontak > 0
-                                    ? ` (${String(pratinjau.data.TanpaKontak)} lainnya cocok tetapi tidak punya ${kanal === 'Whatsapp' ? 'nomor WhatsApp' : 'email'} yang sah).`
+                                    ? ` (${String(pratinjau.data.TanpaKontak)} lainnya cocok tetapi tidak punya nomor WhatsApp yang sah).`
                                     : '.'}
                                 {pratinjau.data.JumlahPenerima > pratinjau.data.MaksPenerima
                                     ? ` Paling banyak ${String(pratinjau.data.MaksPenerima)} per kampanye; persempit segmennya.`
@@ -182,15 +181,6 @@ export default function HalamanFormKampanye({
                 </Panel>
 
                 <Panel judul="Isi pesan" idJudul="judul-isi-kampanye">
-                    {kanal === 'Email' ? (
-                        <BidangTeks
-                            label="Judul email"
-                            nilai={judul}
-                            saatBerubah={AturJudul}
-                            galat={galat.Judul}
-                            required
-                        />
-                    ) : null}
                     <BidangTeksPanjang
                         label="Isi pesan"
                         nilai={isi}

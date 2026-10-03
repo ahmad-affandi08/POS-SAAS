@@ -3,22 +3,20 @@ import 'package:mesin_kasir/MesinKasir.dart';
 
 import '../GalatKasir.dart';
 
-/// Kanal struk digital (v2.05). Nilai sama dengan server (`KanalPesanKeluar`).
+/// Kanal struk digital (v2.05). Nilai sama dengan server (`KanalPesanKeluar`). Sejak D-33 (PRD v4.05) hanya WhatsApp:
+/// notifikasi toko ke pelanggan tidak memakai email.
 abstract final class KanalStruk {
   static const String whatsapp = 'Whatsapp';
-  static const String email = 'Email';
 }
 
-/// Kirim struk digital (tautan `/s/{kodeStruk}`) ke pelanggan lewat WhatsApp atau email (v2.05). Wajib online dan
+/// Kirim struk digital (tautan `/s/{kodeStruk}`) ke pelanggan lewat WhatsApp (v2.05, D-33). Wajib online dan
 /// penjualan sudah tersinkron; server mengantrekan pengiriman lewat penyedia yang aktif di konsol Platform Pengelola.
-/// Nomor/email pelanggan hanya dikirim ke server, tidak disimpan di perangkat dan tidak dicatat di log.
+/// Nomor pelanggan hanya dikirim ke server, tidak disimpan di perangkat dan tidak dicatat di log.
 class LayananKirimStruk {
   LayananKirimStruk({required this.klien, PembuatUlid? ulid}) : _ulid = ulid ?? PembuatUlid();
 
   final KlienPos klien;
   final PembuatUlid _ulid;
-
-  static final RegExp _polaEmail = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]{2,}$');
 
   /// Nomor WhatsApp Indonesia ke format 62xxxxxxxxxx (08…, +62…, 62…). Null = tidak sah.
   static String? RapikanNomor(String masukan) {
@@ -41,23 +39,16 @@ class LayananKirimStruk {
     return angka;
   }
 
-  /// Tujuan rapi untuk [kanal], atau [GalatKasir] `TujuanTidakValid`.
-  static String RapikanTujuan(String kanal, String masukan) {
-    final teks = masukan.trim();
-    if (kanal == KanalStruk.whatsapp) {
-      return RapikanNomor(teks) ??
-          (throw const GalatKasir('TujuanTidakValid', 'Nomor WhatsApp tidak sah. Contoh: 0812 3456 7890.'));
-    }
-    if (teks.length > 254 || !_polaEmail.hasMatch(teks)) {
-      throw const GalatKasir('TujuanTidakValid', 'Alamat email tidak sah. Contoh: nama@contoh.co.id.');
-    }
-    return teks.toLowerCase();
-  }
+  /// Nomor WhatsApp rapi, atau [GalatKasir] `TujuanTidakValid`.
+  static String RapikanTujuan(String masukan) =>
+      RapikanNomor(masukan.trim()) ??
+      (throw const GalatKasir('TujuanTidakValid', 'Nomor WhatsApp tidak sah. Contoh: 0812 3456 7890.'));
 
-  Future<PesanKeluarPos> Kirim({required String uuidPenjualan, required String kanal, required String tujuan}) async {
-    final rapi = RapikanTujuan(kanal, tujuan);
+  Future<PesanKeluarPos> Kirim({required String uuidPenjualan, required String tujuan}) async {
+    final rapi = RapikanTujuan(tujuan);
     return _Jalankan(
-      () => klien.KirimStruk(uuidPenjualan: uuidPenjualan, uuid: _ulid.Buat(), kanal: kanal, tujuan: rapi),
+      () =>
+          klien.KirimStruk(uuidPenjualan: uuidPenjualan, uuid: _ulid.Buat(), kanal: KanalStruk.whatsapp, tujuan: rapi),
     );
   }
 

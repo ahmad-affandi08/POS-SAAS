@@ -1,6 +1,6 @@
 import type { HasilTabel } from '@/Komponen/TabelData/Tipe';
 
-/** CRM-07 kampanye pesan WhatsApp/email bersegmen. Waktu = ISO-8601 UTC dari server. */
+/** CRM-07 kampanye pesan WhatsApp bersegmen (kanal Email hanya untuk riwayat lama, D-33). Waktu = ISO-8601 UTC dari server. */
 
 export type KanalKampanye = 'Whatsapp' | 'Email';
 export type StatusKampanye = 'Draf' | 'Dijadwalkan' | 'Berjalan' | 'Selesai' | 'Dibatalkan';

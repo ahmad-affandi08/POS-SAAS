@@ -65,7 +65,7 @@ Schedule::command('akuntansi:susutkan-aset-tetap')->dailyAt('05:50')->timezone('
 // D-23 D: tutup harian otomatis untuk hari yang aman ditutup (setelah jam tutup buku bawaan 04.00).
 Schedule::command('kasir:tutup-harian-otomatis')->dailyAt('06:15')->timezone('Asia/Jakarta')->withoutOverlapping();
 
-// D-23 D: ringkasan pagi Kotak Tindakan lewat email (setelah otomatisasi pagi di atas).
+// D-23 D: ringkasan pagi Kotak Tindakan lewat WhatsApp (D-33) (setelah otomatisasi pagi di atas).
 Schedule::command('tindakan:kirim-ringkasan-harian')->dailyAt('07:00')->timezone('Asia/Jakarta')->withoutOverlapping();
 
 // X6 (v3.79): insight penjualan minggu lalu ke pemilik tiap Senin pagi (setelah ringkasan Kotak Tindakan).

@@ -13,7 +13,7 @@ import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import { FormatTanggal } from '@/Pustaka/FormatWaktu';
 import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
 import type { PropsBersamaAplikasi } from '@/Tipe/Aplikasi';
-import type { ButirTindakan, PropsKotakTindakan, RingkasanEmailTindakan } from '@/Tipe/Tindakan';
+import type { ButirTindakan, PropsKotakTindakan, RingkasanWhatsappTindakan } from '@/Tipe/Tindakan';
 
 function KartuButir({ butir }: { butir: ButirTindakan }) {
     const [dipilih, AturDipilih] = useState<string[]>([]);
@@ -139,19 +139,19 @@ function KartuButir({ butir }: { butir: ButirTindakan }) {
     );
 }
 
-/** D-23 D: berlangganan ringkasan pagi Kotak Tindakan lewat email (pilihan pribadi; Owner bawaan aktif). */
-function PilihanRingkasanEmail({ ringkasan }: { ringkasan: RingkasanEmailTindakan }) {
+/** D-23 D: berlangganan ringkasan pagi Kotak Tindakan lewat WhatsApp (pilihan pribadi; Owner bawaan aktif). */
+function PilihanRingkasanWhatsapp({ ringkasan }: { ringkasan: RingkasanWhatsappTindakan }) {
     const [memproses, AturMemproses] = useState(false);
 
     return (
         <div className="flex max-w-3xl items-start gap-3 rounded-panel border border-garis bg-permukaan p-4">
             <Switch
-                id="RingkasanEmail"
+                id="RingkasanWhatsapp"
                 checked={ringkasan.Aktif}
-                disabled={!ringkasan.BisaEmail || memproses}
+                disabled={!ringkasan.BisaWhatsapp || memproses}
                 onCheckedChange={(aktif) =>
                     router.put(
-                        '/kelola/tindakan/ringkasan-email',
+                        '/kelola/tindakan/ringkasan-whatsapp',
                         { Aktif: aktif },
                         {
                             preserveScroll: true,
@@ -162,13 +162,13 @@ function PilihanRingkasanEmail({ ringkasan }: { ringkasan: RingkasanEmailTindaka
                 }
             />
             <div className="flex min-w-0 flex-col gap-0.5">
-                <label htmlFor="RingkasanEmail" className="text-isi font-semibold text-teks-utama">
-                    Kirim ringkasan ke email saya setiap pagi
+                <label htmlFor="RingkasanWhatsapp" className="text-isi font-semibold text-teks-utama">
+                    Kirim ringkasan ke WhatsApp saya setiap pagi
                 </label>
                 <span className="text-label text-teks-sekunder">
-                    {ringkasan.BisaEmail
+                    {ringkasan.BisaWhatsapp
                         ? 'Butir penting & perlu perhatian dikirim pukul 07.00 WIB, hanya bila ada.'
-                        : 'Akun Anda belum punya email, jadi ringkasan tidak bisa dikirim.'}
+                        : 'Akun Anda belum punya nomor HP, jadi ringkasan tidak bisa dikirim. Tambahkan nomor HP di profil akun.'}
                 </span>
             </div>
         </div>
@@ -180,7 +180,7 @@ function PilihanRingkasanEmail({ ringkasan }: { ringkasan: RingkasanEmailTindaka
  * perlu dicek bisa ditandai "sudah dicek" (izin `tindakan.tinjau`); pengingat lain selesai sendiri saat keadaannya
  * berubah (stok diisi, piutang dilunasi, buku ditutup).
  */
-export default function HalamanKotakTindakan({ Butir, RingkasanEmail }: PropsKotakTindakan) {
+export default function HalamanKotakTindakan({ Butir, RingkasanWhatsapp }: PropsKotakTindakan) {
     const { props } = usePage<PropsBersamaAplikasi>();
 
     return (
@@ -189,7 +189,7 @@ export default function HalamanKotakTindakan({ Butir, RingkasanEmail }: PropsKot
                 Semua yang perlu Anda perhatikan hari ini, dari yang paling penting. Butir hilang sendiri setelah
                 diselesaikan.
             </p>
-            {RingkasanEmail ? <PilihanRingkasanEmail ringkasan={RingkasanEmail} /> : null}
+            {RingkasanWhatsapp ? <PilihanRingkasanWhatsapp ringkasan={RingkasanWhatsapp} /> : null}
             <DaftarGalatServer galat={props.errors} />
             {Butir.length === 0 ? (
                 <Empty className="rounded-panel border border-garis bg-permukaan px-4 py-6 md:p-8">

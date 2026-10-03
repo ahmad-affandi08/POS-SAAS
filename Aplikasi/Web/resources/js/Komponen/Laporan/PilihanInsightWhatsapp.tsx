@@ -2,21 +2,21 @@ import { router } from '@inertiajs/react';
 import { useState } from 'react';
 
 import { Switch } from '@/Komponen/Ui/switch';
-import type { InsightEmailLaporan } from '@/Tipe/Laporan';
+import type { InsightWhatsappLaporan } from '@/Tipe/Laporan';
 
-/** X6 (v3.79): berlangganan insight penjualan mingguan lewat email (pilihan pribadi; Owner bawaan aktif). */
-export default function PilihanInsightEmail({ insight }: { insight: InsightEmailLaporan }) {
+/** X6 (v3.79): berlangganan insight penjualan mingguan lewat WhatsApp (pilihan pribadi; Owner bawaan aktif). */
+export default function PilihanInsightWhatsapp({ insight }: { insight: InsightWhatsappLaporan }) {
     const [memproses, AturMemproses] = useState(false);
 
     return (
         <div className="flex max-w-3xl items-start gap-3 rounded-panel border border-garis bg-permukaan p-4">
             <Switch
-                id="InsightEmail"
+                id="InsightWhatsapp"
                 checked={insight.Aktif}
-                disabled={!insight.BisaEmail || memproses}
+                disabled={!insight.BisaWhatsapp || memproses}
                 onCheckedChange={(aktif) =>
                     router.put(
-                        '/kelola/laporan/penjualan/insight-email',
+                        '/kelola/laporan/penjualan/insight-whatsapp',
                         { Aktif: aktif },
                         {
                             preserveScroll: true,
@@ -27,13 +27,13 @@ export default function PilihanInsightEmail({ insight }: { insight: InsightEmail
                 }
             />
             <div className="flex min-w-0 flex-col gap-0.5">
-                <label htmlFor="InsightEmail" className="text-isi font-semibold text-teks-utama">
-                    Kirim insight mingguan ke email saya
+                <label htmlFor="InsightWhatsapp" className="text-isi font-semibold text-teks-utama">
+                    Kirim insight mingguan ke WhatsApp saya
                 </label>
                 <span className="text-label text-teks-sekunder">
-                    {insight.BisaEmail
+                    {insight.BisaWhatsapp
                         ? 'Tiap Senin pukul 07.15 WIB: penjualan minggu lalu dibanding minggu sebelumnya, produk naik & turun, dan stok yang segera habis.'
-                        : 'Akun Anda belum punya email, jadi insight tidak bisa dikirim.'}
+                        : 'Akun Anda belum punya nomor HP, jadi insight tidak bisa dikirim. Tambahkan nomor HP di profil akun.'}
                 </span>
             </div>
         </div>

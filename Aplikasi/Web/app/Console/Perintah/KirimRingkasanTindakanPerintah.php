@@ -12,14 +12,14 @@ use Illuminate\Console\Command;
 use Throwable;
 
 /**
- * D-23 D bagian 4: tiap pagi (setelah otomatisasi lain) mengirim ringkasan Kotak Tindakan lewat email ke pelanggannya.
+ * D-23 D bagian 4: tiap pagi (setelah otomatisasi lain) mengirim ringkasan Kotak Tindakan lewat WhatsApp ke anggota yang berlangganan (D-33).
  * Kegagalan satu tenant tidak menghentikan tenant lain.
  */
 final class KirimRingkasanTindakanPerintah extends Command
 {
     protected $signature = 'tindakan:kirim-ringkasan-harian {--tenant=* : Id tenant (kosong = semua)}';
 
-    protected $description = 'Mengirim ringkasan pagi Kotak Tindakan lewat email (D-23 D).';
+    protected $description = 'Mengirim ringkasan pagi Kotak Tindakan lewat WhatsApp (D-23 D, D-33).';
 
     public function handle(KeanggotaanPengguna $keanggotaan, KonteksTenant $konteks, TanggalBisnisOutlet $tanggalBisnis, KirimRingkasanTindakanHarian $kirim): int
     {

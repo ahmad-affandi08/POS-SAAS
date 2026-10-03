@@ -30,17 +30,15 @@ const Kampanye: BarisKampanye = {
 
 const PropsForm: PropsFormKampanye = {
     Kampanye: null,
-    OpsiKanal: [
-        { Nilai: 'Whatsapp', Label: 'WhatsApp' },
-        { Nilai: 'Email', Label: 'Email' },
-    ],
+    // D-33: hanya WhatsApp yang ditawarkan server.
+    OpsiKanal: [{ Nilai: 'Whatsapp', Label: 'WhatsApp' }],
     OpsiRfm: [
         { Nilai: 'Juara', Label: 'Juara', Keterangan: 'Belanja ≤ 30 hari lalu dan sering.' },
         { Nilai: 'Baru', Label: 'Baru', Keterangan: 'Baru sekali belanja.' },
     ],
     OpsiTier: [],
     OpsiTag: [{ Nilai: 'Kantor', Label: 'Kantor' }],
-    KanalAktif: { Whatsapp: false, Email: true },
+    KanalAktif: { Whatsapp: false, Email: false },
     MaksIsi: 1000,
 };
 
@@ -68,7 +66,7 @@ describe('CRM-07 kampanye pesan', () => {
         expect(screen.getByText(/menyetujui kabar promosi/)).toBeTruthy();
     });
 
-    it('formulir: kanal belum aktif diberi tanda, pratinjau penerima dari server per segmen', async () => {
+    it('formulir: hanya WhatsApp (D-33), kanal belum aktif diberi tanda, pratinjau penerima dari server per segmen', async () => {
         const Ambil = vi.fn().mockResolvedValue({
             ok: true,
             json: () =>
@@ -83,15 +81,16 @@ describe('CRM-07 kampanye pesan', () => {
 
         RenderUji(<HalamanFormKampanye {...PropsForm} />);
 
-        expect(screen.getByRole('combobox', { name: /Kanal/ }).textContent).toContain('Email');
+        expect(screen.getByRole('combobox', { name: /Kanal/ }).textContent).toContain('WhatsApp (belum aktif)');
+        expect(screen.getByText(/Pengiriman WhatsApp belum aktif/)).toBeTruthy();
         await waitFor(() => expect(screen.getByRole('status').textContent).toContain('2 pelanggan'));
-        expect(screen.getByRole('status').textContent).toContain('1 lainnya cocok tetapi tidak punya email');
+        expect(screen.getByRole('status').textContent).toContain('1 lainnya cocok tetapi tidak punya nomor WhatsApp yang sah');
         expect(screen.getByLabelText('Baru (1)')).toBeTruthy();
-        expect(screen.getByLabelText('Judul email')).toBeTruthy();
+        expect(screen.queryByLabelText('Judul email')).toBeNull();
         const [alamat, opsi] = Ambil.mock.calls[0] as [string, { body: string }];
         expect(alamat).toBe('/kelola/pelanggan/kampanye/pratinjau');
         expect(JSON.parse(opsi.body)).toEqual({
-            Kanal: 'Email',
+            Kanal: 'Whatsapp',
             Segmen: { Rfm: [], UuidTier: [], Tag: [], UlangTahunBulanIni: false },
         });
     });

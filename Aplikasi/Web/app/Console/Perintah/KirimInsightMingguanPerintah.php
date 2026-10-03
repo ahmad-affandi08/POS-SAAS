@@ -19,7 +19,7 @@ final class KirimInsightMingguanPerintah extends Command
 {
     protected $signature = 'laporan:kirim-insight-mingguan {--tenant=* : Id tenant (kosong = semua)}';
 
-    protected $description = 'Mengirim insight penjualan mingguan lewat email (X6).';
+    protected $description = 'Mengirim insight penjualan mingguan lewat WhatsApp (X6, D-33).';
 
     public function handle(KeanggotaanPengguna $keanggotaan, KonteksTenant $konteks, TanggalBisnisOutlet $tanggalBisnis, KirimInsightMingguan $kirim): int
     {

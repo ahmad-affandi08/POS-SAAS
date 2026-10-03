@@ -15,28 +15,28 @@ import '../Pendukung/KatalogUji.dart';
 import '../Pendukung/LingkunganUji.dart';
 import '../Pendukung/PasangAplikasi.dart';
 
-/// Struk digital lewat WhatsApp/email (v2.05) dari layar selesai bayar: nomor dirapikan ke 62…, dikirim ke server,
+/// Struk digital lewat WhatsApp (v2.05, D-33) dari layar selesai bayar: nomor dirapikan ke 62…, dikirim ke server,
 /// status antrean dipantau sampai terkirim; nomor tidak sah ditolak di perangkat; transaksi belum tersinkron diberi
 /// pesan jelas.
 void main() {
   group('LayananKirimStruk.RapikanTujuan', () {
     test('nomor WhatsApp Indonesia dirapikan ke 62…', () {
-      expect(LayananKirimStruk.RapikanTujuan(KanalStruk.whatsapp, '0812-3456-7890'), '6281234567890');
-      expect(LayananKirimStruk.RapikanTujuan(KanalStruk.whatsapp, '+62 812 3456 7890'), '6281234567890');
-      expect(LayananKirimStruk.RapikanTujuan(KanalStruk.whatsapp, '81234567890'), '6281234567890');
+      expect(LayananKirimStruk.RapikanTujuan('0812-3456-7890'), '6281234567890');
+      expect(LayananKirimStruk.RapikanTujuan('+62 812 3456 7890'), '6281234567890');
+      expect(LayananKirimStruk.RapikanTujuan('81234567890'), '6281234567890');
       for (final salah in ['021-555-1234', '0812', 'abc', '+1 415 555 0100']) {
         expect(
-          () => LayananKirimStruk.RapikanTujuan(KanalStruk.whatsapp, salah),
+          () => LayananKirimStruk.RapikanTujuan(salah),
           throwsA(isA<GalatKasir>().having((g) => g.kode, 'kode', 'TujuanTidakValid')),
           reason: salah,
         );
       }
     });
 
-    test('email dirapikan huruf kecil; format salah ditolak', () {
-      expect(LayananKirimStruk.RapikanTujuan(KanalStruk.email, ' Siti.Rahma@Contoh.co.id '), 'siti.rahma@contoh.co.id');
+    test('D-33: struk digital hanya lewat WhatsApp; alamat email ditolak sebagai nomor tidak sah', () {
+      expect(KanalStruk.whatsapp, 'Whatsapp');
       expect(
-        () => LayananKirimStruk.RapikanTujuan(KanalStruk.email, 'siti@contoh'),
+        () => LayananKirimStruk.RapikanTujuan('siti.rahma@contoh.co.id'),
         throwsA(isA<GalatKasir>().having((g) => g.kode, 'kode', 'TujuanTidakValid')),
       );
     });
@@ -125,7 +125,9 @@ void main() {
     });
   }
 
-  testWidgets('email tidak sah ditolak di perangkat; belum tersinkron → pesan jelas', (tester) async {
+  testWidgets('D-33: tanpa pilihan Email; nomor tidak sah ditolak di perangkat; belum tersinkron → pesan jelas', (
+    tester,
+  ) async {
     var dikirim = 0;
     final u = await BayarTunai(tester, const Size(1280, 900), (p) async {
       dikirim++;
@@ -137,15 +139,15 @@ void main() {
         headers: {'content-type': 'application/json'},
       );
     });
-    await tester.tap(find.text('Email'));
-    await Tunggu(tester);
-    await tester.enterText(find.byType(TextField).last, 'siti@contoh');
+    expect(find.text('Email'), findsNothing);
+    expect(find.text('Nomor WhatsApp pelanggan'), findsOneWidget);
+    await tester.enterText(find.byType(TextField).last, 'siti.rahma@contoh.co.id');
     await tester.tap(find.widgetWithText(FilledButton, 'Kirim struk'));
     await Tunggu(tester);
-    expect(find.textContaining('Alamat email tidak sah'), findsOneWidget);
+    expect(find.textContaining('Nomor WhatsApp tidak sah'), findsOneWidget);
     expect(dikirim, 0);
 
-    await tester.enterText(find.byType(TextField).last, 'siti.rahma@contoh.co.id');
+    await tester.enterText(find.byType(TextField).last, '0812 3456 7890');
     await tester.tap(find.widgetWithText(FilledButton, 'Kirim struk'));
     await Tunggu(tester);
     expect(dikirim, 1);

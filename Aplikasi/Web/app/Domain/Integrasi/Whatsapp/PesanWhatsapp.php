@@ -38,4 +38,16 @@ final readonly class PesanWhatsapp
 
         return $angka;
     }
+
+    /** Nomor HP Indonesia yang sah untuk WhatsApp (`628…`, 10–15 digit); null bila kosong atau tidak sah. */
+    public static function AmbilNomorSah(?string $nomor): ?string
+    {
+        if ($nomor === null || trim($nomor) === '') {
+            return null;
+        }
+
+        $rapi = self::RapikanNomor($nomor);
+
+        return preg_match('/^628\d{7,12}$/', $rapi) === 1 ? $rapi : null;
+    }
 }

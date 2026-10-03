@@ -9,6 +9,7 @@ use App\Domain\Bersama\Tindakan\Aksi\UbahLanggananRingkasanTindakan;
 use App\Domain\Bersama\Tindakan\Data\DataButirTindakan;
 use App\Domain\Bersama\Tindakan\Kueri\KotakTindakan;
 use App\Domain\Bersama\Tindakan\Kueri\LanggananRingkasan;
+use App\Domain\Integrasi\Whatsapp\PesanWhatsapp;
 use App\Domain\Organisasi\Enum\IzinTenant;
 use App\Domain\Organisasi\Kueri\AksesPengguna;
 use App\Domain\Organisasi\Kueri\KonteksTindakanPengguna;
@@ -34,24 +35,25 @@ final class TindakanKontroler extends DasarKelolaKontroler
         return Inertia::render('Kelola/Tindakan', [
             'Butir' => array_map(fn (DataButirTindakan $b): array => $b->KeLarik($bolehTandai), $kotak->Ambil($konteks->Buat($this->IdTenant(), $pelaku->Id, $tanggal->Hitung(null)))),
             'Izin' => ['Tandai' => $bolehTandai],
-            'RingkasanEmail' => [
-                'BisaEmail' => $pelaku->Email !== null,
-                'Aktif' => $pelaku->Email !== null && $langganan->CekAktif($pelaku->Id, $pemilik),
+            // D-33: ringkasan pagi dikirim lewat WhatsApp ke nomor HP akun.
+            'RingkasanWhatsapp' => [
+                'BisaWhatsapp' => PesanWhatsapp::AmbilNomorSah($pelaku->NoHp) !== null,
+                'Aktif' => PesanWhatsapp::AmbilNomorSah($pelaku->NoHp) !== null && $langganan->CekAktif($pelaku->Id, $pemilik),
             ],
         ]);
     }
 
-    public function UbahRingkasanEmail(Request $permintaan, UbahLanggananRingkasanTindakan $ubah): RedirectResponse
+    public function UbahRingkasanWhatsapp(Request $permintaan, UbahLanggananRingkasanTindakan $ubah): RedirectResponse
     {
-        $aktif = (bool) $permintaan->validate(['Aktif' => ['required', 'boolean']], attributes: ['Aktif' => 'ringkasan email'])['Aktif'];
+        $aktif = (bool) $permintaan->validate(['Aktif' => ['required', 'boolean']], attributes: ['Aktif' => 'ringkasan WhatsApp'])['Aktif'];
 
-        if ($aktif && $this->Pelaku()->Email === null) {
-            return back()->withErrors(['Aktif' => 'Akun Anda belum punya email. Tambahkan email dulu untuk menerima ringkasan.']);
+        if ($aktif && PesanWhatsapp::AmbilNomorSah($this->Pelaku()->NoHp) === null) {
+            return back()->withErrors(['Aktif' => 'Akun Anda belum punya nomor HP. Tambahkan nomor HP dulu untuk menerima ringkasan.']);
         }
 
         $ubah->Jalankan($this->Pelaku()->Id, $aktif);
 
-        return back()->with('Kilat', $aktif ? 'Ringkasan dikirim ke email Anda setiap pagi.' : 'Ringkasan pagi lewat email dimatikan.');
+        return back()->with('Kilat', $aktif ? 'Ringkasan dikirim ke WhatsApp Anda setiap pagi.' : 'Ringkasan pagi lewat WhatsApp dimatikan.');
     }
 
     public function Tandai(Request $permintaan, TandaiDokumenDitinjau $tandai, KotakTindakan $kotak, KonteksTindakanPengguna $konteks, TanggalBisnisOutlet $tanggal): RedirectResponse

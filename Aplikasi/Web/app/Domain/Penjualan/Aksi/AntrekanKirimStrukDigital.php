@@ -22,7 +22,8 @@ use Illuminate\Support\Facades\DB;
  * K3: kasir mengirim struk digital (`/s/{kodeStruk}`) ke WhatsApp atau email pelanggan dari POS. Penjualan harus sudah
  * tersinkron (404 `PenjualanBelumTersinkron`), struk digital tenant aktif (409 `StrukDigitalNonaktif`), kanal siap
  * (409 `WhatsappBelumAktif`: penyedia P-05 tidak aktif atau fitur `integrasi.whatsapp` tidak dimiliki;
- * 409 `EmailBelumAktif`: tanpa email P-05 di produksi), tujuan sah (422 `TujuanTidakValid`), paling banyak
+ * 409 `EmailBelumAktif`: kanal email ditutup sejak D-33 — notifikasi tenant hanya lewat WhatsApp; nilai `Email` tetap
+ * diterima validasi supaya aplikasi kasir lama mendapat pesan yang jelas), tujuan sah (422 `TujuanTidakValid`), paling banyak
  * `MAKSIMAL_PER_PENJUALAN` kiriman per penjualan (429 `BatasKirimStrukTercapai`). Baris `PesanKeluar` dibuat lalu
  * `KirimStrukDigitalTugas` diantrekan setelah commit (aturan #10). Idempoten menurut `Uuid` perangkat: kiriman ulang
  * mengembalikan status terkini tanpa mengantrekan lagi.
@@ -119,8 +120,8 @@ final class AntrekanKirimStrukDigital
     {
         return match ($kanal) {
             KanalPesanKeluar::Whatsapp => $this->whatsapp->AmbilAktif() !== null && $this->fitur->CekAktif($idTenant, PemeriksaFiturTenant::KUNCI_WHATSAPP),
-            // Di luar produksi mailer bawaan (log/array) boleh dipakai tanpa integrasi email P-05.
-            KanalPesanKeluar::Email => config('integrasi.EmailAktif') === true || ! app()->isProduction(),
+            // D-33 (PRD v4.05): notifikasi tenant ke pelanggan hanya lewat WhatsApp.
+            KanalPesanKeluar::Email => false,
         };
     }
 
@@ -132,6 +133,6 @@ final class AntrekanKirimStrukDigital
 
         throw $kanal === KanalPesanKeluar::Whatsapp
             ? new PelanggaranAturanBisnis('WhatsappBelumAktif', 'Kirim struk lewat WhatsApp belum aktif untuk usaha ini.', 'Kanal', 409)
-            : new PelanggaranAturanBisnis('EmailBelumAktif', 'Kirim struk lewat email belum aktif.', 'Kanal', 409);
+            : new PelanggaranAturanBisnis('EmailBelumAktif', 'Kirim struk lewat email tidak tersedia. Kirim lewat WhatsApp atau tunjukkan QR struk digital.', 'Kanal', 409);
     }
 }

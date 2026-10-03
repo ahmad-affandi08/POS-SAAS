@@ -14,7 +14,6 @@ use App\Domain\Pelanggan\Aksi\BatalkanPembayaranPiutang;
 use App\Domain\Pelanggan\Aksi\SimpanPembayaranPiutang;
 use App\Domain\Pelanggan\Aksi\SimpanPengaturanPengingatPiutang;
 use App\Domain\Pelanggan\Enum\JenisPengingatPiutang;
-use App\Domain\Pelanggan\Enum\KanalPengingatPiutang;
 use App\Domain\Pelanggan\Enum\KelompokUmurPiutang;
 use App\Domain\Pelanggan\Enum\StatusPembayaranPiutang;
 use App\Domain\Pelanggan\Kueri\DaftarPiutang;
@@ -74,16 +73,15 @@ final class PiutangKontroler extends DasarKelolaKontroler
         ]);
     }
 
-    /** D-23 D: kirim pengingat piutang ke pelanggan sekarang (WhatsApp bila bisa, selain itu email). */
+    /** D-23 D: kirim pengingat piutang ke pelanggan sekarang lewat WhatsApp (D-33). */
     public function KirimPengingat(string $piutang, AntrekanPengingatPiutang $antrekan): RedirectResponse
     {
         // Parameter string (bukan binding model): konteks tenant baru ditetapkan setelah binding rute.
         $piutang = Piutang::query()->where('Uuid', $piutang)->firstOrFail();
         abort_if(($idOutlet = $this->IdOutletBoleh()) !== null && ! in_array($piutang->IdOutlet, $idOutlet, true), 404);
-        $pengingat = $antrekan->Jalankan($this->IdTenant(), $piutang, JenisPengingatPiutang::Manual, $this->Pelaku()->Id);
-        $kanal = $pengingat?->Kanal === KanalPengingatPiutang::Whatsapp ? 'WhatsApp' : 'email';
+        $antrekan->Jalankan($this->IdTenant(), $piutang, JenisPengingatPiutang::Manual, $this->Pelaku()->Id);
 
-        return back()->with('Kilat', "Pengingat {$piutang->Nomor} sedang dikirim lewat {$kanal}.");
+        return back()->with('Kilat', "Pengingat {$piutang->Nomor} sedang dikirim lewat WhatsApp.");
     }
 
     /** D-23 D: pengaturan pengingat piutang otomatis. */

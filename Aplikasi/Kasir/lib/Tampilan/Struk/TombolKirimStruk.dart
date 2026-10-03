@@ -7,10 +7,9 @@ import 'package:sistem_desain/SistemDesain.dart';
 
 import '../../Aplikasi/Penyedia.dart';
 import '../../Domain/GalatKasir.dart';
-import '../../Domain/Struk/LayananKirimStruk.dart';
 
 /// Tombol "Kirim struk" (v2.05) di layar selesai bayar dan riwayat: membuka dialog kirim struk digital lewat WhatsApp
-/// atau email.
+/// (D-33: tanpa email).
 class TombolKirimStruk extends StatelessWidget {
   const TombolKirimStruk({super.key, required this.uuidPenjualan});
 
@@ -30,7 +29,7 @@ class TombolKirimStruk extends StatelessWidget {
   );
 }
 
-/// Dialog kirim struk: pilih kanal, isi nomor WhatsApp/email, kirim, lalu pantau status antrean (tiap [jedaCek],
+/// Dialog kirim struk: isi nomor WhatsApp pelanggan, kirim, lalu pantau status antrean (tiap [jedaCek],
 /// paling lama [batasCek] kali) sampai terkirim/gagal. Menutup dialog tidak membatalkan pengiriman di server.
 class DialogKirimStruk extends ConsumerStatefulWidget {
   const DialogKirimStruk({
@@ -50,7 +49,6 @@ class DialogKirimStruk extends ConsumerStatefulWidget {
 
 class _DialogKirimStrukState extends ConsumerState<DialogKirimStruk> {
   final _tujuan = TextEditingController();
-  var _kanal = KanalStruk.whatsapp;
   var _mengirim = false;
   PesanKeluarPos? _pesan;
   String? _galat;
@@ -72,7 +70,7 @@ class _DialogKirimStrukState extends ConsumerState<DialogKirimStruk> {
     try {
       final pesan = await ref
           .read(penyediaLayananKirimStruk)
-          .Kirim(uuidPenjualan: widget.uuidPenjualan, kanal: _kanal, tujuan: _tujuan.text);
+          .Kirim(uuidPenjualan: widget.uuidPenjualan, tujuan: _tujuan.text);
       if (!mounted) {
         return;
       }
@@ -160,34 +158,19 @@ class _DialogKirimStrukState extends ConsumerState<DialogKirimStruk> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              SegmentedButton<String>(
-                segments: const [
-                  ButtonSegment(value: KanalStruk.whatsapp, label: Text('WhatsApp'), icon: Icon(Icons.chat_outlined)),
-                  ButtonSegment(value: KanalStruk.email, label: Text('Email'), icon: Icon(Icons.mail_outline)),
-                ],
-                selected: {_kanal},
-                onSelectionChanged: bisaKirim
-                    ? (pilihan) => setState(() {
-                        _kanal = pilihan.single;
-                        _tujuan.clear();
-                        _galat = null;
-                        _pesan = null;
-                      })
-                    : null,
-              ),
-              const SizedBox(height: TokenJarak.jarak12),
               TextField(
                 controller: _tujuan,
                 enabled: bisaKirim,
                 autofocus: true,
-                keyboardType: _kanal == KanalStruk.whatsapp ? TextInputType.phone : TextInputType.emailAddress,
+                keyboardType: TextInputType.phone,
                 autocorrect: false,
                 onChanged: (_) => setState(() => _galat = null),
                 onSubmitted: bisaKirim ? (_) => _Kirim() : null,
-                decoration: InputDecoration(
-                  labelText: _kanal == KanalStruk.whatsapp ? 'Nomor WhatsApp pelanggan' : 'Email pelanggan',
-                  hintText: _kanal == KanalStruk.whatsapp ? '0812 3456 7890' : 'nama@contoh.co.id',
-                  border: const OutlineInputBorder(),
+                decoration: const InputDecoration(
+                  labelText: 'Nomor WhatsApp pelanggan',
+                  hintText: '0812 3456 7890',
+                  prefixIcon: Icon(Icons.chat_outlined),
+                  border: OutlineInputBorder(),
                 ),
               ),
               if (_galat != null)

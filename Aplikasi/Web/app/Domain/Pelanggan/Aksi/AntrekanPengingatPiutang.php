@@ -20,8 +20,9 @@ use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 
 /**
- * D-23 D bagian 4b: antrekan satu pengingat piutang ke pelanggan. Kanal dipilih otomatis: WhatsApp bila nomor HP sah
- * dan WhatsApp aktif untuk usaha ini (integrasi P-05 + fitur `integrasi.whatsapp`), selain itu email pelanggan bila ada.
+ * D-23 D bagian 4b: antrekan satu pengingat piutang ke pelanggan lewat WhatsApp (nomor HP sah dan WhatsApp aktif untuk
+ * usaha ini: integrasi P-05 + fitur `integrasi.whatsapp`). Sejak D-33 tidak ada lagi jalur email: notifikasi tenant
+ * hanya lewat WhatsApp.
  * Piutang harus terbuka dan berpelanggan. Otomatis: sekali per (piutang, jenis) lewat `KunciOtomatis`; manual: paling
  * sering sekali per `JEDA_JAM` per piutang (tidak membanjiri pelanggan). Tugas antrean dijalankan setelah commit.
  */
@@ -50,7 +51,7 @@ final class AntrekanPengingatPiutang
         }
 
         [$kanal, $tujuan] = $this->PilihKanal($idTenant, $pelanggan)
-            ?? throw new PelanggaranAturanBisnis('KontakTidakTersedia', 'Pelanggan belum punya nomor WhatsApp atau email yang bisa dihubungi, atau pengiriman WhatsApp/email belum aktif.', 'Umum', 409);
+            ?? throw new PelanggaranAturanBisnis('KontakTidakTersedia', 'Pelanggan belum punya nomor WhatsApp yang sah, atau pengiriman WhatsApp belum aktif untuk usaha ini.', 'Umum', 409);
         $kunci = $jenis === JenisPengingatPiutang::Manual ? null : "{$piutang->Id}:{$jenis->value}";
 
         if ($kunci !== null && PengingatPiutang::query()->where('KunciOtomatis', $kunci)->exists()) {
@@ -96,14 +97,6 @@ final class AntrekanPengingatPiutang
 
         if (preg_match(self::POLA_NOMOR, $nomor) === 1 && $this->whatsapp->AmbilAktif() !== null && $this->fitur->CekAktif($idTenant, PemeriksaFiturTenant::KUNCI_WHATSAPP)) {
             return [KanalPengingatPiutang::Whatsapp, $nomor];
-        }
-
-        $email = mb_strtolower(trim((string) $pelanggan->Email));
-        // Di luar produksi mailer bawaan (log/array) boleh dipakai tanpa integrasi email P-05.
-        $emailAktif = config('integrasi.EmailAktif') === true || ! app()->isProduction();
-
-        if ($email !== '' && $emailAktif && filter_var($email, FILTER_VALIDATE_EMAIL) !== false) {
-            return [KanalPengingatPiutang::Email, $email];
         }
 
         return null;

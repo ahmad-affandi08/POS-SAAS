@@ -155,7 +155,7 @@ final class KampanyePesanKontroler extends DasarKelolaKontroler
             'OpsiTag' => array_map(fn (string $t): array => ['Nilai' => $t, 'Label' => $t], $pelanggan->AmbilSemuaTag()),
             'KanalAktif' => [
                 'Whatsapp' => $pengirim !== null && $fitur->CekAktif($this->IdTenant(), PemeriksaFiturTenant::KUNCI_WHATSAPP),
-                'Email' => config('integrasi.EmailAktif') === true || ! app()->isProduction(),
+                'Email' => false,
             ],
             'MaksIsi' => SimpanKampanyePesan::MAKS_ISI,
         ];
@@ -193,7 +193,10 @@ final class KampanyePesanKontroler extends DasarKelolaKontroler
     /** @return list<array{Nilai: string, Label: string}> */
     private static function OpsiKanal(): array
     {
-        return array_map(fn (KanalKampanye $k): array => ['Nilai' => $k->value, 'Label' => $k->AmbilLabel()], KanalKampanye::cases());
+        return array_values(array_map(
+            fn (KanalKampanye $k): array => ['Nilai' => $k->value, 'Label' => $k->AmbilLabel()],
+            array_filter(KanalKampanye::cases(), fn (KanalKampanye $k): bool => $k->CekTersedia()),
+        ));
     }
 
     private function Cari(string $uuid): KampanyePesan

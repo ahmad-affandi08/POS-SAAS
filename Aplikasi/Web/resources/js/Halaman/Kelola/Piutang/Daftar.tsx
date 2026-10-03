@@ -122,7 +122,7 @@ const OpsiHariSebelum = [0, 1, 2, 3, 5, 7, 14].map((h) => ({
     Label: h === 0 ? 'Pada hari jatuh tempo' : `${String(h)} hari sebelum jatuh tempo`,
 }));
 
-/** D-23 D: pengaturan pengingat piutang otomatis ke pelanggan lewat WhatsApp/email. */
+/** D-23 D: pengaturan pengingat piutang otomatis ke pelanggan lewat WhatsApp (D-33). */
 function DialogPengingatOtomatis({
     pengaturan,
     saatTutup,
@@ -139,7 +139,7 @@ function DialogPengingatOtomatis({
     return (
         <DialogFormulir
             judul="Pengingat piutang otomatis"
-            keterangan="Pelanggan diingatkan lewat WhatsApp (bila nomor HP ada dan WhatsApp aktif) atau email, sekitar pukul 09.00. Setiap pengingat hanya dikirim sekali per nota."
+            keterangan="Pelanggan diingatkan lewat WhatsApp (bila nomor HP ada dan WhatsApp aktif), sekitar pukul 09.00. Setiap pengingat hanya dikirim sekali per nota."
             saatTutup={saatTutup}
             galatUmum={(formulir.errors as Record<string, string | undefined>).Umum}
         >

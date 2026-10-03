@@ -11,21 +11,28 @@ use App\Domain\Pelanggan\Layanan\TautanBerhentiLangganan;
 use App\Domain\Pelanggan\Model\KampanyePesan;
 use App\Domain\Pelanggan\Model\Pelanggan;
 use App\Domain\Pelanggan\Model\PenerimaKampanye;
-use App\Domain\Pelanggan\Surel\PesanKampanyePelanggan;
+use App\Domain\Pengelola\TimInternal\Enum\PeranPengelolaBawaan;
+use App\Domain\Tenant\Enum\JenisOverride;
+use App\Domain\Tenant\Layanan\PemeriksaFiturTenant;
+use App\Domain\Tenant\Model\OverrideTenant;
 use Carbon\CarbonImmutable;
+use Illuminate\Http\Client\Request as PermintaanHttp;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use Inertia\Testing\AssertableInertia;
 use Tests\Pendukung\Kasir\BantuanKasir;
 use Tests\Pendukung\Organisasi\BantuanOrganisasi;
+use Tests\Pendukung\Pengelola\BantuanPengelola;
 use Tests\Pendukung\Penjualan\BantuanPenjualan;
 use Tests\Pendukung\Tenant\BantuanPendaftaran;
 use Tests\TestCase;
 
 /*
  * CRM-07 kampanye pesan bersegmen: hanya pelanggan yang setuju promosi, segmen RFM, pratinjau penerima, kirim bertahap
- * lewat email (WhatsApp belum aktif di test), tujuan terenkripsi, tautan berhenti berlangganan bertanda tangan (UU PDP),
+ * lewat WhatsApp (D-33: kanal email ditutup), tujuan terenkripsi, tautan berhenti berlangganan bertanda tangan (UU PDP),
  * jadwal, batal, satu kampanye berjalan, izin `pelanggan.kelola`, isolasi tenant.
  */
 
@@ -34,11 +41,20 @@ beforeEach(function (): void {
     BantuanPendaftaran::SiapkanPrasyarat();
     $this->travelTo(CarbonImmutable::parse('2026-10-07 05:00:00', 'UTC'));
     Mail::fake();
+    config(['integrasi.Whatsapp' => ['Penyedia' => 'Fonnte', 'Pengaturan' => [], 'Kredensial' => ['Token' => 'rahasia-uji']]]);
+    Http::fake(['api.fonnte.com/send' => Http::response(['status' => true, 'id' => ['5001']])]);
 });
+
+/** Pesan WhatsApp kampanye yang dikirim ke penyedia (Fonnte). */
+function PesanKampanyeTerkirim(): Collection
+{
+    return collect(Http::recorded())->map(fn (array $pasangan): PermintaanHttp => $pasangan[0])
+        ->filter(fn (PermintaanHttp $r): bool => str_contains($r->url(), 'api.fonnte.com/send'))->values();
+}
 
 /**
  * Ani (setuju, belanja sekali hari ini → Baru), Budi (setuju, belum belanja), Citra (tidak setuju, belanja), Dedi
- * (setuju, tanpa email). Pemilik masuk.
+ * (setuju, nomor HP tidak sah). Pemilik masuk, fitur WhatsApp usaha aktif.
  *
  * @return array<string, mixed>
  */
@@ -52,10 +68,18 @@ function SiapkanKampanye(TestCase $tes, string $nama = 'Kopi Senja Kampanye'): a
     $ani = $buat('Ani Lestari', '6281200000001', 'ani@contoh.id', true);
     $budi = $buat('Budi Santoso', '6281200000002', 'budi@contoh.id', true);
     $citra = $buat('Citra Dewi', '6281200000003', 'citra@contoh.id', false);
-    $dedi = $buat('Dedi Kurnia', '6281200000004', null, true);
+    $dedi = $buat('Dedi Kurnia', '12345', 'dedi@contoh.id', true);
     $jual = fn (Pelanggan $p): array => BantuanPenjualan::Item($k, ['Baris' => [['Produk' => $produk, 'Jumlah' => '1', 'Harga' => '38500.00']]], ['UuidPelanggan' => $p->Uuid]);
 
     expect(BantuanKasir::KirimRingkas($tes, $k['Token'], [$jual($ani), $jual($citra)]))->toBe([['Diterima', null], ['Diterima', null]]);
+    OverrideTenant::query()->create([
+        'IdTenant' => $k['Tenant']->Id,
+        'Jenis' => JenisOverride::Fitur,
+        'Kunci' => PemeriksaFiturTenant::KUNCI_WHATSAPP,
+        'BerakhirPada' => now()->addDays(90),
+        'Alasan' => 'Uji kampanye pesan lewat WhatsApp',
+        'DibuatOleh' => BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::SuperAdmin)->Id,
+    ]);
     BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
     BantuanOrganisasi::Masuk($tes, $k['Pemilik'], $k['Tenant']->Id);
 
@@ -67,27 +91,29 @@ function IsianKampanye(array $timpa = []): array
 {
     return [
         'Nama' => 'Promo kopi gula aren Oktober',
-        'Kanal' => 'Email',
-        'Judul' => 'Diskon 20% kopi gula aren',
+        'Kanal' => 'Whatsapp',
         'Isi' => 'Halo {nama}, minggu ini kopi gula aren diskon 20% di {toko}. Tunjukkan pesan ini ke kasir.',
         'Segmen' => [],
         ...$timpa,
     ];
 }
 
-it('pratinjau hanya menghitung yang setuju promosi & punya kontak; kirim email bertahap, tujuan terenkripsi, selesai', function (): void {
+it('pratinjau hanya menghitung yang setuju promosi & punya nomor WhatsApp sah; kirim WhatsApp bertahap, tujuan terenkripsi, selesai', function (): void {
     $k = SiapkanKampanye($this);
 
-    $this->postJson('/kelola/pelanggan/kampanye/pratinjau', ['Kanal' => 'Email', 'Segmen' => []])->assertOk()->assertJson([
+    $this->postJson('/kelola/pelanggan/kampanye/pratinjau', ['Kanal' => 'Whatsapp', 'Segmen' => []])->assertOk()->assertJson([
         'JumlahPenerima' => 2,
         'TanpaKontak' => 1,
         'PerSegmen' => ['Baru' => 1, 'BelumBelanja' => 2, 'Juara' => 0],
     ]);
-    $this->postJson('/kelola/pelanggan/kampanye/pratinjau', ['Kanal' => 'Email', 'Segmen' => ['Rfm' => ['Baru']]])->assertJson(['JumlahPenerima' => 1, 'TanpaKontak' => 0]);
-    $this->postJson('/kelola/pelanggan/kampanye/pratinjau', ['Kanal' => 'Whatsapp', 'Segmen' => []])->assertJson(['JumlahPenerima' => 3, 'TanpaKontak' => 0]);
+    $this->postJson('/kelola/pelanggan/kampanye/pratinjau', ['Kanal' => 'Whatsapp', 'Segmen' => ['Rfm' => ['Baru']]])->assertJson(['JumlahPenerima' => 1, 'TanpaKontak' => 0]);
 
-    // Email tanpa judul ditolak.
-    $this->post('/kelola/pelanggan/kampanye', IsianKampanye(['Judul' => '']))->assertSessionHasErrors('Judul');
+    // D-33: kampanye email tidak bisa dibuat lagi; pilihan kanal di formulir hanya WhatsApp.
+    $this->post('/kelola/pelanggan/kampanye', IsianKampanye(['Kanal' => 'Email', 'Judul' => 'Diskon 20% kopi gula aren']))
+        ->assertSessionHasErrors(['Kanal' => 'Kampanye lewat email tidak tersedia lagi. Pilih WhatsApp.']);
+    $this->get('/kelola/pelanggan/kampanye/buat')->assertInertia(fn (AssertableInertia $h) => $h
+        ->where('OpsiKanal', [['Nilai' => 'Whatsapp', 'Label' => 'WhatsApp']])
+        ->where('KanalAktif.Email', false));
     $this->post('/kelola/pelanggan/kampanye', IsianKampanye())->assertSessionHasNoErrors();
     $kampanye = KampanyePesan::query()->sole();
     expect($kampanye->Status)->toBe(StatusKampanye::Draf);
@@ -101,13 +127,15 @@ it('pratinjau hanya menghitung yang setuju promosi & punya kontak; kirim email b
     $this->post("/kelola/pelanggan/kampanye/{$kampanye->Uuid}/jalankan")->assertSessionHasNoErrors()
         ->assertSessionHas('Kilat', 'Kampanye mulai dikirim ke 2 pelanggan secara bertahap.');
 
-    Mail::assertSent(PesanKampanyePelanggan::class, 2);
-    Mail::assertSent(PesanKampanyePelanggan::class, fn (PesanKampanyePelanggan $s): bool => $s->hasTo('ani@contoh.id')
-        && $s->judul === 'Diskon 20% kopi gula aren'
-        && str_contains($s->isi, 'Halo Ani Lestari, minggu ini')
-        && str_contains($s->isi, 'Berhenti menerima pesan promosi: '.url('/berhenti-langganan/'))
-        && str_contains($s->tautanBerhenti, 'signature='));
-    Mail::assertNotSent(PesanKampanyePelanggan::class, fn (PesanKampanyePelanggan $s): bool => $s->hasTo('citra@contoh.id'));
+    $pesan = PesanKampanyeTerkirim();
+    $keAni = $pesan->first(fn (PermintaanHttp $r): bool => $r['target'] === '6281200000001');
+    expect($pesan)->toHaveCount(2)
+        ->and($pesan->pluck('target')->sort()->values()->all())->toBe(['6281200000001', '6281200000002'])
+        ->and($keAni)->not->toBeNull()
+        ->and((string) $keAni['message'])->toContain('Halo Ani Lestari, minggu ini')
+        ->and((string) $keAni['message'])->toContain('Berhenti menerima pesan promosi: '.url('/berhenti-langganan/'))
+        ->and((string) $keAni['message'])->toContain('signature=');
+    Mail::assertNothingSent();
 
     BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
     $kampanye->refresh();
@@ -115,7 +143,7 @@ it('pratinjau hanya menghitung yang setuju promosi & punya kontak; kirim email b
         ->and($kampanye->JumlahPenerima)->toBe(2)
         ->and($kampanye->JumlahTerkirim)->toBe(2)
         ->and(PenerimaKampanye::query()->where('Status', StatusPenerimaKampanye::Terkirim->value)->count())->toBe(2)
-        ->and(DB::table('PenerimaKampanye')->pluck('Tujuan')->implode(' '))->not->toContain('contoh.id')
+        ->and(DB::table('PenerimaKampanye')->pluck('Tujuan')->implode(' '))->not->toContain('6281200000001')
         ->and(LogAudit::query()->where('Peristiwa', 'kampanye-pesan.jalankan')->count())->toBe(1);
 
     // Daftar penerima di rincian tidak pernah membawa email/nomor.
@@ -149,7 +177,7 @@ it('tautan berhenti berlangganan: GET hanya konfirmasi, POST mencabut persetujua
     BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
     expect(Pelanggan::query()->whereKey($k['Budi']->Id)->value('SetujuPemasaran'))->toBeFalsy()
         ->and(LogAudit::query()->where('Peristiwa', 'pelanggan.berhenti-pemasaran')->count())->toBe(1);
-    $this->postJson('/kelola/pelanggan/kampanye/pratinjau', ['Kanal' => 'Email', 'Segmen' => []])->assertJson(['JumlahPenerima' => 1]);
+    $this->postJson('/kelola/pelanggan/kampanye/pratinjau', ['Kanal' => 'Whatsapp', 'Segmen' => []])->assertJson(['JumlahPenerima' => 1]);
 });
 
 it('jadwal dijalankan perintah terjadwal saat waktunya tiba; tanpa penerima ditolak; batal; izin & isolasi tenant', function (): void {
@@ -172,12 +200,12 @@ it('jadwal dijalankan perintah terjadwal saat waktunya tiba; tanpa penerima dito
     $this->put("/kelola/pelanggan/kampanye/{$kampanye->Uuid}", IsianKampanye())->assertSessionHasErrors('Umum');
 
     Artisan::call('pelanggan:jalankan-kampanye-terjadwal');
-    Mail::assertNothingSent();
+    expect(PesanKampanyeTerkirim())->toHaveCount(0);
 
     $this->travelTo(CarbonImmutable::parse('2026-10-07 07:01:00', 'UTC'));
     Artisan::call('pelanggan:jalankan-kampanye-terjadwal');
-    Mail::assertSent(PesanKampanyePelanggan::class, 1);
-    Mail::assertSent(PesanKampanyePelanggan::class, fn (PesanKampanyePelanggan $s): bool => $s->hasTo('budi@contoh.id'));
+    expect(PesanKampanyeTerkirim())->toHaveCount(1)
+        ->and(PesanKampanyeTerkirim()[0]['target'])->toBe('6281200000002');
     BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
     expect($kampanye->refresh()->Status)->toBe(StatusKampanye::Selesai);
     $this->post("/kelola/pelanggan/kampanye/{$kampanye->Uuid}/batal")->assertSessionHasErrors('Umum');
@@ -188,4 +216,25 @@ it('jadwal dijalankan perintah terjadwal saat waktunya tiba; tanpa penerima dito
     $b = SiapkanKampanye($this, 'Kopi Pagi Lain');
     app(KonteksTenant::class)->Kosongkan();
     BantuanOrganisasi::Masuk($this, $b['Pemilik'], $b['Tenant']->Id)->get("/kelola/pelanggan/kampanye/{$kampanye->Uuid}")->assertNotFound();
+});
+
+it('D-33: kampanye email lama tidak dikirim lagi — yang terjadwal dibatalkan penjadwal, draf ditolak saat dijalankan', function (): void {
+    $k = SiapkanKampanye($this);
+    $this->post('/kelola/pelanggan/kampanye', IsianKampanye(['Nama' => 'Email lama terjadwal']))->assertSessionHasNoErrors();
+    $this->post('/kelola/pelanggan/kampanye', IsianKampanye(['Nama' => 'Email lama draf']))->assertSessionHasNoErrors();
+    // Data dari sebelum D-33: kampanye berkanal Email.
+    DB::table('KampanyePesan')->where('Nama', 'Email lama terjadwal')->update(['Kanal' => 'Email', 'Judul' => 'Promo lama', 'Status' => StatusKampanye::Dijadwalkan->value, 'DijadwalkanPada' => now()->subMinute()]);
+    DB::table('KampanyePesan')->where('Nama', 'Email lama draf')->update(['Kanal' => 'Email', 'Judul' => 'Promo lama']);
+
+    Artisan::call('pelanggan:jalankan-kampanye-terjadwal');
+    BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+    expect(KampanyePesan::query()->where('Nama', 'Email lama terjadwal')->sole()->Status)->toBe(StatusKampanye::Dibatalkan);
+
+    $draf = KampanyePesan::query()->where('Nama', 'Email lama draf')->sole();
+    BantuanOrganisasi::Masuk($this, $k['Pemilik'], $k['Tenant']->Id)
+        ->post("/kelola/pelanggan/kampanye/{$draf->Uuid}/jalankan")
+        ->assertSessionHasErrors(['Kanal' => 'Kampanye lewat email tidak tersedia lagi. Ubah ke WhatsApp.']);
+    expect($draf->refresh()->Status)->toBe(StatusKampanye::Draf)
+        ->and(PesanKampanyeTerkirim())->toHaveCount(0);
+    Mail::assertNothingSent();
 });

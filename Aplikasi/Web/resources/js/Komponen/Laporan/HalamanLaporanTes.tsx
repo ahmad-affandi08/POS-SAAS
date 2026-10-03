@@ -195,13 +195,13 @@ describe('F-14a laporan penjualan', () => {
     });
 
     it('X6: sakelar insight mingguan mengirim pilihan langganan ke server', () => {
-        RenderUji(<HalamanLaporanPenjualan {...PropsPenjualan({ InsightEmail: { BisaEmail: true, Aktif: true } })} />);
+        RenderUji(<HalamanLaporanPenjualan {...PropsPenjualan({ InsightWhatsapp: { BisaWhatsapp: true, Aktif: true } })} />);
 
-        const sakelar = screen.getByRole('switch', { name: 'Kirim insight mingguan ke email saya' });
+        const sakelar = screen.getByRole('switch', { name: 'Kirim insight mingguan ke WhatsApp saya' });
         expect(sakelar.getAttribute('aria-checked')).toBe('true');
         sakelar.click();
         expect(tiruanRouter.put).toHaveBeenCalledWith(
-            '/kelola/laporan/penjualan/insight-email',
+            '/kelola/laporan/penjualan/insight-whatsapp',
             { Aktif: false },
             expect.objectContaining({ preserveScroll: true }),
         );

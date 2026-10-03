@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 use App\Domain\Organisasi\Enum\PeranTenantBawaan;
 use App\Domain\Pengelola\TimInternal\Enum\PeranPengelolaBawaan;
+use App\Domain\Penjualan\Enum\JenisPesanKeluar;
+use App\Domain\Penjualan\Enum\KanalPesanKeluar;
 use App\Domain\Penjualan\Enum\StatusPesanKeluar;
 use App\Domain\Penjualan\Layanan\KodeStrukDigital;
 use App\Domain\Penjualan\Model\Penjualan;
@@ -31,7 +33,7 @@ use Tests\Pendukung\Tenant\BantuanPendaftaran;
 use Tests\TestCase;
 
 /*
- * K3: kirim struk digital (`/s/{kodeStruk}`) ke WhatsApp/email pelanggan dari POS. Tabel `PesanKeluar`, tugas antrean
+ * K3: kirim struk digital (`/s/{kodeStruk}`) ke WhatsApp pelanggan dari POS (email ditutup D-33). Tabel `PesanKeluar`, tugas antrean
  * `KirimStrukDigitalTugas`, kontrak `POST /api/pos/v1/penjualan/{uuidPenjualan}/kirim-struk` &
  * `GET /api/pos/v1/pesan-keluar/{uuid}`.
  */
@@ -98,6 +100,29 @@ function JalankanTugasStruk(PesanKeluar $pesan, int $percobaan = 1): KirimStrukD
     app()->call([$tugas, 'handle']);
 
     return $tugas;
+}
+
+/**
+ * Kiriman struk lewat email yang sudah diantrekan sebelum D-33 (PRD v4.05); sejak itu jalur email ditutup untuk kiriman
+ * baru, tetapi baris lama di antrean tetap diproses tugas yang sama.
+ *
+ * @param  array<string, mixed>  $k
+ */
+function BuatPesanEmailLama(array $k, Penjualan $p, string $email): PesanKeluar
+{
+    BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+
+    return PesanKeluar::query()->create([
+        'Uuid' => (string) Str::ulid(),
+        'IdOutlet' => $k['Outlet']->Id,
+        'IdPerangkat' => $k['Perangkat']->Id,
+        'Kanal' => KanalPesanKeluar::Email,
+        'Jenis' => JenisPesanKeluar::StrukDigital,
+        'IdReferensi' => $p->Id,
+        'Tujuan' => $email,
+        'Status' => StatusPesanKeluar::Diantrekan,
+        'Percobaan' => 0,
+    ]);
 }
 
 describe('K3 kirim struk digital dari POS', function (): void {
@@ -171,15 +196,13 @@ describe('K3 kirim struk digital dari POS', function (): void {
         expect(PesanKeluar::query()->where('Status', StatusPesanKeluar::Terkirim->value)->count())->toBe(2);
     });
 
-    it('tugas email: Mailable berisi ringkasan & tautan struk, pengirim bernama usaha; tanpa integrasi email di luar produksi tetap boleh', function (): void {
+    it('tugas email (kiriman lama yang sudah antre sebelum D-33): Mailable berisi ringkasan & tautan struk, pengirim bernama usaha', function (): void {
         Queue::fake();
         Mail::fake();
         config(['mail.from.address' => 'struk@payou.id']);
         [$k, $p] = SiapkanJualStruk($this, whatsapp: false);
 
-        KirimStruk($this, $k, $p->Uuid, 'Email', '  Bu.Ratna@Contoh.CO.ID ')->assertStatus(202);
-        $pesan = PesanKeluar::query()->firstOrFail();
-        expect($pesan->Tujuan)->toBe('bu.ratna@contoh.co.id');
+        $pesan = BuatPesanEmailLama($k, $p, 'bu.ratna@contoh.co.id');
         JalankanTugasStruk($pesan);
 
         $url = url('/s/'.KodeStrukDigital::Buat($k['Tenant']->Id, $p->Uuid));
@@ -201,18 +224,17 @@ describe('K3 kirim struk digital dari POS', function (): void {
         expect($pesan->refresh()->Status)->toBe(StatusPesanKeluar::Terkirim);
     });
 
-    it('email di produksi tanpa integrasi email P-05 = 409 EmailBelumAktif', function (): void {
-        [$k, $p] = SiapkanJualStruk($this, whatsapp: false);
-        app()->detectEnvironment(fn () => 'production');
+    it('D-33: kirim struk lewat email selalu 409 EmailBelumAktif (juga bila integrasi email platform aktif); tidak ada baris PesanKeluar', function (): void {
+        Queue::fake();
+        PasangWhatsapp();
+        [$k, $p] = SiapkanJualStruk($this);
+        config(['integrasi.EmailAktif' => true]);
 
-        try {
-            KirimStruk($this, $k, $p->Uuid, 'Email', 'pelanggan@contoh.id')->assertStatus(409)->assertJsonPath('Galat.Kode', 'EmailBelumAktif');
-            config(['integrasi.EmailAktif' => true]);
-            Queue::fake();
-            KirimStruk($this, $k, $p->Uuid, 'Email', 'pelanggan@contoh.id')->assertStatus(202);
-        } finally {
-            app()->detectEnvironment(fn () => 'testing');
-        }
+        KirimStruk($this, $k, $p->Uuid, 'Email', 'pelanggan@contoh.id')->assertStatus(409)
+            ->assertJsonPath('Galat.Kode', 'EmailBelumAktif')
+            ->assertJsonPath('Galat.Pesan', 'Kirim struk lewat email tidak tersedia. Kirim lewat WhatsApp atau tunjukkan QR struk digital.');
+        expect(PesanKeluar::query()->count())->toBe(0);
+        Queue::assertNotPushed(KirimStrukDigitalTugas::class);
     });
 
     it('penjualan belum tersinkron = 404 PenjualanBelumTersinkron', function (): void {
@@ -287,7 +309,7 @@ describe('K3 kirim struk digital dari POS', function (): void {
             KirimStruk($this, $k, $p->Uuid)->assertStatus(202);
         }
 
-        KirimStruk($this, $k, $p->Uuid, 'Email', 'pelanggan@contoh.id')->assertStatus(429)->assertJsonPath('Galat.Kode', 'BatasKirimStrukTercapai');
+        KirimStruk($this, $k, $p->Uuid)->assertStatus(429)->assertJsonPath('Galat.Kode', 'BatasKirimStrukTercapai');
         expect(PesanKeluar::query()->count())->toBe(5);
     });
 
@@ -337,20 +359,18 @@ describe('K3 kirim struk digital dari POS', function (): void {
         ))->times(3);
     });
 
-    it('galat email: pesan disaring dari alamat pelanggan; kegagalan sistem (failed) menandai Gagal', function (): void {
+    it('galat email (kiriman lama sebelum D-33): pesan disaring dari alamat pelanggan; kegagalan sistem (failed) menandai Gagal', function (): void {
         Queue::fake();
         Mail::shouldReceive('to')->andThrow(new RuntimeException('550 mailbox pelanggan@contoh.id unavailable'));
         [$k, $p] = SiapkanJualStruk($this, whatsapp: false);
-        KirimStruk($this, $k, $p->Uuid, 'Email', 'pelanggan@contoh.id')->assertStatus(202);
-        $pesan = PesanKeluar::query()->firstOrFail();
+        $pesan = BuatPesanEmailLama($k, $p, 'pelanggan@contoh.id');
 
         JalankanTugasStruk($pesan, 3);
         expect($pesan->refresh()->Status)->toBe(StatusPesanKeluar::Gagal)
             ->and($pesan->PesanGalat)->toContain('550 mailbox')
             ->and($pesan->PesanGalat)->not->toContain('pelanggan@contoh.id');
 
-        KirimStruk($this, $k, $p->Uuid, 'Email', 'pelanggan@contoh.id')->assertStatus(202);
-        $kedua = PesanKeluar::query()->latest('Id')->firstOrFail();
+        $kedua = BuatPesanEmailLama($k, $p, 'pelanggan@contoh.id');
         (new KirimStrukDigitalTugas($kedua->IdTenant, $kedua->Id))->failed(new RuntimeException('Deadlock'));
         BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
         expect($kedua->refresh()->Status)->toBe(StatusPesanKeluar::Gagal)

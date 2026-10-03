@@ -87,6 +87,22 @@ final class PembuatPengirimWhatsapp
         return is_string($nama) && $nama !== '' ? $nama : null;
     }
 
+    /** Nama templat resmi untuk ringkasan pagi Kotak Tindakan ke anggota tenant (D-23 D, D-33); null = kirim teks. */
+    public function AmbilTemplatRingkasanTindakan(): ?string
+    {
+        $nama = config('integrasi.Whatsapp.Pengaturan.NamaTemplatRingkasanTindakan');
+
+        return is_string($nama) && $nama !== '' ? $nama : null;
+    }
+
+    /** Nama templat resmi untuk insight penjualan mingguan ke anggota tenant (X6, D-33); null = kirim teks. */
+    public function AmbilTemplatInsightMingguan(): ?string
+    {
+        $nama = config('integrasi.Whatsapp.Pengaturan.NamaTemplatInsightMingguan');
+
+        return is_string($nama) && $nama !== '' ? $nama : null;
+    }
+
     /** Nama templat resmi untuk pengingat tagihan langganan PAYOU ke Owner (P-08); null = kirim teks. */
     public function AmbilTemplatPengingatTagihan(): ?string
     {

@@ -78,7 +78,7 @@ const kolom: KolomTabel<BarisKampanye>[] = [
 ];
 
 /**
- * CRM-07 kampanye pesan: kirim promosi lewat WhatsApp/email hanya ke pelanggan yang setuju menerima promosi, bersegmen
+ * CRM-07 kampanye pesan: kirim promosi lewat WhatsApp (D-33) hanya ke pelanggan yang setuju menerima promosi, bersegmen
  * RFM, tier, tag, atau ulang tahun. Dibuka dari halaman Pelanggan.
  */
 export default function HalamanDaftarKampanye({ Kampanye, OpsiStatus, OpsiKanal }: PropsDaftarKampanye) {

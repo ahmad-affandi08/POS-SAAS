@@ -137,9 +137,8 @@ final class JalankanKampanyePesan
             return;
         }
 
-        if (config('integrasi.EmailAktif') !== true && app()->isProduction()) {
-            throw new PelanggaranAturanBisnis('KanalTidakAktif', 'Pengiriman email belum aktif.', 'Kanal', 422);
-        }
+        // D-33: kampanye email lama (draf/terjadwal) tidak dikirim lagi; yang terjadwal dibatalkan penjadwal.
+        throw new PelanggaranAturanBisnis('KanalTidakTersedia', 'Kampanye lewat email tidak tersedia lagi. Ubah ke WhatsApp.', 'Kanal', 422);
     }
 
     private function KunciDraf(KampanyePesan $kampanye): KampanyePesan

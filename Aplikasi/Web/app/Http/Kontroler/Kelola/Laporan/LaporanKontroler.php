@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Kontroler\Kelola\Laporan;
 
 use App\Domain\Bersama\Tabel\Data\DataPermintaanTabel;
+use App\Domain\Integrasi\Whatsapp\PesanWhatsapp;
 use App\Domain\Laporan\Aksi\UbahLanggananInsightMingguan;
 use App\Domain\Laporan\Data\DataPeriodeLaporan;
 use App\Domain\Laporan\Kueri\LanggananInsight;
@@ -57,25 +58,25 @@ final class LaporanKontroler extends DasarKelolaKontroler
 
         return Inertia::render('Kelola/Laporan/Penjualan', [
             ...$laporan->AmbilHalaman($saring, $this->IdOutletBoleh(), $tabel),
-            // X6 (v3.79): langganan insight mingguan lewat email (Owner bawaan berlangganan).
-            'InsightEmail' => [
-                'BisaEmail' => $pelaku->Email !== null,
-                'Aktif' => $pelaku->Email !== null && $langganan->CekAktif($pelaku->Id, $pemilik),
+            // X6 (v3.79, D-33): langganan insight mingguan lewat WhatsApp (Owner bawaan berlangganan).
+            'InsightWhatsapp' => [
+                'BisaWhatsapp' => PesanWhatsapp::AmbilNomorSah($pelaku->NoHp) !== null,
+                'Aktif' => PesanWhatsapp::AmbilNomorSah($pelaku->NoHp) !== null && $langganan->CekAktif($pelaku->Id, $pemilik),
             ],
         ]);
     }
 
-    public function UbahInsightEmail(Request $permintaan, UbahLanggananInsightMingguan $ubah): RedirectResponse
+    public function UbahInsightWhatsapp(Request $permintaan, UbahLanggananInsightMingguan $ubah): RedirectResponse
     {
         $aktif = (bool) $permintaan->validate(['Aktif' => ['required', 'boolean']], attributes: ['Aktif' => 'insight mingguan'])['Aktif'];
 
-        if ($aktif && $this->Pelaku()->Email === null) {
-            return back()->withErrors(['Aktif' => 'Akun Anda belum punya email. Tambahkan email dulu untuk menerima insight.']);
+        if ($aktif && PesanWhatsapp::AmbilNomorSah($this->Pelaku()->NoHp) === null) {
+            return back()->withErrors(['Aktif' => 'Akun Anda belum punya nomor HP. Tambahkan nomor HP dulu untuk menerima insight.']);
         }
 
         $ubah->Jalankan($this->Pelaku()->Id, $aktif);
 
-        return back()->with('Kilat', $aktif ? 'Insight penjualan dikirim ke email Anda setiap Senin pagi.' : 'Insight mingguan lewat email dimatikan.');
+        return back()->with('Kilat', $aktif ? 'Insight penjualan dikirim ke WhatsApp Anda setiap Senin pagi.' : 'Insight mingguan lewat WhatsApp dimatikan.');
     }
 
     public function EksporPenjualan(Request $permintaan, LaporanPenjualan $laporan, TanggalBisnisOutlet $tanggal): StreamedResponse

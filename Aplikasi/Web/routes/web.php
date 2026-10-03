@@ -160,7 +160,7 @@ Route::middleware([TolakDomainPengelola::class, ArahkanDomainAplikasi::class, Ba
             Route::get('/tindakan', [TindakanKontroler::class, 'Daftar'])->name('kelola.tindakan.daftar');
             Route::post('/tindakan/tinjau', [TindakanKontroler::class, 'Tandai'])->middleware([SiapkanAuditTenant::class, $izin(IzinTenant::TindakanTinjau)])->name('kelola.tindakan.tinjau');
             // D-23 D: berlangganan ringkasan pagi Kotak Tindakan lewat email (pilihan pribadi tiap pengguna).
-            Route::put('/tindakan/ringkasan-email', [TindakanKontroler::class, 'UbahRingkasanEmail'])->middleware(SiapkanAuditTenant::class)->name('kelola.tindakan.ringkasan-email');
+            Route::put('/tindakan/ringkasan-whatsapp', [TindakanKontroler::class, 'UbahRingkasanWhatsapp'])->middleware(SiapkanAuditTenant::class)->name('kelola.tindakan.ringkasan-whatsapp');
 
             Route::middleware(SiapkanAuditTenant::class)->group(function () use ($izin): void {
                 // Langganan & tagihan (pembayaran online via gerbang billing). Izin `langganan.kelola` khusus Pemilik (§19.1).

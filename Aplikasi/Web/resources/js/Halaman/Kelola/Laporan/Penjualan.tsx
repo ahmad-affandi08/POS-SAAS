@@ -3,7 +3,7 @@ import type { HasilTabel, KolomTabel } from '@/Komponen/TabelData/Tipe';
 import { KolomAngkaPenjualan, KolomBilangan, KolomQty, KolomUang } from '@/Komponen/Laporan/KolomLaporan';
 import NavigasiTab, { TautanEkspor } from '@/Komponen/Laporan/NavigasiTab';
 import PetaPanasJam from '@/Komponen/Laporan/PetaPanasJam';
-import PilihanInsightEmail from '@/Komponen/Laporan/PilihanInsightEmail';
+import PilihanInsightWhatsapp from '@/Komponen/Laporan/PilihanInsightWhatsapp';
 import SaringLaporan from '@/Komponen/Laporan/SaringLaporan';
 import LabelStatus from '@/Komponen/Umpan/LabelStatus';
 import Pemberitahuan from '@/Komponen/Umpan/Pemberitahuan';
@@ -601,7 +601,7 @@ export default function HalamanLaporanPenjualan(props: PropsLaporanPenjualan) {
                 </div>
                 <IsiTab key={`${Saring.Tab}-${JSON.stringify(query)}`} tab={Saring.Tab} isi={props.Isi} />
             </div>
-            {props.InsightEmail ? <PilihanInsightEmail insight={props.InsightEmail} /> : null}
+            {props.InsightWhatsapp ? <PilihanInsightWhatsapp insight={props.InsightWhatsapp} /> : null}
         </TataLetakAplikasi>
     );
 }
