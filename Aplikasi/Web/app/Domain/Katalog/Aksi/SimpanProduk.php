@@ -110,7 +110,11 @@ final class SimpanProduk
             ? $this->aturan->NormalisasiDefinisiVarian($data->atributVarian, $produk)
             : $produk?->AtributVarian;
         $rencanaSatuan = $this->penyelaras->Periksa($produk, $data->idSatuanDasar, $data->satuan, $data->bolehUbahHarga);
-        $sku = $this->aturan->TentukanSku($data->sku, $produk?->Id);
+        // BR-03.1: SKU kosong saat mengubah produk = pertahankan SKU lama (identitas di label, impor, & integrasi),
+        // bukan membuat SKU baru diam-diam; SKU otomatis hanya untuk produk baru (atau yang belum ber-SKU).
+        $sku = trim((string) $data->sku) === '' && $produk?->Sku !== null
+            ? $produk->Sku
+            : $this->aturan->TentukanSku($data->sku, $produk?->Id);
         [$golonganObat, $obatWajibApotek, $prekursor] = self::TentukanObat($data, $produk, $pelacakan);
 
         $lama = $produk === null ? null : RingkasanAuditProduk::Ambil($produk);

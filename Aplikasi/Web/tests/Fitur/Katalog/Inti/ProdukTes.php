@@ -99,6 +99,19 @@ describe('F-03 SimpanProduk lewat form', function (): void {
 
         BantuanOrganisasi::AturKonteks($a['Tenant']->Id);
         expect(Produk::query()->orderBy('Id')->pluck('Sku')->all())->toBe(['PRD-000001', 'PRD-000002', 'abc-01']);
+
+        // Mengubah produk dengan SKU kosong mempertahankan SKU lama (tidak membuat PRD-000003 diam-diam).
+        $form = BantuanKatalog::IsiFormProduk($a['Pcs'], $a['KelompokPajak'], ['Nama' => 'Gula Pasir Gulaku 1 kg']);
+        $masukA()->post('/kelola/produk', $form)->assertSessionHasNoErrors();
+        BantuanOrganisasi::AturKonteks($a['Tenant']->Id);
+        $gula = Produk::query()->where('Uuid', $form['Uuid'])->sole();
+        $satuan = $gula->Satuan()->firstOrFail();
+        $masukA()->put("/kelola/produk/{$form['Uuid']}", [...$form, 'Nama' => 'Gula Pasir Gulaku 1 kg Premium', 'Satuan' => [[...$form['Satuan'][0], 'Uuid' => $satuan->Uuid]]])
+            ->assertSessionHasNoErrors();
+        BantuanOrganisasi::AturKonteks($a['Tenant']->Id);
+        expect($gula->refresh()->Sku)->toBe('PRD-000003')
+            ->and($gula->Nama)->toBe('Gula Pasir Gulaku 1 kg Premium')
+            ->and(Produk::query()->count())->toBe(4);
     });
 
     it('BR-03.1 balapan SKU: pelanggaran indeks unik dipetakan ke BR-03.1 dan seluruh transaksi dibatalkan', function (): void {

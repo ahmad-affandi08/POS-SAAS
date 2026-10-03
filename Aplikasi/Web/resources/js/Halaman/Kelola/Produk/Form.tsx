@@ -582,7 +582,11 @@ export default function HalamanFormProduk({
                 nilai={data.Sku}
                 saatBerubah={(nilai) => Atur('Sku', nilai)}
                 galat={galat.Sku}
-                keterangan="Kode unik produk. Kosongkan agar dibuat otomatis, misal PRD-000123."
+                keterangan={
+                    Mode === 'Buat'
+                        ? 'Kode unik produk. Kosongkan agar dibuat otomatis, misal PRD-000123.'
+                        : 'Kode unik produk. Kosongkan untuk tetap memakai SKU yang sekarang.'
+                }
                 maxLength={64}
                 kode
             />
