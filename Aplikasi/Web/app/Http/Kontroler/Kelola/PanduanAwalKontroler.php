@@ -14,7 +14,9 @@ use App\Domain\PanduanAwal\Data\HasilPenerapanTemplate;
 use App\Domain\PanduanAwal\Enum\LangkahPanduan;
 use App\Domain\PanduanAwal\Enum\StatusLangkahPanduan;
 use App\Domain\PanduanAwal\Kueri\PilihanTemplate;
+use App\Domain\PanduanAwal\Kueri\TemplateTerbit;
 use App\Domain\PanduanAwal\Kueri\UsulanPajak;
+use App\Domain\PanduanAwal\Model\ProgresPanduanAwal;
 use App\Domain\Referensi\Kueri\WilayahKota;
 use App\Domain\Tenant\Kueri\ProfilTenant;
 use App\Domain\Tenant\Layanan\PenyimpanLogoTenant;
@@ -95,18 +97,28 @@ final class PanduanAwalKontroler extends DasarPanduanAwalKontroler
     }
 
     /** D-23 A: terapkan template + pajak usulan + produk contoh + metode bayar dalam satu klik, lalu ke langkah Perangkat. */
-    public function SiapkanOtomatis(TerapkanTemplateSektorPermintaan $permintaan, SiapkanOtomatisPanduan $siapkan): RedirectResponse
+    public function SiapkanOtomatis(TerapkanTemplateSektorPermintaan $permintaan, SiapkanOtomatisPanduan $siapkan, SelesaikanPanduanAwal $selesaikan): RedirectResponse
     {
         $hasil = $siapkan->Jalankan($this->OutletPanduan(), $permintaan->string('KodeTemplate')->toString(), $permintaan->AmbilSektorLain());
+        $progres = ProgresPanduanAwal::query()->first();
+        $kurang = $progres?->Wajib === true ? $progres->AmbilLangkahWajibBelumSelesai() : [];
         $pesan = array_filter([
             "Template {$hasil['Template']} diterapkan.",
             $hasil['PajakDikonfirmasi'] ? 'Pajak diatur sesuai usulan.' : 'Periksa pengaturan pajak di langkah Pajak.',
             $hasil['JumlahProduk'] > 0 ? "{$hasil['JumlahProduk']} produk contoh ditambahkan; ubah harganya kapan saja di menu Produk." : null,
             $hasil['ProdukTerlewatKuota'] > 0 ? "{$hasil['ProdukTerlewatKuota']} produk contoh tidak ditambahkan karena kuota paket penuh." : null,
-            'Tunai siap dipakai. Tinggal aktifkan perangkat kasir.',
+            'Tunai siap dipakai.',
         ]);
 
-        return redirect()->route('kelola.panduan-awal.perangkat')->with('Kilat', implode(' ', $pesan));
+        // Audit kemudahan pakai: jalur otomatis langsung menyelesaikan panduan bila semua langkah wajib sudah beres,
+        // jadi back-office langsung terbuka; perangkat kasir tetap bisa ditambahkan di halaman berikutnya.
+        if ($kurang === []) {
+            $selesaikan->Jalankan($this->Pelaku()->Id, $this->OutletPanduan()->Id);
+
+            return redirect()->route('kelola.panduan-awal.perangkat')->with('Kilat', implode(' ', [...$pesan, 'Toko siap berjualan. Tambahkan perangkat kasir sekarang, atau nanti dari Pengaturan › Perangkat kasir.']));
+        }
+
+        return redirect()->route($kurang[0]->AmbilNamaRute())->with('Kilat', implode(' ', [...$pesan, "Tinggal satu hal: {$kurang[0]->AmbilJudul()}."]));
     }
 
     public function TampilkanPajak(UsulanPajak $usulan): Response
@@ -132,10 +144,13 @@ final class PanduanAwalKontroler extends DasarPanduanAwalKontroler
         return $this->KeLangkahBerikutnya($kunci, "Langkah {$kunci->AmbilJudul()} dilewati. Anda bisa kembali kapan saja.");
     }
 
-    public function TandaiSelesai(string $langkah, TandaiLangkahPanduan $tandai): RedirectResponse
+    public function TandaiSelesai(string $langkah, TandaiLangkahPanduan $tandai, TemplateTerbit $template): RedirectResponse
     {
         $kunci = LangkahPanduan::DariSlug($langkah) ?? abort(404);
-        abort_unless($kunci->CekBisaDitandaiSelesaiLangsung(), 404);
+        // Audit kemudahan pakai: belum ada template sektor terbit = langkah Sektor tidak boleh mengunci tenant baru;
+        // pemilik lanjut tanpa template dan bisa menerapkannya nanti dari Pengaturan.
+        $sektorTanpaTemplate = $kunci === LangkahPanduan::Sektor && $template->AmbilKode() === [];
+        abort_unless($kunci->CekBisaDitandaiSelesaiLangsung() || $sektorTanpaTemplate, 404);
         $tandai->Jalankan($kunci, StatusLangkahPanduan::Selesai, $this->OutletPanduan()->Id);
 
         return $this->KeLangkahBerikutnya($kunci, "Langkah {$kunci->AmbilJudul()} selesai.");

@@ -8,6 +8,7 @@ use App\Domain\PanduanAwal\Enum\LangkahPanduan;
 use App\Domain\PanduanAwal\Enum\StatusLangkahPanduan;
 use App\Domain\PanduanAwal\Kueri\ProgresPanduan;
 use App\Domain\PanduanAwal\Layanan\PembacaIsiTemplate;
+use App\Domain\PanduanAwal\Model\ProgresPanduanAwal;
 use App\Domain\Tenant\Layanan\PastikanBatasPaket;
 use Illuminate\Support\Facades\Mail;
 use Tests\Pendukung\Katalog\BantuanKatalog;
@@ -81,4 +82,31 @@ it('kota belum diisi padahal PBJT diusulkan: pajak dibiarkan untuk diisi manual;
     expect(Produk::query()->count())->toBe($batas)
         ->and($progres->AmbilStatus(LangkahPanduan::Pajak))->toBe(StatusLangkahPanduan::Belum)
         ->and($progres->AmbilStatus(LangkahPanduan::MetodePembayaran))->toBe(StatusLangkahPanduan::Selesai);
+});
+
+it('tenant baru (panduan wajib): siapkan otomatis langsung menyelesaikan panduan, atau mengarahkan ke satu-satunya langkah yang kurang', function (): void {
+    BantuanPanduanAwal::TerbitkanTemplate('FNB-CAF');
+    ['Tenant' => $tenant, 'Pemilik' => $pemilik] = BantuanOrganisasi::BuatTenant('Kopi Otomatis Wajib', panduanWajib: true);
+    $masuk = fn () => BantuanPanduanAwal::Masuk($this, $pemilik, $tenant);
+    BantuanOrganisasi::AturKonteks($tenant->Id);
+    $progres = ProgresPanduanAwal::query()->sole();
+    $progres->StatusLangkah = [...($progres->StatusLangkah ?? []), 'ProfilUsaha' => ['Status' => 'Selesai', 'Pada' => now()->toIso8601ZuluString()]];
+    $progres->save();
+
+    // Kota belum diisi → pajak PBJT tidak bisa dikonfirmasi otomatis: diarahkan ke langkah Pajak, panduan belum selesai.
+    BantuanPanduanAwal::TerbitkanTarif('PbjtMakananMinuman', '33.72', '10.000000', true);
+    $masuk()->post('/kelola/panduan-awal/sektor/siapkan-otomatis', ['KodeTemplate' => 'FNB-CAF'])
+        ->assertRedirect('/kelola/panduan-awal/pajak')
+        ->assertSessionHas('Kilat', fn (string $pesan): bool => str_contains($pesan, 'Tinggal satu hal: Pajak.'));
+    BantuanOrganisasi::AturKonteks($tenant->Id);
+    expect(ProgresPanduanAwal::query()->sole()->SelesaiPada)->toBeNull();
+
+    // Kota diisi → semua langkah wajib beres sekaligus: panduan selesai, back-office terbuka.
+    Outlet::query()->update(['KodeKota' => '33.72']);
+    $masuk()->post('/kelola/panduan-awal/sektor/siapkan-otomatis', ['KodeTemplate' => 'FNB-CAF'])
+        ->assertRedirect('/kelola/panduan-awal/perangkat')
+        ->assertSessionHas('Kilat', fn (string $pesan): bool => str_contains($pesan, 'Toko siap berjualan.'));
+    BantuanOrganisasi::AturKonteks($tenant->Id);
+    expect(ProgresPanduanAwal::query()->sole()->SelesaiPada)->not->toBeNull();
+    $masuk()->get('/kelola/produk')->assertOk();
 });

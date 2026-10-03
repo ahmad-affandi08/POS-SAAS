@@ -7,6 +7,7 @@ import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import RingkasanGalatFormulir, { FokusGalatPertama } from '@/Komponen/PanduanAwal/RingkasanGalatFormulir';
 import TataLetakPanduan from '@/Komponen/PanduanAwal/TataLetakPanduan';
+import TataLetakAplikasi from '@/TataLetak/TataLetakAplikasi';
 import TabelData from '@/Komponen/TabelData/TabelData';
 import type { KolomTabel } from '@/Komponen/TabelData/Tipe';
 import {
@@ -79,9 +80,8 @@ export default function HalamanMetodePembayaran({
     PersenBiayaMaksimal = { Umum: '10', Platform: '40' },
 }: PropsMetodePembayaranPanduan) {
     const hanyaTunai = MetodePembayaran.every((metode) => metode.Wajib);
-
-    return (
-        <TataLetakPanduan progres={Progres} langkah="MetodePembayaran" lanjut="tandai-selesai">
+    const isi = (
+        <>
             {hanyaTunai ? (
                 <p className="text-isi text-teks-sekunder">
                     Saat ini kasir hanya menerima Tunai. Tambahkan QRIS, EDC, atau transfer bank yang Anda pakai supaya
@@ -103,6 +103,18 @@ export default function HalamanMetodePembayaran({
                 kanalPlatform={KanalPlatform}
                 persenBiayaMaksimal={PersenBiayaMaksimal}
             />
+        </>
+    );
+
+    // Audit kemudahan pakai: setelah panduan selesai, halaman ini juga rumah tetap "Metode pembayaran" di Pengaturan,
+    // jadi tampil di tata letak back-office biasa, bukan di dalam langkah panduan.
+    return Progres.SelesaiPada !== null ? (
+        <TataLetakAplikasi judul="Metode pembayaran" jejak={[{ label: 'Pengaturan', href: '/kelola/pengaturan' }]}>
+            {isi}
+        </TataLetakAplikasi>
+    ) : (
+        <TataLetakPanduan progres={Progres} langkah="MetodePembayaran" lanjut="tandai-selesai">
+            {isi}
         </TataLetakPanduan>
     );
 }

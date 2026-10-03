@@ -111,6 +111,12 @@ export const daftarPengaturan: GrupPengaturan[] = [
                 izin: IzinTenant.AkuntansiKelola,
             },
             {
+                label: 'Metode pembayaran',
+                keterangan: 'Tunai, QRIS, EDC, transfer, dan ojol yang tampil sebagai tombol di layar bayar kasir.',
+                href: '/kelola/panduan-awal/metode-pembayaran',
+                izin: IzinTenant.PanduanAwalKelola,
+            },
+            {
                 label: 'Gerbang pembayaran',
                 keterangan: 'Gerbang QRIS milik toko untuk pembayaran dinamis di kasir.',
                 href: '/kelola/pembayaran/gerbang',

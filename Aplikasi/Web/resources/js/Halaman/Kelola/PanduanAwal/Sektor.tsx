@@ -75,7 +75,11 @@ export default function HalamanSektor({ Progres, Template, TemplateTerpilih, Sek
     };
 
     return (
-        <TataLetakPanduan progres={Progres} langkah="Sektor">
+        <TataLetakPanduan
+            progres={Progres}
+            langkah="Sektor"
+            lanjut={Template.length === 0 ? 'tandai-selesai' : 'formulir'}
+        >
             <p className="text-isi text-teks-sekunder">
                 Template menyiapkan bagan akun, kategori, satuan, kelompok pajak, dan fitur kasir yang cocok untuk jenis
                 usaha Anda. Semuanya bisa diubah nanti.
@@ -98,7 +102,8 @@ export default function HalamanSektor({ Progres, Template, TemplateTerpilih, Sek
                 <Empty className="items-start border border-solid border-garis bg-permukaan p-6 text-left md:p-6">
                     <EmptyHeader className="max-w-none items-start text-left">
                         <EmptyDescription className="text-isi text-teks-sekunder">
-                            Belum ada template yang bisa dipilih.{' '}
+                            Belum ada template yang bisa dipilih. Tekan Lanjutkan untuk menyiapkan toko tanpa template;
+                            template bisa diterapkan nanti dari Pengaturan.{' '}
                             <AjakanTambahBatas teksLisensi="Hubungi penjual lisensi PAYOU untuk paket data template sektor.">
                                 Hubungi tim kami lewat menu{' '}
                                 <Link href="/kelola/bantuan" className="font-semibold text-brand underline">

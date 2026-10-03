@@ -215,6 +215,8 @@ describe('Kirim ganda metode pembayaran', function (): void {
 describe('Langkah hanya Selesai lewat Aksinya', function (): void {
     it('profil usaha, sektor, dan pajak tidak bisa ditandai Selesai langsung (404); produk, metode pembayaran, perangkat bisa; semua bisa dilewati', function (): void {
         ['Tenant' => $tenant, 'Pemilik' => $pemilik] = BantuanPanduanAwal::BuatTenant();
+        // Sektor tanpa template terbit boleh dilanjutkan langsung (panduan tidak macet); di sini ada template terbit.
+        BantuanPanduanAwal::TerbitkanTemplate();
         $tes = fn () => BantuanPanduanAwal::Masuk($this, $pemilik, $tenant);
 
         foreach (['profil-usaha', 'sektor', 'pajak'] as $slug) {

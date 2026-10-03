@@ -3,8 +3,12 @@
 declare(strict_types=1);
 
 use App\Domain\Organisasi\Enum\PeranTenantBawaan;
+use App\Domain\PanduanAwal\Enum\LangkahPanduan;
+use App\Domain\PanduanAwal\Enum\StatusLangkahPanduan;
+use App\Domain\PanduanAwal\Enum\StatusTemplateSektor;
 use App\Domain\PanduanAwal\Model\ProgresPanduanAwal;
 use App\Domain\Referensi\Enum\ZonaWaktu;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Inertia\Testing\AssertableInertia;
 use Tests\Pendukung\Organisasi\BantuanOrganisasi;
@@ -84,4 +88,19 @@ it('langkah wajib selesai (siapkan otomatis) + perangkat "nanti saja" → pandua
         ->component('Kelola/Beranda')
         ->where('Tindakan', fn ($butir) => collect($butir)->pluck('Kunci')->contains('awal.AktifkanPerangkat')));
     $masuk()->get('/kelola/produk')->assertOk();
+});
+
+it('belum ada template sektor terbit: langkah Sektor bisa dilanjutkan tanpa template (panduan tidak macet)', function (): void {
+    ['Tenant' => $tenant, 'Pemilik' => $pemilik] = BantuanOrganisasi::BuatTenant('Kopi Tanpa Template', panduanWajib: true);
+    BantuanPanduanAwal::TerbitkanTemplate();
+    $masuk = fn () => BantuanPanduanAwal::Masuk($this, $pemilik, $tenant);
+
+    // Selama ada template terbit, Sektor hanya selesai lewat penerapan template.
+    $masuk()->post('/kelola/panduan-awal/langkah/sektor/selesai')->assertNotFound();
+
+    DB::table('TemplateSektorVersi')->where('Status', StatusTemplateSektor::Terbit->value)->update(['Status' => StatusTemplateSektor::Draf->value]);
+    $masuk()->post('/kelola/panduan-awal/langkah/sektor/selesai')->assertRedirect();
+
+    BantuanOrganisasi::AturKonteks($tenant->Id);
+    expect(ProgresPanduanAwal::query()->sole()->AmbilStatus(LangkahPanduan::Sektor))->toBe(StatusLangkahPanduan::Selesai);
 });
