@@ -7,6 +7,7 @@ namespace App\Domain\Katalog\Aksi;
 use App\Domain\Bersama\Audit\Layanan\PencatatAudit;
 use App\Domain\Bersama\Tenant\KonteksTenant;
 use App\Domain\Katalog\Enum\JenisProduk;
+use App\Domain\Katalog\Layanan\PemberitahuProdukDiubah;
 use App\Domain\Katalog\Model\Produk;
 use App\Domain\Tenant\Layanan\PenguncianTenant;
 use Illuminate\Support\Facades\DB;
@@ -22,6 +23,7 @@ final class ArsipkanProduk
         private readonly KonteksTenant $konteks,
         private readonly PenguncianTenant $penguncian,
         private readonly PencatatAudit $audit,
+        private readonly PemberitahuProdukDiubah $pemberitahu,
     ) {}
 
     public function Jalankan(Produk $produk): Produk
@@ -39,8 +41,9 @@ final class ArsipkanProduk
             $jumlahAnak = 0;
 
             if ($produk->Jenis === JenisProduk::IndukVarian) {
-                $jumlahAnak = Produk::query()->where('IdInduk', $produk->Id)->whereNull('DiarsipkanPada')
-                    ->update(['Aktif' => false, 'DiarsipkanPada' => $waktu]);
+                $anak = Produk::query()->where('IdInduk', $produk->Id)->whereNull('DiarsipkanPada')->get(['Id', 'Uuid', 'IdTenant']);
+                $jumlahAnak = Produk::query()->whereKey($anak->modelKeys())->update(['Aktif' => false, 'DiarsipkanPada' => $waktu]);
+                $this->pemberitahu->TandaiBanyak($anak);
             }
 
             $this->audit->Catat('produk.arsipkan', $produk, ['Status' => 'Aktif'], ['Status' => 'Diarsipkan', 'JumlahVarian' => $jumlahAnak]);

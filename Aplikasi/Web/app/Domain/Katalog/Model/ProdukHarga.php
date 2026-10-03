@@ -7,6 +7,7 @@ namespace App\Domain\Katalog\Model;
 use App\Domain\Bersama\Model\ModelDasar;
 use App\Domain\Bersama\Tenant\MilikTenant;
 use App\Domain\Katalog\Harga\Model\DaftarHarga;
+use App\Domain\Katalog\Layanan\PemberitahuProdukDiubah;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
@@ -37,6 +38,22 @@ final class ProdukHarga extends ModelDasar
 
     /** @var array<string, mixed> */
     protected $attributes = ['IdDaftarHarga' => null, 'JumlahMinimum' => '1'];
+
+    protected static function booted(): void
+    {
+        // X7 §16.4 (v3.96): perubahan ProdukHarga ikut mengubah data `GET /api/v1/produk` → webhook `produk.diubah`.
+        $tandai = static function (ProdukHarga $baris): void {
+            if ($baris->IdDaftarHarga === null) {
+                PemberitahuProdukDiubah::TandaiDariModel($baris->IdTenant, $baris->IdProduk);
+            }
+        };
+        self::saved(static function (ProdukHarga $baris) use ($tandai): void {
+            if ($baris->wasRecentlyCreated || $baris->wasChanged()) {
+                $tandai($baris);
+            }
+        });
+        self::deleted($tandai);
+    }
 
     /**
      * @return BelongsTo<DaftarHarga, $this>

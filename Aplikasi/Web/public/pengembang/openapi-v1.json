@@ -568,7 +568,7 @@
             "$ref": "#/components/responses/Ditolak"
           },
           "422": {
-            "description": "Validasi gagal (ValidasiGagal) atau aturan bisnis: GudangTidakDikenal, ProdukTidakDikenal, BatchTidakDikenal, PelacakanBelumDidukung, KeteranganWajib, stok/periode, dll.",
+            "description": "Validasi gagal (ValidasiGagal) atau aturan bisnis: GudangTidakDikenal, ProdukTidakDikenal, BatchTidakDikenal, PelacakanBelumDidukung, KeteranganWajib, UuidSudahDipakai (Uuid milik draf back-office), stok/periode, dll. Gagal = tidak ada dokumen yang tersimpan.",
             "content": {
               "application/json": {
                 "schema": {
@@ -726,7 +726,7 @@
     "produk.diubah": {
       "post": {
         "summary": "produk.diubah",
-        "description": "Produk dibuat atau diubah di back-office (termasuk harga & status). Data = bentuk GET /api/v1/produk/{uuid}. Kirim setiap perubahan; X-Id-Peristiwa berbeda per perubahan. Header: X-Id-Peristiwa (dedup), X-Peristiwa, X-Waktu-Kirim (detik Unix), X-Tanda-Tangan: sha256=<HMAC-SHA256 rahasia atas \"{X-Waktu-Kirim}.{badan}\">. Balas 2xx dalam 10 detik; selain itu dicoba ulang 1m, 5m, 30m, 2j, 12j.",
+        "description": "Produk dibuat atau diubah (form produk, harga dasar, satuan, barcode, arsip/pulihkan, impor, varian). Data = bentuk GET /api/v1/produk/{uuid}. Satu kiriman per perubahan nyata (simpan ulang tanpa perubahan tidak dikirim); X-Id-Peristiwa berbeda per perubahan. Header: X-Id-Peristiwa (dedup), X-Peristiwa, X-Waktu-Kirim (detik Unix), X-Tanda-Tangan: sha256=<HMAC-SHA256 rahasia atas \"{X-Waktu-Kirim}.{badan}\">. Balas 2xx dalam 10 detik; selain itu dicoba ulang 1m, 5m, 30m, 2j, 12j.",
         "tags": [
           "Webhook"
         ],

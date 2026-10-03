@@ -484,7 +484,8 @@ class _LembarReturState extends ConsumerState<LembarRetur> {
             'Paket sesi tidak bisa diretur di kasir. Kembalikan sisa sesinya dari back-office.',
             style: teks.bodySmall,
           ),
-        for (final b in hasil.baris.where((b) => !LayananReturPenjualan.CekPaketSesi(b, katalog)))
+        if (hasil.baris.any((b) => b.racikan)) Text('Obat racikan tidak bisa diretur.', style: teks.bodySmall),
+        for (final b in hasil.baris.where((b) => !b.racikan && !LayananReturPenjualan.CekPaketSesi(b, katalog)))
           _BarisRetur(
             baris: b,
             pengendali: _PengendaliJumlah(b.uuid),

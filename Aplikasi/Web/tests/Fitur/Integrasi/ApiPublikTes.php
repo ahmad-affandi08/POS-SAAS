@@ -3,10 +3,16 @@
 declare(strict_types=1);
 
 use App\Domain\Bersama\Audit\Model\LogAudit;
+use App\Domain\Bersama\Nilai\Kuantitas;
 use App\Domain\Integrasi\ApiPublik\Model\TokenApiTenant;
 use App\Domain\Katalog\Enum\PelacakanProduk;
 use App\Domain\Organisasi\Enum\PeranTenantBawaan;
 use App\Domain\Pengelola\TimInternal\Enum\PeranPengelolaBawaan;
+use App\Domain\Persediaan\Aksi\SimpanPenyesuaianStok;
+use App\Domain\Persediaan\Data\DataBarisDokumenStok;
+use App\Domain\Persediaan\Data\DataPenyesuaianStok;
+use App\Domain\Persediaan\Enum\AlasanPenyesuaian;
+use App\Domain\Persediaan\Enum\StatusPenyesuaianStok;
 use App\Domain\Persediaan\Model\PenyesuaianStok;
 use App\Domain\Persediaan\Model\SaldoStok;
 use App\Domain\Tenant\Enum\JenisOverride;
@@ -238,4 +244,18 @@ it('X7 stok:tulis menolak lokasi/produk tak dikenal (termasuk milik tenant lain)
 
     BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
     expect(PenyesuaianStok::query()->count())->toBe(0);
+
+    // Uuid yang sudah dipakai draf back-office tidak membuat draf itu terajukan dengan isi lamanya.
+    $uuidDraf = (string) Str::ulid();
+    app(SimpanPenyesuaianStok::class)->Jalankan(new DataPenyesuaianStok(
+        uuid: $uuidDraf,
+        idGudang: $k['Gudang']->Id,
+        tanggal: CarbonImmutable::parse('2026-10-05'),
+        alasan: AlasanPenyesuaian::Rusak,
+        keterangan: null,
+        baris: [new DataBarisDokumenStok(idProduk: $semen->Id, jumlah: Kuantitas::Dari('-5'))],
+    ), null);
+    $kirim(['Uuid' => $uuidDraf])->assertStatus(422)->assertJsonPath('Galat.Kode', 'UuidSudahDipakai');
+    BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+    expect(PenyesuaianStok::query()->where('Uuid', $uuidDraf)->sole()->Status)->toBe(StatusPenyesuaianStok::Draf);
 });

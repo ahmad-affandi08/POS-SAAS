@@ -164,6 +164,7 @@ final class PenyusunAnakVarian
             'TampilDiPos' => $induk->TampilDiPos,
             'TampilOnline' => $induk->TampilOnline,
         ]);
+        app(PemberitahuProdukDiubah::class)->TandaiBanyak(Produk::query()->where('IdInduk', $induk->Id)->get(['Id', 'Uuid', 'IdTenant']));
     }
 
     /** `{SkuInduk}-{NN}`: nomor bebas berikutnya per induk (minimal 2 digit). */

@@ -22,6 +22,7 @@ use App\Http\Permintaan\ApiPublik\BuatPenyesuaianStokApiPermintaan;
 use Brick\Math\BigDecimal;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
 
 /**
  * X7 bagian 4 — endpoint tulis Open API v1 (PRD §16.1 cakupan `stok:tulis`): sistem lain (WMS, marketplace, ERP)
@@ -48,6 +49,12 @@ final class StokKontroler
 
         if ($ada !== null && $ada['Status'] !== StatusPenyesuaianStok::Draf->value) {
             return response()->json(['Data' => $ada]);
+        }
+
+        // Draf dan pengajuan satu transaksi, jadi API tidak pernah meninggalkan Draf. Draf ber-Uuid sama berarti milik
+        // back-office: jangan diajukan dengan isi lamanya.
+        if ($ada !== null) {
+            throw new PelanggaranAturanBisnis('UuidSudahDipakai', 'Uuid ini sudah dipakai draf penyesuaian lain. Pakai Uuid baru.', 'Uuid');
         }
 
         $uuidGudang = strtoupper((string) $permintaan->validated('UuidGudang'));
@@ -84,16 +91,18 @@ final class StokKontroler
             );
         }
 
-        $draf = $simpan->Jalankan(new DataPenyesuaianStok(
-            uuid: $uuid,
-            idGudang: $lokasi->id,
-            tanggal: CarbonImmutable::parse((string) $permintaan->validated('Tanggal')),
-            alasan: AlasanPenyesuaian::from((string) $permintaan->validated('Alasan')),
-            keterangan: is_string($permintaan->validated('Keterangan')) ? $permintaan->validated('Keterangan') : null,
-            baris: $baris,
-        ), null);
-        $ajukan->Jalankan($draf, $token->DibuatOleh);
+        DB::transaction(function () use ($simpan, $ajukan, $uuid, $lokasi, $permintaan, $baris, $token): void {
+            $draf = $simpan->Jalankan(new DataPenyesuaianStok(
+                uuid: $uuid,
+                idGudang: $lokasi->id,
+                tanggal: CarbonImmutable::parse((string) $permintaan->validated('Tanggal')),
+                alasan: AlasanPenyesuaian::from((string) $permintaan->validated('Alasan')),
+                keterangan: is_string($permintaan->validated('Keterangan')) ? $permintaan->validated('Keterangan') : null,
+                baris: $baris,
+            ), null);
+            $ajukan->Jalankan($draf, $token->DibuatOleh);
+        });
 
-        return response()->json(['Data' => $kueri->Satu($uuid)], $ada === null ? 201 : 200);
+        return response()->json(['Data' => $kueri->Satu($uuid)], 201);
     }
 }

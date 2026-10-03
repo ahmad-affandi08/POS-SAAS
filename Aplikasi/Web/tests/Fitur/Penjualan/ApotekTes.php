@@ -354,7 +354,11 @@ describe('Racikan apotek (bagian 3): resep racik sebagai resep sementara pada ba
                 ->where('Baris.0.Racikan.Komponen.2.NamaProduk', 'Dexamethasone 0,5 mg Tablet')
                 ->where('Baris.0.Racikan.Komponen.2.Jumlah', '2.0000'));
 
-        // Obat racikan tidak bisa diretur.
+        // Obat racikan tidak bisa diretur: pencarian struk untuk retur memberi sisa 0 dan penanda Racikan.
+        $this->withToken($k['Token'])->getJson('/api/pos/v1/penjualan/cari?nomor='.urlencode($p->Nomor))->assertOk()
+            ->assertJsonPath('Baris.0.Racikan', true)
+            ->assertJsonPath('Baris.0.JumlahBisaDiretur', '0.0000')
+            ->assertJsonPath('Baris.0.NilaiBisaDiretur', '0.00');
         expect(BantuanKasir::KirimRingkas($this, $k['Token'], [BantuanPenjualan::ItemRetur($k, $p, [['Detail' => $d, 'Jumlah' => '1']])]))
             ->toBe([['Ditolak', 'ReturRacikanTidakDidukung']]);
 

@@ -130,8 +130,11 @@ final class CariPenjualanPos
                     'TotalBaris' => $d->TotalBaris,
                     'SnapshotPajak' => $d->SnapshotPajak ?? [],
                     'JumlahSudahDiretur' => $s->jumlah->KeString(),
-                    'JumlahBisaDiretur' => $this->penghitung->HitungSisa($d, $s)->KeString(),
-                    'NilaiBisaDiretur' => $this->penghitung->HitungSisaNilai($d, $s)->KeString(),
+                    // Apotek: obat racikan tidak bisa diretur (`ReturRacikanTidakDidukung`); sisa 0 agar aplikasi lama pun
+                    // tidak membuat retur yang pasti ditolak, `Racikan` agar aplikasi baru menjelaskan alasannya.
+                    'Racikan' => $d->Racikan !== null,
+                    'JumlahBisaDiretur' => $d->Racikan !== null ? '0.0000' : $this->penghitung->HitungSisa($d, $s)->KeString(),
+                    'NilaiBisaDiretur' => $d->Racikan !== null ? '0.00' : $this->penghitung->HitungSisaNilai($d, $s)->KeString(),
                 ];
             })->all()),
             'Pembayaran' => array_values(PenjualanPembayaran::query()->where('IdPenjualan', $p->Id)->orderBy('Urutan')->get()->map(fn (PenjualanPembayaran $b): array => [

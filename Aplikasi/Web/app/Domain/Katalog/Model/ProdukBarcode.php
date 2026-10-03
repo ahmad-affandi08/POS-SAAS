@@ -6,6 +6,7 @@ namespace App\Domain\Katalog\Model;
 
 use App\Domain\Bersama\Model\ModelDasar;
 use App\Domain\Bersama\Tenant\MilikTenant;
+use App\Domain\Katalog\Layanan\PemberitahuProdukDiubah;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
@@ -26,6 +27,20 @@ final class ProdukBarcode extends ModelDasar
     use MilikTenant;
 
     protected $table = 'ProdukBarcode';
+
+    protected static function booted(): void
+    {
+        // X7 §16.4 (v3.96): perubahan ProdukBarcode ikut mengubah data `GET /api/v1/produk` → webhook `produk.diubah`.
+        $tandai = static function (ProdukBarcode $baris): void {
+            PemberitahuProdukDiubah::TandaiDariModel($baris->IdTenant, $baris->IdProduk);
+        };
+        self::saved(static function (ProdukBarcode $baris) use ($tandai): void {
+            if ($baris->wasRecentlyCreated || $baris->wasChanged()) {
+                $tandai($baris);
+            }
+        });
+        self::deleted($tandai);
+    }
 
     /**
      * @return BelongsTo<Produk, $this>

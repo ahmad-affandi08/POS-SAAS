@@ -56,6 +56,8 @@ final class PenyusunBarisPerintahKerja
     public function Susun(array $baris, int $idOutlet, ?string $kodeTier): array
     {
         $hasil = [];
+        /** @var array<string, true> $seriDipakai nomor seri per produk yang sudah dipakai baris sebelumnya */
+        $seriDipakai = [];
 
         foreach ($baris as $indeks => $b) {
             $bidang = "Baris.{$indeks}";
@@ -70,6 +72,17 @@ final class PenyusunBarisPerintahKerja
             }
 
             $nomorSeri = $this->PeriksaNomorSeri($produk, $satuan, $b, $idOutlet, $bidang);
+
+            // Unit yang sama tidak boleh muncul di dua baris (penagihan di kasir akan menolak seluruh penjualan).
+            foreach ($nomorSeri ?? [] as $n) {
+                $kunciSeri = $produk->Id.'|'.mb_strtoupper($n);
+
+                if (isset($seriDipakai[$kunciSeri])) {
+                    throw new PelanggaranAturanBisnis('NomorSeriGanda', "Nomor seri {$n} {$produk->Nama} sudah dipakai di baris lain.", "{$bidang}.NomorSeri");
+                }
+
+                $seriDipakai[$kunciSeri] = true;
+            }
             $harga = $this->harga->Tentukan($produk, $satuan, $b->jumlah, $idOutlet, null, $kodeTier, CarbonImmutable::now())
                 ?? throw new PelanggaranAturanBisnis('HargaBelumDiatur', "{$produk->Nama} belum punya harga jual untuk satuan itu. Atur harganya dulu di katalog.", "{$bidang}.UuidProduk");
 

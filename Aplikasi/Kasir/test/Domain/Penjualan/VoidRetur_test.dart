@@ -506,6 +506,40 @@ void main() {
       expect(LayananReturPenjualan.CekBolehDesimal(Baris('2.0000'), katalog), isFalse);
     });
 
+    test('baris obat racikan tidak bisa diretur: disaring dari pilihan, ditolak sebelum outbox', () async {
+      ServerStruk(
+        StrukUji(
+          baris: [
+            {
+              ...BarisStrukUji(
+                UuidStruk.kopiLiter,
+                'Puyer batuk pilek anak',
+                'bks',
+                '10.0000',
+                '15000.00',
+                bisa: '0.0000',
+              ),
+              'Racikan': true,
+            },
+          ],
+        ),
+      );
+      final hasil = await layananRetur.Cari(UuidStruk.nomor);
+      expect(hasil.baris.single.racikan, isTrue);
+      expect(
+        () => LayananReturPenjualan.ValidasiPilihan(
+          hasil,
+          Pilih(hasil, {UuidStruk.kopiLiter: ('1', KondisiRetur.layakJual)}),
+        ),
+        throwsA(isA<GalatKasir>().having((g) => g.kode, 'kode', 'ReturRacikanTidakDidukung')),
+      );
+      // Server lama tanpa kunci Racikan → false.
+      expect(
+        BarisPenjualanCariPos.DariJson(BarisStrukUji(UuidStruk.kopiLiter, 'Uji', 'pcs', '1.0000', '1000.00')).racikan,
+        isFalse,
+      );
+    });
+
     test('BolehDesimal = true dari server: retur 0,5 atas jumlah jual bulat diterima', () async {
       ServerStruk(
         StrukUji(

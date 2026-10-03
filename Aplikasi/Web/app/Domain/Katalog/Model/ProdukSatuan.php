@@ -6,6 +6,7 @@ namespace App\Domain\Katalog\Model;
 
 use App\Domain\Bersama\Model\ModelDasar;
 use App\Domain\Bersama\Tenant\MilikTenant;
+use App\Domain\Katalog\Layanan\PemberitahuProdukDiubah;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -34,6 +35,20 @@ final class ProdukSatuan extends ModelDasar
 
     /** @var array<string, mixed> */
     protected $attributes = ['KonversiKeDasar' => '1', 'DefaultJual' => false, 'DefaultBeli' => false];
+
+    protected static function booted(): void
+    {
+        // X7 §16.4 (v3.96): perubahan ProdukSatuan ikut mengubah data `GET /api/v1/produk` → webhook `produk.diubah`.
+        $tandai = static function (ProdukSatuan $baris): void {
+            PemberitahuProdukDiubah::TandaiDariModel($baris->IdTenant, $baris->IdProduk);
+        };
+        self::saved(static function (ProdukSatuan $baris) use ($tandai): void {
+            if ($baris->wasRecentlyCreated || $baris->wasChanged()) {
+                $tandai($baris);
+            }
+        });
+        self::deleted($tandai);
+    }
 
     /**
      * @return BelongsTo<Produk, $this>

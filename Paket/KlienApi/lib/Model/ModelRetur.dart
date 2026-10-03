@@ -119,6 +119,7 @@ class BarisPenjualanCariPos {
     required this.nilaiBisaDiretur,
     this.bolehDesimal,
     this.uuidProdukSatuan,
+    this.racikan = false,
   });
 
   /// Uuid `PenjualanDetail` (dikirim sebagai `UuidPenjualanDetail`).
@@ -150,6 +151,9 @@ class BarisPenjualanCariPos {
   /// Uuid `ProdukSatuan` yang dijual (`UuidProdukSatuan`); null bila tidak ada atau server lama.
   final String? uuidProdukSatuan;
 
+  /// Obat racikan (`Racikan`): tidak bisa diretur; false bila server lama tidak mengirimnya.
+  final bool racikan;
+
   static BarisPenjualanCariPos DariJson(Map<String, Object?> json) => BarisPenjualanCariPos(
     uuid: UraiJson.AmbilTeks(json['Uuid']),
     uuidProduk: UraiJson.AmbilTeksAtauNull(json['UuidProduk']),
@@ -173,6 +177,7 @@ class BarisPenjualanCariPos {
     nilaiBisaDiretur: UraiJson.AmbilDesimal(json['NilaiBisaDiretur'], UraiJson.AmbilDesimal(json['TotalBaris'])),
     bolehDesimal: UraiJson.AmbilBenarAtauNull(json['BolehDesimal']),
     uuidProdukSatuan: UraiJson.AmbilTeksAtauNull(json['UuidProdukSatuan']),
+    racikan: UraiJson.AmbilBenar(json['Racikan']),
   );
 }
 

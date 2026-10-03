@@ -10,6 +10,7 @@ use App\Domain\Katalog\Enum\GolonganObat;
 use App\Domain\Katalog\Enum\JenisProduk;
 use App\Domain\Katalog\Enum\PelacakanProduk;
 use App\Domain\Katalog\Enum\StatusProduk;
+use App\Domain\Katalog\Layanan\PemberitahuProdukDiubah;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -98,6 +99,16 @@ final class Produk extends ModelDasar
         'PathGambar' => null,
         'DiarsipkanPada' => null,
     ];
+
+    protected static function booted(): void
+    {
+        // X7 §16.4 (v3.96): webhook `produk.diubah` dari semua jalur, hanya bila ada perubahan nyata.
+        self::saved(static function (Produk $produk): void {
+            if ($produk->wasRecentlyCreated || $produk->wasChanged()) {
+                PemberitahuProdukDiubah::TandaiDariModel($produk->IdTenant, $produk->Id);
+            }
+        });
+    }
 
     /** Apotek (§9.5): wajib resep dokter = turunan golongan & OWA, tidak disimpan. */
     public function CekWajibResep(): bool

@@ -14,6 +14,7 @@ use App\Domain\Dukungan\Peristiwa\TiketDukunganDibalasPelapor;
 use App\Domain\Dukungan\Peristiwa\TiketDukunganDibuat;
 use App\Domain\Integrasi\ApiPublik\Penangan\AntrekanWebhookIntegrasi;
 use App\Domain\Integrasi\ApiPublik\Penangan\AntrekanWebhookPenjualan;
+use App\Domain\Katalog\Layanan\PemberitahuProdukDiubah;
 use App\Domain\Organisasi\Layanan\PenjagaAsalSinkronPerangkat;
 use App\Domain\Organisasi\Model\Perangkat;
 use App\Domain\Organisasi\Model\TokenAksesPengguna;
@@ -58,6 +59,8 @@ final class PenyediaAplikasi extends ServiceProvider
         // F-02: pencatat log audit tenant (pelaku & IP diisi perantara per request).
         $this->app->scoped(PencatatAudit::class);
         $this->app->scoped(PenandaSinkronPos::class);
+        // X7: satu webhook `produk.diubah` per produk per transaksi.
+        $this->app->scoped(PemberitahuProdukDiubah::class);
         // Audit P0 F-01: perangkat asal item outbox (cache perangkat per permintaan).
         $this->app->scoped(PenjagaAsalItemSinkron::class, PenjagaAsalSinkronPerangkat::class);
     }

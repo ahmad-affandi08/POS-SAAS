@@ -8,6 +8,7 @@ use App\Domain\Bersama\Audit\Layanan\PencatatAudit;
 use App\Domain\Bersama\Tenant\KonteksTenant;
 use App\Domain\Katalog\Enum\JenisProduk;
 use App\Domain\Katalog\Kueri\PemakaianSku;
+use App\Domain\Katalog\Layanan\PemberitahuProdukDiubah;
 use App\Domain\Katalog\Model\Produk;
 use App\Domain\Tenant\Layanan\PastikanBatasPaket;
 use App\Domain\Tenant\Layanan\PenguncianTenant;
@@ -27,6 +28,7 @@ final class PulihkanProduk
         private readonly PastikanBatasPaket $batasPaket,
         private readonly PemakaianSku $pemakaianSku,
         private readonly PencatatAudit $audit,
+        private readonly PemberitahuProdukDiubah $pemberitahu,
     ) {}
 
     public function Jalankan(Produk $produk): Produk
@@ -55,6 +57,7 @@ final class PulihkanProduk
 
             if ($anak->isNotEmpty()) {
                 Produk::query()->whereKey($anak->modelKeys())->update(['Aktif' => true, 'DiarsipkanPada' => null]);
+                $this->pemberitahu->TandaiBanyak($anak);
             }
 
             $this->audit->Catat('produk.pulihkan', $produk, ['Status' => 'Diarsipkan'], ['Status' => 'Aktif', 'JumlahVarian' => $anak->count()]);

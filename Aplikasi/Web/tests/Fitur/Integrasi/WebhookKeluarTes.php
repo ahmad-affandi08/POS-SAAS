@@ -10,6 +10,8 @@ use App\Domain\Integrasi\ApiPublik\Model\KirimanWebhook;
 use App\Domain\Integrasi\ApiPublik\Model\WebhookTenant;
 use App\Domain\Integrasi\ApiPublik\Penangan\AntrekanWebhookIntegrasi;
 use App\Domain\Integrasi\ApiPublik\Penangan\AntrekanWebhookPenjualan;
+use App\Domain\Katalog\Model\Produk;
+use App\Domain\Katalog\Model\ProdukSatuan;
 use App\Domain\Organisasi\Enum\PeranTenantBawaan;
 use App\Domain\Pelanggan\Model\Pelanggan;
 use App\Domain\Pengelola\TimInternal\Enum\PeranPengelolaBawaan;
@@ -338,6 +340,51 @@ it('produk.diubah dikirim setiap kali produk disimpan (IdPeristiwa berbeda), dat
         ->and($kiriman[1]->Muatan['Data'])->not->toHaveKey('Id');
     PeriksaDataWebhookSesuaiSpesifikasi('produk.diubah', $kiriman[1]->Muatan['Data']);
     Http::assertSentCount(2);
+});
+
+it('produk.diubah: sekali per perubahan nyata dari harga, arsip, dan pulihkan; simpan ulang tanpa perubahan tidak mengirim', function (): void {
+    Http::fake(['gudang.contoh.co.id/*' => Http::response('', 204)]);
+    $t = BantuanKatalog::SiapkanTenantProduk('Toko Bangunan Sumber Rejeki Boyolali');
+    AktifkanFiturWebhook($t['Tenant']);
+    DaftarkanWebhookUji($this, $t, ['produk.diubah']);
+    $form = BantuanKatalog::IsiFormProduk($t['Pcs'], $t['KelompokPajak'], [
+        'Nama' => 'Cat Tembok Avitex 5 kg Putih',
+        'Satuan' => [BantuanKatalog::IsiSatuanForm($t['Pcs'], '1', [], [['JumlahMinimum' => '1', 'Harga' => '98000']], defaultJual: true)],
+    ]);
+    $hitung = function () use ($t): int {
+        BantuanOrganisasi::AturKonteks($t['Tenant']->Id);
+
+        return KirimanWebhook::query()->where('Peristiwa', 'produk.diubah')->count();
+    };
+    $klien = fn () => BantuanKatalog::MasukSebagai($this, $t['Tenant']->Id);
+
+    // Produk baru + harga & satuan awalnya dalam satu transaksi = satu kiriman.
+    $klien()->post('/kelola/produk', $form)->assertSessionHasNoErrors();
+    expect($hitung())->toBe(1);
+
+    // Kirim ulang idempoten (Uuid sama) dan simpan form tanpa perubahan: tidak ada kiriman baru.
+    $klien()->post('/kelola/produk', $form);
+    $produk = Produk::query()->where('Uuid', $form['Uuid'])->firstOrFail();
+    $satuan = ProdukSatuan::query()->where('IdProduk', $produk->Id)->firstOrFail();
+    $klien()->put("/kelola/produk/{$form['Uuid']}", [...$form, 'Sku' => $produk->Sku, 'Satuan' => [[...$form['Satuan'][0], 'Uuid' => $satuan->Uuid]]])
+        ->assertSessionHasNoErrors();
+    expect($hitung())->toBe(1);
+
+    // Harga dasar diubah dari halaman harga: datanya sudah memuat harga baru.
+    $klien()->put("/kelola/produk/{$form['Uuid']}/harga", ['Satuan' => [['UuidProdukSatuan' => $satuan->Uuid, 'Harga' => [['JumlahMinimum' => '1', 'Harga' => '99500']]]]])
+        ->assertSessionHasNoErrors();
+    expect($hitung())->toBe(2);
+    $terakhir = KirimanWebhook::query()->where('Peristiwa', 'produk.diubah')->latest('Id')->firstOrFail();
+    expect($terakhir->Muatan['Data']['Satuan'][0]['HargaDasar'])->toBe('99500.00');
+
+    // Arsip & pulihkan masing-masing satu kiriman, status Aktif terbawa.
+    $klien()->post("/kelola/produk/{$form['Uuid']}/arsipkan")->assertSessionHasNoErrors();
+    $klien()->post("/kelola/produk/{$form['Uuid']}/pulihkan")->assertSessionHasNoErrors();
+    BantuanOrganisasi::AturKonteks($t['Tenant']->Id);
+    $kiriman = KirimanWebhook::query()->where('Peristiwa', 'produk.diubah')->orderBy('Id')->get();
+    expect($kiriman)->toHaveCount(4)
+        ->and($kiriman[2]->Muatan['Data']['Aktif'])->toBeFalse()
+        ->and($kiriman[3]->Muatan['Data']['Aktif'])->toBeTrue();
 });
 
 it('pelanggan.dibuat, shift.ditutup, stok.disesuaikan, PO disetujui, dan GRN diposting terkirim sesuai spesifikasi; hanya yang dilanggan', function (): void {

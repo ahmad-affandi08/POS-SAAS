@@ -432,6 +432,11 @@ it('bagian 3: sparepart ber-batch (FEFO saat ditagih) dan bernomor seri (dicatat
     $kirim([['Jenis' => 'Sparepart', 'UuidProduk' => $ban->Uuid, 'Jumlah' => '1', 'NomorSeri' => ['IRC-9999']]])
         ->assertSessionHasErrors(['Baris.0.NomorSeri' => 'Nomor seri IRC-9999 Ban Tubeless IRC NR83 90/80-14 tidak tersedia di stok toko outlet ini.']);
     $kirim([['Jenis' => 'Sparepart', 'UuidProduk' => $ban->Uuid, 'Jumlah' => '1.5']])->assertSessionHasErrors('Baris.0.Jumlah');
+    // Unit yang sama di dua baris ditolak di sini (bukan baru ditolak saat ditagih di kasir).
+    $kirim([
+        ['Jenis' => 'Sparepart', 'UuidProduk' => $ban->Uuid, 'Jumlah' => '1', 'NomorSeri' => ['IRC-0001']],
+        ['Jenis' => 'Sparepart', 'UuidProduk' => $ban->Uuid, 'Jumlah' => '1', 'NomorSeri' => ['irc-0001']],
+    ])->assertSessionHasErrors(['Baris.1.NomorSeri' => 'Nomor seri irc-0001 Ban Tubeless IRC NR83 90/80-14 sudah dipakai di baris lain.']);
     $kirim([['Jenis' => 'Sparepart', 'UuidProduk' => $k['Oli']->Uuid, 'Jumlah' => '1', 'NomorSeri' => ['IRC-0001']]])->assertSessionHasErrors('Baris.0.NomorSeri');
     BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
     expect(PerintahKerja::query()->count())->toBe(0);

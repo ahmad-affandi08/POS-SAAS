@@ -213,6 +213,9 @@ class LayananReturPenjualan {
       if (p.jumlah.BernilaiNegatif()) {
         throw GalatKasir('JumlahTidakValid', 'Jumlah retur "$nama" tidak boleh minus.');
       }
+      if (p.baris.racikan) {
+        throw GalatKasir('ReturRacikanTidakDidukung', '"$nama" adalah obat racikan dan tidak bisa diretur.');
+      }
       if (CekPaketSesi(p.baris, katalog)) {
         throw GalatKasir(
           'ReturPaketSesiTidakDidukung',
