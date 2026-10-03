@@ -10,6 +10,7 @@ use App\Domain\Integrasi\ApiPublik\Model\KirimanWebhook;
 use App\Domain\Integrasi\ApiPublik\Model\WebhookTenant;
 use App\Domain\Integrasi\ApiPublik\Penangan\AntrekanWebhookIntegrasi;
 use App\Domain\Integrasi\ApiPublik\Penangan\AntrekanWebhookPenjualan;
+use App\Domain\Integrasi\ApiPublik\Tugas\AntrekanWebhookIntegrasiTugas;
 use App\Domain\Katalog\Model\Produk;
 use App\Domain\Katalog\Model\ProdukSatuan;
 use App\Domain\Organisasi\Enum\PeranTenantBawaan;
@@ -23,7 +24,6 @@ use App\Domain\Tenant\Enum\JenisOverride;
 use App\Domain\Tenant\Model\OverrideTenant;
 use App\Domain\Tenant\Model\Tenant;
 use Carbon\CarbonImmutable;
-use Illuminate\Events\CallQueuedListener;
 use Illuminate\Http\Client\Request as PermintaanHttp;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
@@ -392,7 +392,7 @@ it('produk.diubah: sekali per perubahan nyata dari harga, arsip, dan pulihkan; s
 it('penangan webhook integrasi hanya diantrekan bila tenant punya webhook aktif yang melanggan peristiwa itu', function (): void {
     $t = BantuanKatalog::SiapkanTenantProduk('Toko Bangunan Sumber Rejeki Boyolali');
     AktifkanFiturWebhook($t['Tenant']);
-    $antreanIntegrasi = fn (): int => Queue::pushed(CallQueuedListener::class, fn (CallQueuedListener $j): bool => $j->class === AntrekanWebhookIntegrasi::class)->count();
+    $antreanIntegrasi = fn (): int => Queue::pushed(AntrekanWebhookIntegrasiTugas::class)->count();
     $simpan = fn (string $nama) => BantuanKatalog::MasukSebagai($this, $t['Tenant']->Id)
         ->post('/kelola/produk', BantuanKatalog::IsiFormProduk($t['Pcs'], $t['KelompokPajak'], ['Nama' => $nama]))->assertSessionHasNoErrors();
 
