@@ -27,6 +27,16 @@ use Illuminate\Support\Carbon;
  * @property int|null $DikoreksiOleh
  * @property Carbon|null $DikoreksiPada
  * @property string|null $AlasanKoreksi
+ * @property string|null $LintangMasuk F-18 bagian 4 (absen web): lokasi, akurasi GPS, jarak ke outlet, kemiripan wajah
+ * @property string|null $BujurMasuk
+ * @property int|null $AkurasiMasukMeter
+ * @property int|null $JarakMasukMeter
+ * @property string|null $KemiripanWajahMasuk
+ * @property string|null $LintangKeluar
+ * @property string|null $BujurKeluar
+ * @property int|null $AkurasiKeluarMeter
+ * @property int|null $JarakKeluarMeter
+ * @property string|null $KemiripanWajahKeluar
  */
 final class Absensi extends ModelDasar
 {
@@ -37,6 +47,9 @@ final class Absensi extends ModelDasar
     public const SUMBER_POS = 'Pos';
 
     public const SUMBER_MANUAL = 'Manual';
+
+    /** F-18 bagian 4 (D-37): absen dari HP pribadi lewat web dengan geofence & pencocokan wajah. */
+    public const SUMBER_WEB = 'Web';
 
     /** @var array<string, mixed> */
     protected $attributes = ['Sumber' => self::SUMBER_POS];
@@ -51,6 +64,16 @@ final class Absensi extends ModelDasar
             'MasukPada' => 'datetime',
             'KeluarPada' => 'datetime',
             'DikoreksiPada' => 'datetime',
+            'LintangMasuk' => 'decimal:7',
+            'BujurMasuk' => 'decimal:7',
+            'AkurasiMasukMeter' => 'integer',
+            'JarakMasukMeter' => 'integer',
+            'KemiripanWajahMasuk' => 'decimal:4',
+            'LintangKeluar' => 'decimal:7',
+            'BujurKeluar' => 'decimal:7',
+            'AkurasiKeluarMeter' => 'integer',
+            'JarakKeluarMeter' => 'integer',
+            'KemiripanWajahKeluar' => 'decimal:4',
         ];
     }
 }

@@ -23,6 +23,9 @@ use Illuminate\Support\Carbon;
  * @property string|null $LevelStaf
  * @property string|null $GajiPokok
  * @property StatusKaryawan $Status
+ * @property string|null $TokenAbsen F-18 bagian 4: tautan absen HP pribadi (terenkripsi; ditampilkan ulang ke pengelola)
+ * @property string|null $HashTokenAbsen
+ * @property Carbon|null $TokenAbsenDibuatPada
  * @property int|null $DibuatOleh
  * @property Carbon|null $DibuatPada
  */
@@ -33,7 +36,10 @@ final class Karyawan extends ModelDasar
     protected $table = 'Karyawan';
 
     /** @var array<string, mixed> */
-    protected $attributes = ['Status' => 'Aktif'];
+    protected $attributes = ['Status' => 'Aktif', 'TokenAbsen' => null, 'HashTokenAbsen' => null, 'TokenAbsenDibuatPada' => null];
+
+    /** @var list<string> */
+    protected $hidden = ['TokenAbsen', 'HashTokenAbsen'];
 
     /**
      * @return array<string, string>
@@ -43,6 +49,8 @@ final class Karyawan extends ModelDasar
         return [
             'GajiPokok' => 'decimal:2',
             'Status' => StatusKaryawan::class,
+            'TokenAbsen' => 'encrypted',
+            'TokenAbsenDibuatPada' => 'datetime',
         ];
     }
 }

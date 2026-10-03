@@ -44,6 +44,9 @@ use Illuminate\Support\Carbon;
  * @property bool $TokoOnlineAktif
  * @property bool $AmbilSendiriAktif
  * @property bool $KirimAktif
+ * @property string|null $Lintang F-18 bagian 4 (D-37): titik lokasi absensi web (derajat desimal, 7 angka)
+ * @property string|null $Bujur
+ * @property int $RadiusAbsensiMeter radius geofence absensi web, bawaan 100 m
  * @property Carbon|null $KodeDikunciPada
  * @property Carbon|null $DiarsipkanPada
  * @property-read Merek $Merek
@@ -75,6 +78,9 @@ final class Outlet extends ModelDasar
         'KirimAktif' => false,
         'KodeDikunciPada' => null,
         'DiarsipkanPada' => null,
+        'Lintang' => null,
+        'Bujur' => null,
+        'RadiusAbsensiMeter' => 100,
     ];
 
     /**
@@ -110,6 +116,9 @@ final class Outlet extends ModelDasar
             'KodeDikunciPada' => 'datetime',
             'DiarsipkanPada' => 'datetime',
             'TemplateSektorDiterapkanPada' => 'datetime',
+            'Lintang' => 'decimal:7',
+            'Bujur' => 'decimal:7',
+            'RadiusAbsensiMeter' => 'integer',
         ];
     }
 }
