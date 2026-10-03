@@ -64,7 +64,7 @@ it('pemilik tenant baru dialihkan ke panduan; langkah wajib tidak bisa dilewati;
         ->assertInertia(fn (AssertableInertia $h) => $h->component('Kelola/PanduanAwal/Menunggu'));
 });
 
-it('langkah wajib selesai (siapkan otomatis) + perangkat "nanti saja" → panduan tuntas, masuk Beranda, menu terbuka', function (): void {
+it('langkah wajib selesai lewat siapkan otomatis → panduan langsung tuntas (audit kemudahan pakai #4), Beranda & menu terbuka, perangkat boleh nanti', function (): void {
     BantuanOrganisasi::BuatKota('73.71', 'Kota Makassar', ZonaWaktu::Wita);
     BantuanPanduanAwal::TerbitkanTemplate('FNB-CAF');
     BantuanPanduanAwal::TerbitkanTarif('PbjtMakananMinuman', '73.71', '10.000000', true);
@@ -73,14 +73,14 @@ it('langkah wajib selesai (siapkan otomatis) + perangkat "nanti saja" → pandua
 
     $masuk()->post('/kelola/panduan-awal/profil-usaha', ['NamaUsaha' => 'Kopi Siap Jualan Solo', 'KodeKota' => '73.71', 'Pkp' => '0'])
         ->assertSessionHasNoErrors()->assertRedirect('/kelola/panduan-awal/sektor');
-    $masuk()->post('/kelola/panduan-awal/sektor/siapkan-otomatis', ['KodeTemplate' => 'FNB-CAF'])
-        ->assertSessionHasNoErrors()->assertRedirect('/kelola/panduan-awal/perangkat');
     $masuk()->get('/kelola')->assertRedirect('/kelola/panduan-awal');
 
-    $masuk()->post('/kelola/panduan-awal/langkah/perangkat/lewati')
+    // Sejak v4.27 jalur otomatis menyelesaikan panduan begitu semua langkah wajib beres; langkah Perangkat tetap
+    // ditawarkan (halaman berikutnya), tetapi tidak lagi mengunci back-office.
+    $masuk()->post('/kelola/panduan-awal/sektor/siapkan-otomatis', ['KodeTemplate' => 'FNB-CAF'])
         ->assertSessionHasNoErrors()
-        ->assertRedirect('/kelola')
-        ->assertSessionHas('Kilat', 'Panduan awal selesai. Toko Anda siap berjualan.');
+        ->assertRedirect('/kelola/panduan-awal/perangkat')
+        ->assertSessionHas('Kilat', fn (string $kilat) => str_contains($kilat, 'Toko siap berjualan.'));
 
     BantuanOrganisasi::AturKonteks($tenant->Id);
     expect(ProgresPanduanAwal::query()->sole()->SelesaiPada)->not->toBeNull();

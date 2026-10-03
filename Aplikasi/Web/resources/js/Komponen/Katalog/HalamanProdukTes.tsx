@@ -359,6 +359,31 @@ describe('Kelola/Produk/Form mode Sederhana (D-23 B)', () => {
         expect(body.Satuan[0]?.HargaAwal).toEqual([{ JumlahMinimum: '1', Harga: '450000' }]);
     });
 
+    it('audit kemudahan pakai #11: stok sekarang + harga beli ikut terkirim, lokasi tunggal terpilih otomatis; Jasa tanpa isian', () => {
+        const opsiStok = {
+            Lokasi: [{ Uuid: '01K5GDG0000000000000000001', Nama: 'Gudang Toko', NamaOutlet: 'Toko Pusat' }],
+        };
+        render(<HalamanFormProduk {...PropsForm({ StokAwal: opsiStok })} />);
+
+        expect(screen.getByText('Stok sekarang (opsional)')).toBeTruthy();
+        expect(screen.queryByLabelText('Lokasi stok')).toBeNull();
+        fireEvent.change(screen.getByLabelText('Nama produk'), { target: { value: 'Sabun Cuci Piring 780 ml' } });
+        fireEvent.change(screen.getByLabelText('Harga jual'), { target: { value: '15.000' } });
+        fireEvent.change(screen.getByLabelText(/Jumlah stok/), { target: { value: '24' } });
+        fireEvent.change(screen.getByLabelText('Harga beli per satuan'), { target: { value: '12.500' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Simpan produk' }));
+
+        const body = kirimanForm[0]?.data as FormProduk;
+        expect(body.StokAwal).toEqual({ Jumlah: '24', HargaBeli: '12500', UuidGudang: '01K5GDG0000000000000000001' });
+
+        fireEvent.click(screen.getByRole('radio', { name: /Jasa/ }));
+        expect(screen.queryByText('Stok sekarang (opsional)')).toBeNull();
+        cleanup();
+
+        render(<HalamanFormProduk {...PropsForm()} />);
+        expect(screen.queryByText('Stok sekarang (opsional)')).toBeNull();
+    });
+
     it('fitur paket sesi di luar paket langganan: pilihan tidak tampil; galat isian lanjutan membuka formulir lengkap', () => {
         render(<HalamanFormProduk {...PropsForm({ Produk: { ...produkBaru, Jenis: 'Jasa' } })} />);
         expect(screen.queryByText('Jual sebagai paket sesi')).toBeNull();

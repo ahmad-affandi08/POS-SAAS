@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Kontroler\Kelola\Katalog;
 
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
+use App\Domain\Bersama\Nilai\Kuantitas;
 use App\Domain\Bersama\Tabel\Data\DataPermintaanTabel;
 use App\Domain\Katalog\Aksi\ArsipkanProduk;
 use App\Domain\Katalog\Aksi\BuatBarcodeInternal;
@@ -12,8 +13,10 @@ use App\Domain\Katalog\Aksi\HapusProduk;
 use App\Domain\Katalog\Aksi\PulihkanProduk;
 use App\Domain\Katalog\Aksi\SimpanProduk;
 use App\Domain\Katalog\Aksi\SimpanProdukDenganPaketSesi;
+use App\Domain\Katalog\Data\DataProduk;
 use App\Domain\Katalog\Data\DataSaringProduk;
 use App\Domain\Katalog\Enum\JenisProduk;
+use App\Domain\Katalog\Enum\PelacakanProduk;
 use App\Domain\Katalog\Enum\StatusProduk;
 use App\Domain\Katalog\Kueri\DaftarProduk;
 use App\Domain\Katalog\Kueri\DaftarSatuan;
@@ -25,17 +28,23 @@ use App\Domain\Katalog\Kueri\PohonKategori;
 use App\Domain\Katalog\Layanan\OpsiKelompokPajakKatalog;
 use App\Domain\Katalog\Model\Kategori;
 use App\Domain\Katalog\Model\ProdukSatuan;
+use App\Domain\Organisasi\Data\DataInfoGudang;
 use App\Domain\Organisasi\Enum\IzinTenant;
+use App\Domain\Organisasi\Enum\JenisGudang;
+use App\Domain\Organisasi\Kueri\InfoGudang;
 use App\Domain\Organisasi\Kueri\OutletUtama;
 use App\Domain\Organisasi\Kueri\ProfilPajakOutlet;
 use App\Domain\Pelanggan\Kueri\PengaturanSesiTenant;
+use App\Domain\Persediaan\Aksi\CatatStokAwalProdukBaru;
 use App\Domain\Tenant\Kueri\ProfilTenant;
 use App\Domain\Tenant\Layanan\PastikanBatasPaket;
 use App\Http\Permintaan\Kelola\Katalog\SimpanProdukPermintaan;
 use App\Http\Respons\ResponsTabel;
+use Brick\Math\BigDecimal;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -78,6 +87,12 @@ final class ProdukKontroler extends DasarKatalogKontroler
         $data = $permintaan->AmbilData(null, $this->CekIzin(IzinTenant::ProdukHargaUbah));
         $paket = $permintaan->AmbilPaketSesi();
 
+        $stokAwal = $permintaan->AmbilStokAwal();
+
+        if ($paket === null && $stokAwal !== null) {
+            return $this->SimpanDenganStokAwal($simpan, $data, $stokAwal);
+        }
+
         if ($paket === null) {
             $produk = $simpan->Jalankan(null, $data);
 
@@ -98,6 +113,48 @@ final class ProdukKontroler extends DasarKatalogKontroler
 
         return redirect()->route('kelola.produk.detail', ['produk' => $produk->Uuid])
             ->with('Kilat', "Produk {$produk->Nama} disimpan sebagai paket {$paket['JumlahSesi']} sesi ({$masa}).");
+    }
+
+    /**
+     * Audit kemudahan pakai #11: produk baru + stok sekarang dalam satu transaksi. Stok awal butuh izin kelola & posting
+     * stok awal, produk berstok tanpa batch/seri (bukan konsinyasi), dan lokasi stok di outlet yang boleh diakses.
+     * Galat posting (misal pemetaan akun belum siap) ditampilkan di isian stok dan produknya ikut tidak tersimpan.
+     *
+     * @param  array{Jumlah: Kuantitas, HargaBeli: BigDecimal, UuidGudang: string}  $stokAwal
+     */
+    private function SimpanDenganStokAwal(SimpanProduk $simpan, DataProduk $data, array $stokAwal): RedirectResponse
+    {
+        if (! $this->CekIzin(IzinTenant::PersediaanKelola) || ! $this->CekIzin(IzinTenant::PersediaanStokAwalPosting)) {
+            throw new PelanggaranAturanBisnis('TanpaIzin', 'Anda belum punya izin mencatat stok awal. Kosongkan stok sekarang atau minta Pemilik.', 'StokAwal.Jumlah');
+        }
+
+        if (! $data->jenis->CekPunyaStok() || $data->jenis === JenisProduk::Konsinyasi || $data->pelacakan !== PelacakanProduk::Tidak) {
+            throw new PelanggaranAturanBisnis('StokAwalTidakBerlaku', 'Stok sekarang hanya untuk barang stok tanpa batch atau nomor seri. Catat lewat halaman Stok awal.', 'StokAwal.Jumlah');
+        }
+
+        $gudang = app(InfoGudang::class)->AmbilDariUuid([$stokAwal['UuidGudang']])[$stokAwal['UuidGudang']] ?? null;
+        $boleh = $this->IdOutletBoleh();
+
+        if ($gudang === null || ($boleh !== null && ($gudang->idOutlet === null || ! in_array($gudang->idOutlet, $boleh, true)))) {
+            throw new PelanggaranAturanBisnis('LokasiStokTidakDitemukan', 'Pilih lokasi stok.', 'StokAwal.UuidGudang');
+        }
+
+        $produk = DB::transaction(function () use ($simpan, $data, $stokAwal, $gudang) {
+            $produk = $simpan->Jalankan(null, $data);
+
+            try {
+                app(CatatStokAwalProdukBaru::class)->Jalankan($produk->Id, $gudang, $stokAwal['Jumlah'], $stokAwal['HargaBeli'], $this->Pelaku()->Id);
+            } catch (PelanggaranAturanBisnis $galat) {
+                throw new PelanggaranAturanBisnis($galat->kode, 'Produk belum disimpan. Stok sekarang: '.$galat->getMessage(), 'StokAwal.Jumlah', $galat->statusHttp, $galat->detail);
+            }
+
+            return $produk;
+        });
+
+        $jumlah = str_replace('.', ',', (string) $stokAwal['Jumlah']->KeDesimal()->strippedOfTrailingZeros());
+
+        return redirect()->route('kelola.produk.detail', ['produk' => $produk->Uuid])
+            ->with('Kilat', "Produk {$produk->Nama} disimpan dengan stok {$jumlah} di {$gudang->nama}.");
     }
 
     public function Detail(string $produk, DetailProduk $detail, KepalaProduk $kepala, KetersediaanProdukPerOutlet $ketersediaan): Response
@@ -182,7 +239,28 @@ final class ProdukKontroler extends DasarKatalogKontroler
             'Pengaturan' => $this->AmbilPengaturan(),
             'Izin' => $this->AmbilIzinKatalog(),
             'FiturPaketSesi' => $mode === 'Buat' && app(PengaturanSesiTenant::class)->CekBerlaku(),
+            'StokAwal' => $mode === 'Buat' ? $this->AmbilOpsiStokAwal() : null,
         ]);
+    }
+
+    /**
+     * Audit kemudahan pakai #11: lokasi stok untuk isian "Stok sekarang" produk baru; `null` bila pelaku tidak boleh
+     * mencatat & memposting stok awal (isian disembunyikan).
+     *
+     * @return array{Lokasi: list<array{Uuid: string, Nama: string, NamaOutlet: string|null}>}|null
+     */
+    private function AmbilOpsiStokAwal(): ?array
+    {
+        if (! $this->CekIzin(IzinTenant::PersediaanKelola) || ! $this->CekIzin(IzinTenant::PersediaanStokAwalPosting)) {
+            return null;
+        }
+
+        $lokasi = array_values(array_filter(
+            app(InfoGudang::class)->AmbilBoleh($this->IdOutletBoleh()),
+            fn (DataInfoGudang $g): bool => $g->jenis !== JenisGudang::DalamPerjalanan,
+        ));
+
+        return ['Lokasi' => array_map(fn (DataInfoGudang $g): array => ['Uuid' => $g->uuid, 'Nama' => $g->nama, 'NamaOutlet' => $g->namaOutlet], $lokasi)];
     }
 
     /**

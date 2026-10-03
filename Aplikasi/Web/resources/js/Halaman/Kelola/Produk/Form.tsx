@@ -32,6 +32,7 @@ import {
     type AturanJenisProduk,
     type FormProduk,
     type GolonganObat,
+    type IsianStokAwalProduk,
     type JenisProduk,
     type PelacakanProduk,
     type PropsFormProduk,
@@ -55,6 +56,9 @@ const galatPerTab: Record<KunciTab, string[]> = {
         'DurasiMenit',
         'MasaGaransiBulan',
         'GolonganObat',
+        'StokAwal.Jumlah',
+        'StokAwal.HargaBeli',
+        'StokAwal.UuidGudang',
     ],
     Satuan: ['Satuan'],
     Harga: [],
@@ -139,7 +143,8 @@ const jenisSederhana: Partial<Record<JenisProduk, string>> = {
 /** Galat yang isiannya tampil di mode Sederhana; galat lain membuka formulir lengkap. */
 export function CekGalatSederhana(kunci: string): boolean {
     return (
-        ['Uuid', 'Nama', 'Jenis', 'UuidKategori'].includes(kunci) || /^(Satuan\.\d+\.HargaAwal|PaketSesi)/.test(kunci)
+        ['Uuid', 'Nama', 'Jenis', 'UuidKategori'].includes(kunci) ||
+        /^(Satuan\.\d+\.HargaAwal|PaketSesi|StokAwal)/.test(kunci)
     );
 }
 
@@ -183,11 +188,23 @@ export default function HalamanFormProduk({
     Pengaturan,
     Izin,
     FiturPaketSesi = false,
+    StokAwal: OpsiStokAwal = null,
 }: PropsFormProduk) {
+    const lokasiStok = OpsiStokAwal?.Lokasi ?? [];
     const formulir = useForm<FormProduk>({
         ...Produk,
         Satuan: SiapkanSatuanDasar(Produk.Satuan, Produk.UuidSatuanDasar),
         ...(Mode === 'Buat' ? { PaketSesi: null } : {}),
+        // Audit kemudahan pakai #11: satu lokasi stok = terpilih otomatis (aturan isi-otomatis v3.25).
+        ...(Mode === 'Buat' && OpsiStokAwal
+            ? {
+                  StokAwal: {
+                      Jumlah: '',
+                      HargaBeli: '',
+                      UuidGudang: lokasiStok.length === 1 ? (lokasiStok[0]?.Uuid ?? '') : '',
+                  },
+              }
+            : {}),
     });
     const data = formulir.data;
     const galat = formulir.errors as Record<string, string | undefined>;
@@ -211,6 +228,14 @@ export default function HalamanFormProduk({
     const sederhana = Mode === 'Buat' && modeFormulir === 'Sederhana' && !adaGalatLanjutan;
     const paketSesi = data.PaketSesi ?? null;
     const bolehPaketSesi = Mode === 'Buat' && FiturPaketSesi && data.Jenis === 'Jasa';
+    const stokAwal = data.StokAwal ?? null;
+    const bolehStokAwal =
+        Mode === 'Buat' &&
+        stokAwal !== null &&
+        lokasiStok.length > 0 &&
+        (aturan?.PunyaStok ?? false) &&
+        data.Jenis !== 'Konsinyasi' &&
+        data.Pelacakan === 'Tidak';
     const indeksDasar = data.Satuan.findIndex(
         (baris) => baris.Uuid === null && baris.UuidSatuan === data.UuidSatuanDasar,
     );
@@ -349,6 +374,11 @@ export default function HalamanFormProduk({
         };
 
         if (Mode === 'Buat') {
+            // Stok sekarang hanya dikirim bila diisi dan berlaku untuk jenis produk ini.
+            formulir.transform((isi) => ({
+                ...isi,
+                StokAwal: bolehStokAwal && isi.StokAwal && isi.StokAwal.Jumlah.trim() !== '' ? isi.StokAwal : null,
+            }));
             formulir.post('/kelola/produk', opsi);
         } else {
             formulir.put(`/kelola/produk/${data.Uuid}`, opsi);
@@ -484,6 +514,54 @@ export default function HalamanFormProduk({
         </div>
     ) : null;
 
+    const AturStokAwal = (nilai: Partial<IsianStokAwalProduk>) =>
+        formulir.setData((lama) => ({
+            ...lama,
+            StokAwal: { Jumlah: '', HargaBeli: '', UuidGudang: '', ...lama.StokAwal, ...nilai },
+        }));
+    const bagianStokAwal =
+        bolehStokAwal && stokAwal !== null ? (
+            <div className="flex flex-col gap-3 rounded-kontrol border border-garis p-3 sm:col-span-2">
+                <p className="text-label font-semibold text-teks-utama">Stok sekarang (opsional)</p>
+                <div className="grid gap-4 sm:grid-cols-2">
+                    {lokasiStok.length > 1 ? (
+                        <div className="sm:col-span-2">
+                            <BidangPilihan
+                                label="Lokasi stok"
+                                nilai={stokAwal.UuidGudang}
+                                kosong="Pilih lokasi stok"
+                                opsi={lokasiStok.map((l) => ({
+                                    Nilai: l.Uuid,
+                                    Label: l.NamaOutlet ? `${l.NamaOutlet} · ${l.Nama}` : l.Nama,
+                                }))}
+                                saatBerubah={(nilai) => AturStokAwal({ UuidGudang: nilai })}
+                                galat={galat['StokAwal.UuidGudang']}
+                            />
+                        </div>
+                    ) : null}
+                    <BidangTeks
+                        label={satuanDasar ? `Jumlah stok (${satuanDasar.Nama.toLowerCase()})` : 'Jumlah stok'}
+                        nilai={stokAwal.Jumlah}
+                        saatBerubah={(nilai) => AturStokAwal({ Jumlah: nilai.replace(/[^\d.]/g, '') })}
+                        galat={galat['StokAwal.Jumlah']}
+                        inputMode="decimal"
+                        maxLength={19}
+                    />
+                    <BidangUang
+                        label="Harga beli per satuan"
+                        nilai={stokAwal.HargaBeli}
+                        saatBerubah={(nilai) => AturStokAwal({ HargaBeli: nilai })}
+                        galat={galat['StokAwal.HargaBeli']}
+                        keterangan="Modal per satuan untuk menghitung laba. Kosong = Rp 0."
+                    />
+                </div>
+                <p className="text-keterangan text-teks-sekunder">
+                    Diisi bila barangnya sudah ada di toko. Langsung tercatat sebagai stok awal
+                    {lokasiStok.length === 1 ? ` di ${lokasiStok[0]?.Nama ?? ''}` : ''}; kosongkan bila belum ada stok.
+                </p>
+            </div>
+        ) : null;
+
     const pilihanJenisSederhana = Jenis.filter(
         (item) => jenisSederhana[item.Nilai] !== undefined || item.Nilai === data.Jenis,
     ).map((item) => ({
@@ -517,6 +595,7 @@ export default function HalamanFormProduk({
             {bagianDurasi}
             {bagianGaransi}
             {bagianPaketSesi}
+            {bagianStokAwal}
             {bisaDijual && !induk ? (
                 <div className="flex flex-col gap-1">
                     <BidangUang
@@ -653,6 +732,7 @@ export default function HalamanFormProduk({
             {bagianDurasi}
             {bagianGaransi}
             {bagianPaketSesi}
+            {bagianStokAwal}
             {aturan?.BolehPelacakan ? (
                 <div className="sm:col-span-2">
                     <GrupRadio

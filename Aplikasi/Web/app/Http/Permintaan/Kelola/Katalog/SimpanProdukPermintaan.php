@@ -20,6 +20,8 @@ use App\Domain\Katalog\Model\Kategori;
 use App\Domain\Katalog\Model\Produk;
 use App\Domain\Katalog\Model\ProdukSatuan;
 use App\Domain\Katalog\Model\Satuan;
+use App\Http\Permintaan\Kelola\Persediaan\SimpanStokAwalPermintaan;
+use Brick\Math\BigDecimal;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -85,6 +87,11 @@ final class SimpanProdukPermintaan extends FormRequest
             'PaketSesi' => ['nullable', 'array'],
             'PaketSesi.JumlahSesi' => ['required_with:PaketSesi', 'integer', 'min:1', 'max:'.SimpanPaketSesi::MAKS_SESI],
             'PaketSesi.MasaBerlakuHari' => ['nullable', 'integer', 'min:1', 'max:'.SimpanPaketSesi::MAKS_HARI],
+            // Audit kemudahan pakai #11: stok sekarang + harga beli produk baru (opsional), diposting sebagai stok awal.
+            'StokAwal' => ['nullable', 'array'],
+            'StokAwal.Jumlah' => ['required_with:StokAwal', SimpanStokAwalPermintaan::POLA_JUMLAH],
+            'StokAwal.HargaBeli' => ['nullable', SimpanStokAwalPermintaan::POLA_HPP],
+            'StokAwal.UuidGudang' => ['required_with:StokAwal', 'ulid'],
         ];
     }
 
@@ -105,7 +112,31 @@ final class SimpanProdukPermintaan extends FormRequest
      */
     public function attributes(): array
     {
-        return ['PaketSesi.JumlahSesi' => 'jumlah sesi', 'PaketSesi.MasaBerlakuHari' => 'masa berlaku'];
+        return [
+            'PaketSesi.JumlahSesi' => 'jumlah sesi',
+            'PaketSesi.MasaBerlakuHari' => 'masa berlaku',
+            'StokAwal.Jumlah' => 'stok sekarang',
+            'StokAwal.HargaBeli' => 'harga beli',
+            'StokAwal.UuidGudang' => 'lokasi stok',
+        ];
+    }
+
+    /**
+     * Audit kemudahan pakai #11: stok sekarang produk baru, `null` bila dikosongkan. Harga beli kosong = 0.
+     *
+     * @return array{Jumlah: Kuantitas, HargaBeli: BigDecimal, UuidGudang: string}|null
+     */
+    public function AmbilStokAwal(): ?array
+    {
+        if (! $this->filled('StokAwal.Jumlah')) {
+            return null;
+        }
+
+        return [
+            'Jumlah' => Kuantitas::Dari((string) $this->validated('StokAwal.Jumlah')),
+            'HargaBeli' => BigDecimal::of($this->filled('StokAwal.HargaBeli') ? (string) $this->validated('StokAwal.HargaBeli') : '0'),
+            'UuidGudang' => (string) $this->validated('StokAwal.UuidGudang'),
+        ];
     }
 
     /**

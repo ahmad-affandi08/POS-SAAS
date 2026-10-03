@@ -141,7 +141,14 @@ export type FormProduk = {
     Prekursor?: boolean;
     /** D-23 B: "Jual sebagai paket sesi" saat membuat produk Jasa; tidak ada/null = bukan paket. */
     PaketSesi?: { JumlahSesi: string; MasaBerlakuHari: string } | null;
+    /** Audit kemudahan pakai #11: stok sekarang produk baru (dikirim hanya bila Jumlah diisi). */
+    StokAwal?: IsianStokAwalProduk | null;
 };
+
+export type IsianStokAwalProduk = { Jumlah: string; HargaBeli: string; UuidGudang: string };
+
+/** Lokasi stok untuk isian "Stok sekarang" (null = pelaku tidak boleh mencatat stok awal). */
+export type OpsiStokAwalProduk = { Lokasi: { Uuid: string; Nama: string; NamaOutlet: string | null }[] };
 export type PropsFormProduk = {
     Mode: 'Buat' | 'Ubah';
     /** Buat: Uuid = ULID baru dari server (kunci idempotensi). */
@@ -158,6 +165,7 @@ export type PropsFormProduk = {
     Izin: IzinKatalog;
     /** D-23 B: fitur paket sesi termasuk paket langganan (hanya mode Buat). */
     FiturPaketSesi?: boolean;
+    StokAwal?: OpsiStokAwalProduk | null;
 };
 
 // E.4 Kelola/Produk/Detail.
