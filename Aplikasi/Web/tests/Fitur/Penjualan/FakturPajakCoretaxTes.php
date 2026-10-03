@@ -6,17 +6,26 @@ use App\Domain\Bersama\Nilai\Kuantitas;
 use App\Domain\Bersama\Nilai\Uang;
 use App\Domain\Pelanggan\Model\Pelanggan;
 use App\Domain\Penjualan\Aksi\BuatFakturPenjualan;
+use App\Domain\Penjualan\Aksi\BuatReturGrosir;
 use App\Domain\Penjualan\Aksi\KirimPesananGrosir;
 use App\Domain\Penjualan\Aksi\KonfirmasiPesananGrosir;
 use App\Domain\Penjualan\Aksi\SimpanPesananGrosir;
+use App\Domain\Penjualan\Aksi\UbahNomorFakturPajak;
 use App\Domain\Penjualan\Data\DataBarisPesananGrosir;
+use App\Domain\Penjualan\Data\DataBarisReturGrosir;
 use App\Domain\Penjualan\Data\DataBarisSuratJalan;
 use App\Domain\Penjualan\Data\DataFakturPenjualan;
 use App\Domain\Penjualan\Data\DataPesananGrosir;
+use App\Domain\Penjualan\Data\DataReturGrosir;
 use App\Domain\Penjualan\Data\DataSuratJalan;
+use App\Domain\Penjualan\Data\HasilNotaReturPajak;
+use App\Domain\Penjualan\Enum\KondisiBarangRetur;
 use App\Domain\Penjualan\Layanan\PenulisXmlCoretax;
 use App\Domain\Penjualan\Layanan\PenyusunFakturPajakCoretax;
+use App\Domain\Penjualan\Layanan\PenyusunNotaReturPajak;
 use App\Domain\Penjualan\Model\FakturPenjualan;
+use App\Domain\Penjualan\Model\ReturGrosir;
+use App\Domain\Penjualan\Model\SuratJalan;
 use App\Domain\Tenant\Model\Tenant;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Carbon;
@@ -245,5 +254,100 @@ describe('HTTP ekspor Faktur Pajak Coretax', function (): void {
         BantuanPersediaan::MasukSebagai($this, $this->k['Tenant']->Id);
 
         $this->get('/kelola/laporan/pajak/faktur-keluaran/ekspor?dari=2026-09-01&sampai=2026-09-30')->assertStatus(422);
+    });
+});
+
+/** Retur grosir atas surat jalan pertama faktur ini (baris 1). */
+function ReturCoretaxUji($tes, SuratJalan $suratJalan, string $jumlah, string $tanggal = '2026-09-28'): ReturGrosir
+{
+    return app(BuatReturGrosir::class)->Jalankan(new DataReturGrosir(
+        uuidSuratJalan: $suratJalan->Uuid,
+        tanggal: CarbonImmutable::parse($tanggal),
+        alasan: 'Kemasan sobek saat bongkar',
+        baris: [new DataBarisReturGrosir(1, Kuantitas::Dari($jumlah), KondisiBarangRetur::LayakJual)],
+    ), $tes->k['Pemilik']->Id);
+}
+
+function SusunNotaReturUji($tes): HasilNotaReturPajak
+{
+    BantuanPersediaan::MasukSebagai($tes, $tes->k['Tenant']->Id);
+
+    return app(PenyusunNotaReturPajak::class)->Susun(CarbonImmutable::parse('2026-09-01'), CarbonImmutable::parse('2026-09-30'), null);
+}
+
+describe('Rekap nota retur pajak dari retur grosir (v4.08)', function (): void {
+    it('retur atas faktur ber-NSFP direkap per baris dengan DPP, DPP nilai lain 11/12, dan PPN; tanpa NSFP dijelaskan', function (): void {
+        Carbon::setTestNow('2026-09-28 03:00:00');
+        $faktur = FakturCoretaxUji($this, $this->toko, '200', '2026-09-27');
+        $retur = ReturCoretaxUji($this, $faktur->SuratJalan->firstOrFail(), '20');
+
+        $hasil = SusunNotaReturUji($this);
+        expect($hasil->retur)->toBe([])
+            ->and($hasil->masalahRetur[$retur->Nomor][0])->toContain('belum punya nomor Faktur Pajak');
+
+        app(UbahNomorFakturPajak::class)->Jalankan($faktur->Uuid, '04002600000012345', $this->k['Pemilik']->Id);
+        $hasil = SusunNotaReturUji($this);
+        $nota = $hasil->retur[0];
+        $baris = $nota->baris[0];
+
+        expect($hasil->jumlahDiperiksa)->toBe(1)
+            ->and($nota->nomorRetur)->toBe($retur->Nomor)
+            ->and($nota->nomorFaktur)->toBe($faktur->Nomor)
+            ->and($nota->nomorFakturPajak)->toBe('04002600000012345')
+            ->and($nota->namaPembeli)->toBe('PT Makmur Jaya Abadi')
+            ->and($nota->tinPembeli)->toBe('0012345678901234')
+            ->and($baris->jumlah)->toBe('20')
+            ->and($baris->dpp)->toBe('300000.00')
+            ->and($baris->dppNilaiLain)->toBe('275000.00')
+            ->and($baris->ppn)->toBe('33000.00')
+            // Angka per baris sama dengan dokumen retur (jurnal J-12.4 memakai angka dokumen).
+            ->and($nota->totalPpn)->toBe(Uang::Dari($retur->Pajak)->KeString())
+            ->and($nota->selisihDpp)->toBe('0.00')
+            ->and($nota->selisihPpn)->toBe('0.00');
+    });
+
+    it('retur atas surat jalan yang belum difakturkan menunggu Faktur Pajaknya terbit', function (): void {
+        $pesanan = app(SimpanPesananGrosir::class)->Jalankan(new DataPesananGrosir(
+            uuidPelanggan: $this->toko->Uuid,
+            idOutlet: $this->k['Outlet']->Id,
+            tanggal: CarbonImmutable::parse('2026-09-20'),
+            baris: [new DataBarisPesananGrosir($this->gula->Uuid, $this->satuan->Uuid, Kuantitas::Dari('50'), Uang::Nol())],
+        ), $this->k['Pemilik']->Id);
+        app(KonfirmasiPesananGrosir::class)->Jalankan($pesanan->Uuid, $this->k['Pemilik']->Id, true, 'Pelanggan lama, rekam jejak baik');
+        $sj = app(KirimPesananGrosir::class)->Jalankan(new DataSuratJalan(
+            uuidPesanan: $pesanan->Uuid,
+            idGudang: $this->k['Gudang']->Id,
+            tanggal: CarbonImmutable::parse('2026-09-20'),
+            baris: [new DataBarisSuratJalan(1, Kuantitas::Dari('50'))],
+        ), $this->k['Pemilik']->Id);
+        $retur = ReturCoretaxUji($this, $sj, '5', '2026-09-25');
+
+        expect(SusunNotaReturUji($this)->masalahRetur[$retur->Nomor][0])->toContain('belum difakturkan');
+    });
+
+    it('HTTP: ringkasan JSON & unduhan CSV per barang; 422 bila tidak ada yang siap', function (): void {
+        BantuanPersediaan::MasukSebagai($this, $this->k['Tenant']->Id);
+        $this->get('/kelola/laporan/pajak/nota-retur/ekspor?dari=2026-09-01&sampai=2026-09-30')->assertStatus(422);
+
+        Carbon::setTestNow('2026-09-28 03:00:00');
+        $faktur = FakturCoretaxUji($this, $this->toko, '200', '2026-09-27');
+        app(UbahNomorFakturPajak::class)->Jalankan($faktur->Uuid, '04002600000012345', $this->k['Pemilik']->Id);
+        ReturCoretaxUji($this, $faktur->SuratJalan->firstOrFail(), '20');
+        BantuanPersediaan::MasukSebagai($this, $this->k['Tenant']->Id);
+
+        $this->getJson('/kelola/laporan/pajak/nota-retur?dari=2026-09-01&sampai=2026-09-30')
+            ->assertOk()
+            ->assertJsonPath('JumlahSiap', 1)
+            ->assertJsonPath('BisaDiekspor', true)
+            ->assertJsonPath('TotalPpn', '33000.00')
+            ->assertJsonPath('Retur.0.NomorFakturPajak', '04002600000012345');
+
+        $respons = $this->get('/kelola/laporan/pajak/nota-retur/ekspor?dari=2026-09-01&sampai=2026-09-30')->assertOk();
+        $isi = $respons->streamedContent();
+
+        expect($respons->headers->get('Content-Type'))->toContain('text/csv')
+            ->and($isi)->toContain('Nomor Faktur Pajak')
+            ->and($isi)->toContain('04002600000012345')
+            ->and($isi)->toContain('275000.00');
     });
 });

@@ -32,6 +32,8 @@ Route::middleware(SiapkanAuditTenant::class)->group(function () use ($izin): voi
         Route::get('/laporan/pajak/ekspor', [LaporanKontroler::class, 'EksporPajak'])->name('kelola.laporan.pajak.ekspor');
         Route::get('/laporan/pajak/faktur-keluaran', [LaporanKontroler::class, 'RingkasFakturKeluaran'])->name('kelola.laporan.pajak.faktur-keluaran');
         Route::get('/laporan/pajak/faktur-keluaran/ekspor', [LaporanKontroler::class, 'EksporFakturKeluaran'])->name('kelola.laporan.pajak.faktur-keluaran.ekspor');
+        Route::get('/laporan/pajak/nota-retur', [LaporanKontroler::class, 'RingkasNotaRetur'])->name('kelola.laporan.pajak.nota-retur');
+        Route::get('/laporan/pajak/nota-retur/ekspor', [LaporanKontroler::class, 'EksporNotaRetur'])->name('kelola.laporan.pajak.nota-retur.ekspor');
     });
     Route::middleware($izin(IzinTenant::PersediaanLihat))->group(function (): void {
         Route::get('/laporan/stok', [LaporanKontroler::class, 'Stok'])->name('kelola.laporan.stok');

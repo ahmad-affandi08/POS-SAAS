@@ -258,6 +258,27 @@ export type RingkasanFakturPajak = {
     Selisih: { Nomor: string; SelisihDpp: string; SelisihPpn: string }[];
 };
 
+/** Rekap nota retur pajak dari retur grosir (GET /kelola/laporan/pajak/nota-retur, PRD v4.08). */
+export type RingkasanNotaReturPajak = {
+    JumlahDiperiksa: number;
+    JumlahSiap: number;
+    TotalDpp: string;
+    TotalPpn: string;
+    BisaDiekspor: boolean;
+    MasalahUmum: string[];
+    MasalahRetur: { Nomor: string; Alasan: string[] }[];
+    Peringatan: string[];
+    Retur: {
+        Nomor: string;
+        Tanggal: string;
+        NomorFaktur: string;
+        NomorFakturPajak: string;
+        Pembeli: string;
+        Dpp: string;
+        Ppn: string;
+    }[];
+};
+
 export type NilaiPersediaan = {
     Total: { Nilai: string; JumlahProduk: number };
     PerGudang: { Kunci: string; NamaGudang: string; NamaOutlet: string; JumlahProduk: number; Nilai: string }[];

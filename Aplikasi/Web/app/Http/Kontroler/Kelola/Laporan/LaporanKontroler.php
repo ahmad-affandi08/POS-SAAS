@@ -19,6 +19,7 @@ use App\Domain\Organisasi\Kueri\TanggalBisnisOutlet;
 use App\Domain\Penjualan\Kueri\AgregatPenjualan;
 use App\Domain\Penjualan\Layanan\PenulisXmlCoretax;
 use App\Domain\Penjualan\Layanan\PenyusunFakturPajakCoretax;
+use App\Domain\Penjualan\Layanan\PenyusunNotaReturPajak;
 use App\Http\Kontroler\Kelola\DasarKelolaKontroler;
 use App\Http\Respons\ResponsTabel;
 use Carbon\CarbonImmutable;
@@ -35,7 +36,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  * - penjualan (`laporan.penjualan.lihat`): tab ringkasan harian, per produk (TabelData mode server lewat URL yang sama
  *   dengan `Accept: application/json`), kategori, jam, kasir, kanal, metode bayar, diskon; ekspor CSV sesuai saring;
  * - pajak (`laporan.keuangan.lihat`): PB1/PBJT per outlet per bulan & PPN keluaran per bulan; ekspor CSV; ringkasan & ekspor
- *   XML Faktur Pajak Keluaran Coretax dari faktur grosir (PRD v3.12);
+ *   XML Faktur Pajak Keluaran Coretax dari faktur grosir (PRD v3.12) dan rekap nota retur pajak dari retur grosir (v4.08);
  * - stok (`persediaan.lihat`): nilai persediaan pada tanggal, stok kritis & batch kedaluwarsa (F-05g), saran restock
  *   dari laju pemakaian 28 hari (X6); ekspor CSV.
  */
@@ -145,6 +146,29 @@ final class LaporanKontroler extends DasarKelolaKontroler
             'X-Content-Type-Options' => 'nosniff',
             'Cache-Control' => 'no-store',
         ]);
+    }
+
+    /** Ringkasan nota retur pajak dari retur grosir pada periode & outlet terpilih (JSON; PRD v4.08). */
+    public function RingkasNotaRetur(Request $permintaan, PenyusunNotaReturPajak $penyusun, PetaUuidOutlet $outlet, TanggalBisnisOutlet $tanggal): JsonResponse
+    {
+        [$periode, , $idOutlet] = $this->BacaSaringPajak($permintaan, $outlet, $tanggal->Hitung(null));
+
+        return response()->json($penyusun->Susun($periode->dari, $periode->sampai, $idOutlet)->KeRingkasan());
+    }
+
+    /** CSV rekap nota retur pajak per barang (PRD v4.08); 422 bila tidak ada yang siap. */
+    public function EksporNotaRetur(Request $permintaan, PenyusunNotaReturPajak $penyusun, PetaUuidOutlet $outlet, TanggalBisnisOutlet $tanggal): StreamedResponse
+    {
+        [$periode, , $idOutlet] = $this->BacaSaringPajak($permintaan, $outlet, $tanggal->Hitung(null));
+        $hasil = $penyusun->Susun($periode->dari, $periode->sampai, $idOutlet);
+
+        if (! $hasil->BisaDiekspor()) {
+            abort(422, $hasil->masalahUmum[0] ?? 'Tidak ada nota retur yang siap pada periode ini.');
+        }
+
+        [$judul, $baris] = $hasil->KeCsv();
+
+        return PenulisCsvLaporan::Alirkan("nota-retur-pajak-{$periode->dari->toDateString()}-{$periode->sampai->toDateString()}", $judul, $baris);
     }
 
     public function Stok(Request $permintaan, LaporanStok $laporan, TanggalBisnisOutlet $tanggal): Response
