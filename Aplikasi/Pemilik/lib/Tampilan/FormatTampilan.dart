@@ -37,4 +37,13 @@ abstract final class FormatTampilan {
     final persen = ((a - b) / b * 100).round();
     return '${persen > 0 ? '+' : ''}$persen%';
   }
+
+  /// Kuantitas desimal dari server ("25.5000") ke tampilan Indonesia ("25,5"), tanpa nol di belakang koma.
+  static String Jumlah(String nilai) {
+    var t = nilai;
+    if (t.contains('.')) {
+      t = t.replaceFirst(RegExp(r'0+$'), '').replaceFirst(RegExp(r'\.$'), '');
+    }
+    return t.replaceAll('.', ',');
+  }
 }

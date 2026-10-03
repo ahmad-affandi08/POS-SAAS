@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Domain\Organisasi\Enum\IzinTenant;
 use App\Http\Kontroler\Pemilik\V1\AutentikasiKontroler;
 use App\Http\Kontroler\Pemilik\V1\DasborKontroler;
+use App\Http\Kontroler\Pemilik\V1\InsightKontroler;
 use App\Http\Kontroler\Pemilik\V1\KaryawanKontroler;
 use App\Http\Kontroler\Pemilik\V1\LaporanKontroler;
 use App\Http\Kontroler\Pemilik\V1\NotifikasiKontroler;
@@ -40,6 +41,8 @@ Route::middleware(AutentikasiPemilik::class)->group(function () use ($izin): voi
 
         // OWN-05: laporan ringkas penjualan & shift.
         Route::get('/laporan/penjualan', [LaporanKontroler::class, 'Penjualan'])->middleware($izin(IzinTenant::LaporanPenjualanLihat))->name('pemilik.laporan.penjualan');
+        // OWN-11: insight mingguan (sama dengan pesan WhatsApp X6).
+        Route::get('/insight', [InsightKontroler::class, 'Mingguan'])->middleware($izin(IzinTenant::LaporanPenjualanLihat))->name('pemilik.insight');
         Route::get('/shift', [LaporanKontroler::class, 'Shift'])->middleware($izin(IzinTenant::LaporanPenjualanLihat))->name('pemilik.shift');
 
         // OWN-03 / X4: persetujuan jarak jauh (izin diperiksa per permintaan: izin yang diminta kasir atau pemilik).

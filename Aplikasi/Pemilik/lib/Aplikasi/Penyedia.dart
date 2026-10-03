@@ -284,6 +284,11 @@ final penyediaPerangkat = FutureProvider.autoDispose<List<PerangkatPemilik>>(
   (ref) => _Jaga(ref, () => ref.read(penyediaKlien).AmbilPerangkat()),
 );
 
+/// OWN-11: insight minggu lalu (null = belum ada penjualan untuk dibandingkan).
+final penyediaInsight = FutureProvider.autoDispose<InsightMingguanPemilik?>(
+  (ref) => _Jaga(ref, () => ref.read(penyediaKlien).AmbilInsight()),
+);
+
 /// OWN-10: pantau karyawan (kehadiran hari ini, komisi & target bulan berjalan).
 final penyediaKaryawan = FutureProvider.autoDispose<PantauKaryawanPemilik>(
   (ref) => _Jaga(ref, () => ref.read(penyediaKlien).AmbilPantauKaryawan()),

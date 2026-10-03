@@ -329,6 +329,83 @@ class TargetKaryawanPemilik {
   );
 }
 
+/// OWN-11: insight minggu lalu (Senin–Minggu) dibanding minggu sebelumnya; sama dengan pesan WhatsApp mingguan.
+class InsightMingguanPemilik {
+  const InsightMingguanPemilik({
+    required this.dari,
+    required this.sampai,
+    required this.bersih,
+    required this.bersihSebelumnya,
+    required this.persenPerubahan,
+    required this.jumlahTransaksi,
+    required this.rataTransaksi,
+    required this.hariTeramai,
+    required this.terlaris,
+    required this.naik,
+    required this.turun,
+    required this.restock,
+    required this.lebaran,
+  });
+
+  final String dari;
+  final String sampai;
+  final String bersih;
+  final String bersihSebelumnya;
+  final String? persenPerubahan;
+  final int jumlahTransaksi;
+  final String rataTransaksi;
+  final ({String tanggal, String bersih})? hariTeramai;
+  final List<({String nama, String qty, String bersih})> terlaris;
+  final List<({String nama, String selisih})> naik;
+  final List<({String nama, String selisih})> turun;
+  final List<({String nama, String gudang, int hariHabis, String saranBeli, String satuan})> restock;
+  final ({String tanggal, int sisaHari})? lebaran;
+
+  static InsightMingguanPemilik DariJson(Map<String, Object?> json) {
+    final teramai = UraiJson.AmbilPetaAtauNull(json['HariTeramai']);
+    final lebaran = UraiJson.AmbilPetaAtauNull(json['Lebaran']);
+    List<({String nama, String selisih})> Perubahan(Object? nilai) => [
+      for (final p in UraiJson.AmbilDaftarPeta(nilai))
+        (nama: UraiJson.AmbilTeks(p['NamaProduk']), selisih: UraiJson.AmbilDesimal(p['Selisih'])),
+    ];
+    return InsightMingguanPemilik(
+      dari: UraiJson.AmbilTeks(json['Dari']),
+      sampai: UraiJson.AmbilTeks(json['Sampai']),
+      bersih: UraiJson.AmbilDesimal(json['Bersih']),
+      bersihSebelumnya: UraiJson.AmbilDesimal(json['BersihSebelumnya']),
+      persenPerubahan: UraiJson.AmbilDesimalAtauNull(json['PersenPerubahan']),
+      jumlahTransaksi: UraiJson.AmbilBulat(json['JumlahTransaksi']),
+      rataTransaksi: UraiJson.AmbilDesimal(json['RataTransaksi']),
+      hariTeramai: teramai == null
+          ? null
+          : (tanggal: UraiJson.AmbilTeks(teramai['Tanggal']), bersih: UraiJson.AmbilDesimal(teramai['Bersih'])),
+      terlaris: [
+        for (final p in UraiJson.AmbilDaftarPeta(json['Terlaris']))
+          (
+            nama: UraiJson.AmbilTeks(p['NamaProduk']),
+            qty: UraiJson.AmbilDesimal(p['Qty']),
+            bersih: UraiJson.AmbilDesimal(p['Bersih']),
+          ),
+      ],
+      naik: Perubahan(json['Naik']),
+      turun: Perubahan(json['Turun']),
+      restock: [
+        for (final r in UraiJson.AmbilDaftarPeta(json['Restock']))
+          (
+            nama: UraiJson.AmbilTeks(r['NamaProduk']),
+            gudang: UraiJson.AmbilTeks(r['NamaGudang']),
+            hariHabis: UraiJson.AmbilBulat(r['HariHabis']),
+            saranBeli: UraiJson.AmbilDesimal(r['SaranBeli']),
+            satuan: UraiJson.AmbilTeks(r['SimbolSatuan']),
+          ),
+      ],
+      lebaran: lebaran == null
+          ? null
+          : (tanggal: UraiJson.AmbilTeks(lebaran['Tanggal']), sisaHari: UraiJson.AmbilBulat(lebaran['SisaHari'])),
+    );
+  }
+}
+
 class NotifikasiPemilik {
   const NotifikasiPemilik({
     required this.uuid,
@@ -447,6 +524,12 @@ class KlienPemilik {
   Future<List<PerangkatPemilik>> AmbilPerangkat() async {
     final json = await _Kirim('GET', 'perangkat', null);
     return [for (final p in UraiJson.AmbilDaftarPeta(json['Perangkat'])) PerangkatPemilik.DariJson(p)];
+  }
+
+  /// OWN-11: insight minggu lalu; null bila belum ada penjualan dua minggu terakhir.
+  Future<InsightMingguanPemilik?> AmbilInsight() async {
+    final isi = UraiJson.AmbilPetaAtauNull((await _Kirim('GET', 'insight', null))['Insight']);
+    return isi == null ? null : InsightMingguanPemilik.DariJson(isi);
   }
 
   /// OWN-10: kehadiran karyawan hari ini, komisi & target bulan berjalan (izin `karyawan.lihat`).

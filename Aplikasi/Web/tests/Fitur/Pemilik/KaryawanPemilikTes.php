@@ -73,3 +73,27 @@ it('kehadiran hari ini (terlambat, sedang bekerja, belum masuk dijadwalkan), tar
     $lain = BantuanPenjualan::Siapkan($this, 'Toko Lain Pantau');
     $this->withToken($token)->withHeaders(['X-Tenant' => $lain['Tenant']->Uuid, 'X-Versi-Aplikasi' => '1.0.0'])->getJson('/api/pemilik/v1/karyawan')->assertForbidden();
 });
+
+it('OWN-11 insight mingguan: minggu lalu vs sebelumnya untuk Aplikasi Pemilik; tanpa penjualan = null', function (): void {
+    $this->travelTo(CarbonImmutable::parse('2026-09-22 05:00:00', 'UTC'));
+    $k = BantuanPenjualan::Siapkan($this, 'Toko Insight Owner');
+    $beras = BantuanPenjualan::BuatProdukBerstok($k['Gudang'], $k['Pemilik']->Id, 'Beras Pandan Wangi 5 kg', '40', '60000', '75000.00');
+    $token = TokenPemilikKaryawanUji($this, $k['Pemilik']);
+    $ambil = fn () => $this->withToken($token)->withHeaders(['X-Tenant' => $k['Tenant']->Uuid, 'X-Versi-Aplikasi' => '1.0.0'])->getJson('/api/pemilik/v1/insight');
+
+    $ambil()->assertOk()->assertJsonPath('Insight', null);
+
+    // Minggu 21–27 Sep: 2 karung; minggu 28 Sep–4 Okt: 4 karung.
+    BantuanPenjualan::Jual($this, $k, ['Baris' => [['Produk' => $beras, 'Jumlah' => '2', 'Harga' => '75000.00']]]);
+    $this->travelTo(CarbonImmutable::parse('2026-09-29 05:00:00', 'UTC'));
+    BantuanPenjualan::Jual($this, $k, ['Baris' => [['Produk' => $beras, 'Jumlah' => '4', 'Harga' => '75000.00']]]);
+
+    $this->travelTo(CarbonImmutable::parse('2026-10-05 03:00:00', 'UTC'));
+    $ambil()->assertOk()
+        ->assertJsonPath('Insight.Dari', '2026-09-28')
+        ->assertJsonPath('Insight.Sampai', '2026-10-04')
+        ->assertJsonPath('Insight.Bersih', '300000.00')
+        ->assertJsonPath('Insight.BersihSebelumnya', '150000.00')
+        ->assertJsonPath('Insight.PersenPerubahan', '100.0')
+        ->assertJsonPath('Insight.Terlaris.0.NamaProduk', 'Beras Pandan Wangi 5 kg');
+});

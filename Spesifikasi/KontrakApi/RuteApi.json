@@ -433,5 +433,10 @@
         "Metode": "GET",
         "Jalur": "api/pemilik/v1/karyawan",
         "Nama": "pemilik.karyawan"
+    },
+    "GET api/pemilik/v1/insight": {
+        "Metode": "GET",
+        "Jalur": "api/pemilik/v1/insight",
+        "Nama": "pemilik.insight"
     }
 }

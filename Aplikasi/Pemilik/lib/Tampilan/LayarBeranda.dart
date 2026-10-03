@@ -8,6 +8,7 @@ import 'BilahSaringan.dart';
 import 'DaftarPengumuman.dart';
 import 'FormatTampilan.dart';
 import 'KeadaanData.dart';
+import 'LayarInsight.dart';
 import 'LayarKaryawan.dart';
 
 /// Beranda OWN-02 (§17.6 "Hari ini untung berapa, ada masalah apa?"): satu angka besar omzet + perbandingan kemarin &
@@ -104,6 +105,7 @@ class _IsiBeranda extends StatelessWidget {
             if (d.labaKotor != null) Angka('Laba kotor', FormatTampilan.Rupiah(d.labaKotor!)),
           ],
         ),
+        const _KartuInsight(),
         const _KartuKaryawan(),
         Judul('Perlu tindakan'),
         if (d.perluTindakan.isEmpty)
@@ -213,6 +215,37 @@ class _KartuKaryawan extends ConsumerWidget {
             builder: (_) => Scaffold(
               appBar: AppBar(title: const Text('Karyawan')),
               body: const LayarKaryawan(),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// OWN-11: ringkasan insight minggu lalu; ketuk untuk membuka layar Insight. Tidak tampil selama memuat, bila belum ada
+/// penjualan untuk dibandingkan, atau bila server menolak.
+class _KartuInsight extends ConsumerWidget {
+  const _KartuInsight();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final data = ref.watch(penyediaInsight).value;
+    if (data == null) return const SizedBox.shrink();
+    final warna = TokenWarna.AmbilDari(context);
+    return Padding(
+      padding: const EdgeInsets.only(top: TokenJarak.jarak16),
+      child: ListTile(
+        contentPadding: EdgeInsets.zero,
+        leading: Icon(Icons.insights_outlined, color: warna.teksSekunder),
+        title: const Text('Insight minggu lalu'),
+        subtitle: Text(LayarInsight.Ringkasan(data)),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (_) => Scaffold(
+              appBar: AppBar(title: const Text('Insight minggu lalu')),
+              body: const LayarInsight(),
             ),
           ),
         ),
