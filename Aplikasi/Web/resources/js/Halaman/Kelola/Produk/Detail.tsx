@@ -7,6 +7,7 @@ import { LabelTigaKeadaan } from '@/Komponen/Katalog/BantuanKatalog';
 import DaftarGalatServer from '@/Komponen/Katalog/DaftarGalatServer';
 import FormBatasStok from '@/Komponen/Katalog/FormBatasStok';
 import PembuatVarian from '@/Komponen/Katalog/PembuatVarian';
+import TabelUbahVarian from '@/Komponen/Katalog/TabelUbahVarian';
 import KepalaProduk from '@/Komponen/Katalog/KepalaProduk';
 import PanelKetersediaan from '@/Komponen/Katalog/PanelKetersediaan';
 import PesanHanyaLihat from '@/Komponen/Katalog/PesanHanyaLihat';
@@ -371,6 +372,11 @@ export default function HalamanDetailProduk({
                         alamatDetail={(varian) => `/kelola/produk/${varian.Uuid}`}
                         kosong={{ judul: 'Belum ada varian. Buat varian dari atribut di bawah.' }}
                     />
+                    {Izin.Kelola && Varian.length > 0 ? (
+                        <div className="mt-4">
+                            <TabelUbahVarian uuidProduk={Produk.Uuid} varian={Varian} bolehUbahHarga={Izin.UbahHarga} />
+                        </div>
+                    ) : null}
                 </Panel>
             ) : null}
 

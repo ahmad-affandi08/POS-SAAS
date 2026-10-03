@@ -91,6 +91,9 @@ final class DetailProduk
 
         $anak = Produk::query()->where('IdInduk', $produk->Id)->orderBy('Nama')->orderBy('Id')->get();
         $harga = $this->daftarProduk->AmbilHargaDasar(array_values(array_map(fn (Produk $satu): int => $satu->Id, $anak->all())));
+        // Audit kemudahan pakai #18: barcode pertama tiap varian untuk tabel varian yang bisa diedit.
+        $barcode = ProdukBarcode::query()->whereIn('IdProduk', $anak->modelKeys())->orderBy('Id')->get(['IdProduk', 'Barcode'])
+            ->groupBy('IdProduk')->map(fn ($k): string => (string) $k->first()?->Barcode);
 
         return array_values($anak->map(fn (Produk $satu): array => [
             'Uuid' => $satu->Uuid,
@@ -98,6 +101,7 @@ final class DetailProduk
             'Sku' => $satu->Sku,
             'Atribut' => array_values(array_map(fn (array $a): array => ['Nama' => (string) ($a['Nama'] ?? ''), 'Nilai' => (string) ($a['Nilai'] ?? '')], $satu->AtributVarian ?? [])),
             'HargaDasar' => $harga[$satu->Id] ?? null,
+            'Barcode' => $barcode->get($satu->Id),
             'Status' => $satu->AmbilStatus()->value,
         ])->all());
     }

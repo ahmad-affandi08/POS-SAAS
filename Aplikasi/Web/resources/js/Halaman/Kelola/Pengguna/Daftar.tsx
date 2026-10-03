@@ -220,16 +220,12 @@ export default function HalamanDaftarPengguna({
                     </p>
                 }
             >
-                {bolehUndang && penuh ? <Tombol disabled>Tambah pengguna</Tombol> : null}
+                {/* Audit kemudahan pakai #34: satu pintu "Tambah staf"; undangan email ada di halaman itu. */}
+                {bolehUndang && penuh ? <Tombol disabled>Tambah staf</Tombol> : null}
                 {bolehUndang && !penuh ? (
-                    <div className="flex flex-wrap gap-2">
-                        <Button asChild variant="outline">
-                            <Link href="/kelola/pengguna/undangan/buat">Undang lewat email</Link>
-                        </Button>
-                        <Button asChild>
-                            <Link href="/kelola/pengguna/buat">Tambah pengguna</Link>
-                        </Button>
-                    </div>
+                    <Button asChild>
+                        <Link href="/kelola/pengguna/buat">Tambah staf</Link>
+                    </Button>
                 ) : null}
             </AksiHalaman>
 

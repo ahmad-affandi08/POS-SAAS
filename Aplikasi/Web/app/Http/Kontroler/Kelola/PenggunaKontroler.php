@@ -4,14 +4,16 @@ declare(strict_types=1);
 
 namespace App\Http\Kontroler\Kelola;
 
+use App\Domain\Karyawan\Aksi\TambahStaf;
 use App\Domain\Organisasi\Aksi\BatalkanUndangan;
-use App\Domain\Organisasi\Aksi\TambahPengguna;
 use App\Domain\Organisasi\Aksi\UbahAksesAnggota;
 use App\Domain\Organisasi\Aksi\UbahStatusAnggota;
 use App\Domain\Organisasi\Aksi\UndangPengguna;
+use App\Domain\Organisasi\Enum\IzinTenant;
 use App\Domain\Organisasi\Enum\PeranTenantBawaan;
 use App\Domain\Organisasi\Enum\StatusKeanggotaan;
 use App\Domain\Organisasi\Enum\StatusOrganisasi;
+use App\Domain\Organisasi\Kueri\AksesPengguna;
 use App\Domain\Organisasi\Kueri\DaftarAnggota;
 use App\Domain\Organisasi\Kueri\PemakaianBatasOrganisasi;
 use App\Domain\Organisasi\Model\Outlet;
@@ -55,16 +57,20 @@ final class PenggunaKontroler extends DasarKelolaKontroler
         $idTenant = $this->IdTenant();
 
         return Inertia::render('Kelola/Pengguna/Tambah', [
+            'BolehCatatKaryawan' => app(AksesPengguna::class)->CekIzin($idTenant, $this->Pelaku()->Id, IzinTenant::KaryawanKelola),
             'Peran' => self::AmbilOpsiPeran(),
             'Outlet' => self::AmbilOpsiOutlet(),
             'BatasPengguna' => $batasPaket->AmbilRingkasan($idTenant, 'BatasPengguna', $pemakaian->HitungPengguna($idTenant)),
         ]);
     }
 
-    public function Tambah(TambahPenggunaPermintaan $permintaan, TambahPengguna $tambah): RedirectResponse
+    public function Tambah(TambahPenggunaPermintaan $permintaan, TambahStaf $tambah, AksesPengguna $akses): RedirectResponse
     {
         $data = $permintaan->AmbilPenggunaBaru();
-        $pengguna = $tambah->Jalankan($this->Pelaku(), $data, $permintaan->AmbilAkses());
+        // Audit #34: "Catat juga sebagai karyawan" hanya untuk pemegang izin karyawan.kelola.
+        $jugaKaryawan = $permintaan->boolean('JugaKaryawan')
+            && $akses->CekIzin($this->IdTenant(), $this->Pelaku()->Id, IzinTenant::KaryawanKelola);
+        $pengguna = $tambah->Jalankan($this->Pelaku(), $data, $permintaan->AmbilAkses(), $jugaKaryawan, $permintaan->AmbilJabatan());
         $pesan = $pengguna->CekHanyaKasir()
             ? "{$pengguna->Nama} ditambahkan sebagai karyawan kasir. Ia masuk aplikasi kasir dengan PIN yang Anda buat."
             : "{$pengguna->Nama} ditambahkan. Berikan email & kata sandi awal kepadanya; ia wajib menggantinya saat pertama masuk.";

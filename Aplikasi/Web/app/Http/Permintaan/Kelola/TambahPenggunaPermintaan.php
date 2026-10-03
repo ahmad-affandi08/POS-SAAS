@@ -24,6 +24,9 @@ final class TambahPenggunaPermintaan extends AksesAnggotaPermintaan
             'NoHp' => ['nullable', 'string', 'max:20', 'regex:/^\+?[0-9\- ]{8,20}$/'],
             'KataSandi' => ['nullable', 'required_with:Email', 'string', 'max:100', Password::min(8)->letters()->numbers()],
             'Pin' => ['nullable', 'required_without:Email', 'digits:6'],
+            // Audit kemudahan pakai #34: sekalian catat sebagai karyawan (jadwal, absensi, gaji).
+            'JugaKaryawan' => ['nullable', 'boolean'],
+            'Jabatan' => ['nullable', 'string', 'max:80'],
             ...parent::rules(),
         ];
     }
@@ -47,6 +50,13 @@ final class TambahPenggunaPermintaan extends AksesAnggotaPermintaan
     public function attributes(): array
     {
         return ['Nama' => 'nama', 'NoHp' => 'nomor WhatsApp', 'KataSandi' => 'kata sandi awal'];
+    }
+
+    public function AmbilJabatan(): ?string
+    {
+        $jabatan = trim((string) $this->input('Jabatan', ''));
+
+        return $jabatan === '' ? null : $jabatan;
     }
 
     public function AmbilPenggunaBaru(): DataPenggunaBaru

@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Domain\Bersama\Audit\Model\LogAudit;
+use App\Domain\Karyawan\Model\Karyawan;
 use App\Domain\Organisasi\Enum\PeranTenantBawaan;
 use App\Domain\Organisasi\Model\Outlet;
 use App\Domain\Organisasi\Model\OutletPengguna;
@@ -42,6 +43,20 @@ function IsianTambahPenggunaUji(int $idTenant, array $isian = []): array
 }
 
 describe('D-22 tambah pengguna langsung di tenant', function (): void {
+    it('audit #34: "Catat juga sebagai karyawan" membuat karyawan tertaut akun dalam satu simpan', function (): void {
+        ['Tenant' => $tenant, 'Pemilik' => $pemilik] = BantuanOrganisasi::BuatTenant();
+
+        BantuanOrganisasi::Masuk($this, $pemilik, $tenant->Id)
+            ->post('/kelola/pengguna', IsianTambahPenggunaUji($tenant->Id, ['Pin' => '482915', 'JugaKaryawan' => true, 'Jabatan' => 'Barista']))
+            ->assertSessionHasNoErrors();
+
+        BantuanOrganisasi::AturKonteks($tenant->Id);
+        $kasir = Pengguna::query()->where('Nama', 'Siti Kasir')->sole();
+        $karyawan = Karyawan::query()->where('IdPengguna', $kasir->Id)->sole();
+        expect($karyawan->Nama)->toBe('Siti Kasir')->and($karyawan->Jabatan)->toBe('Barista')
+            ->and($karyawan->IdOutlet)->toBe(Outlet::query()->where('Kode', 'UTAMA')->value('Id'));
+    });
+
     it('karyawan kasir tanpa email: cukup nama + PIN, bisa masuk aplikasi kasir dengan PIN, tanpa email terkirim', function (): void {
         ['Tenant' => $tenant, 'Pemilik' => $pemilik] = BantuanOrganisasi::BuatTenant();
 

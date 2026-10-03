@@ -10,6 +10,7 @@ use App\Domain\Katalog\Data\DataVarianAnak;
 use App\Domain\Katalog\Enum\JenisProduk;
 use App\Domain\Katalog\Enum\SumberPerubahanKatalog;
 use App\Domain\Katalog\Model\Produk;
+use App\Domain\Katalog\Model\ProdukBarcode;
 use App\Domain\Katalog\Model\ProdukHarga;
 use App\Domain\Katalog\Model\ProdukSatuan;
 use App\Domain\Organisasi\Enum\PeranTenantBawaan;
@@ -45,6 +46,34 @@ function BuatIndukVarianUji(object $tes, array $t, array $atribut = []): array
 }
 
 describe('F-03 varian', function (): void {
+    it('audit #18: tabel varian mengubah harga dasar & menambah barcode banyak varian sekaligus, harga bertingkat tetap', function (): void {
+        $t = BantuanKatalog::SiapkanTenantProduk();
+        [$induk] = BuatIndukVarianUji($this, $t, [['Nama' => 'Ukuran', 'Nilai' => ['S', 'M']]]);
+        BantuanKatalog::MasukSebagai($this, $t['Tenant']->Id)->post("/kelola/produk/{$induk->Uuid}/varian", ['AtributVarian' => [['Nama' => 'Ukuran', 'Nilai' => ['S', 'M']]], 'JenisAnak' => 'Stok', 'HargaDasar' => '75000'])
+            ->assertSessionHasNoErrors();
+        BantuanOrganisasi::AturKonteks($t['Tenant']->Id);
+        [$s, $m] = Produk::query()->where('IdInduk', $induk->Id)->orderBy('Id')->get()->all();
+        $satuanS = ProdukSatuan::query()->where('IdProduk', $s->Id)->sole();
+        ProdukHarga::query()->create(['IdProduk' => $s->Id, 'IdProdukSatuan' => $satuanS->Id, 'JumlahMinimum' => '12', 'Harga' => '70000.00']);
+
+        BantuanKatalog::MasukSebagai($this, $t['Tenant']->Id)->put("/kelola/produk/{$induk->Uuid}/varian", ['Baris' => [
+            ['Uuid' => $s->Uuid, 'Harga' => '79000', 'Barcode' => '8991234500011'],
+            ['Uuid' => $m->Uuid, 'Harga' => '79000', 'Barcode' => null],
+        ]])->assertSessionHasNoErrors()->assertSessionHas('Kilat', 'Harga 2 varian disimpan.');
+
+        BantuanOrganisasi::AturKonteks($t['Tenant']->Id);
+        $hargaS = ProdukHarga::query()->where('IdProdukSatuan', $satuanS->Id)->whereNull('IdDaftarHarga')->orderBy('JumlahMinimum')->get();
+        expect($hargaS->pluck('Harga')->all())->toBe(['79000.00', '70000.00'])
+            ->and(ProdukHarga::query()->where('IdProduk', $m->Id)->whereNull('IdDaftarHarga')->value('Harga'))->toBe('79000.00')
+            ->and(ProdukBarcode::query()->where('IdProduk', $s->Id)->value('Barcode'))->toBe('8991234500011');
+
+        // Varian produk lain ditolak.
+        $lain = BantuanKatalog::BuatProduk(['Sku' => 'LAIN-1', 'IdKelompokPajak' => $t['KelompokPajak']->Id], '1000.00', $t['Pcs']);
+        BantuanKatalog::MasukSebagai($this, $t['Tenant']->Id)->put("/kelola/produk/{$induk->Uuid}/varian", ['Baris' => [
+            ['Uuid' => $lain->Uuid, 'Harga' => '5000'],
+        ]])->assertSessionHasErrors();
+    });
+
     it('generasi Kartesius: nama, SKU {SkuInduk}-NN, salinan kolom induk, satuan dasar, harga dasar; idempoten', function (): void {
         $t = BantuanKatalog::SiapkanTenantProduk();
         [$induk] = BuatIndukVarianUji($this, $t, [['Nama' => 'Ukuran', 'Nilai' => ['S', 'M']]]);

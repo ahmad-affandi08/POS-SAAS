@@ -185,6 +185,8 @@ export type BarisVarian = {
     Sku: string | null;
     Atribut: { Nama: string; Nilai: string }[];
     HargaDasar: string | null;
+    /** Barcode pertama varian (audit kemudahan pakai #18); null = belum ada. */
+    Barcode?: string | null;
     Status: StatusProduk;
 };
 export type BarisBatasStok = {

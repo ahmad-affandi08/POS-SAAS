@@ -202,13 +202,9 @@ describe('Kelola/Pengguna: aksi baris & konfirmasi nonaktifkan (F-02, BR-02.1)',
         RenderDenganKueri(<HalamanDaftarPengguna {...props} />);
 
         expect(screen.queryByRole('button', { name: 'Aksi untuk Budi Santoso' })).toBeNull();
-        // D-22: tambah langsung sebagai aksi utama, undangan email tetap tersedia.
-        expect(screen.getByRole('link', { name: 'Tambah pengguna' }).getAttribute('href')).toBe(
-            '/kelola/pengguna/buat',
-        );
-        expect(screen.getByRole('link', { name: 'Undang lewat email' }).getAttribute('href')).toBe(
-            '/kelola/pengguna/undangan/buat',
-        );
+        // Audit #34: satu pintu "Tambah staf"; undangan email tersedia di halaman tambah staf.
+        expect(screen.getByRole('link', { name: 'Tambah staf' }).getAttribute('href')).toBe('/kelola/pengguna/buat');
+        expect(screen.queryByRole('link', { name: 'Undang lewat email' })).toBeNull();
     });
 });
 
