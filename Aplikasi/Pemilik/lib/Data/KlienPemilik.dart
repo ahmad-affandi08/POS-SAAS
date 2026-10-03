@@ -217,6 +217,118 @@ class PerangkatPemilik {
   );
 }
 
+/// OWN-10: pantau karyawan — kehadiran hari ini, komisi & progres target bulan berjalan.
+class PantauKaryawanPemilik {
+  const PantauKaryawanPemilik({
+    required this.tanggal,
+    required this.periode,
+    required this.hadir,
+    required this.sedangBekerja,
+    required this.terlambat,
+    required this.belumMasuk,
+    required this.kehadiran,
+    required this.daftarBelumMasuk,
+    required this.komisi,
+    required this.target,
+  });
+
+  final String tanggal;
+  final String periode;
+  final int hadir;
+  final int sedangBekerja;
+  final int terlambat;
+  final int belumMasuk;
+  final List<KehadiranKaryawan> kehadiran;
+  final List<({String nama, String? outlet, String jadwal})> daftarBelumMasuk;
+  final List<({String nama, String komisi})> komisi;
+  final List<TargetKaryawanPemilik> target;
+
+  static PantauKaryawanPemilik DariJson(Map<String, Object?> json) {
+    final ringkasan = UraiJson.AmbilPeta(json['Ringkasan']);
+    return PantauKaryawanPemilik(
+      tanggal: UraiJson.AmbilTeks(json['Tanggal']),
+      periode: UraiJson.AmbilTeks(json['Periode']),
+      hadir: UraiJson.AmbilBulat(ringkasan['Hadir']),
+      sedangBekerja: UraiJson.AmbilBulat(ringkasan['SedangBekerja']),
+      terlambat: UraiJson.AmbilBulat(ringkasan['Terlambat']),
+      belumMasuk: UraiJson.AmbilBulat(ringkasan['BelumMasuk']),
+      kehadiran: [for (final k in UraiJson.AmbilDaftarPeta(json['Kehadiran'])) KehadiranKaryawan.DariJson(k)],
+      daftarBelumMasuk: [
+        for (final b in UraiJson.AmbilDaftarPeta(json['BelumMasuk']))
+          (
+            nama: UraiJson.AmbilTeks(b['NamaKaryawan']),
+            outlet: UraiJson.AmbilTeksAtauNull(b['NamaOutlet']),
+            jadwal: UraiJson.AmbilTeks(b['Jadwal']),
+          ),
+      ],
+      komisi: [
+        for (final k in UraiJson.AmbilDaftarPeta(json['Komisi']))
+          (nama: UraiJson.AmbilTeks(k['NamaKaryawan']), komisi: UraiJson.AmbilDesimal(k['Komisi'])),
+      ],
+      target: [for (final t in UraiJson.AmbilDaftarPeta(json['Target'])) TargetKaryawanPemilik.DariJson(t)],
+    );
+  }
+}
+
+class KehadiranKaryawan {
+  const KehadiranKaryawan({
+    required this.nama,
+    required this.outlet,
+    required this.jadwal,
+    required this.jamMasuk,
+    required this.jamKeluar,
+    required this.terlambatMenit,
+    required this.sumber,
+  });
+
+  final String nama;
+  final String? outlet;
+  final String? jadwal;
+  final String jamMasuk;
+  final String? jamKeluar;
+  final int terlambatMenit;
+
+  /// `Pos` (aplikasi kasir), `Web` (HP pribadi), atau `Manual` (dicatat pengelola).
+  final String sumber;
+
+  static KehadiranKaryawan DariJson(Map<String, Object?> json) => KehadiranKaryawan(
+    nama: UraiJson.AmbilTeks(json['NamaKaryawan']),
+    outlet: UraiJson.AmbilTeksAtauNull(json['NamaOutlet']),
+    jadwal: UraiJson.AmbilTeksAtauNull(json['Jadwal']),
+    jamMasuk: UraiJson.AmbilTeks(json['JamMasuk']),
+    jamKeluar: UraiJson.AmbilTeksAtauNull(json['JamKeluar']),
+    terlambatMenit: UraiJson.AmbilBulat(json['TerlambatMenit']),
+    sumber: UraiJson.AmbilTeks(json['Sumber'], 'Pos'),
+  );
+}
+
+class TargetKaryawanPemilik {
+  const TargetKaryawanPemilik({
+    required this.cakupan,
+    required this.sasaran,
+    required this.nilai,
+    required this.realisasi,
+    required this.persen,
+    required this.proyeksi,
+  });
+
+  final String cakupan;
+  final String sasaran;
+  final String nilai;
+  final String realisasi;
+  final String persen;
+  final String? proyeksi;
+
+  static TargetKaryawanPemilik DariJson(Map<String, Object?> json) => TargetKaryawanPemilik(
+    cakupan: UraiJson.AmbilTeks(json['LabelCakupan']),
+    sasaran: UraiJson.AmbilTeks(json['NamaSasaran']),
+    nilai: UraiJson.AmbilDesimal(json['Nilai']),
+    realisasi: UraiJson.AmbilDesimal(json['Realisasi']),
+    persen: UraiJson.AmbilDesimal(json['Persen']),
+    proyeksi: UraiJson.AmbilDesimalAtauNull(json['Proyeksi']),
+  );
+}
+
 class NotifikasiPemilik {
   const NotifikasiPemilik({
     required this.uuid,
@@ -336,6 +448,10 @@ class KlienPemilik {
     final json = await _Kirim('GET', 'perangkat', null);
     return [for (final p in UraiJson.AmbilDaftarPeta(json['Perangkat'])) PerangkatPemilik.DariJson(p)];
   }
+
+  /// OWN-10: kehadiran karyawan hari ini, komisi & target bulan berjalan (izin `karyawan.lihat`).
+  Future<PantauKaryawanPemilik> AmbilPantauKaryawan() async =>
+      PantauKaryawanPemilik.DariJson(await _Kirim('GET', 'karyawan', null));
 
   /// P-10 PGL-19 (v3.47): pengumuman platform yang berlaku untuk tenant aktif di Aplikasi Pemilik.
   Future<List<PengumumanAplikasi>> AmbilPengumuman() async {

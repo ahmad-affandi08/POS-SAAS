@@ -8,6 +8,7 @@ import 'BilahSaringan.dart';
 import 'DaftarPengumuman.dart';
 import 'FormatTampilan.dart';
 import 'KeadaanData.dart';
+import 'LayarKaryawan.dart';
 
 /// Beranda OWN-02 (§17.6 "Hari ini untung berapa, ada masalah apa?"): satu angka besar omzet + perbandingan kemarin &
 /// minggu lalu, transaksi, rata-rata, laba kotor; lalu hal yang butuh tindakan, omzet per outlet, per jam, dan produk
@@ -103,6 +104,7 @@ class _IsiBeranda extends StatelessWidget {
             if (d.labaKotor != null) Angka('Laba kotor', FormatTampilan.Rupiah(d.labaKotor!)),
           ],
         ),
+        const _KartuKaryawan(),
         Judul('Perlu tindakan'),
         if (d.perluTindakan.isEmpty)
           Row(
@@ -182,5 +184,39 @@ class _IsiBeranda extends StatelessWidget {
       t = t.replaceFirst(RegExp(r'0+$'), '').replaceFirst(RegExp(r'\.$'), '');
     }
     return t.replaceAll('.', ',');
+  }
+}
+
+/// OWN-10: ringkasan kehadiran karyawan hari ini; ketuk untuk membuka layar Karyawan. Tidak tampil selama memuat atau
+/// bila pengguna tidak punya izin `karyawan.lihat` (server menolak) — Beranda tetap utuh.
+class _KartuKaryawan extends ConsumerWidget {
+  const _KartuKaryawan();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final data = ref.watch(penyediaKaryawan).value;
+    if (data == null) return const SizedBox.shrink();
+    final warna = TokenWarna.AmbilDari(context);
+    return Padding(
+      padding: const EdgeInsets.only(top: TokenJarak.jarak16),
+      child: ListTile(
+        contentPadding: EdgeInsets.zero,
+        leading: Icon(
+          Icons.groups_outlined,
+          color: data.belumMasuk > 0 || data.terlambat > 0 ? warna.peringatan : warna.teksSekunder,
+        ),
+        title: const Text('Karyawan hari ini'),
+        subtitle: Text(LayarKaryawan.Ringkasan(data)),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (_) => Scaffold(
+              appBar: AppBar(title: const Text('Karyawan')),
+              body: const LayarKaryawan(),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }

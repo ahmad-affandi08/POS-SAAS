@@ -428,5 +428,10 @@
         "Metode": "POST",
         "Jalur": "api/v1/stok/penyesuaian",
         "Nama": "api.v1.stok.penyesuaian"
+    },
+    "GET api/pemilik/v1/karyawan": {
+        "Metode": "GET",
+        "Jalur": "api/pemilik/v1/karyawan",
+        "Nama": "pemilik.karyawan"
     }
 }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Domain\Organisasi\Enum\IzinTenant;
 use App\Http\Kontroler\Pemilik\V1\AutentikasiKontroler;
 use App\Http\Kontroler\Pemilik\V1\DasborKontroler;
+use App\Http\Kontroler\Pemilik\V1\KaryawanKontroler;
 use App\Http\Kontroler\Pemilik\V1\LaporanKontroler;
 use App\Http\Kontroler\Pemilik\V1\NotifikasiKontroler;
 use App\Http\Kontroler\Pemilik\V1\PengumumanKontroler;
@@ -58,5 +59,7 @@ Route::middleware(AutentikasiPemilik::class)->group(function () use ($izin): voi
 
         // OWN-08: status perangkat POS.
         Route::get('/perangkat', [PerangkatKontroler::class, 'Daftar'])->middleware($izin(IzinTenant::PerangkatLihat))->name('pemilik.perangkat');
+        // OWN-10: pantau karyawan (kehadiran hari ini, komisi & target bulan berjalan).
+        Route::get('/karyawan', [KaryawanKontroler::class, 'Pantau'])->middleware($izin(IzinTenant::KaryawanLihat))->name('pemilik.karyawan');
     });
 });

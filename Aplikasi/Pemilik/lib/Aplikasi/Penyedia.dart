@@ -284,6 +284,11 @@ final penyediaPerangkat = FutureProvider.autoDispose<List<PerangkatPemilik>>(
   (ref) => _Jaga(ref, () => ref.read(penyediaKlien).AmbilPerangkat()),
 );
 
+/// OWN-10: pantau karyawan (kehadiran hari ini, komisi & target bulan berjalan).
+final penyediaKaryawan = FutureProvider.autoDispose<PantauKaryawanPemilik>(
+  (ref) => _Jaga(ref, () => ref.read(penyediaKlien).AmbilPantauKaryawan()),
+);
+
 /// P-10 PGL-19: pengumuman & jadwal pemeliharaan platform (dibaca saat Beranda dibuka & ditarik untuk menyegarkan).
 final penyediaPengumuman = FutureProvider.autoDispose<List<PengumumanAplikasi>>(
   (ref) => _Jaga(ref, () => ref.read(penyediaKlien).AmbilPengumuman()),
