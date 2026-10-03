@@ -18,10 +18,16 @@ final readonly class DataSudahDiretur
         public Uang $nilai,
         public Uang $pajak,
         public Uang $biayaLayanan,
+        public ?Uang $biayaKirim = null,
     ) {}
+
+    public function AmbilBiayaKirim(): Uang
+    {
+        return $this->biayaKirim ?? Uang::Nol();
+    }
 
     public static function Kosong(): self
     {
-        return new self(Kuantitas::Nol(), Uang::Nol(), Uang::Nol(), Uang::Nol());
+        return new self(Kuantitas::Nol(), Uang::Nol(), Uang::Nol(), Uang::Nol(), Uang::Nol());
     }
 }

@@ -72,8 +72,8 @@ final class TerimaPesananGrosirPos
             throw new PelanggaranAturanBisnis('WaktuTidakValid', 'Waktu pesanan ada di masa depan. Periksa jam perangkat.', 'DibuatPada');
         }
 
-        if (PesananGrosir::query()->where('Uuid', $uuid)->exists()) {
-            return StatusItemSinkron::Duplikat;
+        if (($lama = $this->BandingkanLama($uuid, $uuidPelanggan, count($baris))) !== null) {
+            return $lama;
         }
 
         $idTenant = $this->konteks->Wajib();
@@ -130,7 +130,36 @@ final class TerimaPesananGrosirPos
                 throw $galat;
             }
 
+            // Kiriman ganda bersamaan: pemenang sudah tersimpan; Uuid bentrok dengan data lain = ditolak.
+            $lama = $this->BandingkanLama($uuid, $uuidPelanggan, count($baris));
+
+            if ($lama === null) {
+                throw new PelanggaranAturanBisnis('UuidSudahDipakai', 'Kode unik ini sudah dipakai data lain. Buat ulang data di aplikasi.', 'Uuid');
+            }
+
+            return $lama;
+        }
+    }
+
+    /**
+     * Uuid yang sudah ada: `Duplikat` bila pelanggan & banyaknya baris sama (kirim ulang), selain itu `UuidSudahDipakai`
+     * (kontrak `PenanganItemSinkron`); null bila Uuid belum ada.
+     * Membaca basis data, jadi hasil panggilan kedua (setelah bentrok unik) bisa berbeda dengan yang pertama.
+     *
+     * @phpstan-impure
+     */
+    private function BandingkanLama(string $uuid, string $uuidPelanggan, int $jumlahBaris): ?StatusItemSinkron
+    {
+        $lama = PesananGrosir::query()->where('Uuid', $uuid)->first();
+
+        if ($lama === null) {
+            return null;
+        }
+
+        if ($lama->IdPelanggan === $this->identitas->CariId($uuidPelanggan) && $lama->Detail()->count() === $jumlahBaris) {
             return StatusItemSinkron::Duplikat;
         }
+
+        throw new PelanggaranAturanBisnis('UuidSudahDipakai', 'Kode unik ini sudah dipakai data lain dengan isi berbeda. Buat ulang data di aplikasi.', 'Uuid');
     }
 }

@@ -40,7 +40,7 @@ final class AgregatPenjualan
 {
     private const KOTOR = '(`Penjualan`.`Subtotal` + `Penjualan`.`DiskonBaris` - `Penjualan`.`TotalPajak` + `Penjualan`.`TotalPajakEksklusif`)';
 
-    private const RETUR = '(`ReturPenjualan`.`TotalNilai` - `ReturPenjualan`.`TotalPajak` - `ReturPenjualan`.`TotalBiayaLayanan`)';
+    private const RETUR = '(`ReturPenjualan`.`TotalNilai` - `ReturPenjualan`.`TotalPajak` - `ReturPenjualan`.`TotalBiayaLayanan` - `ReturPenjualan`.`TotalBiayaKirim`)';
 
     /**
      * Kanal retur = kanal penjualan asal; retur tanpa struk (K28) tidak punya penjualan asal dan terjadi di konter,
@@ -555,7 +555,7 @@ final class AgregatPenjualan
         $this->TerapkanSaringRetur($retur, $saring);
         $retur = $retur->selectRaw(
             '`ReturPenjualanDetail`.`IdProduk`, `ReturPenjualanDetail`.`NamaProduk`, 0 - `ReturPenjualanDetail`.`JumlahDasar`, 0, 0, '
-            .'(`ReturPenjualanDetail`.`NilaiBaris` - `ReturPenjualanDetail`.`Pajak` - `ReturPenjualanDetail`.`BiayaLayanan`), '
+            .'(`ReturPenjualanDetail`.`NilaiBaris` - `ReturPenjualanDetail`.`Pajak` - `ReturPenjualanDetail`.`BiayaLayanan` - `ReturPenjualanDetail`.`BiayaKirim`), '
             .'0 - `ReturPenjualanDetail`.`Pajak`, 0 - `ReturPenjualanDetail`.`BiayaLayanan`, 0 - `ReturPenjualanDetail`.`TotalHpp`, NULL, `ReturPenjualan`.`Id`'
         )->toBase();
 

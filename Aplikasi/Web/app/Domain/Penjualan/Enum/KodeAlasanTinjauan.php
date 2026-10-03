@@ -36,6 +36,21 @@ enum KodeAlasanTinjauan: string
     // Apotek (§9.5): obat wajib resep tanpa resep lengkap; obat keras/OWA/psikotropika/narkotika tanpa apoteker berizin.
     case ResepTidakLengkap = 'ResepTidakLengkap';
     case ApotekerTidakBerwenang = 'ApotekerTidakBerwenang';
+    // Kode tinjauan dari fitur lanjutan (tukar barang, pre-order, sesi, reservasi, laundry, bengkel, komisi, voucher,
+    // batch & nomor seri, retur tanpa struk) supaya halaman web menampilkan labelnya, bukan kode mesin.
+    case TukarBermasalah = 'TukarBermasalah';
+    case UangMukaBermasalah = 'UangMukaBermasalah';
+    case PaketSesi = 'PaketSesi';
+    case Reservasi = 'Reservasi';
+    case Laundry = 'Laundry';
+    case PerintahKerja = 'PerintahKerja';
+    case StafTidakDikenal = 'StafTidakDikenal';
+    case VoucherTidakBerlaku = 'VoucherTidakBerlaku';
+    case BatchTidakCukup = 'BatchTidakCukup';
+    case BatchKedaluwarsa = 'BatchKedaluwarsa';
+    case SerialBermasalah = 'SerialBermasalah';
+    case BatasReturTanpaStruk = 'BatasReturTanpaStruk';
+    case HppTidakDiketahui = 'HppTidakDiketahui';
 
     public function AmbilLabel(): string
     {
@@ -63,6 +78,19 @@ enum KodeAlasanTinjauan: string
             self::PelangganDiarsipkan => 'Pelanggan sudah diarsipkan',
             self::ResepTidakLengkap => 'Obat wajib resep tanpa resep lengkap',
             self::ApotekerTidakBerwenang => 'Obat keras diserahkan tanpa apoteker berizin',
+            self::TukarBermasalah => 'Tukar barang perlu diperiksa',
+            self::UangMukaBermasalah => 'Uang muka pre-order perlu diperiksa',
+            self::PaketSesi => 'Paket sesi perlu diperiksa',
+            self::Reservasi => 'Reservasi tidak bisa diselesaikan',
+            self::Laundry => 'Tiket laundry tidak bisa dibuat',
+            self::PerintahKerja => 'Perintah kerja bengkel tidak bisa ditagih',
+            self::StafTidakDikenal => 'Staf pelayan tidak dikenal, komisi tidak dicatat',
+            self::VoucherTidakBerlaku => 'Voucher tidak berlaku saat penjualan diterima',
+            self::BatchTidakCukup => 'Stok batch tidak cukup',
+            self::BatchKedaluwarsa => 'Batch yang terjual sudah kedaluwarsa',
+            self::SerialBermasalah => 'Nomor seri tidak tersedia di stok',
+            self::BatasReturTanpaStruk => 'Retur tanpa struk melewati batas harian',
+            self::HppTidakDiketahui => 'Harga pokok barang retur tidak diketahui',
         };
     }
 

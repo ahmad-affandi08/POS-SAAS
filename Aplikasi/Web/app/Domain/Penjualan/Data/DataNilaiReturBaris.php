@@ -9,7 +9,8 @@ use App\Domain\Bersama\Nilai\Uang;
 
 /**
  * Nilai satu baris retur hasil `PenghitungNilaiRetur` (F-09 fase 1): bagian proporsional baris penjualan asal
- * (`nilai` dari `TotalBaris`, `pajak` dari `JumlahPajak`, `biayaLayanan` dari `BiayaLayanan`), `terakhir` = retur ini
+ * (`nilai` dari `TotalBaris`, `pajak` dari `JumlahPajak`, `biayaLayanan` dari `BiayaLayanan`, `biayaKirim` dari `BiayaKirim`
+ * — bagian ongkir yang sudah termuat di `nilai`), `terakhir` = retur ini
  * menghabiskan sisa baris sehingga mengambil sisa nilai.
  */
 final readonly class DataNilaiReturBaris
@@ -21,5 +22,11 @@ final readonly class DataNilaiReturBaris
         public Uang $pajak,
         public Uang $biayaLayanan,
         public bool $terakhir,
+        public ?Uang $biayaKirim = null,
     ) {}
+
+    public function AmbilBiayaKirim(): Uang
+    {
+        return $this->biayaKirim ?? Uang::Nol();
+    }
 }

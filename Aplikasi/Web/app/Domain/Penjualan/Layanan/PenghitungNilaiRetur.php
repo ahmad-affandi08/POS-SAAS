@@ -15,7 +15,7 @@ use Brick\Math\RoundingMode;
 
 /**
  * Nilai retur per baris (PRD "Rincian F-09 fase 1"): bagian proporsional snapshot baris penjualan
- * (`TotalBaris`/`JumlahPajak`/`BiayaLayanan` × jumlah retur ÷ jumlah jual, dibulatkan ke sen HalfUp); retur yang
+ * (`TotalBaris`/`JumlahPajak`/`BiayaLayanan`/`BiayaKirim` × jumlah retur ÷ jumlah jual, dibulatkan ke sen HalfUp); retur yang
  * menghabiskan sisa baris mengambil sisa nilai sehingga Σ retur = snapshot baris. Aplikasi POS memakai rumus yang
  * sama (`penjualan/cari` mengirim `JumlahBisaDiretur` & `NilaiBisaDiretur`) agar `Ringkasan.TotalRefund` cocok.
  */
@@ -37,7 +37,7 @@ final class PenghitungNilaiRetur
         $baris = ReturPenjualanDetail::query()
             ->whereIn('IdPenjualanDetail', array_values(array_unique($idDetail)))
             ->groupBy('IdPenjualanDetail')
-            ->selectRaw('`IdPenjualanDetail`, SUM(`Jumlah`) AS `Jumlah`, SUM(`NilaiBaris`) AS `Nilai`, SUM(`Pajak`) AS `Pajak`, SUM(`BiayaLayanan`) AS `Layanan`')
+            ->selectRaw('`IdPenjualanDetail`, SUM(`Jumlah`) AS `Jumlah`, SUM(`NilaiBaris`) AS `Nilai`, SUM(`Pajak`) AS `Pajak`, SUM(`BiayaLayanan`) AS `Layanan`, SUM(`BiayaKirim`) AS `Kirim`')
             ->toBase()
             ->get();
 
@@ -47,6 +47,7 @@ final class PenghitungNilaiRetur
                 Uang::Dari(self::Teks($b->Nilai)),
                 Uang::Dari(self::Teks($b->Pajak)),
                 Uang::Dari(self::Teks($b->Layanan)),
+                Uang::Dari(self::Teks($b->Kirim)),
             );
         }
 
@@ -81,6 +82,7 @@ final class PenghitungNilaiRetur
                 Uang::Dari($detail->JumlahPajak)->Kurangi($sudah->pajak),
                 Uang::Dari($detail->BiayaLayanan)->Kurangi($sudah->biayaLayanan),
                 true,
+                Uang::Dari($detail->BiayaKirim)->Kurangi($sudah->AmbilBiayaKirim()),
             );
         }
 
@@ -91,6 +93,7 @@ final class PenghitungNilaiRetur
             self::Bagian($detail->JumlahPajak, $jumlah, $detail->Jumlah),
             self::Bagian($detail->BiayaLayanan, $jumlah, $detail->Jumlah),
             false,
+            self::Bagian($detail->BiayaKirim, $jumlah, $detail->Jumlah),
         );
     }
 

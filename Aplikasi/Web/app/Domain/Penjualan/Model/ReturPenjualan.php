@@ -38,6 +38,7 @@ use LogicException;
  * @property string $TotalNilai
  * @property string $TotalPajak
  * @property string $TotalBiayaLayanan
+ * @property string $TotalBiayaKirim
  * @property string $TotalRefund
  * @property string $RefundTunai
  * @property string $TotalHpp
@@ -68,6 +69,7 @@ final class ReturPenjualan extends ModelDasar
             'TotalNilai' => 'decimal:2',
             'TotalPajak' => 'decimal:2',
             'TotalBiayaLayanan' => 'decimal:2',
+            'TotalBiayaKirim' => 'decimal:2',
             'TotalRefund' => 'decimal:2',
             'RefundTunai' => 'decimal:2',
             'TotalHpp' => 'decimal:2',

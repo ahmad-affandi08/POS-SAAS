@@ -21,6 +21,7 @@ use App\Http\Perantara\AutentikasiTokenApi;
 use App\Http\Permintaan\ApiPublik\BuatPenyesuaianStokApiPermintaan;
 use Brick\Math\BigDecimal;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 
@@ -48,7 +49,7 @@ final class StokKontroler
         $ada = $kueri->Satu($uuid);
 
         if ($ada !== null && $ada['Status'] !== StatusPenyesuaianStok::Draf->value) {
-            return response()->json(['Data' => $ada]);
+            return $this->JawabUlang($permintaan, $ada);
         }
 
         // Draf dan pengajuan satu transaksi, jadi API tidak pernah meninggalkan Draf. Draf ber-Uuid sama berarti milik
@@ -91,18 +92,54 @@ final class StokKontroler
             );
         }
 
-        DB::transaction(function () use ($simpan, $ajukan, $uuid, $lokasi, $permintaan, $baris, $token): void {
-            $draf = $simpan->Jalankan(new DataPenyesuaianStok(
-                uuid: $uuid,
-                idGudang: $lokasi->id,
-                tanggal: CarbonImmutable::parse((string) $permintaan->validated('Tanggal')),
-                alasan: AlasanPenyesuaian::from((string) $permintaan->validated('Alasan')),
-                keterangan: is_string($permintaan->validated('Keterangan')) ? $permintaan->validated('Keterangan') : null,
-                baris: $baris,
-            ), null);
-            $ajukan->Jalankan($draf, $token->DibuatOleh);
-        });
+        try {
+            DB::transaction(function () use ($simpan, $ajukan, $uuid, $lokasi, $permintaan, $baris, $token): void {
+                $draf = $simpan->Jalankan(new DataPenyesuaianStok(
+                    uuid: $uuid,
+                    idGudang: $lokasi->id,
+                    tanggal: CarbonImmutable::parse((string) $permintaan->validated('Tanggal')),
+                    alasan: AlasanPenyesuaian::from((string) $permintaan->validated('Alasan')),
+                    keterangan: is_string($permintaan->validated('Keterangan')) ? $permintaan->validated('Keterangan') : null,
+                    baris: $baris,
+                ), null);
+                $ajukan->Jalankan($draf, $token->DibuatOleh);
+            });
+        } catch (QueryException $galat) {
+            // Dua POST pertama bersamaan dengan Uuid sama: yang kalah membaca hasil pemenang, bukan HTTP 500.
+            $pemenang = ($galat->errorInfo[1] ?? null) === 1062 ? $kueri->Satu($uuid) : null;
+
+            if ($pemenang === null) {
+                throw $galat;
+            }
+
+            return $this->JawabUlang($permintaan, $pemenang);
+        }
 
         return response()->json(['Data' => $kueri->Satu($uuid)], 201);
+    }
+
+    /**
+     * Kirim ulang Uuid yang sudah diproses: isi sama (lokasi + baris produk & jumlah) = 200 dengan dokumen lama
+     * (idempoten); isi berbeda = 409 `UuidSudahDipakai`, supaya integrator tidak mengira penyesuaian barunya tercatat.
+     *
+     * @param  array<string, mixed>  $ada
+     */
+    private function JawabUlang(BuatPenyesuaianStokApiPermintaan $permintaan, array $ada): JsonResponse
+    {
+        $susun = fn (iterable $baris): array => collect($baris)
+            ->map(fn (array $b): string => strtoupper((string) $b['UuidProduk']).'|'.Kuantitas::Dari((string) $b['Jumlah'])->KeString())
+            ->sort()->values()->all();
+        /** @var list<array<string, mixed>> $barisMasuk */
+        $barisMasuk = array_values((array) $permintaan->validated('Baris'));
+        /** @var list<array<string, mixed>> $barisLama */
+        $barisLama = is_array($ada['Baris'] ?? null) ? array_values($ada['Baris']) : [];
+        $sama = strtoupper((string) $permintaan->validated('UuidGudang')) === strtoupper((string) ($ada['UuidGudang'] ?? ''))
+            && $susun($barisMasuk) === $susun($barisLama);
+
+        if (! $sama) {
+            throw new PelanggaranAturanBisnis('UuidSudahDipakai', 'Uuid ini sudah dipakai penyesuaian lain dengan isi berbeda. Pakai Uuid baru.', 'Uuid', 409);
+        }
+
+        return response()->json(['Data' => $ada]);
     }
 }

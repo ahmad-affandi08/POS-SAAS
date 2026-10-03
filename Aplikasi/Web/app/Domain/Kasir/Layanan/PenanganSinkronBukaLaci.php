@@ -36,11 +36,11 @@ final class PenanganSinkronBukaLaci implements PenanganItemSinkron
         return $this->catat->Jalankan(new DataBukaLaci(
             uuid: $uuid,
             idPerangkat: $konteks->idPerangkat,
-            uuidShift: (string) $valid['UuidShift'],
+            uuidShift: strtoupper((string) $valid['UuidShift']),
             alasan: (string) $valid['Alasan'],
-            uuidPembuka: (string) $valid['UuidPembuka'],
+            uuidPembuka: strtoupper((string) $valid['UuidPembuka']),
             dibukaPada: ValidasiItemSinkron::AmbilWaktu((string) $valid['DibukaPada']),
-            uuidPenyetuju: isset($valid['UuidPenyetuju']) ? (string) $valid['UuidPenyetuju'] : null,
+            uuidPenyetuju: isset($valid['UuidPenyetuju']) ? strtoupper((string) $valid['UuidPenyetuju']) : null,
         ));
     }
 }

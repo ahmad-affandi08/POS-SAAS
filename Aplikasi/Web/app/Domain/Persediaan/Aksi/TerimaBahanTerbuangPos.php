@@ -56,8 +56,8 @@ final class TerimaBahanTerbuangPos
             throw new PelanggaranAturanBisnis('WaktuTidakValid', 'Waktu catatan ada di masa depan. Periksa jam perangkat.', 'DibuatPada');
         }
 
-        if (BahanTerbuang::query()->where('Uuid', $uuid)->exists()) {
-            return StatusItemSinkron::Duplikat;
+        if (($lama = $this->BandingkanLama($uuid, $uuidProduk, $jumlah)) !== null) {
+            return $lama;
         }
 
         try {
@@ -108,7 +108,38 @@ final class TerimaBahanTerbuangPos
                 throw $galat;
             }
 
+            // Kiriman ganda bersamaan: pemenang sudah tersimpan; Uuid bentrok dengan data lain = ditolak.
+            $lama = $this->BandingkanLama($uuid, $uuidProduk, $jumlah);
+
+            if ($lama === null) {
+                throw new PelanggaranAturanBisnis('UuidSudahDipakai', 'Kode unik ini sudah dipakai data lain. Buat ulang data di aplikasi.', 'Uuid');
+            }
+
+            return $lama;
+        }
+    }
+
+    /**
+     * Uuid yang sudah ada: `Duplikat` bila produk & jumlahnya sama (kirim ulang), selain itu `UuidSudahDipakai` (kontrak
+     * `PenanganItemSinkron`); null bila Uuid belum ada.
+     * Membaca basis data, jadi hasil panggilan kedua (setelah bentrok unik) bisa berbeda dengan yang pertama.
+     *
+     * @phpstan-impure
+     */
+    private function BandingkanLama(string $uuid, string $uuidProduk, Kuantitas $jumlah): ?StatusItemSinkron
+    {
+        $lama = BahanTerbuang::query()->where('Uuid', $uuid)->first();
+
+        if ($lama === null) {
+            return null;
+        }
+
+        $produk = $this->infoProduk->AmbilDariUuid([$uuidProduk])[$uuidProduk] ?? null;
+
+        if ($produk !== null && $lama->IdProduk === $produk->id && Kuantitas::Dari($lama->Jumlah)->SamaDengan($jumlah)) {
             return StatusItemSinkron::Duplikat;
         }
+
+        throw new PelanggaranAturanBisnis('UuidSudahDipakai', 'Kode unik ini sudah dipakai data lain dengan isi berbeda. Buat ulang data di aplikasi.', 'Uuid');
     }
 }

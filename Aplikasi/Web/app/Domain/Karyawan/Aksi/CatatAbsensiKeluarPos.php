@@ -34,6 +34,14 @@ final class CatatAbsensiKeluarPos
         $pelaku = $this->anggota->Cari($data->idTenant, $data->uuidPengguna, $data->idOutlet);
 
         if ($pelaku === null) {
+            // Kiriman ulang absen keluar yang sudah tercatat tetap `Duplikat` walau akses pengguna dicabut sesudahnya.
+            $idLama = $this->anggota->CariDiTenant($data->idTenant, $data->uuidPengguna, $data->idOutlet)[0]->id ?? null;
+            $karyawanLama = $idLama === null ? null : Karyawan::query()->where('IdPengguna', $idLama)->first();
+
+            if ($karyawanLama !== null && Absensi::query()->where('Uuid', (string) $data->uuidAbsensi)->where('IdKaryawan', $karyawanLama->Id)->whereNotNull('KeluarPada')->exists()) {
+                return StatusItemSinkron::Duplikat;
+            }
+
             throw new PelanggaranAturanBisnis('KasirTidakDitemukan', 'Pengguna ini tidak terdaftar di outlet perangkat.', 'UuidPengguna');
         }
 

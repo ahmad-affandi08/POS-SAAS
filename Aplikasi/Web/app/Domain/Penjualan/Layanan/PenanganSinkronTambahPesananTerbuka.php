@@ -37,7 +37,7 @@ final class PenanganSinkronTambahPesananTerbuka extends PenanganSinkronPesananTe
             'Baris.*.Uuid' => ['required', 'string', 'ulid', 'distinct'],
             'Baris.*.UuidProduk' => ['required', 'string', 'ulid'],
             'Baris.*.UuidProdukSatuan' => ['sometimes', 'nullable', 'string', 'ulid'],
-            'Baris.*.Jumlah' => ['required', 'string', 'regex:'.self::POLA_JUMLAH, 'not_in:0,0.0,0.00,0.000,0.0000'],
+            'Baris.*.Jumlah' => ['required', 'string', 'regex:'.self::POLA_JUMLAH, 'not_regex:/^0+(\.0+)?$/'],
             'Baris.*.HargaSatuan' => ['required', 'string', $uang],
             'Baris.*.HargaPilihan' => ['sometimes', 'nullable', 'string', $uang],
             'Baris.*.Pilihan' => ['sometimes', 'nullable', 'array', 'max:30'],

@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Domain\Bersama\Audit\Model\LogAudit;
 use App\Domain\Bersama\Dokumen\Enum\StatusDokumenTerposting;
 use App\Domain\Organisasi\Enum\PeranTenantBawaan;
 use App\Domain\Pelanggan\Enum\StatusPelanggan;
@@ -131,7 +132,8 @@ describe('HTTP back-office grosir', function (): void {
 
         $this->put("/kelola/grosir/faktur/{$faktur->Uuid}/nomor-pajak", ['NomorFakturPajak' => '0100002512345678'])
             ->assertSessionHasNoErrors()->assertRedirect();
-        expect($faktur->refresh()->NomorFakturPajak)->toBe('0100002512345678');
+        expect($faktur->refresh()->NomorFakturPajak)->toBe('0100002512345678')
+            ->and(LogAudit::query()->where('Peristiwa', 'grosir.faktur-nomor-pajak')->where('IdObjek', $faktur->Id)->exists())->toBeTrue();
 
         // Retur (BR-12.7): jumlah & kondisi saja yang dikirim; harga dan HPP-nya dari snapshot surat jalan.
         $this->get("/kelola/grosir/retur/buat/{$suratJalan->Uuid}")->assertOk()->assertInertia(fn (AssertableInertia $h) => $h

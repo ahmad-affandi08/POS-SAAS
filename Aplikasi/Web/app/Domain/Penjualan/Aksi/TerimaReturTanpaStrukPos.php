@@ -116,6 +116,13 @@ final class TerimaReturTanpaStrukPos
             return DB::transaction(fn (): StatusItemSinkron => $this->Proses($data));
         } catch (QueryException $galat) {
             if (($galat->errorInfo[1] ?? null) === 1062) {
+                // Kiriman ganda bersamaan: yang kalah membaca ulang dokumen pemenang.
+                $duplikat = $this->CekDuplikat($data);
+
+                if ($duplikat !== null) {
+                    return $duplikat;
+                }
+
                 if (str_contains($galat->getMessage(), 'UniqReturPenjualanIdTenantNomor')) {
                     throw new PelanggaranAturanBisnis('NomorSudahDipakai', "Nomor {$data->nomor} sudah dipakai retur lain.", 'Nomor', 409);
                 }
@@ -127,18 +134,34 @@ final class TerimaReturTanpaStrukPos
         }
     }
 
+    /**
+     * `Duplikat` bila Uuid ini sudah tercatat dengan data yang sama; galat bila dipakai data lain; null bila baru.
+     *
+     * @phpstan-impure
+     */
+    private function CekDuplikat(DataReturTanpaStrukPos $data): ?StatusItemSinkron
+    {
+        $lama = ReturPenjualan::query()->where('Uuid', $data->uuid)->first();
+
+        if ($lama === null) {
+            return null;
+        }
+
+        if ($lama->TanpaStruk && $lama->Nomor === $data->nomor && Uang::Dari($lama->TotalRefund)->SamaDengan($data->totalRefund)) {
+            return StatusItemSinkron::Duplikat;
+        }
+
+        throw self::GalatUuidDipakai();
+    }
+
     private function Proses(DataReturTanpaStrukPos $data): StatusItemSinkron
     {
         $idTenant = $this->konteks->Wajib();
 
-        $lama = ReturPenjualan::query()->where('Uuid', $data->uuid)->first();
+        $duplikat = $this->CekDuplikat($data);
 
-        if ($lama !== null) {
-            if ($lama->TanpaStruk && $lama->Nomor === $data->nomor && Uang::Dari($lama->TotalRefund)->SamaDengan($data->totalRefund)) {
-                return StatusItemSinkron::Duplikat;
-            }
-
-            throw self::GalatUuidDipakai();
+        if ($duplikat !== null) {
+            return $duplikat;
         }
 
         $shift = $this->infoShift->CariDiPerangkat($data->uuidShift, $data->idPerangkat);

@@ -234,7 +234,8 @@ final class TerimaReturPenjualanPos
             }
         }
 
-        $jurnal = $this->penyusunJurnal->Susun($retur, $total, $biayaLayanan, $this->BagiPajak($penjualan, $detail, $nilai), $refundJurnal, $persediaan);
+        $biayaKirim = array_reduce($nilai, fn (Uang $t, DataNilaiReturBaris $n): Uang => $t->Tambah($n->AmbilBiayaKirim()), Uang::Nol());
+        $jurnal = $this->penyusunJurnal->Susun($retur, $total, $biayaLayanan, $this->BagiPajak($penjualan, $detail, $nilai), $refundJurnal, $persediaan, $biayaKirim);
 
         if (array_filter($jurnal->baris, fn ($b): bool => ! $b->debit->BernilaiNol() || ! $b->kredit->BernilaiNol()) !== []) {
             $retur->IdJurnal = $this->postingJurnal->Jalankan($jurnal)->idJurnal;
@@ -615,6 +616,7 @@ final class TerimaReturPenjualanPos
             'TotalNilai' => $jumlah(fn (DataNilaiReturBaris $n): Uang => $n->nilai),
             'TotalPajak' => $jumlah(fn (DataNilaiReturBaris $n): Uang => $n->pajak),
             'TotalBiayaLayanan' => $jumlah(fn (DataNilaiReturBaris $n): Uang => $n->biayaLayanan),
+            'TotalBiayaKirim' => $jumlah(fn (DataNilaiReturBaris $n): Uang => $n->AmbilBiayaKirim()),
             'TotalRefund' => $jumlah(fn (DataNilaiReturBaris $n): Uang => $n->nilai),
             'RefundTunai' => $tunai->KeString(),
             'TotalHpp' => array_reduce($rencana, fn (Uang $t, array $r): Uang => $t->Tambah($r['Nilai']), Uang::Nol())->KeString(),
@@ -652,6 +654,7 @@ final class TerimaReturPenjualanPos
                 'NilaiBaris' => $n->nilai->KeString(),
                 'Pajak' => $n->pajak->KeString(),
                 'BiayaLayanan' => $n->biayaLayanan->KeString(),
+                'BiayaKirim' => $n->AmbilBiayaKirim()->KeString(),
                 'HppSatuan' => $d->HppSatuan,
                 'TotalHpp' => array_reduce($stok, fn (Uang $t, array $r): Uang => $t->Tambah($r['Nilai']), Uang::Nol())->KeString(),
                 'Kondisi' => $baris->kondisi,

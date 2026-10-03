@@ -5,8 +5,10 @@ declare(strict_types=1);
 use App\Domain\Organisasi\Enum\PeranTenantBawaan;
 use App\Domain\Penjualan\Enum\StatusPesananOnline;
 use App\Domain\Penjualan\Model\PesananOnline;
+use Tests\Pendukung\Kasir\BantuanKasir;
 use Tests\Pendukung\Katalog\BantuanHarga;
 use Tests\Pendukung\Organisasi\BantuanOrganisasi;
+use Tests\Pendukung\Penjualan\BantuanPenjualan;
 use Tests\Pendukung\Penjualan\BantuanTokoOnline;
 use Tests\Pendukung\Tenant\BantuanPendaftaran;
 
@@ -84,4 +86,23 @@ it('tolak wajib alasan; tanpa izin ditolak; pesanan outlet lain tidak ditemukan'
     PesananOnline::query()->whereKey($p->Id)->update(['IdOutlet' => $k['Outlet']->Id]);
     $this->withToken($k['Token'])->postJson("/api/pos/v1/pesanan-online/{$p->Uuid}/status", ['UuidPengguna' => $k['Kasir']->Uuid, 'Status' => 'Ditolak', 'Alasan' => 'Bahan habis hari ini'])
         ->assertOk()->assertJsonPath('Status', 'Ditolak');
+});
+
+it('tautkan hanya memastikan tautan dari sinkron: penjualan yang sama idempoten, pesanan belum tertaut ditolak TautkanLewatSinkron', function (): void {
+    $k = BantuanTokoOnline::Siapkan($this);
+    $p = PesanOnlineUntukPos($k);
+    PesananOnline::query()->whereKey($p->Id)->update(['Status' => StatusPesananOnline::Siap->value]);
+    $item = BantuanPenjualan::Item($k, ['Baris' => [['Produk' => BantuanPenjualan::BuatProdukBerstok($k['Gudang'], $k['Pemilik']->Id), 'Jumlah' => '1', 'Harga' => '38500.00']]], ['UuidPesananOnline' => $p->Uuid, 'Kanal' => 'Online']);
+    expect(BantuanKasir::KirimRingkas($this, $k['Token'], [$item]))->toBe([['Diterima', null]]);
+    $tautkan = fn (string $uuidPesanan) => $this->withToken($k['Token'])
+        ->postJson("/api/pos/v1/pesanan-online/{$uuidPesanan}/tautkan", ['UuidPenjualan' => $item['Uuid']]);
+
+    $tautkan($p->Uuid)->assertOk()->assertJsonPath('Uuid', $p->Uuid);
+
+    // Penjualan sembarang tidak bisa menutup pesanan lain (dulu: satu penjualan menutup banyak pesanan).
+    $lain = PesanOnlineUntukPos($k);
+    $tautkan($lain->Uuid)->assertStatus(409)->assertJsonPath('Galat.Kode', 'TautkanLewatSinkron');
+    BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+    expect($lain->refresh()->IdPenjualan)->toBeNull()
+        ->and($lain->Status)->toBe(StatusPesananOnline::MenungguKonfirmasi);
 });

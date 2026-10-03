@@ -23,8 +23,8 @@ use Illuminate\Support\Facades\DB;
 /**
  * F-06 langkah 2: shift yang dibuka di perangkat (bisa offline, BR-06.3) diterima server lewat sinkron.
  *
- * - Idempoten per `Uuid`: Uuid yang sudah diterima dari perangkat yang sama = `Duplikat`; dipakai data lain =
- *   `UuidSudahDipakai`.
+ * - Idempoten per `Uuid`: Uuid yang sudah diterima dari perangkat yang sama = `Duplikat` (diperiksa sebelum akses
+ *   kasir, supaya kiriman ulang setelah izin dicabut tidak macet di outbox); dipakai data lain = `UuidSudahDipakai`.
  * - Pembuka wajib anggota aktif dengan akses outlet perangkat dan izin `penjualan.buat` (berjualan & shift sendiri).
  * - BR-06.1: perangkat yang masih punya shift aktif lain ditolak (`ShiftSudahTerbuka`). Kasir yang sudah punya shift
  *   aktif di perangkat lain pada outlet yang sama (bukan shift bersama, BR-06.2) tetap diterima karena bisa terjadi
@@ -48,6 +48,14 @@ final class BukaShift
     {
         $idTenant = $this->konteks->Wajib();
         $pembuka = $this->anggota->Cari($idTenant, $data->uuidPembuka, $data->idOutlet);
+        $sudahAda = Shift::query()->where('Uuid', $data->uuid)->first();
+
+        // Kiriman ulang tetap `Duplikat` walau akses kasir dicabut setelah shift diterima.
+        if ($sudahAda !== null) {
+            $idPembuka = $pembuka->id ?? $this->anggota->CariDiTenant($idTenant, $data->uuidPembuka, $data->idOutlet)[0]->id ?? null;
+
+            return $this->BandingkanDuplikat($sudahAda, $data, $idPembuka);
+        }
 
         if ($pembuka === null) {
             throw new PelanggaranAturanBisnis('KasirTidakDitemukan', 'Kasir ini tidak terdaftar di outlet perangkat ini.', 'UuidPengguna');
@@ -139,9 +147,10 @@ final class BukaShift
         }
     }
 
-    private function BandingkanDuplikat(Shift $lama, DataBukaShift $data, int $idPembuka): StatusItemSinkron
+    private function BandingkanDuplikat(Shift $lama, DataBukaShift $data, ?int $idPembuka): StatusItemSinkron
     {
-        $sama = $lama->IdPerangkat === $data->idPerangkat
+        $sama = $idPembuka !== null
+            && $lama->IdPerangkat === $data->idPerangkat
             && $lama->DibukaOleh === $idPembuka
             && Uang::Dari($lama->KasAwal)->SamaDengan($data->kasAwal);
 

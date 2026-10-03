@@ -61,6 +61,11 @@ final class KirimInsightMingguan
                 continue;
             }
 
+            // Saran restock = data stok; halaman sumbernya (`laporan/stok?tab=restock`) mensyaratkan `persediaan.lihat`.
+            if (! $konteks->CekIzin(IzinTenant::PersediaanLihat->value)) {
+                $isi['Restock'] = [];
+            }
+
             try {
                 Mail::to($anggota['Email'])->send(new SurelInsightMingguan(
                     $anggota['Nama'],

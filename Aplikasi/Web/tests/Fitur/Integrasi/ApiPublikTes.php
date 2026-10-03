@@ -195,6 +195,11 @@ it('X7 bagian 4 stok:tulis: penyesuaian stok dari sistem lain langsung diposting
     BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
     expect($saldo())->toBe('197.0000')
         ->and(PenyesuaianStok::query()->count())->toBe(1);
+    // Uuid sama dengan isi berbeda bukan kiriman ulang: 409, bukan 200 yang menyesatkan integrator.
+    $kirim($tulis, array_replace($isi, ['Baris' => [['UuidProduk' => $semen->Uuid, 'Jumlah' => '-4']]]))
+        ->assertStatus(409)->assertJsonPath('Galat.Kode', 'UuidSudahDipakai');
+    BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+    expect($saldo())->toBe('197.0000')->and(PenyesuaianStok::query()->count())->toBe(1);
     $audit = LogAudit::query()->where('Peristiwa', 'penyesuaian-stok.posting')->sole();
     expect($audit->IdPengguna)->toBe($k['Pemilik']->Id)->and($audit->AgenPengguna)->toContain('Token API payou_');
 

@@ -109,6 +109,12 @@ final class TerimaVoidPenjualanPos
             return DB::transaction(fn (): StatusItemSinkron => $this->Proses($data));
         } catch (QueryException $galat) {
             if (($galat->errorInfo[1] ?? null) === 1062) {
+                $duplikat = $this->CekDuplikat($data);
+
+                if ($duplikat !== null) {
+                    return $duplikat;
+                }
+
                 if (str_contains($galat->getMessage(), 'UniqVoidPenjualanIdTenantIdPenjualan')) {
                     throw self::GalatSudahDivoid();
                 }
@@ -120,21 +126,35 @@ final class TerimaVoidPenjualanPos
         }
     }
 
+    /**
+     * `Duplikat` bila Uuid ini sudah mem-void penjualan yang sama; galat bila Uuid dipakai dokumen lain; null bila baru.
+     *
+     * @phpstan-impure
+     */
+    private function CekDuplikat(DataVoidPenjualanPos $data): ?StatusItemSinkron
+    {
+        $lama = VoidPenjualan::query()->where('Uuid', $data->uuid)->first();
+
+        if ($lama === null) {
+            return null;
+        }
+
+        if (Penjualan::query()->whereKey($lama->IdPenjualan)->value('Uuid') !== $data->uuidPenjualan) {
+            throw self::GalatUuidDipakai();
+        }
+
+        return StatusItemSinkron::Duplikat;
+    }
+
     private function Proses(DataVoidPenjualanPos $data): StatusItemSinkron
     {
         $idTenant = $this->konteks->Wajib();
 
         // (1) Idempotensi per Uuid.
-        $lama = VoidPenjualan::query()->where('Uuid', $data->uuid)->first();
+        $duplikat = $this->CekDuplikat($data);
 
-        if ($lama !== null) {
-            $uuidPenjualanLama = Penjualan::query()->whereKey($lama->IdPenjualan)->value('Uuid');
-
-            if ($uuidPenjualanLama === $data->uuidPenjualan) {
-                return StatusItemSinkron::Duplikat;
-            }
-
-            throw self::GalatUuidDipakai();
+        if ($duplikat !== null) {
+            return $duplikat;
         }
 
         // (2) Penjualan di outlet perangkat (kunci baris dokumen, L2).
@@ -145,7 +165,8 @@ final class TerimaVoidPenjualanPos
         }
 
         if ($penjualan->Status === StatusPenjualan::Void) {
-            throw self::GalatSudahDivoid();
+            // Kiriman ganda yang bersamaan: yang kalah menunggu kunci baris lalu melihat void miliknya sendiri.
+            return $this->CekDuplikat($data) ?? throw self::GalatSudahDivoid();
         }
 
         // (3) Syarat void fase 1.
@@ -287,10 +308,22 @@ final class TerimaVoidPenjualanPos
         }
     }
 
+    /** Pembayaran yang dikembalikan lewat dokumennya sendiri, bukan uang yang harus direfund ke pembeli. */
+    private const BUKAN_REFUND = [
+        JenisMetodePembayaran::Tempo,
+        JenisMetodePembayaran::Deposit,
+        JenisMetodePembayaran::UangMuka,
+        JenisMetodePembayaran::Tukar,
+        JenisMetodePembayaran::Poin,
+        JenisMetodePembayaran::Voucher,
+    ];
+
     /**
      * Pengembalian mengikuti pembayaran asal: tunai bersih (diterima − kembalian) keluar dari laci; non-tunai dicatat
      * sebagai refund manual (BR-09.2). Tempo (F-12) bukan refund: piutangnya dibatalkan. Deposit (F-16d) bukan refund:
-     * saldonya dikembalikan.
+     * saldonya dikembalikan. Uang muka (pre-order & pesanan online) bukan refund: tetap melekat di pesanan yang dibuka
+     * kembali. Tukar (K-11) bukan refund: nilai retur tukar bisa dipakai lagi karena penjualan void tidak dihitung
+     * `PemeriksaTukarBarang`. Poin & voucher bukan uang yang diterima.
      *
      * @return array{0: Uang, 1: Uang} [refund tunai, refund non-tunai]
      */
@@ -300,7 +333,7 @@ final class TerimaVoidPenjualanPos
         $nonTunai = Uang::Nol();
 
         foreach (PenjualanPembayaran::query()->where('IdPenjualan', $penjualan->Id)->get() as $bayar) {
-            if (in_array($bayar->JenisMetode, [JenisMetodePembayaran::Tempo, JenisMetodePembayaran::Deposit], true)) {
+            if (in_array($bayar->JenisMetode, self::BUKAN_REFUND, true)) {
                 continue;
             }
 

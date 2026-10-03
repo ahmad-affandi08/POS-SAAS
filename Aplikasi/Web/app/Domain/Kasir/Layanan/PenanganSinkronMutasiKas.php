@@ -45,14 +45,14 @@ final class PenanganSinkronMutasiKas implements PenanganItemSinkron
         return $this->catat->Jalankan(new DataMutasiKas(
             uuid: $uuid,
             idPerangkat: $konteks->idPerangkat,
-            uuidShift: (string) $valid['UuidShift'],
+            uuidShift: strtoupper((string) $valid['UuidShift']),
             jenis: JenisMutasiKas::from((string) $valid['Jenis']),
-            uuidKategori: isset($valid['UuidKategori']) ? (string) $valid['UuidKategori'] : null,
+            uuidKategori: isset($valid['UuidKategori']) ? strtoupper((string) $valid['UuidKategori']) : null,
             jumlah: Uang::Dari((string) $valid['Jumlah']),
             catatan: $catatan === '' ? null : $catatan,
-            uuidPencatat: (string) $valid['UuidPencatat'],
+            uuidPencatat: strtoupper((string) $valid['UuidPencatat']),
             dicatatPada: ValidasiItemSinkron::AmbilWaktu((string) $valid['DicatatPada']),
-            uuidPenyetuju: isset($valid['UuidPenyetuju']) ? (string) $valid['UuidPenyetuju'] : null,
+            uuidPenyetuju: isset($valid['UuidPenyetuju']) ? strtoupper((string) $valid['UuidPenyetuju']) : null,
             bukti: isset($valid['Bukti']) && $valid['Bukti'] !== '' ? (string) $valid['Bukti'] : null,
         ));
     }

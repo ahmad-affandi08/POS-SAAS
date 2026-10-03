@@ -15,7 +15,8 @@ use Carbon\CarbonImmutable;
 
 /**
  * Jurnal retur penjualan satu dokumen (PRD §11.3 J-09.2, "Rincian F-09 fase 1"), dimensi outlet retur:
- * - Dr Retur Penjualan = Σ nilai retur − pajak − biaya layanan (pendapatan bersih diskon yang dibalik).
+ * - Dr Retur Penjualan = Σ nilai retur − pajak − biaya layanan − ongkir (pendapatan barang bersih diskon yang dibalik).
+ * - Dr Pendapatan Pengiriman = bagian ongkir (F-17 bagian 3) yang ikut dikembalikan; penjualannya mengkredit akun itu.
  * - Dr pajak bagian retur per kode menurut kategori `JenisPajak` (Ppn → PPN Keluaran, lainnya → Hutang PB1/PBJT);
  *   Dr Pendapatan Biaya Layanan.
  * - Cr per refund: tunai → akun metode atau Kas Outlet; transfer → akun metode atau Bank.
@@ -31,13 +32,15 @@ final class PenyusunJurnalReturPenjualan
      * @param  list<array{0: MetodePembayaran, 1: Uang}>  $refund
      * @param  array<string, Uang>  $persediaan  nilai PeranAkun persediaan → nilai stok yang kembali (positif)
      */
-    public function Susun(ReturPenjualan $retur, Uang $totalNilai, Uang $biayaLayanan, array $pajak, array $refund, array $persediaan): DataJurnal
+    public function Susun(ReturPenjualan $retur, Uang $totalNilai, Uang $biayaLayanan, array $pajak, array $refund, array $persediaan, ?Uang $biayaKirim = null): DataJurnal
     {
+        $biayaKirim ??= Uang::Nol();
         $idOutlet = $retur->IdOutlet;
         $totalPajak = array_reduce($pajak, fn (Uang $t, Uang $u): Uang => $t->Tambah($u), Uang::Nol());
         $baris = [
-            DataBarisJurnal::DariSelisih(PeranAkun::ReturPenjualan, $totalNilai->Kurangi($totalPajak)->Kurangi($biayaLayanan), $idOutlet),
+            DataBarisJurnal::DariSelisih(PeranAkun::ReturPenjualan, $totalNilai->Kurangi($totalPajak)->Kurangi($biayaLayanan)->Kurangi($biayaKirim), $idOutlet),
             DataBarisJurnal::DariSelisih(PeranAkun::PendapatanBiayaLayanan, $biayaLayanan, $idOutlet),
+            DataBarisJurnal::DariSelisih(PeranAkun::PendapatanPengiriman, $biayaKirim, $idOutlet),
         ];
 
         $akunPajak = $this->penyusunPenjualan->TentukanAkunPajak(array_map('strval', array_keys($pajak)));

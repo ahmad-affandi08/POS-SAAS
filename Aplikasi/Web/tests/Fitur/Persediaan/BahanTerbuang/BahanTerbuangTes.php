@@ -174,6 +174,9 @@ describe('F-05f outbox kasir BahanTerbuang.Catat', function (): void {
         BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
         expect(BantuanKasir::KirimRingkas($this, $k['Token'], [$item]))->toBe([['Duplikat', null]]);
         BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+        // Uuid sama dengan jumlah berbeda bukan kiriman ulang: ditolak, tidak diam-diam dianggap Duplikat.
+        expect(BantuanKasir::KirimRingkas($this, $k['Token'], [ItemBahanTerbuang($k, $p['Menu'], '2', null, $item['Uuid'])]))->toBe([['Ditolak', 'UuidSudahDipakai']]);
+        BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
 
         $catatan = BahanTerbuang::query()->sole();
         expect($catatan->Sumber)->toBe(BahanTerbuang::SUMBER_POS)

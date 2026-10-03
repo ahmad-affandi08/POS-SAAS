@@ -419,7 +419,7 @@
     "/stok/penyesuaian": {
       "post": {
         "summary": "Buat penyesuaian stok",
-        "description": "Membuat & mengajukan penyesuaian stok seperti di back-office: di bawah batas nilai persetujuan langsung Diposting (mutasi stok & jurnal), di atasnya MenungguPersetujuan sampai disetujui di back-office. Produk bernomor seri belum didukung (PelacakanBelumDidukung). 201 = dokumen baru, 200 = Uuid yang sama dikirim ulang.",
+        "description": "Membuat & mengajukan penyesuaian stok seperti di back-office: di bawah batas nilai persetujuan langsung Diposting (mutasi stok & jurnal), di atasnya MenungguPersetujuan sampai disetujui di back-office. Produk bernomor seri belum didukung (PelacakanBelumDidukung). 201 = dokumen baru, 200 = Uuid yang sama dikirim ulang dengan isi sama, 409 = Uuid sama dengan isi berbeda.",
         "tags": [
           "Tulis"
         ],
@@ -569,6 +569,16 @@
           },
           "422": {
             "description": "Validasi gagal (ValidasiGagal) atau aturan bisnis: GudangTidakDikenal, ProdukTidakDikenal, BatchTidakDikenal, PelacakanBelumDidukung, KeteranganWajib, UuidSudahDipakai (Uuid milik draf back-office), stok/periode, dll. Gagal = tidak ada dokumen yang tersimpan.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Galat"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "UuidSudahDipakai: Uuid ini sudah dipakai penyesuaian lain dengan isi berbeda (lokasi atau baris). Pakai Uuid baru; tidak ada dokumen yang tersimpan.",
             "content": {
               "application/json": {
                 "schema": {

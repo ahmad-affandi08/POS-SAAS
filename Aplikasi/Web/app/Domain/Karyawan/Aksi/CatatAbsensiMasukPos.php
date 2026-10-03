@@ -37,14 +37,21 @@ final class CatatAbsensiMasukPos
      */
     public function Jalankan(DataAbsensiPos $data): StatusItemSinkron
     {
+        $lama = Absensi::query()->where('Uuid', $data->uuid)->first();
+
+        // Diperiksa sebelum akses pengguna: kiriman ulang setelah akses dicabut tetap `Duplikat`, bukan macet di outbox.
+        if ($lama !== null) {
+            if ($lama->IdPerangkat !== $data->idPerangkat) {
+                throw new PelanggaranAturanBisnis('UuidSudahDipakai', 'Uuid absensi sudah dipakai. Absen ulang di perangkat.', 'Uuid');
+            }
+
+            return StatusItemSinkron::Duplikat;
+        }
+
         $pelaku = $this->anggota->Cari($data->idTenant, $data->uuidPengguna, $data->idOutlet);
 
         if ($pelaku === null) {
             throw new PelanggaranAturanBisnis('KasirTidakDitemukan', 'Pengguna ini tidak terdaftar di outlet perangkat.', 'UuidPengguna');
-        }
-
-        if (Absensi::query()->where('Uuid', $data->uuid)->exists()) {
-            return StatusItemSinkron::Duplikat;
         }
 
         $path = $data->swafoto === null ? null : $this->swafoto->Simpan($data->idTenant, $data->swafoto);

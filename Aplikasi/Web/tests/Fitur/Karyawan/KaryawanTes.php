@@ -8,6 +8,8 @@ use App\Domain\Karyawan\Model\Absensi;
 use App\Domain\Karyawan\Model\JadwalKerja;
 use App\Domain\Karyawan\Model\Karyawan;
 use App\Domain\Organisasi\Enum\PeranTenantBawaan;
+use App\Domain\Organisasi\Enum\StatusKeanggotaan;
+use App\Domain\Organisasi\Model\TenantPengguna;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia;
@@ -192,6 +194,23 @@ describe('F-18 absensi dari POS', function (): void {
         BantuanOrganisasi::Masuk($this, $b['Pemilik'], $b['Tenant']->Id);
         $this->get("/kelola/karyawan/absensi/{$uuid}/swafoto/masuk")->assertNotFound();
         $this->getJson('/kelola/karyawan/absensi?cari=')->assertOk()->assertJsonPath('Meta.Total', 0);
+    });
+
+    it('kiriman ulang absen masuk & keluar setelah akses pengguna dicabut tetap Duplikat, bukan macet KasirTidakDitemukan', function (): void {
+        $k = SiapkanKaryawan($this);
+        $uuid = BantuanKasir::Uuid();
+        $masuk = ItemAbsensi('Absensi.Masuk', ['UuidPengguna' => $k['Kasir']->Uuid, 'MasukPada' => JamHariIni(8, 0)], $uuid);
+        $keluar = ItemAbsensi('Absensi.Keluar', ['UuidAbsensi' => $uuid, 'UuidPengguna' => $k['Kasir']->Uuid, 'KeluarPada' => JamHariIni(16, 0)]);
+
+        expect(BantuanKasir::KirimRingkas($this, $k['Token'], [$masuk, $keluar]))->toBe([['Diterima', null], ['Diterima', null]]);
+        BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+        TenantPengguna::query()->where('IdTenant', $k['Tenant']->Id)->where('IdPengguna', $k['Kasir']->Id)->update(['Status' => StatusKeanggotaan::Nonaktif->value]);
+
+        expect(BantuanKasir::KirimRingkas($this, $k['Token'], [$masuk, $keluar]))->toBe([['Duplikat', null], ['Duplikat', null]])
+            // Absen baru dari pengguna yang sudah dicabut tetap ditolak.
+            ->and(BantuanKasir::KirimRingkas($this, $k['Token'], [ItemAbsensi('Absensi.Masuk', ['UuidPengguna' => $k['Kasir']->Uuid, 'MasukPada' => JamHariIni(8, 5)])]))->toBe([['Ditolak', 'KasirTidakDitemukan']]);
+        BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+        expect(Absensi::query()->count())->toBe(1);
     });
 
     it('swafoto bukan JPEG, pengguna di luar outlet, dan karyawan nonaktif ditolak', function (): void {

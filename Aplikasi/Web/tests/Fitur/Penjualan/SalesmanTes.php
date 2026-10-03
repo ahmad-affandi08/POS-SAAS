@@ -206,6 +206,27 @@ describe('Outbox Kunjungan.Catat', function (): void {
             ->and($catatan->IdPesananGrosir)->toBe(PesananGrosir::query()->sole()->Id);
     });
 
+    it('Uuid yang dipakai ulang dengan isi berbeda ditolak UuidSudahDipakai, bukan dianggap Duplikat', function (): void {
+        /** @var TestCase $this */
+        $k = SiapkanSalesman($this);
+        $pesanan = ItemPesananSalesman($k, [['UuidProduk' => $k['Gula']->Uuid, 'Jumlah' => '50']]);
+        $kunjungan = ItemKunjungan($k, ['Hasil' => 'TidakPesan']);
+
+        expect(BantuanKasir::KirimRingkas($this, $k['TokenHp'], [$pesanan, $kunjungan]))->toBe([['Diterima', null], ['Diterima', null]]);
+        BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+
+        $pesananLain = ItemPesananSalesman($k, [['UuidProduk' => $k['Gula']->Uuid, 'Jumlah' => '50'], ['UuidProduk' => $k['Gula']->Uuid, 'Jumlah' => '5']], [], $pesanan['Uuid']);
+        $kunjunganLain = ItemKunjungan($k, ['Hasil' => 'TokoTutup'], $kunjungan['Uuid']);
+
+        expect(BantuanKasir::KirimRingkas($this, $k['TokenHp'], [$pesananLain, $kunjunganLain]))->toBe([
+            ['Ditolak', 'UuidSudahDipakai'],
+            ['Ditolak', 'UuidSudahDipakai'],
+        ]);
+        BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+        expect(PesananGrosir::query()->count())->toBe(1)
+            ->and(KunjunganSales::query()->sole()->Hasil)->toBe(HasilKunjungan::TidakPesan);
+    });
+
     it('pesanan yang belum ada disimpan kosong lalu ditautkan saat pesanannya tiba belakangan', function (): void {
         /** @var TestCase $this */
         $k = SiapkanSalesman($this);

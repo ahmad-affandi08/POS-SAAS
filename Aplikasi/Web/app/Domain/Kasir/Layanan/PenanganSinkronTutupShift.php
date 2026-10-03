@@ -62,21 +62,21 @@ final class PenanganSinkronTutupShift implements PenanganItemSinkron
         $nonTunai = [];
 
         foreach (is_array($valid['NonTunai'] ?? null) ? $valid['NonTunai'] : [] as $baris) {
-            $nonTunai[] = ['UuidMetodePembayaran' => (string) $baris['UuidMetodePembayaran'], 'Jumlah' => Uang::Dari((string) $baris['Jumlah'])];
+            $nonTunai[] = ['UuidMetodePembayaran' => strtoupper((string) $baris['UuidMetodePembayaran']), 'Jumlah' => Uang::Dari((string) $baris['Jumlah'])];
         }
 
         $alasan = isset($valid['Alasan']) ? trim((string) $valid['Alasan']) : '';
 
         return $this->tutup->Jalankan(new DataTutupShift(
             idPerangkat: $konteks->idPerangkat,
-            uuidShift: (string) $valid['UuidShift'],
-            uuidPenutup: (string) $valid['UuidPengguna'],
+            uuidShift: strtoupper((string) $valid['UuidShift']),
+            uuidPenutup: strtoupper((string) $valid['UuidPengguna']),
             ditutupPada: ValidasiItemSinkron::AmbilWaktu((string) $valid['DitutupPada']),
             kasAktual: Uang::Dari((string) $valid['KasAktual']),
             pecahan: $pecahan,
             nonTunai: $nonTunai,
             alasan: $alasan === '' ? null : $alasan,
-            uuidPenyetuju: isset($valid['UuidPenyetuju']) ? (string) $valid['UuidPenyetuju'] : null,
+            uuidPenyetuju: isset($valid['UuidPenyetuju']) ? strtoupper((string) $valid['UuidPenyetuju']) : null,
             ringkasanKasSeharusnya: Uang::Dari((string) $valid['Ringkasan']['KasSeharusnya']),
             ringkasanSelisih: Uang::Dari((string) $valid['Ringkasan']['Selisih']),
         ));

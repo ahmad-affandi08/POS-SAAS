@@ -49,7 +49,7 @@ final class PenanganSinkronBukaShift implements PenanganItemSinkron
             uuid: $uuid,
             idPerangkat: $konteks->idPerangkat,
             idOutlet: $konteks->idOutlet,
-            uuidPembuka: (string) $valid['UuidPengguna'],
+            uuidPembuka: strtoupper((string) $valid['UuidPengguna']),
             dibukaPada: ValidasiItemSinkron::AmbilWaktu((string) $valid['DibukaPada']),
             kasAwal: Uang::Dari((string) $valid['KasAwal']),
             pecahan: $pecahan,

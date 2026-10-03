@@ -8,6 +8,7 @@ use App\Domain\Bersama\Dokumen\Enum\StatusDokumenTerposting;
 use App\Domain\Bersama\Tabel\Data\DataPermintaanTabel;
 use App\Domain\Penjualan\Aksi\BatalkanFakturPenjualan;
 use App\Domain\Penjualan\Aksi\BuatFakturPenjualan;
+use App\Domain\Penjualan\Aksi\UbahNomorFakturPajak;
 use App\Domain\Penjualan\Kueri\DaftarDokumenGrosir;
 use App\Domain\Penjualan\Kueri\DetailGrosir;
 use App\Domain\Penjualan\Kueri\DokumenCetakGrosir;
@@ -75,7 +76,7 @@ final class FakturPenjualanKontroler extends DasarGrosirKontroler
         ]);
     }
 
-    public function UbahNomorPajak(NomorFakturPajakPermintaan $permintaan, string $faktur): RedirectResponse
+    public function UbahNomorPajak(NomorFakturPajakPermintaan $permintaan, string $faktur, UbahNomorFakturPajak $ubah): RedirectResponse
     {
         $dokumen = $this->CariDokumen(FakturPenjualan::class, $faktur);
 
@@ -84,9 +85,7 @@ final class FakturPenjualanKontroler extends DasarGrosirKontroler
                 ->withErrors(['Umum' => 'Faktur yang sudah dibatalkan tidak bisa diubah.']);
         }
 
-        $dokumen->NomorFakturPajak = $permintaan->AmbilNomor();
-        $dokumen->DiubahOleh = $this->Pelaku()->Id;
-        $dokumen->save();
+        $ubah->Jalankan($dokumen->Uuid, $permintaan->AmbilNomor(), $this->Pelaku()->Id);
 
         return to_route('kelola.grosir.faktur.detail', ['faktur' => $dokumen->Uuid])->with('Kilat', 'Nomor Faktur Pajak disimpan.');
     }

@@ -28,6 +28,7 @@ use LogicException;
  * @property string $NilaiBaris
  * @property string $Pajak
  * @property string $BiayaLayanan
+ * @property string $BiayaKirim
  * @property string $HppSatuan
  * @property string $TotalHpp
  * @property KondisiBarangRetur $Kondisi
@@ -50,6 +51,7 @@ final class ReturPenjualanDetail extends ModelDasar
             'NilaiBaris' => 'decimal:2',
             'Pajak' => 'decimal:2',
             'BiayaLayanan' => 'decimal:2',
+            'BiayaKirim' => 'decimal:2',
             'HppSatuan' => 'decimal:6',
             'TotalHpp' => 'decimal:2',
             'Kondisi' => KondisiBarangRetur::class,

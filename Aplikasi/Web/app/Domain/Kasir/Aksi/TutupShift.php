@@ -88,13 +88,15 @@ final class TutupShift
         }
 
         $penutup = $this->anggota->Cari($idTenant, $data->uuidPenutup, $shift->IdOutlet);
+        // Kiriman ulang dicocokkan dengan Id pengguna walau aksesnya sudah dicabut sejak shift ditutup.
+        $idPenutup = $penutup->id ?? $this->anggota->CariDiTenant($idTenant, $data->uuidPenutup, $shift->IdOutlet)[0]->id ?? null;
 
         if ($shift->Status === StatusShift::Tertutup) {
-            return $this->BandingkanDuplikat($shift, $data, $penutup);
+            return $this->BandingkanDuplikat($shift, $data, $idPenutup);
         }
 
         // K-18: tutup lama yang terkirim ulang setelah shift dibuka ulang = Duplikat (bukan menutup lagi).
-        if ($shift->Status === StatusShift::DibukaUlang && $this->CekTutupSebelumBukaUlang($shift, $data, $penutup)) {
+        if ($shift->Status === StatusShift::DibukaUlang && $this->CekTutupSebelumBukaUlang($shift, $data, $idPenutup)) {
             return StatusItemSinkron::Duplikat;
         }
 
@@ -203,16 +205,16 @@ final class TutupShift
         }
     }
 
-    private function CekTutupSebelumBukaUlang(Shift $shift, DataTutupShift $data, ?DataAnggotaOutlet $penutup): bool
+    private function CekTutupSebelumBukaUlang(Shift $shift, DataTutupShift $data, ?int $idPenutup): bool
     {
-        if ($penutup === null) {
+        if ($idPenutup === null) {
             return false;
         }
 
         foreach (BukaUlangShift::query()->where('IdShift', $shift->Id)->get(['SnapshotTutup']) as $log) {
             $snapshot = $log->SnapshotTutup;
 
-            if ($snapshot['DitutupOleh'] === $penutup->id
+            if ($snapshot['DitutupOleh'] === $idPenutup
                 && $snapshot['DitutupPada'] !== null && CarbonImmutable::parse($snapshot['DitutupPada'])->getTimestamp() === $data->ditutupPada->getTimestamp()
                 && $snapshot['KasAktual'] !== null && Uang::Dari($snapshot['KasAktual'])->SamaDengan($data->kasAktual)) {
                 return true;
@@ -222,10 +224,10 @@ final class TutupShift
         return false;
     }
 
-    private function BandingkanDuplikat(Shift $shift, DataTutupShift $data, ?DataAnggotaOutlet $penutup): StatusItemSinkron
+    private function BandingkanDuplikat(Shift $shift, DataTutupShift $data, ?int $idPenutup): StatusItemSinkron
     {
-        $sama = $penutup !== null
-            && $shift->DitutupOleh === $penutup->id
+        $sama = $idPenutup !== null
+            && $shift->DitutupOleh === $idPenutup
             && $shift->DitutupPada?->getTimestamp() === $data->ditutupPada->getTimestamp()
             && $shift->KasAktual !== null
             && Uang::Dari($shift->KasAktual)->SamaDengan($data->kasAktual);

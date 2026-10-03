@@ -6,6 +6,7 @@ use App\Domain\Bersama\Nilai\Uang;
 use App\Domain\Laporan\Kueri\InsightMingguan;
 use App\Domain\Laporan\Surel\InsightMingguan as SurelInsightMingguan;
 use App\Domain\Organisasi\Enum\PeranTenantBawaan;
+use App\Domain\Organisasi\Model\PeranIzin;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Mail;
@@ -63,6 +64,26 @@ it('Owner menerima insight minggu lalu vs minggu sebelumnya; sekali per minggu; 
     // Jalan ulang minggu yang sama: tidak dikirim lagi.
     $jalankan();
     Mail::assertSent(SurelInsightMingguan::class, 1);
+});
+
+it('anggota ber-izin laporan penjualan tanpa persediaan.lihat menerima insight tanpa saran restock (data stok)', function (): void {
+    $this->travelTo(CarbonImmutable::parse('2026-09-21 05:00:00', 'UTC'));
+    $k = BantuanPenjualan::Siapkan($this, 'Toko Sembako Insight Sragen');
+    $beras = BantuanPenjualan::BuatProdukBerstok($k['Gudang'], $k['Pemilik']->Id, 'Beras Pandan Wangi Karung 5 kg', '40', '60000', '75000.00');
+    BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+    $peranKasir = BantuanOrganisasi::Peran($k['Tenant']->Id, PeranTenantBawaan::Kasir);
+    PeranIzin::query()->create(['IdPeran' => $peranKasir->Id, 'KunciIzin' => 'laporan.penjualan.lihat']);
+    $kasir = BantuanOrganisasi::TambahAnggota($k['Tenant']->Id, PeranTenantBawaan::Kasir);
+    $this->travelTo(CarbonImmutable::parse('2026-09-29 05:00:00', 'UTC'));
+    BantuanPenjualan::Jual($this, $k, ['Baris' => [['Produk' => $beras, 'Jumlah' => '38', 'Harga' => '75000.00']]]);
+
+    $this->travelTo(CarbonImmutable::parse('2026-10-05 00:15:00', 'UTC'));
+    BantuanOrganisasi::Masuk($this, $kasir, $k['Tenant']->Id)->put('/kelola/laporan/penjualan/insight-email', ['Aktif' => true])->assertRedirect();
+    Artisan::call('laporan:kirim-insight-mingguan', ['--tenant' => [$k['Tenant']->Id]]);
+
+    Mail::assertSent(SurelInsightMingguan::class, 2);
+    Mail::assertSent(SurelInsightMingguan::class, fn (SurelInsightMingguan $s): bool => $s->hasTo($k['Pemilik']->Email) && $s->insight['Restock'] !== []);
+    Mail::assertSent(SurelInsightMingguan::class, fn (SurelInsightMingguan $s): bool => $s->hasTo($kasir->Email) && $s->insight['Restock'] === []);
 });
 
 it('sakelar di laporan penjualan: Owner bawaan aktif, berhenti = tidak dikirim; tanpa penjualan tidak dikirim', function (): void {

@@ -13,7 +13,9 @@ use App\Domain\Kasir\Enum\StatusShift;
 use App\Domain\Kasir\Model\MutasiKas;
 use App\Domain\Kasir\Model\Shift;
 use App\Domain\Organisasi\Enum\PeranTenantBawaan;
+use App\Domain\Organisasi\Enum\StatusKeanggotaan;
 use App\Domain\Organisasi\Model\Pengguna;
+use App\Domain\Organisasi\Model\TenantPengguna;
 use App\Domain\Penjualan\Model\Penjualan;
 use App\Domain\Tenant\Kueri\PengaturanKasirTenant;
 use Inertia\Testing\AssertableInertia;
@@ -136,6 +138,22 @@ describe('F-11 tutup shift lewat sinkron', function (): void {
 
         expect(BantuanKasir::KirimRingkas($this, $k['Token'], [$item]))->toBe([['Duplikat', null]])
             ->and(BantuanKasir::KirimRingkas($this, $k['Token'], [ItemTutupShiftUji($k, '450000.00')]))->toBe([['Ditolak', 'ShiftSudahDitutup']]);
+    });
+
+    it('kiriman ulang Shift.Buka & Shift.Tutup setelah akses kasir dicabut tetap Duplikat (outbox tidak macet); isi berbeda tetap ditolak', function (): void {
+        $k = SiapkanShiftTutupUji($this);
+        $item = ItemTutupShiftUji($k, '452000.00');
+
+        expect(BantuanKasir::KirimRingkas($this, $k['Token'], [$item]))->toBe([['Diterima', null]]);
+        BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+        $shift = AmbilShiftUji($k['UuidShift']);
+        $buka = BantuanKasir::ItemBukaShift($k['Kasir'], (string) $shift->KasAwal, ['DibukaPada' => $shift->DibukaPada->utc()->toIso8601ZuluString()], $k['UuidShift']);
+
+        TenantPengguna::query()->where('IdTenant', $k['Tenant']->Id)->where('IdPengguna', $k['Kasir']->Id)->update(['Status' => StatusKeanggotaan::Nonaktif->value]);
+
+        expect(BantuanKasir::KirimRingkas($this, $k['Token'], [$buka, $item]))->toBe([['Duplikat', null], ['Duplikat', null]])
+            ->and(BantuanKasir::KirimRingkas($this, $k['Token'], [ItemTutupShiftUji($k, '450000.00')]))->toBe([['Ditolak', 'ShiftSudahDitutup']])
+            ->and(BantuanKasir::KirimRingkas($this, $k['Token'], [BantuanKasir::ItemBukaShift($k['Kasir'], '1.00', uuid: $k['UuidShift'])]))->toBe([['Ditolak', 'UuidSudahDipakai']]);
     });
 
     it('izin & shift bersama (BR-06.2): tanpa penjualan.buat = TanpaIzin; kasir lain di shift bukan bersama = BukanShiftSendiri; supervisor boleh menutup', function (): void {

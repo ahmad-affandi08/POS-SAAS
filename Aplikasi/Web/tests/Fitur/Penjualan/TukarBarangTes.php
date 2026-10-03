@@ -12,6 +12,7 @@ use App\Domain\Penjualan\Model\MetodePembayaran;
 use App\Domain\Penjualan\Model\Penjualan;
 use App\Domain\Penjualan\Model\PenjualanDetail;
 use App\Domain\Penjualan\Model\ReturPenjualan;
+use App\Domain\Penjualan\Model\VoidPenjualan;
 use Tests\Pendukung\Kasir\BantuanKasir;
 use Tests\Pendukung\Organisasi\BantuanOrganisasi;
 use Tests\Pendukung\Penjualan\BantuanPenjualan;
@@ -77,6 +78,34 @@ describe('K-11 tukar barang', function (): void {
         expect($p->IdReturTukar)->toBe($r->Id)
             ->and($p->AlasanTinjauan ?? null)->toBeNull()
             ->and(SaldoKliringTukar())->toBe('0.00');
+        expect(PemeriksaInvarian::PeriksaSemua($k['Tenant']->Id))->toBe([]);
+    });
+
+    it('void penjualan pengganti: nilai tukar bukan refund non-tunai (bisa dipakai lagi), hanya tunai yang keluar dari laci', function (): void {
+        $k = BantuanPenjualan::Siapkan($this);
+        $this->withToken($k['Token'])->getJson('/api/pos/v1/data-awal')->assertOk();
+        BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+        $tukar = MetodePembayaran::query()->where('Jenis', JenisMetodePembayaran::Tukar->value)->sole();
+        $kaos = BantuanPenjualan::BuatProdukBerstok($k['Gudang'], $k['Pemilik']->Id, 'Kaos Polos Katun Combed 30s Ukuran M', '5', '45000', '85000.00');
+        $kaosL = BantuanPenjualan::BuatProdukBerstok($k['Gudang'], $k['Pemilik']->Id, 'Kaos Polos Katun Combed 30s Ukuran XL', '5', '50000', '95000.00');
+
+        $asal = BantuanPenjualan::Jual($this, $k, ['Baris' => [['Produk' => $kaos, 'Jumlah' => '1', 'Harga' => '85000.00']]]);
+        $d = PenjualanDetail::query()->where('IdPenjualan', $asal->Id)->sole();
+        $retur = BantuanPenjualan::ItemRetur($k, $asal, [['Detail' => $d, 'Jumlah' => '1']], ['Refund' => [['Metode' => $tukar, 'Jumlah' => null]]]);
+        $pengganti = BantuanPenjualan::Item($k, [
+            'Baris' => [['Produk' => $kaosL, 'Jumlah' => '1', 'Harga' => '95000.00']],
+            'Pembayaran' => [['Metode' => $tukar, 'Jumlah' => '85000.00'], ['Metode' => $k['Tunai'], 'Jumlah' => null]],
+        ], ['UuidReturTukar' => $retur['Uuid']]);
+        expect(BantuanKasir::KirimRingkas($this, $k['Token'], [$retur, $pengganti]))->toBe([['Diterima', null], ['Diterima', null]]);
+
+        BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+        $p = Penjualan::query()->where('Uuid', $pengganti['Uuid'])->sole();
+        expect(BantuanKasir::KirimRingkas($this, $k['Token'], [BantuanPenjualan::ItemVoid($k, $p)]))->toBe([['Diterima', null]]);
+        BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+        $void = VoidPenjualan::query()->where('IdPenjualan', $p->Id)->sole();
+        expect($void->RefundNonTunai)->toBe('0.00')
+            ->and($void->RefundTunai)->toBe('10000.00')
+            ->and(SaldoKliringTukar())->toBe('-85000.00');
         expect(PemeriksaInvarian::PeriksaSemua($k['Tenant']->Id))->toBe([]);
     });
 
