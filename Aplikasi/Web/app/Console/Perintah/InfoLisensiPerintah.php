@@ -35,7 +35,15 @@ final class InfoLisensiPerintah extends Command
             ['Batas perangkat per outlet', $lisensi->batasPerangkatPerOutlet ?? 'tak terbatas'],
             ['Batas pengguna', $lisensi->batasPengguna ?? 'tak terbatas'],
             ['Diterbitkan', $lisensi->diterbitkanPada],
+            ['Pembaruan & dukungan sampai', $lisensi->pembaruanSampai ?? 'tanpa batas'],
+            ['Tanggal rilis terpasang', EdisiAplikasi::AmbilTanggalRilis() ?? '-'],
         ]);
+
+        $peringatan = $lisensi->AmbilPeringatanRilis(EdisiAplikasi::AmbilTanggalRilis());
+
+        if ($peringatan !== null) {
+            $this->warn($peringatan);
+        }
 
         // Katalog fitur diisi `db:seed`; tanpa itu lisensi sah tidak memberi fitur apa pun.
         if (! Fitur::query()->exists()) {

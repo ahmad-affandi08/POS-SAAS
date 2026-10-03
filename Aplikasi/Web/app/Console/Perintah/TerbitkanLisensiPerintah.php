@@ -23,6 +23,7 @@ final class TerbitkanLisensiPerintah extends Command
         {--batas-outlet= : Jumlah outlet maksimal (kosong = tak terbatas)}
         {--batas-perangkat= : Perangkat kasir per outlet maksimal (kosong = tak terbatas)}
         {--batas-pengguna= : Pengguna maksimal (kosong = tak terbatas)}
+        {--pembaruan-sampai= : Akhir masa pembaruan & dukungan YYYY-MM-DD (bawaan 1 tahun sejak terbit, D-36)}
         {--kunci-privat= : Berkas kunci privat penerbit}
         {--keluaran= : Berkas lisensi yang dihasilkan, misal payou-tokoabc.lisensi}';
 
@@ -40,6 +41,11 @@ final class TerbitkanLisensiPerintah extends Command
             return self::FAILURE;
         }
 
+        // D-36: hak pakai selamanya, pembaruan & dukungan gratis 1 tahun. Perpanjangan pemeliharaan = terbitkan ulang
+        // lisensi bernomor sama dengan tanggal baru, lalu pembeli menjalankan lisensi:pasang.
+        $hariIni = now('Asia/Jakarta');
+        $pembaruanSampai = $this->option('pembaruan-sampai');
+
         try {
             $data = DataLisensi::DariArray([
                 'Nomor' => $this->option('nomor'),
@@ -48,7 +54,8 @@ final class TerbitkanLisensiPerintah extends Command
                 'BatasOutlet' => $this->AmbilBatas('batas-outlet'),
                 'BatasPerangkatPerOutlet' => $this->AmbilBatas('batas-perangkat'),
                 'BatasPengguna' => $this->AmbilBatas('batas-pengguna'),
-                'DiterbitkanPada' => now('Asia/Jakarta')->toDateString(),
+                'DiterbitkanPada' => $hariIni->toDateString(),
+                'PembaruanSampai' => is_string($pembaruanSampai) && $pembaruanSampai !== '' ? $pembaruanSampai : $hariIni->addYear()->subDay()->toDateString(),
             ]);
             $isi = $penanda->Tandatangani($data, $kunciPrivat);
             $penanda->Baca($isi);
@@ -70,7 +77,7 @@ final class TerbitkanLisensiPerintah extends Command
             return self::FAILURE;
         }
 
-        $this->info("Lisensi {$data->nomor} untuk {$data->namaPemegang} ({$data->domain}) ditulis ke {$keluaran}.");
+        $this->info("Lisensi {$data->nomor} untuk {$data->namaPemegang} ({$data->domain}) ditulis ke {$keluaran}. Pembaruan & dukungan sampai {$data->pembaruanSampai}.");
 
         return self::SUCCESS;
     }

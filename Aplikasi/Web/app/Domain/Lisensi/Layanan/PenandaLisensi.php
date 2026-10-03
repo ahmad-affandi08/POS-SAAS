@@ -14,7 +14,7 @@ use SodiumException;
  * Tanda tangan & verifikasi berkas lisensi (D-35) dengan Ed25519 (libsodium). Verifikasi sepenuhnya offline: server
  * pembeli hanya butuh kunci publik di `config/lisensi.php`, tidak pernah menghubungi server PAYOU.
  *
- * Bentuk berkas: JSON `{"Format": 1, "Data": {...}, "TandaTangan": "<base64>"}`. Yang ditandatangani adalah JSON
+ * Bentuk berkas: JSON `{"Format": 1|2, "Data": {...}, "TandaTangan": "<base64>"}`. Yang ditandatangani adalah JSON
  * kanonik `DataLisensi::KeArray()` (urutan kunci tetap, tanpa escape garis miring/unicode), bukan teks berkas apa
  * adanya, sehingga spasi/indentasi berkas boleh berubah tanpa merusak tanda tangan.
  */
@@ -47,7 +47,7 @@ final class PenandaLisensi
         sodium_memzero($kunciPrivat);
 
         return json_encode([
-            'Format' => DataLisensi::VERSI_FORMAT,
+            'Format' => $data->AmbilFormat(),
             'Data' => $data->KeArray(),
             'TandaTangan' => base64_encode($tandaTangan),
         ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR)."\n";
@@ -70,12 +70,12 @@ final class PenandaLisensi
             throw new LisensiTidakSah('Berkas lisensi rusak: bukan JSON yang sah.');
         }
 
-        if (! is_array($berkas) || ($berkas['Format'] ?? null) !== DataLisensi::VERSI_FORMAT
+        if (! is_array($berkas) || ! in_array($berkas['Format'] ?? null, DataLisensi::FORMAT_DIKENAL, true)
             || ! is_array($berkas['Data'] ?? null) || ! is_string($berkas['TandaTangan'] ?? null)) {
             throw new LisensiTidakSah('Berkas lisensi rusak atau formatnya tidak dikenal.');
         }
 
-        $data = DataLisensi::DariArray($berkas['Data']);
+        $data = DataLisensi::DariArray($berkas['Data'], (int) $berkas['Format']);
         $tandaTangan = base64_decode($berkas['TandaTangan'], true);
 
         try {

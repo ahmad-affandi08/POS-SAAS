@@ -7,6 +7,7 @@ namespace App\Domain\Pengelola\DataBawaan\Aksi;
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Bersama\Status\StatusDataMaster;
 use App\Domain\Lisensi\Enum\EdisiAplikasi;
+use App\Domain\Lisensi\Kueri\LisensiBerlaku;
 use App\Domain\Pajak\Model\JenisPajak;
 use App\Domain\Pajak\Model\TarifPajak;
 use App\Domain\Pajak\Peristiwa\TarifPajakTerbit;
@@ -14,6 +15,7 @@ use App\Domain\Referensi\Enum\JenisHariLibur;
 use App\Domain\Referensi\Model\HariLibur;
 use Brick\Math\BigDecimal;
 use Brick\Math\Exception\MathException;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -26,9 +28,13 @@ use Illuminate\Support\Facades\DB;
  *   lama sehari sebelumnya (seperti BR-P02.1); tarif yang berlaku lebih awal dari tarif terbit terakhir dilewati
  *   karena tarif terbit tidak boleh diubah mundur.
  * - Hari libur: ditambahkan bila tanggal & namanya belum ada; pembatalan di paket ikut membatalkan baris setempat.
+ * - D-36: berkas yang dibuat setelah masa pembaruan lisensi berakhir ditolak (pembaruan data master termasuk layanan
+ *   pemeliharaan). Lisensi format 1 tanpa `PembaruanSampai` tidak dibatasi.
  */
 final class ImporDataMasterLisensi
 {
+    public function __construct(private readonly LisensiBerlaku $lisensiBerlaku) {}
+
     /**
      * @return array{TarifBaru: int, TarifDilewati: int, HariLiburBaru: int, HariLiburDibatalkan: int}
      */
@@ -45,6 +51,8 @@ final class ImporDataMasterLisensi
             throw new PelanggaranAturanBisnis('D-35', 'Berkas data master rusak atau formatnya tidak dikenal.');
         }
 
+        $this->PastikanDalamMasaPembaruan($paket['DibuatPada'] ?? null);
+
         $hasil = DB::transaction(fn (): array => [
             ...$this->ImporTarif($paket['TarifPajak']),
             ...$this->ImporHariLibur($paket['HariLibur']),
@@ -60,6 +68,29 @@ final class ImporDataMasterLisensi
             'HariLiburBaru' => $hasil['HariLiburBaru'],
             'HariLiburDibatalkan' => $hasil['HariLiburDibatalkan'],
         ];
+    }
+
+    private function PastikanDalamMasaPembaruan(mixed $dibuatPada): void
+    {
+        $lisensi = $this->lisensiBerlaku->Ambil();
+
+        if ($lisensi?->pembaruanSampai === null) {
+            return;
+        }
+
+        try {
+            $tanggal = is_string($dibuatPada) ? CarbonImmutable::parse($dibuatPada)->setTimezone('Asia/Jakarta')->toDateString() : null;
+        } catch (\Throwable) {
+            $tanggal = null;
+        }
+
+        if ($tanggal === null) {
+            throw new PelanggaranAturanBisnis('D-35', 'Berkas data master rusak: tanggal pembuatan tidak terbaca.');
+        }
+
+        if (! $lisensi->CekDalamMasaPembaruan($tanggal)) {
+            throw new PelanggaranAturanBisnis('D-36', "Berkas data master ini dibuat {$tanggal}, setelah masa pembaruan lisensi {$lisensi->nomor} berakhir ({$lisensi->pembaruanSampai}). Perpanjang pemeliharaan ke PAYOU untuk menerima tarif pajak & hari libur terbaru.");
+        }
     }
 
     /**

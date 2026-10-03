@@ -29,7 +29,7 @@ final class BantuanLisensi
         config(['lisensi.KunciPublik' => self::Kunci()['KunciPublik']]);
     }
 
-    public static function Data(string $domain = 'localhost', ?int $batasOutlet = 2, ?int $batasPerangkat = 3, ?int $batasPengguna = null, string $nomor = 'PAYOU-L-2026-0001'): DataLisensi
+    public static function Data(string $domain = 'localhost', ?int $batasOutlet = 2, ?int $batasPerangkat = 3, ?int $batasPengguna = null, string $nomor = 'PAYOU-L-2026-0001', ?string $pembaruanSampai = null): DataLisensi
     {
         return new DataLisensi(
             nomor: $nomor,
@@ -39,6 +39,7 @@ final class BantuanLisensi
             batasPerangkatPerOutlet: $batasPerangkat,
             batasPengguna: $batasPengguna,
             diterbitkanPada: '2026-10-03',
+            pembaruanSampai: $pembaruanSampai,
         );
     }
 

@@ -233,9 +233,12 @@ jobs:
           mkdir -p "$STAGE"
           tar -xzf "payou-web-${GITHUB_SHA}.tar.gz" -C "$STAGE"
           printf "<?php\n\ndeclare(strict_types=1);\n\nreturn 'Lisensi';\n" > "$STAGE/bootstrap/EdisiTerkunci.php"
+          # D-36: tanggal rilis = tanggal commit (WIB), dibandingkan dengan PembaruanSampai di berkas lisensi.
+          TANGGAL="$(TZ=Asia/Jakarta git show -s --date=format-local:%Y-%m-%d --format=%cd HEAD)"
+          printf "<?php\n\ndeclare(strict_types=1);\n\nreturn '%s';\n" "$TANGGAL" > "$STAGE/bootstrap/TanggalRilis.php"
           rm "$STAGE/routes/Pengelola.php"
           sed -i 's/^EDISI=.*/# Edisi terkunci di paket ini (bootstrap\/EdisiTerkunci.php); EDISI tidak dibaca./' "$STAGE/.env.example"
-          php -r '$c = require "'"$STAGE"'/config/lisensi.php"; exit($c["Edisi"] === "Lisensi" && $c["EdisiTerkunci"] === true ? 0 : 1);'
+          php -r '$c = require "'"$STAGE"'/config/lisensi.php"; exit($c["Edisi"] === "Lisensi" && $c["EdisiTerkunci"] === true && preg_match("/^\\d{4}-\\d{2}-\\d{2}$/", (string) $c["TanggalRilis"]) === 1 ? 0 : 1);'
           tar -czf "${NAMA}.tar.gz" -C "$STAGE" .
           sha256sum "${NAMA}.tar.gz" > "${NAMA}.tar.gz.sha256"
       - uses: actions/upload-artifact@v4

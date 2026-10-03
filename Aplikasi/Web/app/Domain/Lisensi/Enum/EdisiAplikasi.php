@@ -27,6 +27,14 @@ enum EdisiAplikasi: string
         return config('lisensi.EdisiTerkunci') === true;
     }
 
+    /** D-36: tanggal rilis paket PAYOU Mandiri (YYYY-MM-DD); null di repo & rilis SaaS. */
+    public static function AmbilTanggalRilis(): ?string
+    {
+        $tanggal = config('lisensi.TanggalRilis');
+
+        return is_string($tanggal) ? $tanggal : null;
+    }
+
     public static function CekLisensi(): bool
     {
         return self::AmbilBerjalan() === self::Lisensi;

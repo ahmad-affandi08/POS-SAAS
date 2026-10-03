@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Console\Perintah;
 
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
+use App\Domain\Lisensi\Enum\EdisiAplikasi;
+use App\Domain\Lisensi\Kueri\LisensiBerlaku;
 use App\Domain\Pengelola\DataBawaan\Aksi\SiapkanDataBawaanLisensi;
 use Illuminate\Console\Command;
 
@@ -19,7 +21,7 @@ final class SiapkanDataLisensiPerintah extends Command
 
     protected $description = 'Memuat dan menerbitkan data master bawaan rilis di edisi Lisensi (D-35).';
 
-    public function handle(SiapkanDataBawaanLisensi $siapkan): int
+    public function handle(SiapkanDataBawaanLisensi $siapkan, LisensiBerlaku $lisensiBerlaku): int
     {
         try {
             $hasil = $siapkan->Jalankan();
@@ -27,6 +29,13 @@ final class SiapkanDataLisensiPerintah extends Command
             $this->error($galat->getMessage());
 
             return self::FAILURE;
+        }
+
+        // D-36: dijalankan setiap memperbarui rilis, jadi di sinilah pemasang paling mungkin melihat peringatannya.
+        $peringatan = $lisensiBerlaku->Ambil()?->AmbilPeringatanRilis(EdisiAplikasi::AmbilTanggalRilis());
+
+        if ($peringatan !== null) {
+            $this->warn($peringatan);
         }
 
         $this->info("Data master siap: {$hasil['TarifTerbit']} tarif pajak & {$hasil['TemplateTerbit']} template sektor baru diterbitkan.");

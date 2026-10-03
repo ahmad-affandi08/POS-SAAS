@@ -123,6 +123,11 @@ tarif penggantinya terbit.
 Minta berkas lisensi baru ke PAYOU, lalu jalankan `php artisan lisensi:pasang /path/ke/berkas-baru.lisensi`. Data
 usaha tidak disentuh; hanya batas/domain yang berubah. Untuk pindah domain, ganti juga `APP_URL`.
 
+**Masa pembaruan.** `php artisan lisensi:info` menampilkan "Pembaruan & dukungan sampai". Berkas tarif pajak & hari
+libur yang dibuat setelah tanggal itu ditolak, dan `lisensi:info`/`lisensi:siapkan-data` memperingatkan bila rilis
+yang terpasang terbit setelahnya. Aplikasi tetap berjalan. Setelah memperpanjang pemeliharaan, PAYOU mengirim berkas
+lisensi baru bernomor sama; pasang dengan `lisensi:pasang` seperti di atas.
+
 ## Catatan keamanan
 
 - Simpan berkas lisensi & cadangan basis data di luar folder `public`.
@@ -145,6 +150,9 @@ Per pembeli:
 php artisan lisensi:terbitkan --nomor=PAYOU-L-2026-0001 --pemegang="PT Toko Anda" --domain=kasir.tokoanda.com \
   --batas-outlet=3 --batas-perangkat=5 --kunci-privat=~/payou-lisensi.kunci --keluaran=tokoanda.lisensi
 ```
+
+Masa pembaruan & dukungan otomatis 1 tahun sejak terbit (D-36). Perpanjangan pemeliharaan: terbitkan ulang dengan
+nomor sama dan `--pembaruan-sampai=YYYY-MM-DD`, simpan dengan nama berkas baru.
 
 Berkas data master untuk pembeli (dijalankan di server SaaS PAYOU, berisi tarif & hari libur yang sudah terbit di
 konsol): `php artisan lisensi:ekspor-data-master storage/app/payou-data-master.json`.

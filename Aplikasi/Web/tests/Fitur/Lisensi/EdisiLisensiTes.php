@@ -35,6 +35,7 @@ use App\Domain\Tenant\Model\Fitur;
 use App\Domain\Tenant\Model\Langganan;
 use App\Domain\Tenant\Model\OverrideTenant;
 use App\Domain\Tenant\Model\Tenant;
+use Carbon\CarbonImmutable;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Route;
@@ -169,6 +170,42 @@ describe('Edisi Lisensi (D-35)', function (): void {
 
         expect(HariLibur::query()->where('Nama', 'Cuti Bersama Natal')->sole()->Status)->toBe(StatusDataMaster::Dibatalkan)
             ->and(TarifPajak::query()->count())->toBe(2);
+    });
+
+    it('D-36: berkas data master yang dibuat setelah masa pembaruan lisensi ditolak; di dalam masa pembaruan diterima', function (): void {
+        app(PasangLisensi::class)->Jalankan(BantuanLisensi::Berkas(BantuanLisensi::Data(pembaruanSampai: '2027-10-02')), 'Kopi Nusantara', PemilikLisensiUji());
+        $paket = ['Format' => 1, 'DibuatPada' => '2027-10-02T16:59:59Z', 'TarifPajak' => [], 'HariLibur' => [
+            ['Tanggal' => '2027-08-17', 'Nama' => 'Hari Kemerdekaan RI', 'Jenis' => 'Nasional', 'NomorDasarHukum' => null, 'Dibatalkan' => false],
+        ]];
+        $berkas = tempnam(sys_get_temp_dir(), 'data');
+        file_put_contents($berkas, json_encode($paket));
+        // 2027-10-02 23.59.59 WIB masih di dalam masa pembaruan.
+        $this->artisan('lisensi:impor-data-master', ['berkas' => $berkas])->assertSuccessful();
+
+        $paket['DibuatPada'] = '2027-10-02T17:00:00Z';
+        $paket['HariLibur'][0] = ['Tanggal' => '2027-12-25', 'Nama' => 'Hari Raya Natal', 'Jenis' => 'Nasional', 'NomorDasarHukum' => null, 'Dibatalkan' => false];
+        file_put_contents($berkas, json_encode($paket));
+        $this->artisan('lisensi:impor-data-master', ['berkas' => $berkas])
+            ->expectsOutputToContain('setelah masa pembaruan lisensi PAYOU-L-2026-0001 berakhir (2027-10-02)')
+            ->assertFailed();
+        unlink($berkas);
+
+        expect(HariLibur::query()->where('Nama', 'Hari Raya Natal')->exists())->toBeFalse();
+    });
+
+    it('D-36: lisensi:terbitkan memberi masa pembaruan 1 tahun bila tidak diisi', function (): void {
+        $folder = sys_get_temp_dir().'/lisensi-'.bin2hex(random_bytes(4));
+        mkdir($folder, 0700);
+        file_put_contents("{$folder}/payou.kunci", BantuanLisensi::Kunci()['KunciPrivat']);
+        $this->travelTo(CarbonImmutable::parse('2026-10-03 10:00', 'Asia/Jakarta'));
+
+        $this->artisan('lisensi:terbitkan', ['--nomor' => 'PAYOU-L-2026-0009', '--pemegang' => 'CV Toko Uji', '--domain' => 'kasir.tokouji.id', '--kunci-privat' => "{$folder}/payou.kunci", '--keluaran' => "{$folder}/uji.lisensi"])
+            ->expectsOutputToContain('Pembaruan & dukungan sampai 2027-10-02')
+            ->assertSuccessful();
+
+        expect(json_decode((string) file_get_contents("{$folder}/uji.lisensi"), true)['Data']['PembaruanSampai'])->toBe('2027-10-02');
+        array_map('unlink', glob("{$folder}/*") ?: []);
+        rmdir($folder);
     });
 
     it('fitur: semua fitur katalog aktif, batas outlet/perangkat/pengguna dari lisensi, batas lain tak terbatas', function (): void {

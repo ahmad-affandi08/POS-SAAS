@@ -16,12 +16,17 @@ declare(strict_types=1);
  * mengubah `EDISI`. Berkas penanda tidak pernah ada di repo (`.gitignore`); repo & rilis SaaS tetap membaca `.env`.
  */
 $berkasTerkunci = __DIR__.'/../bootstrap/EdisiTerkunci.php';
+// D-36: tanggal rilis (YYYY-MM-DD) yang ditulis paket PAYOU Mandiri, dibandingkan dengan masa pembaruan lisensi.
+$berkasTanggalRilis = __DIR__.'/../bootstrap/TanggalRilis.php';
+$tanggalRilis = is_file($berkasTanggalRilis) ? require $berkasTanggalRilis : null;
 $edisiTerkunci = is_file($berkasTerkunci) ? require $berkasTerkunci : null;
 
 return [
     'Edisi' => is_string($edisiTerkunci) ? $edisiTerkunci : env('EDISI', 'Saas'),
 
     'EdisiTerkunci' => is_string($edisiTerkunci),
+
+    'TanggalRilis' => is_string($tanggalRilis) ? $tanggalRilis : null,
 
     'KunciPublik' => '',
 ];
