@@ -39,4 +39,41 @@ void main() {
     expect(jumlah, {100000: 1, 50000: 1, 500: 3});
     expect(HitungPecahan.HitungTotal(jumlah), Uang.DariBulat(151500));
   });
+  testWidgets('HitungPecahan: jumlah bisa diketik dan tombol +10 (audit kemudahan pakai #28)', (tester) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(360, 640);
+    addTearDown(tester.view.reset);
+    final jumlah = <int, int>{100000: 0, 50000: 4};
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: BuatTema(),
+        home: Scaffold(
+          body: StatefulBuilder(
+            builder: (context, atur) => HitungPecahan(
+              nominal: const [100000, 50000],
+              jumlah: jumlah,
+              saatBerubah: (n, baru) => atur(() => jumlah[n] = baru),
+            ),
+          ),
+        ),
+      ),
+    );
+    expect(tester.takeException(), isNull);
+
+    await tester.enterText(find.byType(TextField).first, '37');
+    await tester.pump();
+    expect(jumlah[100000], 37);
+
+    await tester.tap(find.text('+10').last);
+    await tester.pump();
+    expect(jumlah[50000], 14);
+    expect(find.widgetWithText(TextField, '14'), findsOneWidget, reason: 'Isian ikut berubah saat tombol ditekan.');
+
+    // Isian dikosongkan = 0 lembar, teks kosong tidak ditimpa "0" selama diketik.
+    await tester.enterText(find.byType(TextField).first, '');
+    await tester.pump();
+    expect(jumlah[100000], 0);
+    expect(HitungPecahan.HitungTotal(jumlah), Uang.DariBulat(700000));
+  });
 }

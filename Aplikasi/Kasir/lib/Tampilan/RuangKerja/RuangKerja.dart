@@ -267,7 +267,9 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
     }
   }
 
-  /// Hitung ulang waktu diam dari nol (setiap sentuhan, gulir, gerak tetikus, atau tombol).
+  /// Hitung ulang waktu diam dari nol (setiap sentuhan, gulir, gerak tetikus, atau tombol). Audit kemudahan pakai
+  /// #26: selama transaksi berjalan (keranjang berisi, termasuk menunggu pembayaran QRIS) layar tidak dikunci;
+  /// hitungan diulang dan kunci baru jatuh setelah keranjang selesai/dikosongkan lalu diam lagi.
   void _MulaiHitungDiam() {
     _pewaktuDiam?.cancel();
     if (_terkunci) {
@@ -275,9 +277,14 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
     }
     final batas = ref.read(penyediaPengaturanPerangkat).AmbilBatasDiam();
     _pewaktuDiam = Timer(batas, () {
-      if (mounted) {
-        ref.read(penyediaSesi.notifier).Kunci();
+      if (!mounted) {
+        return;
       }
+      if (!ref.read(penyediaKeranjang).CekKosong) {
+        _MulaiHitungDiam();
+        return;
+      }
+      ref.read(penyediaSesi.notifier).Kunci();
     });
   }
 

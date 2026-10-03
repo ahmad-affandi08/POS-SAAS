@@ -40,7 +40,8 @@ enum TampilanKatalog {
 }
 
 /// Pengaturan lokal perangkat kasir (D-16, §17.2.7), disimpan di tabel `Pengaturan` (kunci-nilai) sehingga tidak
-/// butuh perubahan skema. Bawaan: Normal, keranjang kanan, kunci otomatis 5 menit.
+/// butuh perubahan skema. Bawaan: Normal, keranjang kanan, kunci otomatis 15 menit
+/// (audit kemudahan pakai #26; nilai yang pernah disimpan perangkat tetap dipakai).
 class PengaturanPerangkat {
   const PengaturanPerangkat({
     this.ukuran = UkuranTampilan.Normal,
@@ -50,7 +51,7 @@ class PengaturanPerangkat {
     this.umpanBalikPindai = true,
   });
 
-  static const int menitKunciBawaan = 5;
+  static const int menitKunciBawaan = 15;
 
   /// Pilihan waktu kunci otomatis (menit diam).
   static const List<int> pilihanMenitKunci = [1, 2, 5, 10, 15, 30];

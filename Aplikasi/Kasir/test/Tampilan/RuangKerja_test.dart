@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:inti/Inti.dart';
+import 'package:kasir/Aplikasi/Penyedia.dart';
 import 'package:kasir/Data/RepositoriKasir.dart';
+import 'package:kasir/Domain/Penjualan/Keranjang.dart';
 import 'package:kasir/Domain/Perangkat/PengaturanPerangkat.dart';
 import 'package:kasir/Tampilan/RuangKerja/BilahAtasRuangKerja.dart';
 import 'package:kasir/Tampilan/RuangKerja/LayarKunci.dart';
@@ -176,18 +179,18 @@ void main() {
     await Lepas(tester, u);
   });
 
-  testWidgets('kunci otomatis setelah diam 5 menit (bawaan); sentuhan mengulang hitungan; buka dengan PIN sama', (
+  testWidgets('kunci otomatis setelah diam 15 menit (bawaan); sentuhan mengulang hitungan; buka dengan PIN sama', (
     tester,
   ) async {
     final u = await MasukRuangKerja(tester);
 
-    await tester.pump(const Duration(minutes: 4));
+    await tester.pump(const Duration(minutes: 14));
     await Tunggu(tester);
     expect(find.byType(LayarKunci), findsNothing);
 
     // Sentuhan = aktivitas: hitungan diam mulai dari nol.
     await tester.tap(find.text('Katalog belum ada di perangkat ini.'));
-    await tester.pump(const Duration(minutes: 4));
+    await tester.pump(const Duration(minutes: 14));
     await Tunggu(tester);
     expect(find.byType(LayarKunci), findsNothing);
 
@@ -218,6 +221,40 @@ void main() {
     await Tunggu(tester);
     expect(find.byType(LayarKunci), findsNothing);
     await tester.pump(const Duration(seconds: 15));
+    await Tunggu(tester);
+    expect(find.byType(LayarKunci), findsOneWidget);
+    await Lepas(tester, u);
+  });
+
+  testWidgets('tidak mengunci selama keranjang berisi (transaksi/QRIS berjalan); kunci setelah keranjang kosong', (
+    tester,
+  ) async {
+    final u = await MasukRuangKerja(tester, pengaturan: {KunciPengaturan.menitKunciOtomatis: '1'});
+    final wadah = ProviderScope.containerOf(tester.element(find.byType(RuangKerja)));
+    wadah
+        .read(penyediaKeranjang.notifier)
+        .Ganti(
+          Keranjang(
+            baris: [
+              ItemKeranjang(
+                uuid: '01K5BARIS00000000000000001',
+                uuidProduk: '01K5PRODUK0000000000000001',
+                nama: 'Americano',
+                uuidProdukSatuan: null,
+                namaSatuan: null,
+                bolehDesimal: false,
+                jumlah: Kuantitas.DariBulat(1),
+                hargaSatuan: Uang.DariBulat(18000),
+              ),
+            ],
+          ),
+        );
+    await tester.pump(const Duration(minutes: 3));
+    await Tunggu(tester);
+    expect(find.byType(LayarKunci), findsNothing, reason: 'Transaksi berjalan tidak boleh terputus kunci otomatis.');
+
+    wadah.read(penyediaKeranjang.notifier).Ganti(Keranjang.kosong);
+    await tester.pump(const Duration(minutes: 1, seconds: 5));
     await Tunggu(tester);
     expect(find.byType(LayarKunci), findsOneWidget);
     await Lepas(tester, u);
@@ -309,7 +346,7 @@ void main() {
     await Tunggu(tester);
     expect(await BacaPengaturan(tester, u, KunciPengaturan.posisiKeranjang), 'Kiri');
 
-    await tester.tap(find.text('5 menit'));
+    await tester.tap(find.text('15 menit'));
     await Tunggu(tester);
     await tester.tap(find.text('10 menit').last);
     await Tunggu(tester);
@@ -349,14 +386,14 @@ void main() {
     final bawaan = await PengaturanPerangkat.Muat(u.repositori);
     expect(bawaan.ukuran, UkuranTampilan.Normal);
     expect(bawaan.posisiKeranjang, PosisiKeranjang.Kanan);
-    expect(bawaan.menitKunciOtomatis, 5);
+    expect(bawaan.menitKunciOtomatis, 15);
     expect(UkuranTampilan.Besar.skalaTeks, 1.15);
 
     await u.repositori.SimpanPengaturan(KunciPengaturan.ukuranTampilan, 'Raksasa');
     await u.repositori.SimpanPengaturan(KunciPengaturan.menitKunciOtomatis, '0');
     final rusak = await PengaturanPerangkat.Muat(u.repositori);
     expect(rusak.ukuran, UkuranTampilan.Normal);
-    expect(rusak.menitKunciOtomatis, 5);
+    expect(rusak.menitKunciOtomatis, 15);
     await u.Tutup();
   });
 }

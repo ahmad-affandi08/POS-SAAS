@@ -1107,6 +1107,24 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
     ];
     // Bilah aksi menempel di bawah: tombol selesaikan/tambah pembayaran & aksi sekunder selalu terlihat tanpa digulir.
     final aksi = <Widget>[
+      // Audit kemudahan pakai #32: peringatan tepat di atas tombol bayar supaya penjualan sungguhan tidak hilang.
+      if (ref.watch(penyediaModeLatihan))
+        Padding(
+          key: const ValueKey('PeringatanLatihanBayar'),
+          padding: const EdgeInsets.only(bottom: TokenJarak.jarak8),
+          child: Row(
+            children: [
+              Icon(Icons.school_outlined, color: warna.peringatan, size: 20),
+              const SizedBox(width: TokenJarak.jarak8),
+              Expanded(
+                child: Text(
+                  'Mode latihan: pembayaran ini tidak disimpan. Matikan mode latihan untuk penjualan sungguhan.',
+                  style: teks.bodyMedium?.copyWith(color: warna.peringatan, fontWeight: FontWeight.w600),
+                ),
+              ),
+            ],
+          ),
+        ),
       if (_galat != null)
         Padding(
           padding: const EdgeInsets.only(bottom: TokenJarak.jarak8),

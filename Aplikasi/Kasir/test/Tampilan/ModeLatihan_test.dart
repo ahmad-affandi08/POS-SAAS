@@ -10,7 +10,7 @@ import '../Pendukung/LingkunganUji.dart';
 import '../Pendukung/PasangAplikasi.dart';
 
 /// K-23 (POS-18): Pengaturan › Mode latihan menyalakan banner di Ruang Kerja; penjualan latihan selesai tanpa
-/// penjualan tersimpan, outbox, atau cetak; "Matikan" di banner kembali ke mode biasa (360/1280 dp).
+/// penjualan tersimpan, outbox, atau cetak; menyalakannya butuh PIN supervisor dan layar Bayar memberi peringatan; "Matikan" di banner kembali ke mode biasa (360/1280 dp).
 void main() {
   for (final ukuran in const [Size(1280, 900), Size(360, 740)]) {
     testWidgets('latihan: jual tanpa menyimpan, lalu matikan (${ukuran.width.toInt()} dp)', (tester) async {
@@ -51,7 +51,18 @@ void main() {
         300,
         scrollable: find.byType(Scrollable).first,
       );
+      // Audit kemudahan pakai #32: Rina tidak ber-izin supervisor → menyalakan butuh PIN supervisor; batal = tetap mati.
       await Ketuk(find.byKey(const ValueKey('ModeLatihan')));
+      expect(find.text('Persetujuan supervisor'), findsOneWidget);
+      await tester.tapAt(const Offset(4, 4));
+      await Tunggu(tester);
+      expect(find.byKey(const ValueKey('BannerModeLatihan')), findsNothing);
+
+      await Ketuk(find.byKey(const ValueKey('ModeLatihan')));
+      await tester.tap(find.widgetWithText(OutlinedButton, 'Budi Santoso'));
+      await tester.pump();
+      await KetikPin(tester, KasusPin(1)['Pin']! as String);
+      await Tunggu(tester);
       expect(find.byKey(const ValueKey('BannerModeLatihan')), findsOneWidget);
 
       await tester.tap(find.text('Jual').last);
@@ -62,6 +73,7 @@ void main() {
         ),
       );
       await Ketuk(find.widgetWithText(FilledButton, 'Bayar'));
+      expect(find.byKey(const ValueKey('PeringatanLatihanBayar')), findsOneWidget);
       await Ketuk(find.widgetWithText(ChoiceChip, 'Tunai'));
       await Ketuk(find.widgetWithText(FilledButton, 'Uang pas'));
       expect(find.text('Latihan selesai'), findsOneWidget);

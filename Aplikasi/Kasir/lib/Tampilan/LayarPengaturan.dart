@@ -1,10 +1,14 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sistem_desain/SistemDesain.dart';
 
 import '../Aplikasi/Penyedia.dart';
 import '../Domain/Perangkat/PengaturanPerangkat.dart';
+import '../Domain/Sesi/StafLokal.dart';
 import 'BagianLogPerangkat.dart';
+import 'LembarMutasiKas.dart';
 import 'RuangKerja/IsiAreaKerja.dart';
 import 'Struk/BagianLayarPelanggan.dart';
 import 'Struk/BagianPrinterDapur.dart';
@@ -25,6 +29,26 @@ class _LayarPengaturanState extends ConsumerState<LayarPengaturan> {
   String? _pesanData;
 
   Future<void> _Simpan(PengaturanPerangkat baru) => ref.read(penyediaPengaturanPerangkat.notifier).Simpan(baru);
+
+  /// Audit kemudahan pakai #32: menyalakan mode latihan butuh PIN supervisor (izin `shift.selisih.setujui`) supaya
+  /// penjualan sungguhan tidak hilang karena kasir lupa; kasir yang sudah ber-izin (atau Pemilik) tidak ditanya lagi.
+  /// Mematikan selalu bebas.
+  Future<void> _AturModeLatihan(BuildContext context, WidgetRef ref, bool nilai) async {
+    if (nilai && !(ref.read(penyediaSesi).kasir?.PunyaIzin(IzinKasir.shiftSelisihSetujui) ?? false)) {
+      final penyetuju = await showDialog<StafLokal>(
+        context: context,
+        builder: (_) => const DialogPinSupervisor(
+          izin: IzinKasir.shiftSelisihSetujui,
+          judul: 'Nyalakan mode latihan',
+          pesan: 'Selama mode latihan, penjualan tidak disimpan. Pilih supervisor yang menyetujui.',
+        ),
+      );
+      if (penyetuju == null || !mounted) {
+        return;
+      }
+    }
+    ref.read(penyediaModeLatihan.notifier).Atur(nilai);
+  }
 
   Future<void> _PerbaruiData() async {
     setState(() {
@@ -194,13 +218,14 @@ class _LayarPengaturanState extends ConsumerState<LayarPengaturan> {
         Bagian(
           'Mode latihan',
           'Untuk melatih kasir baru: transaksi dihitung seperti biasa tetapi tidak disimpan, tidak dikirim ke server, '
-              'tidak mengubah stok & kas, dan tidak dicetak. Mati lagi saat aplikasi dibuka ulang.',
+              'tidak mengubah stok & kas, dan tidak dicetak. Menyalakannya butuh PIN supervisor. Mati lagi saat aplikasi '
+              'dibuka ulang.',
           Row(
             children: [
               Switch(
                 key: const ValueKey('ModeLatihan'),
                 value: ref.watch(penyediaModeLatihan),
-                onChanged: (nilai) => ref.read(penyediaModeLatihan.notifier).Atur(nilai),
+                onChanged: (nilai) => unawaited(_AturModeLatihan(context, ref, nilai)),
               ),
               const SizedBox(width: TokenJarak.jarak8),
               Text(ref.watch(penyediaModeLatihan) ? 'Hidup' : 'Mati'),
