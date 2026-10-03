@@ -32,6 +32,7 @@ use App\Domain\Persediaan\Layanan\Hpp\MasukanHpp;
 use App\Domain\Persediaan\Layanan\Hpp\StrategiHpp;
 use App\Domain\Persediaan\Layanan\PelacakBatchStok;
 use App\Domain\Persediaan\Layanan\PelacakNomorSeri;
+use App\Domain\Persediaan\Layanan\PemberitahuStokMenipis;
 use App\Domain\Persediaan\Layanan\PemeriksaStokMinus;
 use App\Domain\Persediaan\Layanan\PengunciSaldoStok;
 use App\Domain\Persediaan\Model\BatchStok;
@@ -84,6 +85,7 @@ final class CatatMutasiStok
         private readonly PemeriksaStokMinus $pemeriksaStokMinus,
         private readonly PelacakBatchStok $pelacakBatch,
         private readonly PelacakNomorSeri $pelacakSeri,
+        private readonly PemberitahuStokMenipis $pemberitahuMenipis,
     ) {}
 
     public function Jalankan(DataDokumenMutasi $dokumen): HasilCatatMutasi
@@ -117,6 +119,7 @@ final class CatatMutasiStok
         [$batchMasuk, $batch] = $this->KunciBatch($dokumen);
         [$seriMasuk, $seri] = $this->KunciSeri($dokumen);
         $keadaan = $this->MuatKeadaan($saldo, $pengaturan->metodeHpp);
+        $saldoAwal = array_map(fn (KeadaanHpp $k): Kuantitas => $k->jumlah, $keadaan);
 
         $strategi = self::PilihStrategi($pengaturan->metodeHpp);
         $sisaBatch = array_map(fn (BatchStok $b): Kuantitas => Kuantitas::Dari($b->JumlahSisa), $batch);
@@ -191,6 +194,7 @@ final class CatatMutasiStok
         $this->SimpanLapisan($keadaan, $idMutasi, $dokumen);
         $this->SimpanSaldo($keadaan, $olahan, $idMutasi);
         $this->SimpanPelacakan($batch, $sisaBatch, $seri, $tindakanSeri);
+        $this->BeritahuStokMenipis($dokumen, $saldo, $saldoAwal, $keadaan, $produk, $gudang);
 
         $hasilBaris = [];
 
@@ -218,6 +222,32 @@ final class CatatMutasiStok
         }
 
         return new HasilCatatMutasi($hasilBaris, false);
+    }
+
+    /**
+     * X7 `stok.menipis` (v4.07): pasangan yang saldonya turun melewati stok minimum diberitahukan setelah commit.
+     *
+     * @param  array<string, SaldoStok>  $saldo
+     * @param  array<string, Kuantitas>  $saldoAwal
+     * @param  array<string, KeadaanHpp>  $keadaan
+     * @param  array<int, DataInfoProdukStok>  $produk
+     * @param  array<int, DataInfoGudang>  $gudang
+     */
+    private function BeritahuStokMenipis(DataDokumenMutasi $dokumen, array $saldo, array $saldoAwal, array $keadaan, array $produk, array $gudang): void
+    {
+        $perubahan = [];
+
+        foreach ($saldo as $kunci => $s) {
+            $perubahan[$kunci] = ['IdProduk' => $s->IdProduk, 'IdGudang' => $s->IdGudang, 'Awal' => $saldoAwal[$kunci], 'Akhir' => $keadaan[$kunci]->jumlah];
+        }
+
+        $this->pemberitahuMenipis->Periksa(
+            (int) $this->konteks->Ambil(),
+            $perubahan,
+            $produk,
+            $gudang,
+            $dokumen->jenisReferensi->value.'-'.$dokumen->idReferensi,
+        );
     }
 
     /**

@@ -12,7 +12,9 @@ use App\Domain\Akuntansi\Enum\PeranAkun;
 use App\Domain\Bersama\Audit\Layanan\PencatatAudit;
 use App\Domain\Bersama\Dokumen\Layanan\PencatatRiwayatStatus;
 use App\Domain\Bersama\Nilai\Uang;
+use App\Domain\Bersama\Peristiwa\PeristiwaIntegrasi;
 use App\Domain\Organisasi\Kueri\TanggalBisnisOutlet;
+use App\Domain\Pelanggan\Kueri\IdentitasPelanggan;
 use App\Domain\Penjualan\Aksi\SiapkanMetodeUangMuka;
 use App\Domain\Penjualan\Enum\PeristiwaPesananOnline;
 use App\Domain\Penjualan\Enum\StatusPesananOnline;
@@ -45,6 +47,7 @@ final class PenerapPembayaranPesananOnline
         private readonly PencatatRiwayatStatus $riwayat,
         private readonly PencatatAudit $audit,
         private readonly PemberitahuPesananOnline $pemberitahu,
+        private readonly IdentitasPelanggan $identitasPelanggan,
     ) {}
 
     /** Hasil: pesanan yang dibayar, atau null bila tagihan ini bukan milik pesanan online / sudah pernah diterapkan. */
@@ -106,6 +109,19 @@ final class PenerapPembayaranPesananOnline
             'JumlahDibayar' => $pesanan->JumlahDibayar,
             'NomorPesananQris' => $tagihan->NomorPesanan,
         ], idTenant: $pesanan->IdTenant);
+
+        // X7 §16.4 (v4.07): webhook `pembayaran.diterima` setelah commit (sekali, dijaga `DibayarPada` di atas).
+        PeristiwaIntegrasi::dispatch($pesanan->IdTenant, 'pembayaran.diterima', $pesanan->Id, [
+            'Sumber' => 'PesananOnline',
+            'Uuid' => $pesanan->Uuid,
+            'Nomor' => $pesanan->Nomor,
+            'UuidPelanggan' => $this->identitasPelanggan->AmbilUuid($pesanan->IdPelanggan),
+            'Tanggal' => $tanggal->toDateString(),
+            'Jumlah' => $diterima->KeString(),
+            'Metode' => $metode->Nama,
+            'Giro' => false,
+            'Alokasi' => [],
+        ]);
 
         return $pesanan;
     }

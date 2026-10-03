@@ -65,6 +65,14 @@ final class IdentitasPelanggan
         return $hasil;
     }
 
+    /** Uuid publik pelanggan (webhook X7, v4.07); null bila tidak ada. */
+    public function AmbilUuid(?int $id): ?string
+    {
+        $uuid = $id === null ? null : Pelanggan::query()->whereKey($id)->value('Uuid');
+
+        return is_string($uuid) ? $uuid : null;
+    }
+
     public function CekAktif(int $id): bool
     {
         return Pelanggan::query()->whereKey($id)->where('Status', StatusPelanggan::Aktif->value)->exists();

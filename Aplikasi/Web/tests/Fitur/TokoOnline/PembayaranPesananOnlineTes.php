@@ -9,6 +9,7 @@ use App\Domain\Akuntansi\Model\Akun;
 use App\Domain\Akuntansi\Model\Jurnal;
 use App\Domain\Akuntansi\Model\JurnalDetail;
 use App\Domain\Bersama\Nilai\Uang;
+use App\Domain\Bersama\Peristiwa\PeristiwaIntegrasi;
 use App\Domain\Bersama\Tindakan\Data\DataKonteksTindakan;
 use App\Domain\Penjualan\Enum\JenisMetodePembayaran;
 use App\Domain\Penjualan\Enum\StatusPesananOnline;
@@ -22,6 +23,7 @@ use App\Domain\Penjualan\Model\TagihanQris;
 use App\Domain\Promo\Model\PromoPemakaian;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Client\Request as PermintaanHttp;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Testing\TestResponse;
 use Tests\Pendukung\Kasir\BantuanKasir;
@@ -420,4 +422,27 @@ it('sakelar QRIS tidak bisa dinyalakan tanpa gerbang pembayaran aktif', function
         'AmbilSendiriAktif' => true, 'KirimAktif' => true, 'BayarSaatAmbilAktif' => true, 'CodAktif' => true,
         'QrisAktif' => true, 'MinimalPesanan' => '10000.00', 'MenitKedaluwarsa' => 120, 'PesanTutup' => null,
     ])->assertSessionHasErrors('QrisAktif');
+});
+
+it('X7: uang muka pesanan online yang masuk memicu pembayaran.diterima sekali, walau notifikasi gerbang berulang', function (): void {
+    $status = 'pending';
+    PalsukanGerbangOnline($status);
+    $k = SiapkanBayarOnline($this);
+    [$pesanan] = PesanBayarQris($this, $k);
+    $this->postJson("/{$k['Slug']}/pesanan/{$pesanan->KodeAkses}/bayar")->assertCreated();
+    BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+    $tagihan = TagihanQris::query()->sole();
+    Event::fake([PeristiwaIntegrasi::class]);
+
+    WebhookBayarOnline($this, $k, $tagihan->NomorPesanan, '60000.00')->assertOk();
+    WebhookBayarOnline($this, $k, $tagihan->NomorPesanan, '60000.00')->assertOk();
+
+    Event::assertDispatchedTimes(PeristiwaIntegrasi::class, 1);
+    Event::assertDispatched(PeristiwaIntegrasi::class, fn (PeristiwaIntegrasi $p): bool => $p->jenis === 'pembayaran.diterima'
+        && $p->idTenant === $k['Tenant']->Id
+        && $p->data['Sumber'] === 'PesananOnline'
+        && $p->data['Uuid'] === $pesanan->Uuid
+        && $p->data['Jumlah'] === '60000.00'
+        && $p->data['Metode'] === 'QRIS Otomatis'
+        && $p->data['Alokasi'] === []);
 });

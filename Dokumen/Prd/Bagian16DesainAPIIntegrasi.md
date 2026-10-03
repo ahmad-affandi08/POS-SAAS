@@ -54,7 +54,8 @@ Event: `penjualan.selesai`, `penjualan.divoid`, `penjualan.diretur`, `pembayaran
 - Retry eksponensial (1m, 5m, 30m, 2j, 12j), dikirim oleh queue via cron.
 - Log pengiriman terlihat oleh tenant, tersedia tombol "kirim ulang".
 - *(v3.95)* Endpoint tulis pertama: `POST /api/v1/stok/penyesuaian` (cakupan `stok:tulis`, idempoten per `Uuid`).
-- *(v3.91)* Terimplementasi juga `produk.diubah`, `pelanggan.dibuat`, `shift.ditutup`, `stok.disesuaikan`, `pesanan-pembelian.disetujui`, `penerimaan-barang.diposting` (peristiwa umum `PeristiwaIntegrasi` dari domain pemilik dokumen; kiriman unik per kejadian lewat `KunciPeristiwa`). Belum: `pembayaran.diterima`, `stok.menipis`.
+- *(v3.91)* Terimplementasi juga `produk.diubah`, `pelanggan.dibuat`, `shift.ditutup`, `stok.disesuaikan`, `pesanan-pembelian.disetujui`, `penerimaan-barang.diposting` (peristiwa umum `PeristiwaIntegrasi` dari domain pemilik dokumen; kiriman unik per kejadian lewat `KunciPeristiwa`).
+- *(v4.07)* `pembayaran.diterima` = pelunasan piutang diposting atau uang muka pesanan toko online diterima (pembayaran kasir sudah di `penjualan.selesai`); `stok.menipis` = saldo produk di satu lokasi turun melewati stok minimum (sekali per penurunan, dikirim lagi setelah diisi di atas minimum).
 - *(v3.84)* Spesifikasi OpenAPI 3.1 API publik & webhook: `public/pengembang/openapi-v1.json`, portal `/pengembang`; kesesuaiannya dengan rute & respons nyata dijaga `SpesifikasiApiPublikTes`.
 - *(v3.83, terimplementasi untuk `penjualan.selesai`, `penjualan.divoid`, `penjualan.diretur`; peristiwa lain menyusul.)* Tanda tangan dihitung atas `{X-Waktu-Kirim}.{badan}` dan dikirim sebagai `X-Tanda-Tangan: sha256=<hex>`; header lain `X-Id-Peristiwa`, `X-Peristiwa`. Alamat wajib HTTPS publik (penjaga SSRF saat dibuat & sebelum tiap kiriman, IP dipin). Setelah percobaan ke-6 gagal status Gagal; log disimpan 30 hari.
 

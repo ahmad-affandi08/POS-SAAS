@@ -12,9 +12,12 @@ use App\Domain\Integrasi\ApiPublik\Penangan\AntrekanWebhookIntegrasi;
 use App\Domain\Integrasi\ApiPublik\Penangan\AntrekanWebhookPenjualan;
 use App\Domain\Integrasi\ApiPublik\Tugas\AntrekanWebhookIntegrasiTugas;
 use App\Domain\Katalog\Model\Produk;
+use App\Domain\Katalog\Model\ProdukGudang;
 use App\Domain\Katalog\Model\ProdukSatuan;
 use App\Domain\Organisasi\Enum\PeranTenantBawaan;
 use App\Domain\Pelanggan\Model\Pelanggan;
+use App\Domain\Pelanggan\Model\PembayaranPiutang;
+use App\Domain\Pelanggan\Model\Piutang;
 use App\Domain\Pengelola\TimInternal\Enum\PeranPengelolaBawaan;
 use App\Domain\Penjualan\Model\PenjualanDetail;
 use App\Domain\Penjualan\Peristiwa\PenjualanDiterima;
@@ -482,4 +485,88 @@ it('PeristiwaIntegrasi yang ditangani ulang tidak menggandakan kiriman; kunci be
 
     BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
     expect(KirimanWebhook::query()->pluck('KunciPeristiwa')->sort()->values()->all())->toBe(['1', '2']);
+});
+
+it('stok.menipis dikirim sekali saat saldo turun melewati stok minimum; terkirim lagi setelah stok diisi di atas minimum', function (): void {
+    Http::fake(['gudang.contoh.co.id/*' => Http::response('', 204)]);
+    $k = BantuanPenjualan::Siapkan($this, 'Toko Bangunan Sumber Rejeki Boyolali');
+    AktifkanFiturWebhook($k['Tenant']);
+    DaftarkanWebhookUji($this, $k, ['stok.menipis']);
+    $semen = BantuanPenjualan::BuatProdukBerstok($k['Gudang'], $k['Pemilik']->Id, 'Semen Gresik Portland Komposit 40 kg', '20', '52000', '63500.00');
+    $pasir = BantuanPenjualan::BuatProdukBerstok($k['Gudang'], $k['Pemilik']->Id, 'Pasir Merapi Ayakan (karung 25 kg)', '20', '15000', '21000.00');
+    BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+    ProdukGudang::query()->create(['IdProduk' => $semen->Id, 'IdGudang' => $k['Gudang']->Id, 'StokMinimum' => '10']);
+    $jual = function (Produk $produk, string $jumlah) use ($k, $semen): void {
+        BantuanPenjualan::Jual($this, $k, ['Baris' => [['Produk' => $produk, 'Jumlah' => $jumlah, 'Harga' => $produk->Is($semen) ? '63500.00' : '21000.00']]]);
+    };
+    $kiriman = function () use ($k) {
+        BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+
+        return KirimanWebhook::query()->where('Peristiwa', 'stok.menipis')->orderBy('Id')->get();
+    };
+
+    // 20 → 12 (masih di atas 10), lalu 12 → 9 melewati batas: satu kiriman; 9 → 7 tidak mengirim lagi.
+    $jual($semen, '8');
+    expect($kiriman())->toHaveCount(0);
+    $jual($semen, '3');
+    $jual($semen, '2');
+    // Produk tanpa batas minimum tidak pernah dikirim.
+    $jual($pasir, '19');
+    expect($kiriman())->toHaveCount(1)
+        ->and($kiriman()[0]->Muatan['Data'])->toMatchArray([
+            'UuidProduk' => $semen->Uuid,
+            'NamaProduk' => 'Semen Gresik Portland Komposit 40 kg',
+            'UuidGudang' => $k['Gudang']->Uuid,
+            'Saldo' => '9.0000',
+            'StokMinimum' => '10.0000',
+        ])
+        ->and($kiriman()[0]->Status)->toBe(StatusKirimanWebhook::Terkirim);
+    PeriksaDataWebhookSesuaiSpesifikasi('stok.menipis', $kiriman()[0]->Muatan['Data']);
+
+    // Diisi kembali ke 27 lalu turun ke 10 (= minimum): kiriman kedua.
+    $pemasok = BantuanPembelian::BuatPemasok('PT Semen Indonesia Distribusi Jateng', idPengguna: $k['Pemilik']->Id);
+    BantuanPembelian::TerimaDariPo(BantuanPembelian::BuatPoDisetujui($pemasok, $k['Gudang'], [[$semen, '20', '51500']], $k['Pemilik']->Id), ['20'], $k['Pemilik']->Id);
+    $jual($semen, '17');
+    expect($kiriman())->toHaveCount(2)
+        ->and($kiriman()[1]->Muatan['Data']['Saldo'])->toBe('10.0000');
+});
+
+it('pembayaran.diterima dikirim saat pelunasan piutang diposting, berisi alokasi per piutang', function (): void {
+    Http::fake(['gudang.contoh.co.id/*' => Http::response('', 204)]);
+    $k = BantuanPenjualan::Siapkan($this, 'Grosir Sembako Pelunasan Webhook');
+    AktifkanFiturWebhook($k['Tenant']);
+    DaftarkanWebhookUji($this, $k, ['pembayaran.diterima']);
+    $produk = BantuanPenjualan::BuatProdukBerstok($k['Gudang'], $k['Pemilik']->Id);
+    $toko = Pelanggan::query()->create(['Nama' => 'Toko Makmur Jaya', 'NoHp' => '6281355550001', 'LimitKredit' => '5000000', 'TerminHari' => 30]);
+    $item = BantuanPenjualan::Item(
+        $k,
+        ['Baris' => [['Produk' => $produk, 'Jumlah' => '2', 'Harga' => '38500.00']], 'Pembayaran' => [['Metode' => $k['Tempo'], 'Jumlah' => '77000.00']]],
+        ['UuidPelanggan' => $toko->Uuid],
+    );
+    expect(BantuanKasir::KirimRingkas($this, $k['Token'], [$item]))->toBe([['Diterima', null]]);
+    BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+    $piutang = Piutang::query()->sole();
+
+    BantuanOrganisasi::Masuk($this, $k['Pemilik'], $k['Tenant']->Id)->post('/kelola/piutang/pelunasan', [
+        'UuidPelanggan' => $toko->Uuid,
+        'UuidAkun' => BantuanPembelian::AkunKas()->Uuid,
+        'Tanggal' => BantuanPembelian::Hari()->format('Y-m-d'),
+        'Catatan' => 'Transfer BCA a.n. Toko Makmur Jaya',
+        'Alokasi' => [['UuidPiutang' => $piutang->Uuid, 'Jumlah' => '50000']],
+    ])->assertSessionHasNoErrors();
+
+    BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
+    $bayar = PembayaranPiutang::query()->sole();
+    $data = KirimanWebhook::query()->where('Peristiwa', 'pembayaran.diterima')->sole()->Muatan['Data'];
+    expect($data)->toMatchArray([
+        'Sumber' => 'PelunasanPiutang',
+        'Uuid' => $bayar->Uuid,
+        'Nomor' => $bayar->Nomor,
+        'UuidPelanggan' => $toko->Uuid,
+        'Jumlah' => '50000.00',
+        'Metode' => null,
+        'Giro' => false,
+        'Alokasi' => [['NomorPiutang' => $piutang->Nomor, 'Jumlah' => '50000.00']],
+    ]);
+    PeriksaDataWebhookSesuaiSpesifikasi('pembayaran.diterima', $data);
 });

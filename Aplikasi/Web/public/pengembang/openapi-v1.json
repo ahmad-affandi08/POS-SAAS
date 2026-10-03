@@ -1008,6 +1008,98 @@
           }
         }
       }
+    },
+    "pembayaran.diterima": {
+      "post": {
+        "summary": "pembayaran.diterima",
+        "description": "Uang pelanggan diterima di luar penjualan kasir: pelunasan piutang (Sumber PelunasanPiutang) atau uang muka pesanan toko online lewat QRIS web (Sumber PesananOnline). Pembayaran penjualan kasir sudah termasuk di penjualan.selesai. Header: X-Id-Peristiwa (dedup), X-Peristiwa, X-Waktu-Kirim (detik Unix), X-Tanda-Tangan: sha256=<HMAC-SHA256 rahasia atas \"{X-Waktu-Kirim}.{badan}\">. Balas 2xx dalam 10 detik; selain itu dicoba ulang 1m, 5m, 30m, 2j, 12j.",
+        "tags": [
+          "Webhook"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "IdPeristiwa": {
+                    "type": "string"
+                  },
+                  "Peristiwa": {
+                    "type": "string",
+                    "const": "pembayaran.diterima"
+                  },
+                  "TerjadiPada": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "Data": {
+                    "$ref": "#/components/schemas/Pembayaran"
+                  }
+                },
+                "required": [
+                  "IdPeristiwa",
+                  "Peristiwa",
+                  "TerjadiPada",
+                  "Data"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Diterima penerima"
+          }
+        }
+      }
+    },
+    "stok.menipis": {
+      "post": {
+        "summary": "stok.menipis",
+        "description": "Saldo stok produk di satu lokasi turun melewati batas stok minimum (sebelumnya di atas minimum, sekarang sama atau di bawahnya). Dikirim sekali per penurunan; setelah stok diisi di atas minimum, penurunan berikutnya dikirim lagi. Header: X-Id-Peristiwa (dedup), X-Peristiwa, X-Waktu-Kirim (detik Unix), X-Tanda-Tangan: sha256=<HMAC-SHA256 rahasia atas \"{X-Waktu-Kirim}.{badan}\">. Balas 2xx dalam 10 detik; selain itu dicoba ulang 1m, 5m, 30m, 2j, 12j.",
+        "tags": [
+          "Webhook"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "IdPeristiwa": {
+                    "type": "string"
+                  },
+                  "Peristiwa": {
+                    "type": "string",
+                    "const": "stok.menipis"
+                  },
+                  "TerjadiPada": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "Data": {
+                    "$ref": "#/components/schemas/StokMenipis"
+                  }
+                },
+                "required": [
+                  "IdPeristiwa",
+                  "Peristiwa",
+                  "TerjadiPada",
+                  "Data"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Diterima penerima"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1969,6 +2061,127 @@
           "Alasan",
           "Keterangan",
           "Baris"
+        ]
+      },
+      "Pembayaran": {
+        "type": "object",
+        "properties": {
+          "Sumber": {
+            "type": "string",
+            "enum": [
+              "PelunasanPiutang",
+              "PesananOnline"
+            ]
+          },
+          "Uuid": {
+            "type": "string",
+            "description": "Uuid dokumen pelunasan piutang atau pesanan online"
+          },
+          "Nomor": {
+            "type": "string"
+          },
+          "UuidPelanggan": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "Tanggal": {
+            "type": "string",
+            "format": "date"
+          },
+          "Jumlah": {
+            "type": "string",
+            "description": "String desimal Rupiah"
+          },
+          "Metode": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Nama metode pembayaran (pesanan online); null untuk pelunasan piutang"
+          },
+          "Giro": {
+            "type": "boolean",
+            "description": "Pelunasan dengan giro/cek mundur (belum cair)"
+          },
+          "Alokasi": {
+            "type": "array",
+            "description": "Piutang yang dilunasi; kosong untuk pesanan online",
+            "items": {
+              "type": "object",
+              "properties": {
+                "NomorPiutang": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "Jumlah": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "NomorPiutang",
+                "Jumlah"
+              ]
+            }
+          }
+        },
+        "required": [
+          "Sumber",
+          "Uuid",
+          "Nomor",
+          "UuidPelanggan",
+          "Tanggal",
+          "Jumlah",
+          "Metode",
+          "Giro",
+          "Alokasi"
+        ]
+      },
+      "StokMenipis": {
+        "type": "object",
+        "properties": {
+          "UuidProduk": {
+            "type": "string"
+          },
+          "Sku": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "NamaProduk": {
+            "type": "string"
+          },
+          "Satuan": {
+            "type": "string",
+            "description": "Simbol satuan dasar"
+          },
+          "UuidGudang": {
+            "type": "string"
+          },
+          "NamaGudang": {
+            "type": "string"
+          },
+          "Saldo": {
+            "type": "string",
+            "description": "Saldo setelah mutasi, satuan dasar (boleh negatif)"
+          },
+          "StokMinimum": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "UuidProduk",
+          "Sku",
+          "NamaProduk",
+          "Satuan",
+          "UuidGudang",
+          "NamaGudang",
+          "Saldo",
+          "StokMinimum"
         ]
       }
     },

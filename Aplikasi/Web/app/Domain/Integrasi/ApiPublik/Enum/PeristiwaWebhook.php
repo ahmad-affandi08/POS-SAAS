@@ -7,7 +7,8 @@ namespace App\Domain\Integrasi\ApiPublik\Enum;
 /**
  * PRD §16.4: peristiwa webhook keluar yang tersedia. X7 bagian 2: penjualan selesai/void/retur (dari peristiwa domain
  * Penjualan). v3.91: produk, pelanggan, shift, penyesuaian stok, PO disetujui, penerimaan barang (dari
- * `PeristiwaIntegrasi`). `pembayaran.diterima` & `stok.menipis` belum.
+ * `PeristiwaIntegrasi`). v4.07: `pembayaran.diterima` (pelunasan piutang & uang muka pesanan online) dan `stok.menipis`
+ * (saldo turun melewati stok minimum lokasi).
  */
 enum PeristiwaWebhook: string
 {
@@ -20,6 +21,8 @@ enum PeristiwaWebhook: string
     case StokDisesuaikan = 'stok.disesuaikan';
     case PesananPembelianDisetujui = 'pesanan-pembelian.disetujui';
     case PenerimaanBarangDiposting = 'penerimaan-barang.diposting';
+    case PembayaranDiterima = 'pembayaran.diterima';
+    case StokMenipis = 'stok.menipis';
 
     public function AmbilLabel(): string
     {
@@ -33,6 +36,8 @@ enum PeristiwaWebhook: string
             self::StokDisesuaikan => 'Penyesuaian stok diposting',
             self::PesananPembelianDisetujui => 'Pesanan pembelian disetujui',
             self::PenerimaanBarangDiposting => 'Penerimaan barang diposting',
+            self::PembayaranDiterima => 'Pembayaran pelanggan diterima (pelunasan piutang, uang muka pesanan online)',
+            self::StokMenipis => 'Stok turun ke batas minimum',
         };
     }
 

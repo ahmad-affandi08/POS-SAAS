@@ -8,6 +8,7 @@ use App\Domain\Katalog\Data\DataInfoProdukStok;
 use App\Domain\Katalog\Enum\JenisProduk;
 use App\Domain\Katalog\Model\Produk;
 use App\Domain\Katalog\Model\ProdukBarcode;
+use App\Domain\Katalog\Model\ProdukGudang;
 use App\Domain\Katalog\Model\Satuan;
 use Generator;
 use Illuminate\Database\Eloquent\Collection;
@@ -21,6 +22,37 @@ use Illuminate\Database\Query\Builder;
 final class InfoProdukStok
 {
     private const UKURAN_POTONGAN = 1000;
+
+    /**
+     * X7 `stok.menipis` (v4.07): batas stok minimum yang diisi untuk pasangan (produk, lokasi stok) ini.
+     *
+     * @param  list<array{0: int, 1: int}>  $pasangan  [IdProduk, IdGudang]
+     * @return array<string, string> kunci = "{IdProduk}:{IdGudang}", nilai = StokMinimum (desimal string)
+     */
+    public function AmbilStokMinimum(array $pasangan): array
+    {
+        $hasil = [];
+        $idProduk = array_values(array_unique(array_map(fn (array $p): int => $p[0], $pasangan)));
+        $idGudang = array_values(array_unique(array_map(fn (array $p): int => $p[1], $pasangan)));
+
+        if ($idProduk === []) {
+            return [];
+        }
+
+        foreach (array_chunk($idProduk, self::UKURAN_POTONGAN) as $potongan) {
+            $baris = ProdukGudang::query()
+                ->whereIn('IdProduk', $potongan)
+                ->whereIn('IdGudang', $idGudang)
+                ->whereNotNull('StokMinimum')
+                ->get(['IdProduk', 'IdGudang', 'StokMinimum']);
+
+            foreach ($baris as $b) {
+                $hasil[$b->IdProduk.':'.$b->IdGudang] = (string) $b->StokMinimum;
+            }
+        }
+
+        return $hasil;
+    }
 
     /**
      * @param  list<int>  $id

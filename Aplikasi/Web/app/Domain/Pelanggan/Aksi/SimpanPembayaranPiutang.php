@@ -20,6 +20,7 @@ use App\Domain\Bersama\Dokumen\Layanan\PencatatRiwayatStatus;
 use App\Domain\Bersama\Dokumen\Layanan\PenomorDokumen;
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Bersama\Nilai\Uang;
+use App\Domain\Bersama\Peristiwa\PeristiwaIntegrasi;
 use App\Domain\Organisasi\Kueri\TanggalBisnisOutlet;
 use App\Domain\Pelanggan\Data\DataPembayaranPiutang;
 use App\Domain\Pelanggan\Enum\StatusPembayaranPiutang;
@@ -158,6 +159,25 @@ final class SimpanPembayaranPiutang
             'Piutang' => $piutang->map(fn (Piutang $p): string => $p->Nomor)->values()->all(),
             'NomorJurnal' => $jurnal->nomor,
         ], idPengguna: $data->idPengguna);
+
+        $alokasi = [];
+
+        foreach ($data->alokasi as $uuid => $jumlah) {
+            $alokasi[] = ['NomorPiutang' => $piutang->get((string) $uuid)?->Nomor, 'Jumlah' => $jumlah->KeString()];
+        }
+
+        // X7 §16.4 (v4.07): webhook `pembayaran.diterima` setelah commit.
+        PeristiwaIntegrasi::dispatch($pembayaran->IdTenant, 'pembayaran.diterima', $pembayaran->Id, [
+            'Sumber' => 'PelunasanPiutang',
+            'Uuid' => $pembayaran->Uuid,
+            'Nomor' => $pembayaran->Nomor,
+            'UuidPelanggan' => $pelanggan->Uuid,
+            'Tanggal' => $data->tanggal->toDateString(),
+            'Jumlah' => $total->KeString(),
+            'Metode' => null,
+            'Giro' => $data->giro !== null,
+            'Alokasi' => $alokasi,
+        ]);
 
         return $pembayaran;
     }
