@@ -392,3 +392,27 @@ it('outlet tanpa kewajiban QR: absen tanpa kode, kolom bukti QR tetap kosong', f
     BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
     expect(Absensi::query()->sole()->QrMasukTerverifikasi)->toBeNull();
 });
+
+it('kalibrasi wajah: sebaran diterima & ditolak per kelompok 0,05, ringkasan, hanya karyawan.kelola', function (): void {
+    [$k, , $alamat] = SiapkanAbsensiWeb($this);
+    $this->postJson("{$alamat}/masuk", KirimanAbsenWebUji(['SidikWajah' => SidikWajahUji(5)]))->assertStatus(422);
+    $this->postJson("{$alamat}/masuk", KirimanAbsenWebUji())->assertOk();
+
+    BantuanOrganisasi::Masuk($this, $k['Pemilik'], $k['Tenant']->Id);
+    $hasil = $this->getJson('/kelola/karyawan/absensi/kalibrasi-wajah')->assertOk()
+        ->assertJsonPath('Ambang', '0.60')
+        ->assertJsonPath('JumlahDiterima', 1)
+        ->assertJsonPath('JumlahDitolak', 1)
+        ->assertJsonPath('PersenDitolak', '50.0')
+        ->assertJsonPath('TerendahDiterima', '1.00')
+        ->assertJsonPath('CukupData', false)
+        ->assertJsonCount(15, 'Kelompok');
+    $kelompok = collect($hasil->json('Kelompok'));
+    expect($kelompok->sum('Diterima'))->toBe(1)
+        ->and($kelompok->sum('Ditolak'))->toBe(1)
+        ->and($kelompok->last())->toMatchArray(['Dari' => '0.95', 'Sampai' => '1.00', 'Diterima' => 1]);
+
+    $supervisor = BantuanOrganisasi::TambahAnggota($k['Tenant']->Id, PeranTenantBawaan::Supervisor);
+    BantuanOrganisasi::Masuk($this, $supervisor, $k['Tenant']->Id);
+    $this->getJson('/kelola/karyawan/absensi/kalibrasi-wajah')->assertForbidden();
+});

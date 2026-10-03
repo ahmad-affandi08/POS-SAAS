@@ -8,6 +8,7 @@ use App\Domain\Bersama\Tabel\Data\DataPermintaanTabel;
 use App\Domain\Karyawan\Aksi\SimpanAbsensiManual;
 use App\Domain\Karyawan\Kueri\DaftarAbsensi;
 use App\Domain\Karyawan\Kueri\DaftarKaryawan;
+use App\Domain\Karyawan\Kueri\KalibrasiWajah;
 use App\Domain\Karyawan\Layanan\PenyimpanSwafoto;
 use App\Domain\Karyawan\Model\Absensi;
 use App\Domain\Karyawan\Model\Karyawan;
@@ -16,6 +17,7 @@ use App\Domain\Organisasi\Kueri\AksesPengguna;
 use App\Domain\Organisasi\Kueri\PetaUuidOutlet;
 use App\Http\Kontroler\Kelola\DasarKelolaKontroler;
 use App\Http\Respons\ResponsTabel;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -38,6 +40,12 @@ final class AbsensiKontroler extends DasarKelolaKontroler
             // v3.34: koreksi & tambah absensi manual hanya untuk `karyawan.kelola`.
             'BolehKoreksi' => $akses->CekIzin($this->IdTenant(), $this->Pelaku()->Id, IzinTenant::KaryawanKelola),
         ]);
+    }
+
+    /** F-18 bagian 4 (D-37, K37): sebaran kemiripan wajah absensi web untuk kalibrasi ambang (`karyawan.kelola`). */
+    public function KalibrasiWajah(KalibrasiWajah $kalibrasi): JsonResponse
+    {
+        return response()->json($kalibrasi->Ambil($this->IdOutletBoleh(), CarbonImmutable::now()));
     }
 
     /** v3.34: catat absensi yang terlewat (karyawan lupa absen); `Sumber` = Manual. */

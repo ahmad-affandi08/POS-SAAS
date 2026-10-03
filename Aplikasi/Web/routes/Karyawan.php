@@ -41,6 +41,8 @@ Route::middleware([SiapkanAuditTenant::class, $izin(IzinTenant::KaryawanLihat)])
         Route::get('/buat', [KaryawanKontroler::class, 'Buat'])->name('kelola.karyawan.buat');
         // v3.34: koreksi & tambah absensi manual.
         Route::post('/absensi', [AbsensiKontroler::class, 'Tambah'])->name('kelola.karyawan.absensi.tambah');
+        // F-18 bagian 4 (D-37, K37): kalibrasi ambang kemiripan wajah absensi web.
+        Route::get('/absensi/kalibrasi-wajah', [AbsensiKontroler::class, 'KalibrasiWajah'])->name('kelola.karyawan.absensi.kalibrasi-wajah');
         Route::put('/absensi/{absensi}', [AbsensiKontroler::class, 'Koreksi'])->where('absensi', $ulid)->name('kelola.karyawan.absensi.koreksi');
         Route::post('/', [KaryawanKontroler::class, 'Simpan'])->name('kelola.karyawan.simpan');
         Route::put('/{karyawan}', [KaryawanKontroler::class, 'Perbarui'])->where('karyawan', $ulid)->name('kelola.karyawan.perbarui');

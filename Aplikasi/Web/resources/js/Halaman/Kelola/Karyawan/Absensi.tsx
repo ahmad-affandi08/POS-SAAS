@@ -6,6 +6,7 @@ import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import KotakCentang from '@/Komponen/Formulir/KotakCentang';
 import Tombol from '@/Komponen/Formulir/Tombol';
+import PanelKalibrasiWajah from '@/Komponen/Karyawan/PanelKalibrasiWajah';
 import AksiHalaman from '@/Komponen/Kelola/AksiHalaman';
 import TabelData from '@/Komponen/TabelData/TabelData';
 import type { DefinisiSaring, KolomTabel } from '@/Komponen/TabelData/Tipe';
@@ -222,6 +223,7 @@ export default function HalamanAbsensi({ Absensi, OpsiKaryawan, OpsiOutlet, Bole
                 labelBaris={(a) => `absensi ${a.NamaKaryawan ?? ''} ${FormatTanggal(a.TanggalBisnis)}`}
                 kosong={{ ilustrasi: true, judul: 'Belum ada absensi. Karyawan absen dari aplikasi kasir di outlet.' }}
             />
+            {BolehKoreksi ? <PanelKalibrasiWajah /> : null}
             {dialog !== null ? (
                 <FormAbsensi
                     absensi={dialog.jenis === 'koreksi' ? dialog.absensi : null}

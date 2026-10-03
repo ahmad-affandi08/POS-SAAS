@@ -256,3 +256,17 @@ export type PropsSlipGaji = {
     Baris: BarisGajiKaryawan[];
     Usaha: { Nama: string | null; Npwp: string | null };
 };
+
+/* F-18 bagian 4 (D-37, K37): kalibrasi ambang kemiripan wajah absensi web. */
+export type KalibrasiWajah = {
+    Ambang: string;
+    Hari: number;
+    JumlahDiterima: number;
+    JumlahDitolak: number;
+    PersenDitolak: string | null;
+    TerendahDiterima: string | null;
+    MedianDiterima: string | null;
+    TertinggiDitolak: string | null;
+    CukupData: boolean;
+    Kelompok: { Dari: string; Sampai: string; Diterima: number; Ditolak: number }[];
+};
