@@ -13,6 +13,7 @@ use App\Domain\Katalog\Aksi\HapusProduk;
 use App\Domain\Katalog\Aksi\PulihkanProduk;
 use App\Domain\Katalog\Aksi\SimpanProduk;
 use App\Domain\Katalog\Aksi\SimpanProdukDenganPaketSesi;
+use App\Domain\Katalog\Aksi\UbahProdukMassal;
 use App\Domain\Katalog\Data\DataProduk;
 use App\Domain\Katalog\Data\DataSaringProduk;
 use App\Domain\Katalog\Enum\JenisProduk;
@@ -39,6 +40,7 @@ use App\Domain\Persediaan\Aksi\CatatStokAwalProdukBaru;
 use App\Domain\Tenant\Kueri\ProfilTenant;
 use App\Domain\Tenant\Layanan\PastikanBatasPaket;
 use App\Http\Permintaan\Kelola\Katalog\SimpanProdukPermintaan;
+use App\Http\Permintaan\Kelola\Katalog\UbahProdukMassalPermintaan;
 use App\Http\Respons\ResponsTabel;
 use Brick\Math\BigDecimal;
 use Illuminate\Http\JsonResponse;
@@ -194,6 +196,31 @@ final class ProdukKontroler extends DasarKatalogKontroler
         $baris = $arsipkan->Jalankan($this->CariProduk($produk));
 
         return back()->with('Kilat', "Produk {$baris->Nama} diarsipkan. Produk tidak tampil di kasir, riwayatnya tetap tersimpan.");
+    }
+
+    /** Audit kemudahan pakai #19: aksi massal produk terpilih di daftar produk. */
+    public function Massal(UbahProdukMassalPermintaan $permintaan, UbahProdukMassal $ubah): RedirectResponse
+    {
+        $uuidKategori = $permintaan->validated('UuidKategori');
+        $idKategori = is_string($uuidKategori) ? Kategori::query()->where('Uuid', $uuidKategori)->value('Id') : null;
+
+        if (is_string($uuidKategori) && $idKategori === null) {
+            return back()->withErrors(['UuidKategori' => 'Kategori tidak ditemukan.']);
+        }
+
+        /** @var list<string> $uuid */
+        $uuid = array_values((array) $permintaan->validated('Uuid'));
+        $aksi = (string) $permintaan->validated('Aksi');
+        $jumlah = $ubah->Jalankan($aksi, $uuid, is_numeric($idKategori) ? (int) $idKategori : null);
+        $kata = match ($aksi) {
+            'Arsipkan' => 'diarsipkan',
+            'Pulihkan' => 'diaktifkan kembali',
+            'Kategori' => 'dipindah kategorinya',
+            'TampilDiPos' => 'ditampilkan di kasir',
+            default => 'disembunyikan dari kasir',
+        };
+
+        return back()->with('Kilat', "{$jumlah} produk {$kata}.");
     }
 
     public function Pulihkan(string $produk, PulihkanProduk $pulihkan): RedirectResponse

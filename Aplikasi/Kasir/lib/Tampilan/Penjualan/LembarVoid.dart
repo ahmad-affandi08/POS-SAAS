@@ -22,7 +22,7 @@ import '../Komponen/PilihanAlasan.dart';
 class LembarVoid extends ConsumerStatefulWidget {
   const LembarVoid({super.key, required this.uuidPenjualan, required this.kasir, required this.saatSelesai});
 
-  static const String judul = 'Void transaksi';
+  static const String judul = 'Batalkan transaksi';
 
   final String uuidPenjualan;
   final StafLokal kasir;
@@ -80,8 +80,8 @@ class _LembarVoidState extends ConsumerState<LembarVoid> {
         context: context,
         builder: (_) => DialogPinSupervisor(
           izin: IzinKasir.penjualanVoid,
-          pesan: 'Void transaksi ${_data?.penjualan.Nomor ?? ''} wajib disetujui. Pilih supervisor yang menyetujui.',
-          judul: 'Void transaksi ${_data?.penjualan.Nomor ?? ''}'.trim(),
+          pesan: 'Pembatalan (void) ${_data?.penjualan.Nomor ?? ''} wajib disetujui. Pilih supervisor yang menyetujui.',
+          judul: 'Batalkan transaksi ${_data?.penjualan.Nomor ?? ''}'.trim(),
           nilai: _data == null ? null : Uang.Dari(_data!.penjualan.TotalAkhir),
           rincian: [(label: 'Alasan', nilai: _alasan.text.trim())],
         ),
@@ -220,13 +220,13 @@ class _LembarVoidState extends ConsumerState<LembarVoid> {
         child: FilledButton(
           style: FilledButton.styleFrom(backgroundColor: warna.bahaya),
           onPressed: _sibuk ? null : _Simpan,
-          child: Text(_sibuk ? 'Menyimpan…' : 'Void transaksi'),
+          child: Text(_sibuk ? 'Menyimpan…' : 'Batalkan transaksi'),
         ),
       ),
       const SizedBox(height: TokenJarak.jarak8),
       Text(
         LayananVoidPenjualan.AmbilPenyetujuEfektif(widget.kasir, null) == null
-            ? 'Void wajib disetujui supervisor dengan PIN. Bisa dilakukan tanpa internet.'
+            ? 'Pembatalan (void) wajib disetujui supervisor dengan PIN. Bisa dilakukan tanpa internet.'
             : 'Anda berwenang menyetujui void ini. Bisa dilakukan tanpa internet.',
         style: teks.bodySmall?.copyWith(color: warna.teksSekunder),
       ),

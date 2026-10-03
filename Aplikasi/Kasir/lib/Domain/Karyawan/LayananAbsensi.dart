@@ -49,6 +49,16 @@ class LayananAbsensi {
   /// Status staf saat ini: null = belum masuk.
   Future<BarisAbsensiLokal?> AmbilTerbuka(StafLokal staf) => repositori.AmbilTerbuka(staf.uuid);
 
+  /// Audit kemudahan pakai #31: tawarkan absen masuk saat kasir masuk bila hari ini (waktu perangkat) belum absen
+  /// masuk dan tidak sedang tercatat masuk.
+  Future<bool> CekPerluTawaranMasuk(StafLokal staf) async {
+    if (await repositori.AmbilTerbuka(staf.uuid) != null) {
+      return false;
+    }
+    final sekarang = _jam();
+    return !await repositori.CekSudahMasukSejak(staf.uuid, DateTime(sekarang.year, sekarang.month, sekarang.day));
+  }
+
   /// Ambil swafoto bila kamera tersedia. Null = tanpa kamera. Dibatalkan = `GalatKasir` `SwafotoDibatalkan`.
   Future<Uint8List?> AmbilSwafoto() async {
     if (!kamera.CekTersedia()) {

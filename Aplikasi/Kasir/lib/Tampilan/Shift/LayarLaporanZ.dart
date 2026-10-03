@@ -1,8 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sistem_desain/SistemDesain.dart';
 
 import '../../Aplikasi/Penyedia.dart';
+import '../../Domain/GalatKasir.dart';
+import '../Komponen/FormatWaktu.dart';
 import '../Struk/BagianCetakDokumen.dart';
 import 'KartuLaporanShift.dart';
 
@@ -18,7 +22,7 @@ class LayarLaporanZ extends ConsumerWidget {
     final laporan = ref.watch(penyediaLaporanShift(uuidShift));
     final warna = TokenWarna.AmbilDari(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Laporan Z · shift ditutup'), automaticallyImplyLeading: false),
+      appBar: AppBar(title: const Text('Laporan tutup shift (Z)'), automaticallyImplyLeading: false),
       body: Align(
         alignment: Alignment.topCenter,
         child: ConstrainedBox(
@@ -43,6 +47,7 @@ class LayarLaporanZ extends ConsumerWidget {
                   ],
                 ),
               ),
+              const _TombolAbsenPulang(),
               const SizedBox(height: TokenJarak.jarak8),
               Text(
                 'Data tutup shift terkirim otomatis ke back-office saat online.',
@@ -64,6 +69,85 @@ class LayarLaporanZ extends ConsumerWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Audit kemudahan pakai #31: kasir yang masih tercatat masuk bisa langsung absen pulang dari laporan tutup shift
+/// (tanpa keluar ke layar Absen dan memasukkan PIN lagi; PIN sudah dipakai untuk masuk & tutup shift).
+class _TombolAbsenPulang extends ConsumerStatefulWidget {
+  const _TombolAbsenPulang();
+
+  @override
+  ConsumerState<_TombolAbsenPulang> createState() => _StatusTombolAbsenPulang();
+}
+
+class _StatusTombolAbsenPulang extends ConsumerState<_TombolAbsenPulang> {
+  bool _masihMasuk = false;
+  bool _sibuk = false;
+  String? _pesan;
+
+  @override
+  void initState() {
+    super.initState();
+    final kasir = ref.read(penyediaSesi).kasir;
+    if (kasir != null) {
+      unawaited(
+        ref.read(penyediaLayananAbsensi).AmbilTerbuka(kasir).then((terbuka) {
+          if (mounted) {
+            setState(() => _masihMasuk = terbuka != null);
+          }
+        }),
+      );
+    }
+  }
+
+  Future<void> _Absen() async {
+    final kasir = ref.read(penyediaSesi).kasir;
+    if (kasir == null) {
+      return;
+    }
+    setState(() => _sibuk = true);
+    try {
+      final layanan = ref.read(penyediaLayananAbsensi);
+      final hasil = await layanan.Catat(kasir, await layanan.AmbilSwafoto());
+      if (mounted) {
+        setState(() {
+          _masihMasuk = false;
+          _pesan = '${hasil.nama} absen pulang pukul ${FormatWaktu.FormatJam(hasil.waktu)}.';
+        });
+      }
+    } on GalatKasir catch (galat) {
+      if (mounted) {
+        setState(() => _pesan = galat.pesan);
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _sibuk = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final pesan = _pesan;
+    if (!_masihMasuk && pesan == null) {
+      return const SizedBox.shrink();
+    }
+    return Padding(
+      padding: const EdgeInsets.only(top: TokenJarak.jarak8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (_masihMasuk)
+            OutlinedButton.icon(
+              onPressed: _sibuk ? null : _Absen,
+              icon: const Icon(Icons.badge_outlined),
+              label: Text(_sibuk ? 'Menyimpan…' : 'Absen pulang sekarang'),
+            ),
+          if (pesan != null) Text(pesan),
+        ],
       ),
     );
   }

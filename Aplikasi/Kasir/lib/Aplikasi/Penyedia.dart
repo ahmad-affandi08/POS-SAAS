@@ -1186,8 +1186,10 @@ class PengaturSesi extends Notifier<KeadaanSesi> {
     unawaited(PerbaruiDataMeja());
   }
 
-  Future<void> Masuk(StafLokal staf, String pin) async {
+  /// [sebelumMasuk] dipanggil setelah PIN benar & sebelum ruang kerja terbuka (misal tawaran absen masuk, audit #31).
+  Future<void> Masuk(StafLokal staf, String pin, {Future<void> Function(StafLokal kasir)? sebelumMasuk}) async {
     final kasir = await ref.read(penyediaLayananMasuk).Masuk(staf, pin);
+    await sebelumMasuk?.call(kasir);
     // PIN diverifikasi lokal supaya kasir tetap bisa masuk tanpa internet (BR-06.3), jadi pencabutan perangkat
     // tidak ketahuan dari PIN saja. Keputusan pemilik produk (v2.64): saat online, masuk **diblokir** — galatnya
     // dilempar supaya papan PIN menyebut alasannya, sementara kait penolakan token membawa aplikasi kembali ke

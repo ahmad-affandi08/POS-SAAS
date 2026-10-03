@@ -21,15 +21,36 @@ class LayarStatusSinkron extends ConsumerStatefulWidget {
   /// §18.3 butir 7: selisih jam perangkat − server lebih dari ini diberi peringatan.
   static const int batasSelisihJamDetik = 600;
 
-  /// Label jenis item outbox untuk kasir.
+  /// Label jenis item outbox untuk kasir (audit kemudahan pakai #30: semua jenis berlabel bahasa sehari-hari; jenis
+  /// yang belum dikenal tampil sebagai "Data lain" supaya kode teknis tidak muncul di layar).
   static String AmbilLabelJenis(String jenis) => switch (jenis) {
     'Shift.Buka' => 'Buka shift',
     'Shift.Tutup' => 'Tutup shift',
+    'Shift.BukaUlang' => 'Buka ulang shift',
     'Penjualan.Buat' => 'Penjualan',
-    'Penjualan.Void' => 'Void penjualan',
+    'Penjualan.Void' => 'Pembatalan transaksi',
     'ReturPenjualan.Buat' => 'Retur penjualan',
+    'ReturPenjualan.TanpaStruk' => 'Retur tanpa struk',
     'MutasiKas.Catat' => 'Kas masuk/keluar',
-    _ => jenis,
+    'Laci.Buka' => 'Buka laci',
+    'Absensi.Masuk' => 'Absen masuk',
+    'Absensi.Keluar' => 'Absen pulang',
+    'Pelanggan.Buat' => 'Pelanggan baru',
+    'Deposit.Isi' => 'Isi saldo pelanggan',
+    'Sesi.Pakai' => 'Pakai paket sesi',
+    'PesananPenjualan.Buat' => 'Pesanan dengan uang muka',
+    'PesananTerbuka.Buka' => 'Buka pesanan meja',
+    'PesananTerbuka.Tambah' => 'Tambah item pesanan meja',
+    'PesananTerbuka.Ubah' => 'Ubah pesanan meja',
+    'PesananTerbuka.KirimDapur' => 'Kirim ke dapur',
+    'PesananTerbuka.BatalkanBaris' => 'Batalkan item pesanan meja',
+    'PesananTerbuka.PindahBaris' => 'Pindah/pisah pesanan meja',
+    'PesananTerbuka.Batal' => 'Batalkan pesanan meja',
+    'Meja.Bersih' => 'Meja selesai dibersihkan',
+    'BahanTerbuang.Catat' => 'Bahan terbuang',
+    'PesananGrosir.Buat' => 'Pesanan salesman',
+    'Kunjungan.Catat' => 'Kunjungan salesman',
+    _ => 'Data lain',
   };
 
   @override
@@ -87,7 +108,7 @@ class _LayarStatusSinkronState extends ConsumerState<LayarStatusSinkron> {
         DeretKartuAngka(
           kartu: [
             KartuAngka(
-              label: 'Antrean kirim',
+              label: 'Belum terkirim ke server',
               ikon: Icons.cloud_upload_outlined,
               nada: tertunda == 0 ? NadaStatus.Sukses : NadaStatus.Peringatan,
               nilai: Text(tertunda == 0 ? 'Semua data sudah terkirim.' : '$tertunda data belum terkirim.'),

@@ -473,7 +473,7 @@ class _BarisRiwayat extends ConsumerWidget {
                             child: OutlinedButton.icon(
                               onPressed: saatVoid,
                               icon: const Icon(Icons.block),
-                              label: const Text('Void transaksi'),
+                              label: const Text('Batalkan transaksi'),
                             ),
                           ),
                       ],

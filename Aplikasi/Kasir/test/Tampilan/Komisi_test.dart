@@ -42,6 +42,9 @@ void main() {
       await tester.pump();
       await KetikPin(tester, KasusPin(0)['Pin']! as String);
       await Tunggu(tester);
+      // Audit kemudahan pakai #31: toko berkaryawan ditawari absen masuk; test ini melewatinya.
+      await tester.tap(find.text('Nanti'));
+      await Tunggu(tester);
       expect(find.byType(RuangKerja), findsOneWidget);
 
       Future<void> Ketuk(Finder f) async {

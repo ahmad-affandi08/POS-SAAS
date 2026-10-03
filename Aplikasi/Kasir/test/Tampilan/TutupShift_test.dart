@@ -88,7 +88,7 @@ void main() {
       await Ketuk(tester, find.text('Tutup shift sekarang'));
       await Tunggu(tester, const Duration(seconds: 1));
 
-      expect(find.text('Laporan Z · shift ditutup'), findsOneWidget);
+      expect(find.text('Laporan tutup shift (Z)'), findsOneWidget);
       expect(find.text('Kas seharusnya'), findsOneWidget);
       expect(find.text('Rp 455.000'), findsWidgets);
       expect(tester.takeException(), isNull);
@@ -127,7 +127,7 @@ void main() {
     await KetikPin(tester, KasusPin(1)['Pin']! as String);
     await Tunggu(tester, const Duration(seconds: 1));
 
-    expect(find.text('Laporan Z · shift ditutup'), findsOneWidget);
+    expect(find.text('Laporan tutup shift (Z)'), findsOneWidget);
     expect(find.text('−Rp 25.000 (kurang)'), findsOneWidget);
     final data = (await OutboxTutup(tester, u)).single;
     expect(data['Alasan'], 'Salah hitung kembalian');
@@ -157,7 +157,7 @@ void main() {
 
     await Ketuk(tester, find.text('Tutup shift sekarang'));
     await Tunggu(tester, const Duration(seconds: 1));
-    expect(find.text('Laporan Z · shift ditutup'), findsOneWidget);
+    expect(find.text('Laporan tutup shift (Z)'), findsOneWidget);
     final data = (await OutboxTutup(tester, u)).single;
     expect(data['PecahanKasAkhir'], [
       {'Nominal': '100000', 'Jumlah': 4},
@@ -180,8 +180,8 @@ void main() {
 
     await tester.tap(find.text('Shift').last);
     await Tunggu(tester);
-    await Ketuk(tester, find.text('Laporan X'));
-    expect(find.text('Laporan X'), findsNWidgets(2));
+    await Ketuk(tester, find.text('Laporan sementara (X)'));
+    expect(find.text('Laporan sementara (X)'), findsNWidgets(2));
     expect(find.text('Kas seharusnya'), findsOneWidget);
     expect(find.text('Rp 455.000'), findsOneWidget);
     await tester.tap(find.byTooltip('Tutup'));

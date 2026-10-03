@@ -432,7 +432,7 @@ void main() {
     await Ketuk(tester, find.widgetWithText(FilledButton, 'Tambah pembayaran EDC BCA'));
     expect(find.text('Isi nomor approval dari struk EDC.'), findsOneWidget);
     await tester.enterText(find.widgetWithText(TextField, 'Bank penerbit kartu (opsional)'), 'Mandiri');
-    await tester.enterText(find.widgetWithText(TextField, 'Nomor approval'), '004512');
+    await tester.enterText(find.widgetWithText(TextField, 'Nomor approval (di struk EDC)'), '004512');
     await Ketuk(tester, find.widgetWithText(FilledButton, 'Tambah pembayaran EDC BCA'));
 
     expect(find.text('Sisa'), findsOneWidget);

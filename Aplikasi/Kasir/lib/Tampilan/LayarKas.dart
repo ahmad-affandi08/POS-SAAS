@@ -66,7 +66,7 @@ class LayarKas extends ConsumerWidget {
               ),
             if (!refundTunai.BernilaiNol())
               KartuAngka(
-                label: 'Refund tunai (void & retur)',
+                label: 'Uang kembali ke pelanggan (batal & retur)',
                 ikon: Icons.undo,
                 nilai: TeksUang(Uang.Nol().Kurangi(refundTunai)),
               ),

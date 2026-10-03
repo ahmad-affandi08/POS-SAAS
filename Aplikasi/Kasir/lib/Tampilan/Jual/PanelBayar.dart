@@ -753,7 +753,7 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
             onChanged: (_) => setState(() => _galat = null),
             decoration: InputDecoration(
               labelText: switch (metode.Jenis) {
-                JenisMetodeBayar.edc => 'Nomor approval',
+                JenisMetodeBayar.edc => 'Nomor approval (di struk EDC)',
                 JenisMetodeBayar.marketplace => 'Nomor pesanan ${metode.Nama} (opsional)',
                 _ => 'Referensi (opsional)',
               },

@@ -1,10 +1,11 @@
 import { Link, router, usePage } from '@inertiajs/react';
 
 import AjakanTambahBatas from '@/Komponen/Kelola/AjakanTambahBatas';
+import AksiMassalProduk from '@/Komponen/Katalog/AksiMassalProduk';
 import AksiHalaman from '@/Komponen/Kelola/AksiHalaman';
 import DaftarGalatServer from '@/Komponen/Katalog/DaftarGalatServer';
 import PesanHanyaLihat from '@/Komponen/Katalog/PesanHanyaLihat';
-import TabelData from '@/Komponen/TabelData/TabelData';
+import TabelData, { type KonteksAksiMassal } from '@/Komponen/TabelData/TabelData';
 import type { DefinisiSaring, KolomTabel } from '@/Komponen/TabelData/Tipe';
 import { Button } from '@/Komponen/Ui/button';
 import { DropdownMenuItem, DropdownMenuSeparator } from '@/Komponen/Ui/dropdown-menu';
@@ -111,7 +112,7 @@ const kolom: KolomTabel<BarisProduk>[] = [
     },
 ];
 
-/** F-03: daftar produk (TabelData D-16) dengan pencarian, saringan, arsip/pulihkan, dan ekspor Excel. */
+/** F-03: daftar produk (TabelData D-16) dengan pencarian, saringan, arsip/pulihkan, aksi massal (#19), dan ekspor Excel. */
 export default function HalamanDaftarProduk({ Produk, Kategori, Jenis, BatasSku, Izin }: PropsDaftarProduk) {
     const { props } = usePage<PropsBersamaAplikasi>();
     const penuh = CekBatasPenuh(BatasSku);
@@ -199,6 +200,9 @@ export default function HalamanDaftarProduk({ Produk, Kategori, Jenis, BatasSku,
                 ekspor={{ alamat: `${alamat}/ekspor`, label: 'Ekspor ke Excel' }}
                 {...(Izin.Kelola
                     ? {
+                          aksiMassal: (konteks: KonteksAksiMassal<BarisProduk>) => (
+                              <AksiMassalProduk konteks={konteks} kategori={Kategori} />
+                          ),
                           aksiBaris: (produk: BarisProduk) => {
                               const aktif = produk.Status === 'Aktif';
 

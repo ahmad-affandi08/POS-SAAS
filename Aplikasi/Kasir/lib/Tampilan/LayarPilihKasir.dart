@@ -32,7 +32,7 @@ class _LayarPilihKasirState extends ConsumerState<LayarPilihKasir> {
       _galat = null;
     });
     try {
-      await ref.read(penyediaSesi.notifier).Masuk(staf, pin);
+      await ref.read(penyediaSesi.notifier).Masuk(staf, pin, sebelumMasuk: _TawarkanAbsenMasuk);
     } on GalatKasir catch (galat) {
       if (mounted) {
         setState(() => _galat = galat.pesan);
@@ -40,6 +40,37 @@ class _LayarPilihKasirState extends ConsumerState<LayarPilihKasir> {
     } finally {
       if (mounted) {
         setState(() => _sibuk = false);
+      }
+    }
+  }
+
+  /// Audit kemudahan pakai #31: toko yang memakai data karyawan ditawari absen masuk sekali per hari tepat setelah
+  /// PIN kasir benar (PIN tidak diminta dua kali). "Nanti" = langsung bekerja; absen tetap bisa dari tombol Absen.
+  Future<void> _TawarkanAbsenMasuk(StafLokal kasir) async {
+    final layanan = ref.read(penyediaLayananAbsensi);
+    final pakaiKaryawan = (await ref.read(penyediaKaryawanPos.future)).isNotEmpty;
+    if (!pakaiKaryawan || !await layanan.CekPerluTawaranMasuk(kasir) || !mounted) {
+      return;
+    }
+    final absen = await showDialog<bool>(
+      context: context,
+      builder: (konteks) => AlertDialog(
+        title: const Text('Absen masuk sekarang?'),
+        content: Text('${kasir.nama} belum absen masuk hari ini.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(konteks).pop(false), child: const Text('Nanti')),
+          FilledButton(onPressed: () => Navigator.of(konteks).pop(true), child: const Text('Absen masuk')),
+        ],
+      ),
+    );
+    if (absen != true) {
+      return;
+    }
+    try {
+      await layanan.Catat(kasir, await layanan.AmbilSwafoto());
+    } on GalatKasir catch (galat) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(galat.pesan)));
       }
     }
   }

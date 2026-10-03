@@ -13,12 +13,17 @@ import '../Pendukung/PasangAplikasi.dart';
 /// F-18 EMP-03 di aplikasi kasir: dari layar pilih kasir → Absen → pilih nama → PIN → swafoto (bila kamera ada) →
 /// absen masuk lalu keluar tercatat di outbox, tanpa membuka sesi kasir.
 void main() {
-  Future<LingkunganUji> Pasang(WidgetTester tester, Size ukuran, KameraSwafotoTiruan kamera) async {
+  Future<LingkunganUji> Pasang(
+    WidgetTester tester,
+    Size ukuran,
+    KameraSwafotoTiruan kamera, {
+    List<Map<String, Object?>>? karyawan,
+  }) async {
     final u = LingkunganUji.Buat();
     await tester.runAsync(() => u.SiapkanAktif());
     u.server.penangan = (p) async {
       if (p.url.path.endsWith('/data-awal')) {
-        return JsonUji(DataAwalUji());
+        return JsonUji(DataAwalUji(karyawan: karyawan));
       }
       if (p.url.path.endsWith('/katalog')) {
         return JsonUji(KatalogUji());
@@ -83,4 +88,32 @@ void main() {
     expect(await tester.runAsync(() => u.db.select(u.db.outbox).get()), isEmpty);
     await Lepas(tester, u);
   });
+
+  for (final (pilih, absen) in [('Absen masuk', true), ('Nanti', false)]) {
+    testWidgets('audit #31: toko berkaryawan ditawari absen masuk setelah PIN kasir ($pilih)', (tester) async {
+      final kamera = KameraSwafotoTiruan(foto: Uint8List.fromList([0xFF, 0xD8, 0xFF, 0xE0, 9]));
+      final u = await Pasang(
+        tester,
+        const Size(1280, 900),
+        kamera,
+        karyawan: [
+          {'Uuid': '01K5KRY0000000000000000001', 'Nama': 'Rina Wulandari', 'Jabatan': 'Kasir'},
+        ],
+      );
+      await tester.tap(find.text('Rina Wulandari'));
+      await tester.pump();
+      await KetikPin(tester, KasusPin(0)['Pin']! as String);
+      await Tunggu(tester);
+      expect(find.text('Absen masuk sekarang?'), findsOneWidget);
+      await tester.tap(find.text(pilih));
+      await Tunggu(tester, const Duration(milliseconds: 600));
+      expect(find.text('Absen masuk sekarang?'), findsNothing);
+
+      final outbox = await tester.runAsync(() => u.db.select(u.db.outbox).get());
+      expect(outbox!.where((o) => o.Jenis == 'Absensi.Masuk'), hasLength(absen ? 1 : 0));
+      expect(kamera.dipanggil, absen ? 1 : 0, reason: 'PIN tidak diminta lagi; hanya swafoto.');
+      expect(tester.takeException(), isNull);
+      await Lepas(tester, u);
+    });
+  }
 }

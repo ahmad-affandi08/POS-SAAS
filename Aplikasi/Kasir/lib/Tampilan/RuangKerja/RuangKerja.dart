@@ -617,7 +617,7 @@ class _RuangKerjaState extends ConsumerState<RuangKerja> {
         LembarTutupShift.judul,
         LembarTutupShift(key: const ValueKey('TutupShift'), shift: widget.shift!, penutup: widget.kasir),
       ),
-      _ => ('Laporan X', _IsiLaporanX(uuidShift: widget.shift!.Uuid)),
+      _ => ('Laporan sementara (X)', _IsiLaporanX(uuidShift: widget.shift!.Uuid)),
     };
 
     if (lebar >= RuangKerja.lebarPanelSamping) {

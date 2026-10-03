@@ -107,16 +107,16 @@ void main() {
       final (u, nomor) = await MasukRuangKerja(tester, ukuran: ukuran);
       await BukaRiwayat(tester);
       await Ketuk(tester, find.text(nomor));
-      await Ketuk(tester, find.widgetWithText(OutlinedButton, 'Void transaksi'));
+      await Ketuk(tester, find.widgetWithText(OutlinedButton, 'Batalkan transaksi'));
 
-      expect(tester.widget<PanelTugas>(find.byType(PanelTugas)).judul, 'Void transaksi');
+      expect(tester.widget<PanelTugas>(find.byType(PanelTugas)).judul, 'Batalkan transaksi');
       expect(find.text('Kembalikan tunai dari laci'), findsOneWidget);
       expect(find.text('Rp 67.100'), findsWidgets);
 
-      await Ketuk(tester, find.widgetWithText(FilledButton, 'Void transaksi'));
+      await Ketuk(tester, find.widgetWithText(FilledButton, 'Batalkan transaksi'));
       expect(find.text('Tulis alasan void minimal 5 huruf.'), findsOneWidget);
       await tester.enterText(find.widgetWithText(TextField, 'Alasan void'), 'Salah input pesanan meja 4');
-      await Ketuk(tester, find.widgetWithText(FilledButton, 'Void transaksi'));
+      await Ketuk(tester, find.widgetWithText(FilledButton, 'Batalkan transaksi'));
       await SetujuiBudi(tester);
 
       expect(find.text('Transaksi $nomor sudah di-void.'), findsOneWidget);
@@ -133,11 +133,11 @@ void main() {
       expect(find.text('Void'), findsOneWidget, reason: 'Status dokumen berteks di riwayat.');
       expect(find.textContaining('0 transaksi · Rp 0 · 1 void'), findsOneWidget);
       await Ketuk(tester, find.text(nomor));
-      expect(find.widgetWithText(OutlinedButton, 'Void transaksi'), findsNothing, reason: 'Sudah di-void.');
+      expect(find.widgetWithText(OutlinedButton, 'Batalkan transaksi'), findsNothing, reason: 'Sudah di-void.');
 
       await tester.tap(find.text('Kas').last);
       await Tunggu(tester);
-      expect(find.text('Refund tunai (void & retur)'), findsOneWidget);
+      expect(find.text('Uang kembali ke pelanggan (batal & retur)'), findsOneWidget);
       expect(find.text('−Rp 67.100'), findsOneWidget);
       expect(find.text('Rp 500.000'), findsWidgets, reason: 'Perkiraan kas kembali ke kas awal.');
       expect(tester.takeException(), isNull);

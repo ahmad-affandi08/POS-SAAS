@@ -114,6 +114,34 @@ void main() {
     });
   }
 
+  testWidgets('audit #29: "+" pada item meja terkirim menambah baris baru yang sama, item lama tetap (1280dp)', (
+    tester,
+  ) async {
+    final u = await MasukKasir(tester, ukuranDesktop);
+    await Ketuk(tester, find.text('Meja'));
+    await Ketuk(tester, find.text('T-01'));
+    await Ketuk(tester, find.widgetWithText(FilledButton, 'Buka pesanan'));
+    await Ketuk(tester, Ubin('Americano Panas'));
+    await Ketuk(tester, find.widgetWithText(OutlinedButton, 'Kirim ke dapur'));
+    expect(find.textContaining('Status: Terkirim'), findsOneWidget);
+
+    await Ketuk(tester, find.descendant(of: find.byType(BarisKeranjang).first, matching: find.byIcon(Icons.add)));
+    expect(find.text('Americano Panas ditambah 1 sebagai item baru.'), findsOneWidget);
+    expect(find.textContaining('Status: Terkirim'), findsOneWidget, reason: 'Item yang sudah dipesan tidak berubah.');
+    expect(find.textContaining('Item baru'), findsOneWidget);
+    expect(find.byType(BarisKeranjang), findsNWidgets(2));
+
+    // Lewat rincian item: "Pesan 1 lagi" melakukan hal yang sama.
+    await Ketuk(
+      tester,
+      find.descendant(of: find.byType(BarisKeranjang).first, matching: find.textContaining('Americano Panas')).first,
+    );
+    await Ketuk(tester, find.text('Pesan 1 lagi'));
+    expect(find.textContaining('Status: Terkirim'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    await Lepas(tester, u);
+  });
+
   testWidgets('pesanan meja: kirim ke dapur → batal item (PIN supervisor) → bayar menutup pesanan (1280dp)', (
     tester,
   ) async {
@@ -136,12 +164,14 @@ void main() {
     expect(tambah.data['Ronde'], 1);
     expect((tambah.data['Baris']! as List<Object?>), hasLength(2));
 
-    // Item yang sudah dipesan tidak bisa diubah jumlahnya.
-    await Ketuk(tester, find.descendant(of: find.byType(BarisKeranjang).first, matching: find.byIcon(Icons.add)));
-    expect(find.textContaining('tidak bisa diubah jumlahnya'), findsOneWidget);
+    // Item yang sudah dipesan tidak bisa dikurangi langsung (audit #29: arahkan ke rincian → Batalkan item).
+    await Ketuk(tester, find.descendant(of: find.byType(BarisKeranjang).first, matching: find.byIcon(Icons.remove)));
+    expect(find.textContaining('tidak bisa dikurangi di sini'), findsOneWidget);
 
-    // BR-07.5: batal croissant yang sudah di dapur → alasan + PIN supervisor.
+    // BR-07.5: batal croissant yang sudah di dapur → rincian item → alasan + PIN supervisor.
     await Ketuk(tester, find.text('Croissant Mentega Prancis Isi Cokelat Lumer Ukuran Jumbo').last);
+    expect(find.text('Pesan 1 lagi'), findsOneWidget);
+    await Ketuk(tester, find.text('Batalkan item'));
     expect(find.text('Batalkan Croissant Mentega Prancis Isi Cokelat Lumer Ukuran Jumbo?'), findsOneWidget);
     await tester.enterText(find.widgetWithText(TextField, 'Alasan'), 'Tamu ganti menu');
     await Ketuk(tester, find.widgetWithText(FilledButton, 'Batalkan item'));

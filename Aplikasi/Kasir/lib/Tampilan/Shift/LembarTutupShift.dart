@@ -317,7 +317,7 @@ class _LembarTutupShiftState extends ConsumerState<LembarTutupShift> {
           ),
           const SizedBox(height: TokenJarak.jarak8),
           Text(
-            'Shift tetap bisa ditutup tanpa internet. Laporan Z tampil setelah shift ditutup.',
+            'Shift tetap bisa ditutup tanpa internet. Laporan tutup shift (Z) tampil setelah shift ditutup.',
             style: teks.bodySmall?.copyWith(color: warna.teksSekunder),
           ),
         ],

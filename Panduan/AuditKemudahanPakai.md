@@ -38,7 +38,7 @@ kali, persetujuan jarak jauh tetap); butir 3 (tautan unduh) ditunda. Butir seles
 | # | Area | Masalah | Usulan | Putusan |
 |---|---|---|---|---|
 | 18 | Back-office | Varian: harga/barcode beda harus dibuka satu per satu (`PembuatVarian.tsx`, `Produk/Detail.tsx`) | Tabel kombinasi bisa diedit di formulir produk + "isi sama untuk semua" | Agent |
-| 19 | Back-office | Tidak ada aksi massal di halaman mana pun walau `TabelData` mendukung | Produk (kategori, harga %, arsip, tampil di POS), hutang/piutang (bayar terpilih) | Agent |
+| 19 ✓ v4.41 | Back-office | Tidak ada aksi massal di halaman mana pun walau `TabelData` mendukung | Produk (kategori, harga %, arsip, tampil di POS), hutang/piutang (bayar terpilih) | Agent |
 | 20 ✓ v4.40 | Back-office | Pembelian tempo tanpa PO butuh penerimaan + faktur (nomor faktur wajib) + pembayaran | "Bayar nanti (tempo X hari)" di penerimaan → faktur otomatis, nomor opsional | Agent |
 | 21 ✓ v4.40 | Back-office | Harga beli tidak terisi otomatis di PO/penerimaan (`AturanPembelian.ts:43`) | Isi harga beli terakhir per pemasok | Agent |
 | 22 ✓ v4.40 | Back-office | Penyesuaian stok masuk wajib "Harga modal" per baris (`Penyesuaian/Form.tsx:342`) | Isi otomatis HPP rata-rata, bisa diubah | Agent |
@@ -48,9 +48,9 @@ kali, persetujuan jarak jauh tetap); butir 3 (tautan unduh) ditunda. Butir seles
 | 26 ✓ v4.39 | Kasir | Kunci layar 5 menit walau keranjang berisi / menunggu QRIS (`RuangKerja.dart:271`) | Tidak mengunci saat transaksi berjalan; bawaan 15 menit | Agent |
 | 27 ✓ v4.40 | Kasir | Alasan void/retur/selisih diketik bebas, batas minimum tidak seragam | Chip alasan siap pakai + "Lainnya" | Agent |
 | 28 ✓ v4.39 | Kasir | Hitung pecahan hanya +/- (37 lembar = 37 ketukan, `HitungPecahan.dart`) | Jumlah bisa diketik + tombol +10 | Agent |
-| 29 | Kasir | Item meja tersimpan: ketuk langsung tawarkan batal, +/- ditolak | "+" membuat baris baru yang sama; ketuk buka rincian | Agent |
-| 30 | Kasir | Istilah: Void, Laporan X/Z, Kanal, Marketplace, Antrean kirim, approval EDC, pre-order/DP; kode teknis di layar Sinkron | Bahasa sehari-hari; label lengkap untuk semua jenis outbox | Agent |
-| 31 | Kasir | Absen terpisah dari masuk kasir (dua kali PIN, ±17 ketukan); absen keluar harus keluar dulu | Tawarkan absen masuk saat masuk pertama hari itu & absen keluar di Laporan tutup shift | Agent |
+| 29 ✓ v4.41 | Kasir | Item meja tersimpan: ketuk langsung tawarkan batal, +/- ditolak | "+" membuat baris baru yang sama; ketuk buka rincian | Agent |
+| 30 ✓ v4.41 | Kasir | Istilah: Void, Laporan X/Z, Kanal, Marketplace, Antrean kirim, approval EDC, pre-order/DP; kode teknis di layar Sinkron | Bahasa sehari-hari; label lengkap untuk semua jenis outbox | Agent |
+| 31 ✓ v4.41 | Kasir | Absen terpisah dari masuk kasir (dua kali PIN, ±17 ketukan); absen keluar harus keluar dulu | Tawarkan absen masuk saat masuk pertama hari itu & absen keluar di Laporan tutup shift | Agent |
 | 32 ✓ v4.39 | Kasir | Mode latihan bisa dinyalakan siapa pun tanpa PIN → penjualan sungguhan bisa hilang | Wajib PIN supervisor + peringatan di tombol Bayar | Agent |
 | 33 | Semua | Menu samping 12 entri + 58 sub-menu tanpa saring sektor; banyak gembok | Saring per sektor & fitur aktif; "Mode sederhana" untuk paket kecil | Disetujui D-38 (anggaran navigasi D-27) |
 | 34 | Awal | Tiga cara menambah orang (undang, tambah langsung, karyawan) + 58 izin & 11 peran | Satu "Tambah staf"; 3–4 peran ringkas; izin rinci di "Sesuaikan" | Agent |

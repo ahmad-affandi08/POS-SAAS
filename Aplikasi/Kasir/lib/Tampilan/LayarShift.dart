@@ -34,7 +34,7 @@ class LayarShift extends StatelessWidget {
         OutlinedButton.icon(
           onPressed: saatLaporanX,
           icon: const Icon(Icons.summarize_outlined),
-          label: const Text('Laporan X'),
+          label: const Text('Laporan sementara (X)'),
         ),
         FilledButton.icon(
           onPressed: saatTutupShift,

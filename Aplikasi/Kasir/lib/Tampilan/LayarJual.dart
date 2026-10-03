@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mesin_kasir/MesinKasir.dart';
 import 'package:sistem_desain/SistemDesain.dart';
 
+import 'Komponen/FormatAngka.dart';
 import 'Komponen/MasukanUang.dart';
 import '../Aplikasi/Penyedia.dart';
 import '../Data/PesananMeja.dart';
@@ -639,9 +640,11 @@ class _LayarJualState extends ConsumerState<LayarJual> {
 
   void _GeserJumlah(String uuidBaris, int arah) {
     if (_CekBarisTersimpan(uuidBaris)) {
-      _TampilPesan(
-        'Item yang sudah dipesan tidak bisa diubah jumlahnya. Ketuk item untuk membatalkan, lalu pesan lagi.',
-      );
+      if (arah > 0) {
+        _PesanLagi(uuidBaris);
+        return;
+      }
+      _TampilPesan('Item yang sudah dipesan tidak bisa dikurangi di sini. Ketuk item lalu pilih "Batalkan item".');
       return;
     }
     final katalog = ref.read(penyediaKatalog).value ?? KatalogLokal.kosong;
@@ -664,9 +667,42 @@ class _LayarJualState extends ConsumerState<LayarJual> {
     }
   }
 
+  /// Audit kemudahan pakai #29: "+" pada item meja yang sudah dipesan menambah baris baru yang sama (pilihan, catatan,
+  /// harga ikut) sebagai item baru yang akan dikirim ke dapur; item tersimpannya tidak diubah.
+  void _PesanLagi(String uuidBaris) {
+    final asal = ref.read(penyediaKeranjangEfektif).baris.where((b) => b.uuid == uuidBaris).firstOrNull;
+    final k = ref.read(penyediaKonteksPenjualan).value;
+    if (asal == null || k == null) {
+      return;
+    }
+    final layanan = ref.read(penyediaLayananPenjualan);
+    final baru = ItemKeranjang(
+      uuid: layanan.BuatUuid(),
+      uuidProduk: asal.uuidProduk,
+      nama: asal.nama,
+      uuidProdukSatuan: asal.uuidProdukSatuan,
+      namaSatuan: asal.namaSatuan,
+      bolehDesimal: asal.bolehDesimal,
+      jumlah: Kuantitas.DariBulat(1),
+      hargaSatuan: asal.hargaSatuan,
+      pilihan: asal.pilihan,
+      catatan: asal.catatan,
+      hargaTermasukPajak: asal.hargaTermasukPajak,
+      pajak: asal.pajak,
+      hargaTerbuka: asal.hargaTerbuka,
+    );
+    try {
+      final katalog = ref.read(penyediaKatalog).value ?? KatalogLokal.kosong;
+      ref.read(penyediaKeranjang.notifier).Ganti(layanan.TambahBaris(ref.read(penyediaKeranjang), baru, katalog, k));
+      _TampilPesan('${asal.nama} ditambah 1 sebagai item baru.');
+    } on GalatKasir catch (galat) {
+      _TampilPesan(galat.pesan);
+    }
+  }
+
   void _UbahBaris(String uuidBaris) {
     if (_CekBarisTersimpan(uuidBaris)) {
-      unawaited(_BatalkanBarisTersimpan(uuidBaris));
+      unawaited(_BukaRincianTersimpan(uuidBaris));
       return;
     }
     final baris = ref.read(penyediaKeranjang).baris.firstWhere((b) => b.uuid == uuidBaris);
@@ -675,6 +711,59 @@ class _LayarJualState extends ConsumerState<LayarJual> {
       _uuidBarisPanel = uuidBaris;
       _produkPanel = ref.read(penyediaKatalog).value?.CariProduk(baris.uuidProduk);
     });
+  }
+
+  /// Audit kemudahan pakai #29: ketuk item meja tersimpan membuka rinciannya dulu (bukan langsung tawaran batal).
+  Future<void> _BukaRincianTersimpan(String uuidBaris) async {
+    final baris = ref.read(penyediaKeranjangEfektif).pesananMeja?.CariBaris(uuidBaris);
+    final item = ref.read(penyediaKeranjangEfektif).baris.where((b) => b.uuid == uuidBaris).firstOrNull;
+    if (baris == null || item == null) {
+      return;
+    }
+    final pilihan = await showModalBottomSheet<String>(
+      context: context,
+      showDragHandle: true,
+      builder: (konteks) {
+        final teks = Theme.of(konteks).textTheme;
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(TokenJarak.jarak16, 0, TokenJarak.jarak16, TokenJarak.jarak16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(item.nama, style: teks.titleMedium),
+                const SizedBox(height: TokenJarak.jarak4),
+                Text(
+                  '${FormatAngka.FormatJumlah(item.jumlah)} × ${item.hargaSatuan.FormatRupiah()} · ${baris.AmbilLabelStatus()}',
+                ),
+                if ((item.catatan ?? '').isNotEmpty) Text('Catatan: ${item.catatan}'),
+                const SizedBox(height: TokenJarak.jarak12),
+                OutlinedButton.icon(
+                  onPressed: () => Navigator.of(konteks).pop('Lagi'),
+                  icon: const Icon(Icons.add),
+                  label: const Text('Pesan 1 lagi'),
+                ),
+                const SizedBox(height: TokenJarak.jarak8),
+                FilledButton.tonalIcon(
+                  onPressed: () => Navigator.of(konteks).pop('Batal'),
+                  icon: const Icon(Icons.remove_circle_outline),
+                  label: const Text('Batalkan item'),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+    if (!mounted) {
+      return;
+    }
+    if (pilihan == 'Lagi') {
+      _PesanLagi(uuidBaris);
+    } else if (pilihan == 'Batal') {
+      await _BatalkanBarisTersimpan(uuidBaris);
+    }
   }
 
   Future<void> _BatalkanBarisTersimpan(String uuidBaris) async {

@@ -32,6 +32,14 @@ class RepositoriAbsensi {
         await repositoriKasir.TambahOutbox(outbox, sekarang);
       });
 
+  /// Audit kemudahan pakai #31: staf sudah absen masuk sejak [sejak] (UTC)?
+  Future<bool> CekSudahMasukSejak(String uuidPengguna, DateTime sejak) async =>
+      (await (db.select(db.absensiLokal)
+            ..where((a) => a.UuidPengguna.equals(uuidPengguna) & a.MasukPada.isBiggerOrEqualValue(sejak.toUtc()))
+            ..limit(1))
+          .getSingleOrNull()) !=
+      null;
+
   /// Absensi terbaru di perangkat (untuk layar absensi).
   Future<List<BarisAbsensiLokal>> AmbilTerbaru({int batas = 20}) =>
       (db.select(db.absensiLokal)
