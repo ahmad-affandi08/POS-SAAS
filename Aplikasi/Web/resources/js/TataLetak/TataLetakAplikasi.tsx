@@ -507,8 +507,7 @@ export function SusunPencarian(
     const pengaturan = daftarPengaturan.flatMap(({ judul, butir }): HalamanPencarian[] =>
         butir
             .filter(
-                (item) =>
-                    CekButirSesuaiEdisi(item, edisi) && (item.izin === null || PunyaIzinTenant(akses, item.izin)),
+                (item) => CekButirSesuaiEdisi(item, edisi) && (item.izin === null || PunyaIzinTenant(akses, item.izin)),
             )
             .map((item) => ({
                 label: item.label,

@@ -7,7 +7,7 @@ Jalankan ulang setiap kali logo sumber diganti:
     python3 Spesifikasi/Merek/BuatTurunanAset.py
 
 Hasil (ditimpa):
-- Web: `Aplikasi/Web/public/favicon.ico`, `public/apple-touch-icon.png`, `resources/js/Aset/Merek/*.png`
+- Web: `Aplikasi/Web/public/favicon.ico`, `public/apple-touch-icon.png`, `public/ikon-pwa-{192,512}.png`, `resources/js/Aset/Merek/*.png`
 - Flutter: ikon Android (legacy + adaptive), iOS AppIcon, Windows `app_icon.ico` untuk Kasir & Pemilik,
   serta logo warna/putih dalam aplikasi di `Paket/SistemDesain/assets/merek/`.
 
@@ -71,6 +71,9 @@ def BuatWeb(tanda: Image.Image, logo: Image.Image, tanda_putih: Image.Image, log
     ico.save(web / "public/favicon.ico", sizes=[(16, 16), (32, 32), (48, 48)])
     print("  Aplikasi/Web/public/favicon.ico")
     Simpan(TaruhDiTengah(tanda, 180, 0.64, PUTIH).convert("RGB"), web / "public/apple-touch-icon.png")
+    # F-18 bagian 4 (D-37): ikon PWA halaman absensi (porsi kecil supaya aman sebagai ikon "maskable").
+    Simpan(TaruhDiTengah(tanda, 192, 0.56, PUTIH).convert("RGB"), web / "public/ikon-pwa-192.png")
+    Simpan(TaruhDiTengah(tanda, 512, 0.56, PUTIH).convert("RGB"), web / "public/ikon-pwa-512.png")
     Simpan(UbahTinggi(logo, 168), web / "resources/js/Aset/Merek/LogoHorizontal.png")
     Simpan(UbahTinggi(tanda, 96), web / "resources/js/Aset/Merek/IkonMerek.png")
     Simpan(UbahTinggi(logo_putih, 168), web / "resources/js/Aset/Merek/LogoHorizontalPutih.png")

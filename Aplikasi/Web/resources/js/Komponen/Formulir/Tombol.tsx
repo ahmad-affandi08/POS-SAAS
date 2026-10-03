@@ -5,6 +5,8 @@ import { Spinner } from '@/Komponen/Ui/spinner';
 
 type PropsTombol = {
     varian?: 'utama' | 'sekunder' | 'bahaya';
+    /** `besar`: satu aksi utama selebar layar di halaman HP (misal absensi web), tinggi 56px. */
+    ukuran?: 'normal' | 'besar';
     memproses?: boolean;
     children: ReactNode;
 } & Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'className'>;
@@ -12,9 +14,15 @@ type PropsTombol = {
 /** Varian shadcn/ui per makna: aksi utama = brand (default), sekunder = outline, hapus/void = destructive. */
 const varianUi = { utama: 'default', sekunder: 'outline', bahaya: 'destructive' } as const;
 
+const kelasUkuran = {
+    normal: 'h-8 pointer-coarse:h-11 px-4 text-label',
+    besar: 'h-14 w-full px-6 text-subjudul',
+} as const;
+
 /** Tombol dengan label kata kerja spesifik (PRD §17.6.7). Warna brand hanya untuk aksi utama. */
 export default function Tombol({
     varian = 'utama',
+    ukuran = 'normal',
     memproses = false,
     children,
     disabled,
@@ -27,7 +35,7 @@ export default function Tombol({
             variant={varianUi[varian]}
             disabled={disabled === true || memproses}
             aria-busy={memproses || undefined}
-            className="h-8 pointer-coarse:h-11 px-4 text-label font-semibold focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+            className={`${kelasUkuran[ukuran]} font-semibold focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60`}
             {...atribut}
         >
             {memproses ? (

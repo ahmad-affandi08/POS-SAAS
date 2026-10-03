@@ -44,8 +44,48 @@ final class AbsensiWebKontroler extends Kontroler
             'NamaToko' => $this->profil->Ambil($idTenant)['Nama'],
             'NamaKaryawan' => $karyawan->Nama,
             'AlamatDasar' => url("/{$slugTenant}/absen/{$token}"),
+            'AlamatModelWajah' => asset('model-wajah'),
             ...$status->Ambil($karyawan),
         ])->toResponse(request()));
+    }
+
+    /** PWA (D-37): manifest per tautan, supaya ikon di layar utama langsung membuka halaman absen karyawan ini. */
+    public function Manifest(string $slugTenant, string $token): SymfonyResponse
+    {
+        return $this->DenganKaryawan($slugTenant, $token, function (Karyawan $karyawan, int $idTenant) use ($slugTenant, $token): JsonResponse {
+            $alamat = "/{$slugTenant}/absen/{$token}";
+            $namaToko = $this->profil->Ambil($idTenant)['Nama'];
+
+            return response()->json([
+                'name' => "Absen {$namaToko}",
+                'short_name' => 'Absen',
+                'description' => "Absen masuk & keluar {$karyawan->Nama} di {$namaToko}",
+                'lang' => 'id',
+                'start_url' => $alamat,
+                'scope' => $alamat,
+                'id' => $alamat,
+                'display' => 'standalone',
+                'orientation' => 'portrait',
+                // Sama dengan token `--color-brand-gelap` & `--color-permukaan` (D-15).
+                'theme_color' => '#1d29b8',
+                'background_color' => '#ffffff',
+                'icons' => [
+                    ['src' => '/ikon-pwa-192.png', 'sizes' => '192x192', 'type' => 'image/png', 'purpose' => 'any maskable'],
+                    ['src' => '/ikon-pwa-512.png', 'sizes' => '512x512', 'type' => 'image/png', 'purpose' => 'any maskable'],
+                ],
+            ], 200, ['Content-Type' => 'application/manifest+json', 'Cache-Control' => 'private, max-age=3600']);
+        });
+    }
+
+    /** PWA (D-37): service worker di jalur tautan sendiri, jadi cakupannya hanya halaman absen ini. */
+    public function PekerjaLayanan(string $slugTenant, string $token): SymfonyResponse
+    {
+        return $this->DenganKaryawan($slugTenant, $token, fn (): SymfonyResponse => response(view('Pwa.PekerjaAbsensi')->render(), 200, [
+            'Content-Type' => 'application/javascript; charset=utf-8',
+            'Cache-Control' => 'no-cache',
+            // Halaman ada di `/…/absen/{token}` (tanpa garis miring akhir), satu tingkat di atas jalur skrip ini.
+            'Service-Worker-Allowed' => "/{$slugTenant}/absen/{$token}",
+        ]));
     }
 
     public function DaftarWajah(Request $permintaan, string $slugTenant, string $token, DaftarkanWajahKaryawan $daftar): SymfonyResponse

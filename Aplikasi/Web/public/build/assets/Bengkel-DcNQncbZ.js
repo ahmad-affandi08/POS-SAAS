@@ -1,0 +1,1 @@
+function e(e){return e===`Ditagih`||e===`Selesai`||e===`Disetujui`?`sukses`:e===`Ditolak`||e===`Dibatalkan`?`bahaya`:e===`MenungguPersetujuan`||e===`Qc`?`peringatan`:`netral`}var t={Diagnosis:`Kembali ke diagnosis`,Dikerjakan:`Mulai dikerjakan`,Qc:`Masuk pemeriksaan akhir`,Selesai:`Tandai selesai`,Dibatalkan:`Batalkan`};export{t as n,e as t};

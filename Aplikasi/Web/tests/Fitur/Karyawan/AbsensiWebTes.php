@@ -178,3 +178,21 @@ it('tinjau wajah: tolak wajib beralasan dan menghapus sidik & foto; sesudahnya k
     BantuanOrganisasi::AturKonteks($k['Tenant']->Id);
     expect(WajahKaryawan::query()->sole()->Status)->toBe(StatusWajahKaryawan::Menunggu);
 });
+
+it('PWA: manifest per tautan (cakupan hanya halaman absen ini) dan service worker dengan Service-Worker-Allowed', function (): void {
+    [, , $alamat] = SiapkanAbsensiWeb($this, wajahDisetujui: false);
+    $jalur = parse_url($alamat, PHP_URL_PATH);
+
+    $this->get("{$alamat}/manifest")->assertOk()
+        ->assertHeader('Content-Type', 'application/manifest+json')
+        ->assertJsonPath('start_url', $jalur)
+        ->assertJsonPath('scope', $jalur)
+        ->assertJsonPath('display', 'standalone')
+        ->assertJsonPath('icons.1.sizes', '512x512');
+
+    $sw = $this->get("{$alamat}/pekerja-layanan")->assertOk()->assertHeader('Service-Worker-Allowed', $jalur);
+    expect($sw->headers->get('Content-Type'))->toStartWith('application/javascript')
+        ->and($sw->getContent())->toContain('/model-wajah/')->not->toContain('@verbatim');
+
+    $this->get(substr($alamat, 0, -40).str_repeat('B', 40).'/manifest')->assertNotFound();
+});

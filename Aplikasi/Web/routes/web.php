@@ -318,6 +318,8 @@ Route::middleware([TolakDomainPengelola::class, ArahkanDomainAplikasi::class, Ba
         ->where(['slugTenant' => '[a-z0-9]+(?:-[a-z0-9]+)*', 'tokenAbsen' => '[A-Za-z0-9]{40}'])
         ->group(function (): void {
             Route::get('/', [AbsensiWebKontroler::class, 'Tampilkan'])->middleware('throttle:60,1')->name('publik.absensi-web');
+            Route::get('/manifest', [AbsensiWebKontroler::class, 'Manifest'])->middleware('throttle:60,1')->name('publik.absensi-web.manifest');
+            Route::get('/pekerja-layanan', [AbsensiWebKontroler::class, 'PekerjaLayanan'])->middleware('throttle:60,1')->name('publik.absensi-web.pekerja-layanan');
             Route::post('/wajah', [AbsensiWebKontroler::class, 'DaftarWajah'])->middleware('throttle:10,1')->name('publik.absensi-web.wajah');
             Route::post('/masuk', [AbsensiWebKontroler::class, 'Masuk'])->middleware('throttle:10,1')->name('publik.absensi-web.masuk');
             Route::post('/keluar', [AbsensiWebKontroler::class, 'Keluar'])->middleware('throttle:10,1')->name('publik.absensi-web.keluar');

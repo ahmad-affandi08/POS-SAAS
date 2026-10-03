@@ -1,0 +1,1 @@
+var e=`0123456789ABCDEFGHJKMNPQRSTVWXYZ`;function t(t=Date.now()){let n=``,r=Math.floor(t);for(let t=0;t<10;t++)n=e.charAt(r%32)+n,r=Math.floor(r/32);let i=new Uint8Array(16);crypto.getRandomValues(i);let a=Array.from(i,t=>e.charAt(t%32)).join(``);return n+a}export{t};
