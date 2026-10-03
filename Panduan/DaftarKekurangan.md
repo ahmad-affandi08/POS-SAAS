@@ -77,6 +77,7 @@ Diverifikasi terhadap kode (bukan hanya dibaca ulang). **Sudah diperbaiki (v3.15
 - **Pin action GitHub ke SHA** (Dependabot `github-actions` sudah memantau tag), **gate coverage** untuk domain uang/jurnal/stok, **pecah bundle**, **public/build tidak lagi di Git** (diganti artefak rilis).
 - **MariaDB vs MySQL** (A2): putuskan setelah job `backend-mariadb` memberi bukti.
 - **Backup & restore drill** (A10), **uji beban** (A3), **legal/DPA** (A5), **berkas LICENSE** (`composer.json` menyebut MIT padahal produk komersial: pemilik produk memutuskan lisensinya), deskripsi repository GitHub.
+- **Migrasi ke server sendiri tanpa henti** (permintaan pemilik 3 Okt 2026): rencana & prasyarat di `Panduan/MigrasiServer.md` (DNS lewat Cloudflare, disk berkas ke penyimpanan objek, `APP_KEY` disimpan aman, cek hak replikasi di hosting).
 - **Ekspor Coretax belum divalidasi ke aplikasi resmi** (impor satu faktur) dan status CI Flutter belum diverifikasi (golden 1280dp, A18).
 
 ## K. Celah aplikasi kasir — audit 2 Oktober 2026
