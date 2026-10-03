@@ -7,6 +7,7 @@ namespace App\Domain\Pengelola\DataBawaan\Aksi;
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Bersama\Status\StatusDataMaster;
 use App\Domain\Lisensi\Enum\EdisiAplikasi;
+use App\Domain\Lisensi\Kontrak\PenyiapDataBawaan;
 use App\Domain\Pajak\Model\TarifPajak;
 use App\Domain\Pajak\Peristiwa\TarifPajakTerbit;
 use App\Domain\PanduanAwal\Enum\StatusTemplateSektor;
@@ -31,7 +32,7 @@ use Illuminate\Support\Facades\DB;
  * - Template sektor versi Draf diterbitkan bila lolos validasi otomatis (BR-P03.3) dan templatenya belum punya versi
  *   terbit; yang gagal validasi dibiarkan Draf dan dilaporkan.
  */
-final class SiapkanDataBawaanLisensi
+final class SiapkanDataBawaanLisensi implements PenyiapDataBawaan
 {
     public function __construct(
         private readonly SiapkanSatuanStandarBawaan $satuan,

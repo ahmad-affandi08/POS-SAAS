@@ -2,7 +2,10 @@
 
 declare(strict_types=1);
 
+use App\Domain\Lisensi\Enum\EdisiAplikasi;
+use App\Domain\Lisensi\Kontrak\PengaturIntegrasiServer;
 use App\Domain\Organisasi\Enum\IzinTenant;
+use App\Http\Kontroler\Kelola\IntegrasiServerKontroler;
 use App\Http\Kontroler\Kelola\PengaturanKontroler;
 use App\Http\Kontroler\Kelola\TokenApiKontroler;
 use App\Http\Kontroler\Kelola\WebhookKontroler;
@@ -40,5 +43,14 @@ Route::prefix('pengaturan')->group(function () use ($izin): void {
         Route::put('/webhook/{uuidWebhook}/status', [WebhookKontroler::class, 'UbahStatus'])->where('uuidWebhook', '[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}')->name('kelola.pengaturan.webhook.status');
         Route::delete('/webhook/{uuidWebhook}', [WebhookKontroler::class, 'Hapus'])->where('uuidWebhook', '[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}')->name('kelola.pengaturan.webhook.hapus');
         Route::post('/webhook/kiriman/{uuidKiriman}/kirim-ulang', [WebhookKontroler::class, 'KirimUlang'])->where('uuidKiriman', '[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}')->name('kelola.pengaturan.webhook.kirim-ulang');
+
+        // D-35: email, WhatsApp, dan penyimpanan berkas server toko. Hanya edisi Lisensi; di SaaS milik konsol.
+        if (EdisiAplikasi::CekLisensi()) {
+            $jenis = strtolower(implode('|', PengaturIntegrasiServer::JENIS));
+            Route::get('/integrasi-server', [IntegrasiServerKontroler::class, 'Daftar'])->name('kelola.pengaturan.integrasi-server');
+            Route::post('/integrasi-server', [IntegrasiServerKontroler::class, 'Simpan'])->name('kelola.pengaturan.integrasi-server.simpan');
+            Route::post('/integrasi-server/{jenis}/uji', [IntegrasiServerKontroler::class, 'Uji'])->where('jenis', $jenis)->name('kelola.pengaturan.integrasi-server.uji');
+            Route::post('/integrasi-server/{jenis}/nonaktifkan', [IntegrasiServerKontroler::class, 'Nonaktifkan'])->where('jenis', $jenis)->name('kelola.pengaturan.integrasi-server.nonaktifkan');
+        }
     });
 });

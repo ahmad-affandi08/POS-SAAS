@@ -16,6 +16,8 @@ export type ButirPengaturan = {
     href: string;
     izin: KunciIzinTenant | null;
     fitur?: string;
+    /** D-35: butir yang rutenya hanya ada di satu edisi (misal integrasi server di edisi Lisensi). */
+    edisi?: 'Saas' | 'Lisensi';
 };
 
 export type GrupPengaturan = { judul: string; butir: ButirPengaturan[] };
@@ -237,6 +239,14 @@ export const daftarPengaturan: GrupPengaturan[] = [
                 izin: IzinTenant.IntegrasiApiKelola,
                 fitur: 'api.publik',
             },
+            {
+                label: 'Email & WhatsApp server',
+                keterangan:
+                    'Akun email, WhatsApp, dan penyimpanan berkas milik toko untuk server ini (edisi pasang sendiri).',
+                href: '/kelola/pengaturan/integrasi-server',
+                izin: IzinTenant.IntegrasiApiKelola,
+                edisi: 'Lisensi',
+            },
         ],
     },
 ];
@@ -247,6 +257,11 @@ export const daftarPengaturan: GrupPengaturan[] = [
  * Pencocokan mencakup nama grup, label, dan keterangannya sekaligus, jadi mengetik "pajak" juga menemukan butir
  * yang hanya menyebut pajak di keterangannya. Fungsi murni supaya bisa diuji tanpa merender halaman.
  */
+/** D-35: butir tanpa `edisi` tampil di semua edisi; yang bertanda hanya di edisinya (rutenya tidak ada di edisi lain). */
+export function CekButirSesuaiEdisi(butir: ButirPengaturan, edisi: 'Saas' | 'Lisensi' | undefined): boolean {
+    return butir.edisi === undefined || butir.edisi === (edisi ?? 'Saas');
+}
+
 export function SaringPengaturan(kata: string, BolehLihat: (butir: ButirPengaturan) => boolean): GrupPengaturan[] {
     const cari = kata.trim().toLowerCase();
 

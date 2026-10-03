@@ -6,7 +6,7 @@ import JudulHalaman from '@/Komponen/Umpan/JudulHalaman';
 import IkonNavigasi, { type NamaIkonNavigasi } from '@/Komponen/Navigasi/IkonNavigasi';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import DialogNaikPaket from '@/Komponen/Langganan/DialogNaikPaket';
-import { daftarPengaturan, type GrupPengaturan } from '@/Pustaka/DaftarPengaturan';
+import { CekButirSesuaiEdisi, daftarPengaturan, type GrupPengaturan } from '@/Pustaka/DaftarPengaturan';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/Komponen/Ui/collapsible';
 import {
     Sidebar,
@@ -494,6 +494,7 @@ const halamanTurunan: (HalamanPencarian & { induk: string; izin?: KunciIzinTenan
 export function SusunPencarian(
     menuTerlihat: MenuTerlihat[],
     akses: PropsBersamaAplikasi['Akses'],
+    edisi?: PropsBersamaAplikasi['Edisi'],
 ): {
     halaman: HalamanPencarian[];
     sumber: SumberPencarian[];
@@ -505,7 +506,10 @@ export function SusunPencarian(
     );
     const pengaturan = daftarPengaturan.flatMap(({ judul, butir }): HalamanPencarian[] =>
         butir
-            .filter((item) => item.izin === null || PunyaIzinTenant(akses, item.izin))
+            .filter(
+                (item) =>
+                    CekButirSesuaiEdisi(item, edisi) && (item.izin === null || PunyaIzinTenant(akses, item.izin)),
+            )
             .map((item) => ({
                 label: item.label,
                 href: item.href,
@@ -762,7 +766,7 @@ export default function TataLetakAplikasi({ judul, jejak = [], children }: Props
     const { props, url } = usePage<PropsBersamaAplikasi>();
     const tenantAktif = props.TenantAktif;
     const menuTerlihat = SaringMenuTerlihat(props.Akses);
-    const pencarian = SusunPencarian(menuTerlihat, props.Akses);
+    const pencarian = SusunPencarian(menuTerlihat, props.Akses, props.Edisi);
     const namaInduk = tenantAktif?.Nama ?? props.NamaAplikasi;
     const [mengirim, AturMengirim] = useState(false);
     // D-23: fitur di luar paket (gembok di menu) dan dialog penawarannya.

@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Domain\Bersama\Audit\Model\LogAudit;
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Bersama\Status\StatusDataMaster;
 use App\Domain\Bersama\Tenant\KonteksTenant;
@@ -10,6 +11,7 @@ use App\Domain\Lisensi\Galat\LisensiTidakSah;
 use App\Domain\Lisensi\Kueri\LisensiBerlaku;
 use App\Domain\Lisensi\Model\LisensiTerpasang;
 use App\Domain\Organisasi\Data\DataPemilikBaru;
+use App\Domain\Organisasi\Enum\PeranTenantBawaan;
 use App\Domain\Organisasi\Layanan\PembuatQrKodeAktivasi;
 use App\Domain\Organisasi\Model\Outlet;
 use App\Domain\Organisasi\Model\Pengguna;
@@ -38,7 +40,9 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Route;
 use Inertia\Testing\AssertableInertia;
 use Tests\Pendukung\Lisensi\BantuanLisensi;
+use Tests\Pendukung\Organisasi\BantuanOrganisasi;
 use Tests\Pendukung\Pengelola\BantuanPengelola;
+use Tests\Pendukung\Tenant\BantuanAutentikasi;
 use Tests\TestCase;
 
 /*
@@ -62,6 +66,24 @@ beforeEach(function (): void {
 function PemilikLisensiUji(): DataPemilikBaru
 {
     return new DataPemilikBaru(nama: 'Rina Wulandari', email: 'rina@kopinusantara.id', noHp: '081234567890', kataSandi: 'kata-sandi-kuat-123');
+}
+
+/**
+ * Usaha edisi Lisensi yang sudah melewati panduan awal dan Owner-nya ber-2FA (BR-00.8), supaya halaman Pengaturan
+ * terbuka langsung.
+ *
+ * @return array{Tenant: Tenant, Pemilik: Pengguna}
+ */
+function PasangUntukPemilikSiap(): array
+{
+    app(PasangLisensi::class)->Jalankan(BantuanLisensi::Berkas(), 'Kopi Nusantara', PemilikLisensiUji());
+    $tenant = Tenant::query()->sole();
+    $pemilik = Pengguna::query()->sole();
+    BantuanAutentikasi::AktifkanDuaFaktor($pemilik);
+    BantuanOrganisasi::AturKonteks($tenant->Id);
+    ProgresPanduanAwal::query()->update(['SelesaiPada' => now()]);
+
+    return ['Tenant' => $tenant, 'Pemilik' => $pemilik];
 }
 
 describe('Edisi Lisensi (D-35)', function (): void {
@@ -281,6 +303,59 @@ describe('Edisi Lisensi (D-35)', function (): void {
             ->and($konfigurasi->Penyedia)->toBe(PenyediaIntegrasi::Fonnte)
             ->and($konfigurasi->Kredensial['Token'])->toBe('tok-fonnte-rahasia-1234')
             ->and((string) $konfigurasi->getRawOriginal('Kredensial'))->not->toContain('tok-fonnte');
+    });
+
+    it('Owner mengatur WhatsApp server dari back-office: simpan, uji & aktif, nonaktifkan; kredensial tidak kembali ke halaman', function (): void {
+        Http::fake(['api.fonnte.com/*' => Http::response(['status' => true, 'device_status' => 'connect'])]);
+        ['Tenant' => $tenant, 'Pemilik' => $pemilik] = PasangUntukPemilikSiap();
+
+        BantuanOrganisasi::Masuk($this, $pemilik, $tenant->Id)
+            ->post('/kelola/pengaturan/integrasi-server', ['Jenis' => 'Whatsapp', 'Penyedia' => 'Fonnte', 'Pengaturan' => [], 'Kredensial' => ['Token' => 'tok-fonnte-rahasia-1234']])
+            ->assertSessionHasNoErrors()
+            ->assertRedirect();
+        $konfigurasi = KonfigurasiIntegrasi::query()->sole();
+        expect($konfigurasi->Aktif)->toBeFalse()
+            ->and($konfigurasi->Kredensial['Token'])->toBe('tok-fonnte-rahasia-1234');
+
+        BantuanOrganisasi::Masuk($this, $pemilik, $tenant->Id)
+            ->post('/kelola/pengaturan/integrasi-server/whatsapp/uji')
+            ->assertSessionHasNoErrors();
+        expect($konfigurasi->refresh()->Aktif)->toBeTrue();
+
+        $halaman = BantuanOrganisasi::Masuk($this, $pemilik, $tenant->Id)->get('/kelola/pengaturan/integrasi-server');
+        $halaman->assertInertia(fn (AssertableInertia $h) => $h->component('Kelola/Pengaturan/IntegrasiServer')
+            ->has('Integrasi', 3)
+            ->where('Integrasi.0.Jenis', 'Email')
+            ->where('Integrasi.2.Jenis', 'Whatsapp')
+            ->where('Integrasi.2.Konfigurasi.Aktif', true)
+            ->missing('Integrasi.2.Konfigurasi.Kredensial'));
+        expect($halaman->getContent())->not->toContain('tok-fonnte-rahasia');
+
+        BantuanOrganisasi::Masuk($this, $pemilik, $tenant->Id)
+            ->post('/kelola/pengaturan/integrasi-server/whatsapp/nonaktifkan')
+            ->assertSessionHasNoErrors();
+        expect($konfigurasi->refresh()->Aktif)->toBeFalse();
+
+        $audit = LogAudit::query()->where('IdTenant', $tenant->Id)->where('Peristiwa', 'like', 'integrasi.server.%')->orderBy('Id')->pluck('Peristiwa')->all();
+        expect($audit)->toBe(['integrasi.server.simpan', 'integrasi.server.uji', 'integrasi.server.nonaktifkan'])
+            ->and(LogAudit::query()->where('Peristiwa', 'integrasi.server.simpan')->sole()->NilaiBaru)->not->toHaveKey('Kredensial');
+    });
+
+    it('integrasi server: hanya Owner; jenis platform lain dan penyedia jenis lain ditolak', function (): void {
+        ['Tenant' => $tenant, 'Pemilik' => $pemilik] = PasangUntukPemilikSiap();
+        $admin = BantuanOrganisasi::TambahAnggota($tenant->Id, PeranTenantBawaan::Admin);
+        BantuanAutentikasi::AktifkanDuaFaktor($admin);
+
+        BantuanOrganisasi::Masuk($this, $admin, $tenant->Id)->get('/kelola/pengaturan/integrasi-server')->assertForbidden();
+        BantuanOrganisasi::Masuk($this, $pemilik, $tenant->Id)
+            ->post('/kelola/pengaturan/integrasi-server', ['Jenis' => 'GerbangBilling', 'Penyedia' => 'Midtrans', 'Pengaturan' => [], 'Kredensial' => []])
+            ->assertSessionHasErrors('Jenis');
+        BantuanOrganisasi::Masuk($this, $pemilik, $tenant->Id)
+            ->post('/kelola/pengaturan/integrasi-server', ['Jenis' => 'Whatsapp', 'Penyedia' => 'Smtp', 'Pengaturan' => [], 'Kredensial' => []])
+            ->assertSessionHasErrors('Penyedia');
+        BantuanOrganisasi::Masuk($this, $pemilik, $tenant->Id)->post('/kelola/pengaturan/integrasi-server/captcha/uji')->assertNotFound();
+
+        expect(KonfigurasiIntegrasi::query()->count())->toBe(0);
     });
 
     it('QR aktivasi perangkat membawa alamat server pembeli', function (): void {

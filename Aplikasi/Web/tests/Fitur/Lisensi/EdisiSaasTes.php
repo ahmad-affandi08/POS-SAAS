@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Bersama\Status\StatusDataMaster;
+use App\Domain\Lisensi\Kontrak\PengaturIntegrasiServer;
 use App\Domain\Organisasi\Layanan\PembuatQrKodeAktivasi;
 use App\Domain\Pajak\Model\JenisPajak;
 use App\Domain\Pajak\Model\TarifPajak;
@@ -18,6 +19,7 @@ use App\Domain\Pengelola\Integrasi\Model\KonfigurasiIntegrasi;
 use App\Domain\Pengelola\Referensi\Aksi\SiapkanPajakBawaan;
 use App\Domain\Referensi\Enum\JenisHariLibur;
 use App\Domain\Referensi\Model\HariLibur;
+use Illuminate\Support\Facades\Route;
 
 /*
  * D-35: jalan pintas edisi Lisensi (data bawaan langsung terbit, integrasi tanpa pelaku konsol) tertutup di edisi SaaS,
@@ -45,6 +47,12 @@ describe('Edisi SaaS menolak jalan pintas edisi Lisensi (D-35)', function (): vo
             ->and(array_column($paket['HariLibur'], 'Nama'))->toBe(['Hari Kemerdekaan RI', 'Cuti Bersama Natal'])
             ->and($paket['HariLibur'][1]['Dibatalkan'])->toBeTrue()
             ->and(fn () => app(ImporDataMasterLisensi::class)->Jalankan((string) json_encode($paket)))->toThrow(PelanggaranAturanBisnis::class, 'edisi Lisensi');
+    });
+
+    it('halaman integrasi server Owner tidak ada di SaaS, dan kontraknya menolak dipanggil langsung', function (): void {
+        expect(Route::has('kelola.pengaturan.integrasi-server'))->toBeFalse()
+            ->and(Route::has('kelola.pengaturan.integrasi-server.simpan'))->toBeFalse();
+        expect(fn () => app(PengaturIntegrasiServer::class)->AmbilDaftar())->toThrow(PelanggaranAturanBisnis::class);
     });
 
     it('QR aktivasi perangkat tetap berisi kode saja', function (): void {

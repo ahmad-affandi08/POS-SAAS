@@ -60,6 +60,9 @@ Tanpa lisensi sah, atau bila dibuka dari domain lain, semua halaman menjawab 503
 
 ## 4. Email, WhatsApp, dan penyimpanan berkas
 
+Cara termudah: masuk sebagai Owner, buka **Pengaturan › Email & WhatsApp server**, pilih penyedia, isi data akun,
+lalu tekan **Uji & aktifkan**. Lewat perintah server juga bisa (misal sebelum Owner pertama kali masuk):
+
 ```
 php artisan lisensi:atur-integrasi Email         # SMTP hosting, Gmail, Brevo, Mailgun, …
 php artisan lisensi:atur-integrasi Whatsapp      # WhatsApp Cloud API resmi, Fonnte, Wablas, …

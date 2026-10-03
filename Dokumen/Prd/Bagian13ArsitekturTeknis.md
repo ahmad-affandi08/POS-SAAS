@@ -596,4 +596,6 @@ Selain PAYOU yang kita jalankan sebagai SaaS, **dashboard bisa dijual sekali bel
 
 **Pembaruan tarif pajak & hari libur (v4.15):** PAYOU mengekspor tarif pajak terbit dan hari libur terbit/dibatalkan dari server SaaS (`lisensi:ekspor-data-master {keluaran}`, data yang sudah lolos four-eyes) dan membagikan berkasnya; pembeli menjalankan `lisensi:impor-data-master {berkas}`. Tarif yang sudah ada atau bertanggal lebih awal dilewati, tarif baru terbit dengan tarif sebelumnya ditutup lewat `BerlakuSampai`; hari libur baru ditambah dan yang dibatalkan ikut dibatalkan. Impor ditolak di edisi SaaS.
 
-**Belum:** halaman pengaturan integrasi untuk Owner di back-office (sekarang lewat perintah) dan rilis khusus pembeli yang mengunci edisi saat build (menunggu keputusan pemilik produk).
+**Integrasi dari back-office (v4.16):** Owner edisi Lisensi mengatur email, WhatsApp, dan penyimpanan berkas di Pengaturan › **Email & WhatsApp server** (`/kelola/pengaturan/integrasi-server`, izin `integrasi.api.kelola`, rute & butirnya hanya ada di edisi Lisensi): simpan → **Uji & aktifkan** → Nonaktifkan, kredensial tidak pernah dikirim balik. Back-office memanggil kontrak `Lisensi\Kontrak\PengaturIntegrasiServer` (pelaksana di domain Pengelola, diikat di penyedia layanan) karena kode tenant tidak boleh memakai domain Pengelola; jejaknya di log audit tenant `integrasi.server.*`. Pola yang sama dipakai `PasangLisensi` untuk data bawaan (`Lisensi\Kontrak\PenyiapDataBawaan`).
+
+**Belum:** rilis khusus pembeli yang mengunci edisi saat build (menunggu keputusan pemilik produk).

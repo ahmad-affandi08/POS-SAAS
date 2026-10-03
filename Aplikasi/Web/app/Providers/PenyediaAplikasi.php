@@ -15,12 +15,16 @@ use App\Domain\Dukungan\Peristiwa\TiketDukunganDibuat;
 use App\Domain\Integrasi\ApiPublik\Penangan\AntrekanWebhookIntegrasi;
 use App\Domain\Integrasi\ApiPublik\Penangan\AntrekanWebhookPenjualan;
 use App\Domain\Katalog\Layanan\PemberitahuProdukDiubah;
+use App\Domain\Lisensi\Kontrak\PengaturIntegrasiServer;
+use App\Domain\Lisensi\Kontrak\PenyiapDataBawaan;
 use App\Domain\Organisasi\Layanan\PenjagaAsalSinkronPerangkat;
 use App\Domain\Organisasi\Model\Perangkat;
 use App\Domain\Organisasi\Model\TokenAksesPengguna;
+use App\Domain\Pengelola\DataBawaan\Aksi\SiapkanDataBawaanLisensi;
 use App\Domain\Pengelola\Dukungan\Penangan\BeritahuPenanggungJawabBalasanPelapor;
 use App\Domain\Pengelola\Dukungan\Penangan\BeritahuTimTiketDukunganBaru;
 use App\Domain\Pengelola\Integrasi\Layanan\PenerapKonfigurasiIntegrasi;
+use App\Domain\Pengelola\Integrasi\Layanan\PengaturIntegrasiServerLisensi;
 use App\Domain\Pengelola\Operasional\Penangan\PeriksaOperasionalSaatCekSehat;
 use App\Domain\Pengelola\Tagihan\Penangan\KirimSurelPelunasanGerbang;
 use App\Domain\Pengelola\Tenant\Layanan\KonteksPengelola;
@@ -63,6 +67,9 @@ final class PenyediaAplikasi extends ServiceProvider
         $this->app->scoped(PemberitahuProdukDiubah::class);
         // Audit P0 F-01: perangkat asal item outbox (cache perangkat per permintaan).
         $this->app->scoped(PenjagaAsalItemSinkron::class, PenjagaAsalSinkronPerangkat::class);
+        // D-35: back-office edisi Lisensi mengatur integrasi server lewat kontrak, bukan domain Pengelola langsung.
+        $this->app->bind(PengaturIntegrasiServer::class, PengaturIntegrasiServerLisensi::class);
+        $this->app->bind(PenyiapDataBawaan::class, SiapkanDataBawaanLisensi::class);
     }
 
     public function boot(): void

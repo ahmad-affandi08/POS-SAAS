@@ -7,11 +7,11 @@ namespace App\Domain\Lisensi\Aksi;
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Lisensi\Data\DataLisensi;
 use App\Domain\Lisensi\Enum\EdisiAplikasi;
+use App\Domain\Lisensi\Kontrak\PenyiapDataBawaan;
 use App\Domain\Lisensi\Kueri\LisensiBerlaku;
 use App\Domain\Lisensi\Layanan\PenandaLisensi;
 use App\Domain\Lisensi\Model\LisensiTerpasang;
 use App\Domain\Organisasi\Data\DataPemilikBaru;
-use App\Domain\Pengelola\DataBawaan\Aksi\SiapkanDataBawaanLisensi;
 use App\Domain\Tenant\Aksi\SiapkanTenantLisensi;
 use Illuminate\Support\Facades\DB;
 
@@ -27,7 +27,7 @@ final class PasangLisensi
     public function __construct(
         private readonly PenandaLisensi $penanda,
         private readonly SiapkanTenantLisensi $siapkanTenant,
-        private readonly SiapkanDataBawaanLisensi $siapkanData,
+        private readonly PenyiapDataBawaan $siapkanData,
     ) {}
 
     /**
