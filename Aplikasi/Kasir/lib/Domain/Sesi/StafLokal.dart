@@ -18,6 +18,9 @@ abstract final class IzinKasir {
   /// K-22: melayani & menyetujui retur (termasuk tukar barang), terpisah dari void.
   static const String penjualanRetur = 'penjualan.retur';
 
+  /// K28: menyetujui retur tanpa struk dengan PIN (bawaan Pemilik & Admin).
+  static const String penjualanReturTanpaStruk = 'penjualan.retur.tanpa-struk';
+
   /// F-12 BR-12.1: menyetujui penjualan tempo melebihi limit kredit / piutang lewat jatuh tempo.
   static const String penjualanTempoSetujui = 'penjualan.tempo.setujui';
 

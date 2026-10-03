@@ -59,6 +59,9 @@ abstract final class KunciPengaturan {
   /// F-09: batas hari retur sejak tanggal bisnis penjualan (bilangan bulat).
   static const String batasHariRetur = 'BatasHariRetur';
 
+  /// K28: batas Σ retur tanpa struk outlet per hari (desimal).
+  static const String batasReturTanpaStrukHarian = 'BatasReturTanpaStrukHarian';
+
   /// F-12 BR-12.1: batas hari lewat jatuh tempo piutang pelanggan sebelum penjualan tempo butuh penyetuju.
   static const String batasHariLewatJatuhTempo = 'BatasHariLewatJatuhTempo';
 
@@ -247,6 +250,7 @@ class RepositoriKasir {
     await SimpanPengaturan(KunciPengaturan.tutupShiftButa, data.tutupShiftButa ? '1' : '0');
     await SimpanPengaturan(KunciPengaturan.toleransiSelisihKas, data.toleransiSelisihKas);
     await SimpanPengaturan(KunciPengaturan.batasHariRetur, '${data.batasHariRetur}');
+    await SimpanPengaturan(KunciPengaturan.batasReturTanpaStrukHarian, data.batasReturTanpaStrukHarian);
     await SimpanPengaturan(KunciPengaturan.batasHariLewatJatuhTempo, '${data.batasHariLewatJatuhTempo}');
     await SimpanPengaturan(KunciPengaturan.bukaLaciPerluPin, data.bukaLaciPerluPin ? '1' : '0');
     await SimpanPengaturan(KunciPengaturan.persetujuanJarakJauh, data.persetujuanJarakJauh ? '1' : '0');

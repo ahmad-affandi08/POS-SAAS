@@ -265,7 +265,7 @@ class _BarisRetur extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  '${FormatWaktu.FormatJam(r.DibuatPada)} · ${r.NamaKasir} · dari ${r.NomorPenjualanAsal}',
+                  '${FormatWaktu.FormatJam(r.DibuatPada)} · ${r.NamaKasir} · ${r.NomorPenjualanAsal.isEmpty ? 'tanpa struk' : 'dari ${r.NomorPenjualanAsal}'}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: teks.bodySmall,

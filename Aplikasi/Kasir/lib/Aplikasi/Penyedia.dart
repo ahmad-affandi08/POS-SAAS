@@ -60,6 +60,7 @@ import '../Domain/Penjualan/LayananQrisDinamis.dart';
 import '../Domain/Struk/LayananKirimStruk.dart';
 import '../Domain/Penjualan/LayananVoucher.dart';
 import '../Domain/Penjualan/LayananReturPenjualan.dart';
+import '../Domain/Penjualan/LayananReturTanpaStruk.dart';
 import '../Domain/Penjualan/LayananVoidPenjualan.dart';
 import '../Domain/Perangkat/LayananLayarPelanggan.dart';
 import '../Domain/Persediaan/LayananInfoBatch.dart';
@@ -526,6 +527,16 @@ final penyediaLayananRetur = Provider<LayananReturPenjualan>(
     klien: ref.watch(penyediaKlienPos),
     repositori: ref.watch(penyediaRepositori),
     repositoriPenjualan: ref.watch(penyediaRepositoriPenjualan),
+    jam: ref.watch(penyediaJam),
+  ),
+);
+
+/// K28: retur tanpa struk (offline, PIN penyetuju ber-izin `penjualan.retur.tanpa-struk`).
+final penyediaLayananReturTanpaStruk = Provider<LayananReturTanpaStruk>(
+  (ref) => LayananReturTanpaStruk(
+    repositori: ref.watch(penyediaRepositori),
+    repositoriPenjualan: ref.watch(penyediaRepositoriPenjualan),
+    layananPenjualan: ref.watch(penyediaLayananPenjualan),
     jam: ref.watch(penyediaJam),
   ),
 );

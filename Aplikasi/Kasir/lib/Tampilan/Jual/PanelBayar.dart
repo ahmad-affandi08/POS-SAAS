@@ -950,8 +950,12 @@ class PanelBayarState extends ConsumerState<PanelBayar> {
         Padding(
           padding: const EdgeInsets.only(bottom: TokenJarak.jarak8),
           child: Text(
-            'Tukar barang dari ${tukar.nomorPenjualanAsal} · nilai retur ${tukar.nilai.FormatRupiah()}'
-            '${tukar.nilai.Bandingkan(hitungan.hasil.totalAkhir) > 0 ? ' · kembalikan ${tukar.nilai.Kurangi(hitungan.hasil.totalAkhir).FormatRupiah()} tunai' : ''}',
+            'Tukar barang ${tukar.tanpaStruk ? 'tanpa struk' : 'dari ${tukar.nomorPenjualanAsal}'} · nilai retur ${tukar.nilai.FormatRupiah()}'
+            '${tukar.nilai.Bandingkan(hitungan.hasil.totalAkhir) <= 0
+                ? ''
+                : tukar.tanpaStruk
+                ? ' · tambah barang pengganti ${tukar.nilai.Kurangi(hitungan.hasil.totalAkhir).FormatRupiah()} lagi (tanpa struk tidak dikembalikan tunai)'
+                : ' · kembalikan ${tukar.nilai.Kurangi(hitungan.hasil.totalAkhir).FormatRupiah()} tunai'}',
             style: teks.bodySmall,
           ),
         ),

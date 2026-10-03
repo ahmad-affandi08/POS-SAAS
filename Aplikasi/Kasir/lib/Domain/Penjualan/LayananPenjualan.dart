@@ -601,12 +601,14 @@ class LayananPenjualan {
   // Hitung & pajak -----------------------------------------------------------------------------------------------------
 
   /// [metodeBayar]: Uuid metode semua pembayaran transaksi (F-16c bagian 3, promo metode bayar); null = belum memilih
-  /// pembayaran (promo metode bayar tidak berlaku, seperti di server).
+  /// pembayaran (promo metode bayar tidak berlaku, seperti di server). [polos] (K28 retur tanpa struk): tanpa biaya
+  /// layanan, pembulatan tunai, dan promo — sama dengan `PenghitungGrosir` server.
   HitunganKeranjang Hitung(
     Keranjang keranjang,
     KonteksPenjualan k, {
     List<DataPembayaranKalkulasi> pembayaran = const [],
     List<String>? metodeBayar,
+    bool polos = false,
   }) {
     final tanggal = k.HitungTanggalBisnis(_jam());
     final pajakDokumen = <String, DataPajakKalkulasi>{};
@@ -657,8 +659,8 @@ class LayananPenjualan {
 
     final dasar = DataKalkulasi(
       hargaTermasukPajak: k.profilPajak.hargaTermasukPajak,
-      persenBiayaLayanan: k.AmbilPersenBiayaLayanan(),
-      pembulatanTunai: k.pembulatanTunai,
+      persenBiayaLayanan: polos ? null : k.AmbilPersenBiayaLayanan(),
+      pembulatanTunai: polos ? null : k.pembulatanTunai,
       pajak: pajakDokumen.values.toList(),
       baris: [
         for (var i = 0; i < keranjang.baris.length; i++)
@@ -687,7 +689,7 @@ class LayananPenjualan {
         ? null
         : KonteksPenjualan.UraiPromo(PromoPos.DariJson(voucher.promo));
     final daftarPromo = [...k.promo, ?promoVoucher];
-    if (daftarPromo.isNotEmpty && keranjang.baris.isNotEmpty) {
+    if (!polos && daftarPromo.isNotEmpty && keranjang.baris.isNotEmpty) {
       final waktu = _jam().toUtc();
       final hasilPromo = const MesinPromo().Terapkan(
         dasar,
@@ -1178,6 +1180,13 @@ class LayananPenjualan {
     final dipakaiTukar = tukar?.HitungDipakai(hasil.totalAkhir);
     if (tukar != null) {
       final bayarTukar = pembayaran.where((p) => p.metode.Jenis == JenisMetodeBayar.tukar).toList();
+      if (tukar.tanpaStruk && dipakaiTukar!.Bandingkan(tukar.nilai) < 0) {
+        throw GalatKasir(
+          'TukarKurang',
+          'Retur tanpa struk tidak bisa dikembalikan tunai. Tambah barang pengganti sampai minimal '
+              '${tukar.nilai.FormatRupiah()}.',
+        );
+      }
       if (bayarTukar.length != 1 || !bayarTukar.single.jumlah.SamaDengan(dipakaiTukar!)) {
         throw GalatKasir(
           'TukarTidakSesuai',

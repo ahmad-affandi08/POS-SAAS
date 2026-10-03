@@ -1,6 +1,6 @@
 # Daftar Kekurangan & Pekerjaan Tertunda PAYOU
 
-Status per 2 Oktober 2026 (PRD v4.01; bagian K disisir dari kode 2 Oktober 2026 dan statusnya diperbarui tiap butir selesai sampai K-25; butir A3, A14, dan A15 disisir ulang di v3.25, sisanya belum disisir butir demi butir sejak v2.88, lihat catatan audit di bawah). Dokumen ini mencatat apa yang **belum ada**, **belum diuji di produksi**, atau **menunggu keputusan pemilik produk**, supaya sistem bisa dibuka ke publik lebih dulu dengan risiko yang diketahui. Perbarui setiap kali satu butir selesai.
+Status per 2 Oktober 2026 (PRD v4.02; bagian K disisir dari kode 2 Oktober 2026 dan statusnya diperbarui tiap butir selesai sampai K-25; butir A3, A14, dan A15 disisir ulang di v3.25, sisanya belum disisir butir demi butir sejak v2.88, lihat catatan audit di bawah). Dokumen ini mencatat apa yang **belum ada**, **belum diuji di produksi**, atau **menunggu keputusan pemilik produk**, supaya sistem bisa dibuka ke publik lebih dulu dengan risiko yang diketahui. Perbarui setiap kali satu butir selesai.
 
 Status butir (audit F-26): **TERBUKA** = belum dikerjakan; **SELESAI @ versi** = sudah dikerjakan & ada test regresinya; **DITUNDA** = sengaja ditunda; **MENUNGGU KEPUTUSAN** = butuh pemilik produk. Butir baru ditandai SELESAI hanya bila test regresinya ada.
 
@@ -104,7 +104,7 @@ kode. Urutan pengerjaan = urutan tabel; butir yang selesai diberi **SELESAI @ ve
 | K-8 | `ModeKasir` template sektor (Retail/Cepat/Meja/Layanan/Grosir) tidak pernah sampai ke kasir; tata letak sama untuk semua sektor | §5.1, §9 | SELESAI v3.58 (beranda Meja, katalog daftar Retail/Grosir, pengali `12*kode`) |
 | K-9 | **Pemilih varian** (ukuran × warna) di kasir tidak ada; produk induk varian ditolak | `KatalogLokal.dart`; §9.4 | SELESAI v3.59 (`PanelVarian`, skema lokal 23) |
 | K-10 | **Cek harga** tanpa menambah ke keranjang | §9.3 | SELESAI v3.60 (`PanelCekHarga`, F4) |
-| K-11 | **Retur tanpa struk & tukar barang** satu layar | `LembarRetur.dart`; §9.3–§9.4 | SELESAI v3.61–v3.62 (tukar barang server + layar kasir; retur tanpa struk: K28 diputuskan, server & back-office v4.01, layar kasir menyusul) |
+| K-11 | **Retur tanpa struk & tukar barang** satu layar | `LembarRetur.dart`; §9.3–§9.4 | SELESAI v3.61–v3.62 (tukar barang server + layar kasir; retur tanpa struk: K28 diputuskan, server & back-office v4.01, layar kasir v4.02) |
 | K-12 | Status meja **minta bill / perlu dibersihkan** | `LayarMeja.dart`; §9.1 | SELESAI v3.63 (`MintaBill` di `PesananTerbuka.Ubah`, outbox `Meja.Bersih`, skema lokal 24) |
 | K-13 | **Course / tahan & kirim** (hold & fire) per kursus | §9.1 | SELESAI v3.64 (`Baris[].Kursus`, "Tahan Utama" & "Kirim Utama") |
 | K-14 | **Bagi tagihan rata per orang / per nominal** (sekarang hanya per item, khusus meja) | BR-08.2, §9.1 | SELESAI v3.65 (tombol Bagi tagihan di Bayar; struk per tamu belum) |

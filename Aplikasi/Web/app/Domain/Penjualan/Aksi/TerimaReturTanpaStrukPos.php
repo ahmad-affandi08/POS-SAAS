@@ -32,6 +32,7 @@ use App\Domain\Pelanggan\Layanan\PencatatDepositPenjualan;
 use App\Domain\Penjualan\Data\DataBarisReturTanpaStrukPos;
 use App\Domain\Penjualan\Data\DataReturTanpaStrukPos;
 use App\Domain\Penjualan\Enum\JenisMetodePembayaran;
+use App\Domain\Penjualan\Enum\KanalPenjualan;
 use App\Domain\Penjualan\Enum\KondisiBarangRetur;
 use App\Domain\Penjualan\Enum\MetodeRefund;
 use App\Domain\Penjualan\Enum\StatusReturPenjualan;
@@ -66,8 +67,8 @@ use Illuminate\Support\Facades\DB;
  * atau pengguna yang berhak. Rincian (keputusan agen, D-17):
  *
  * - **Penyetuju** wajib ber-izin `penjualan.retur.tanpa-struk` (bawaan Pemilik & Admin), kasir ber-izin retur (K-22).
- * - **Nilai** = harga jual berlaku saat retur dari price engine (tanpa tier, kanal, atau promo, karena pembelinya tidak
- *   diketahui), dihitung `PenghitungGrosir::HitungRinci` (mesin kalkulasi yang sama dengan kasir; tanpa biaya layanan &
+ * - **Nilai** = harga jual berlaku saat retur dari price engine untuk kanal Bawa pulang (tanpa tier atau promo, karena
+ *   pembelinya tidak diketahui; kanal sama dengan bawaan kasir), dihitung `PenghitungGrosir::HitungRinci` (mesin kalkulasi yang sama dengan kasir; tanpa biaya layanan &
  *   pembulatan), pajak dengan tarif berlaku pada tanggal bisnis. Perangkat menghitung dengan cara yang sama;
  *   selisih = `HitunganTidakCocok`.
  * - **Refund** hanya `Tukar` (barang pengganti) atau `Deposit` pelanggan terdaftar, **tidak pernah uang tunai/transfer**:
@@ -335,7 +336,7 @@ final class TerimaReturTanpaStrukPos
                 throw new PelanggaranAturanBisnis('SatuanTidakDikenal', "Satuan {$produk->Nama} tidak ditemukan.", "Baris.{$indeks}.UuidProdukSatuan");
             }
 
-            $harga = $this->harga->Tentukan($produk, $satuan, $baris->jumlah, $outlet->idOutlet, null, null, $data->dibuatPada)
+            $harga = $this->harga->Tentukan($produk, $satuan, $baris->jumlah, $outlet->idOutlet, KanalPenjualan::BawaPulang, null, $data->dibuatPada)
                 ?? throw new PelanggaranAturanBisnis('HargaBelumDiatur', "{$produk->Nama} belum punya harga jual untuk satuan itu.", "Baris.{$indeks}.UuidProdukSatuan");
 
             $hasil[] = [

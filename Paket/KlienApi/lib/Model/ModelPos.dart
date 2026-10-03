@@ -441,6 +441,7 @@ class DataAwal {
     this.tutupShiftButa = true,
     this.toleransiSelisihKas = toleransiSelisihKasBawaan,
     this.batasHariRetur = batasHariReturBawaan,
+    this.batasReturTanpaStrukHarian = batasReturTanpaStrukHarianBawaan,
     this.batasHariLewatJatuhTempo = 0,
     this.bukaLaciPerluPin = false,
     this.persetujuanJarakJauh = false,
@@ -460,6 +461,9 @@ class DataAwal {
 
   /// F-09: batas hari retur bawaan (inklusif, 0–365).
   static const int batasHariReturBawaan = 7;
+
+  /// K28: batas Σ retur tanpa struk outlet per hari bawaan Rp 1.000.000.
+  static const String batasReturTanpaStrukHarianBawaan = '1000000';
 
   final String batasKasKeluar;
   final bool shiftBersama;
@@ -491,6 +495,10 @@ class DataAwal {
 
   /// F-09: retur paling lama sekian hari sejak tanggal bisnis penjualan (`Pengaturan.BatasHariRetur`).
   final int batasHariRetur;
+
+  /// K28: Σ retur tanpa struk outlet per hari di atas nilai ini menjadi tinjauan di server; aplikasi memperingatkan
+  /// (`Pengaturan.BatasReturTanpaStrukHarian`; server lama tanpa kunci ini = bawaan).
+  final String batasReturTanpaStrukHarian;
 
   /// F-12 BR-12.1: penjualan tempo butuh penyetuju bila pelanggan punya piutang lewat jatuh tempo lebih dari sekian
   /// hari (`Pengaturan.BatasHariLewatJatuhTempo`; server lama tanpa kunci ini = 0).
@@ -546,6 +554,10 @@ class DataAwal {
       tutupShiftButa: UraiJson.AmbilBenar(pengaturan['TutupShiftButa'], true),
       toleransiSelisihKas: UraiJson.AmbilDesimal(pengaturan['ToleransiSelisihKas'], toleransiSelisihKasBawaan),
       batasHariRetur: UraiJson.AmbilBulat(pengaturan['BatasHariRetur'], batasHariReturBawaan),
+      batasReturTanpaStrukHarian: UraiJson.AmbilDesimal(
+        pengaturan['BatasReturTanpaStrukHarian'],
+        batasReturTanpaStrukHarianBawaan,
+      ),
       batasHariLewatJatuhTempo: UraiJson.AmbilBulat(pengaturan['BatasHariLewatJatuhTempo']),
       bukaLaciPerluPin: UraiJson.AmbilBenar(pengaturan['BukaLaciPerluPin']),
       persetujuanJarakJauh: UraiJson.AmbilBenar(pengaturan['PersetujuanJarakJauh']),

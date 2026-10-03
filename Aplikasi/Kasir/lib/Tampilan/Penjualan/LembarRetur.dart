@@ -20,6 +20,7 @@ import '../../Domain/Sesi/StafLokal.dart';
 import '../Komponen/FormatAngka.dart';
 import '../Komponen/MasukanUang.dart';
 import '../LembarMutasiKas.dart';
+import 'LembarReturTanpaStruk.dart';
 
 /// Cara refund retur fase 1: tunai dari laci shift aktif, transfer manual, atau keduanya.
 /// Cara refund retur. `Tukar` (K-11): nilai barang yang diretur membayar barang pengganti di layar Jual.
@@ -58,6 +59,9 @@ class _LembarReturState extends ConsumerState<LembarRetur> {
   String? _galat;
   ReturTersimpan? _selesai;
   int? _batasHari;
+
+  /// K28: formulir retur tanpa struk ditampilkan.
+  bool _tanpaStruk = false;
 
   LayananReturPenjualan get _layanan => ref.read(penyediaLayananRetur);
 
@@ -329,6 +333,15 @@ class _LembarReturState extends ConsumerState<LembarRetur> {
     final selesai = _selesai;
     final hasil = _hasil;
 
+    if (_tanpaStruk) {
+      return LembarReturTanpaStruk(
+        kasir: widget.kasir,
+        saatSelesai: widget.saatSelesai,
+        saatTukar: widget.saatTukar,
+        saatKembali: () => setState(() => _tanpaStruk = false),
+      );
+    }
+
     Widget Bingkai(List<Widget> anak) => Padding(
       padding: const EdgeInsets.all(TokenJarak.jarak24),
       child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: anak),
@@ -418,6 +431,20 @@ class _LembarReturState extends ConsumerState<LembarRetur> {
           'Retur butuh internet untuk mencari struk. Batas retur ${_batasHari ?? DataAwal.batasHariReturBawaan} hari '
           'sejak tanggal transaksi. Transaksi di shift ini yang belum ditutup cukup di-void dari Riwayat.',
           style: teks.bodySmall?.copyWith(color: warna.teksSekunder),
+        ),
+        const SizedBox(height: TokenJarak.jarak12),
+        // K28: pembeli tanpa struk — wajib PIN pemilik/berhak, tukar barang atau deposit saja.
+        SizedBox(
+          height: TokenJarak.targetSentuh,
+          child: OutlinedButton.icon(
+            key: const ValueKey('BukaReturTanpaStruk'),
+            onPressed: () => setState(() {
+              _tanpaStruk = true;
+              _galat = null;
+            }),
+            icon: const Icon(Icons.receipt_long_outlined),
+            label: const Text('Pembeli tidak membawa struk'),
+          ),
         ),
       ],
     ];

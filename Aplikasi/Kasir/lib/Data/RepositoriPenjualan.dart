@@ -252,6 +252,14 @@ class RepositoriPenjualan {
     return (await kueri.get()).isNotEmpty;
   }
 
+  /// K28: Σ `TotalRefund` retur tanpa struk (tanpa penjualan asal) perangkat ini pada [tanggalBisnis] `YYYY-MM-DD`.
+  Future<Uang> HitungReturTanpaStrukHari(String tanggalBisnis) async {
+    final baris = await (db.select(
+      db.returPenjualan,
+    )..where((r) => r.UuidPenjualanAsal.equals('') & r.TanggalBisnis.equals(tanggalBisnis))).get();
+    return baris.fold<Uang>(Uang.Nol(), (total, r) => total.Tambah(Uang.Dari(r.TotalRefund)));
+  }
+
   /// Ambil nomor urut retur berikutnya ([tanggal] `YYMMDD`), susun dokumen dengan nomor itu, lalu simpan retur + baris
   /// + refund + status penjualan asal lokal + outbox dalam satu transaksi (nomor tidak terpakai bila gagal).
   Future<DokumenRetur> SimpanRetur({

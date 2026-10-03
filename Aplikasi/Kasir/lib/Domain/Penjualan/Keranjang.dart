@@ -432,6 +432,7 @@ class TukarKeranjang {
     required this.uuidMetode,
     required this.namaMetode,
     required this.simpanRetur,
+    this.tanpaStruk = false,
   });
 
   /// Uuid retur yang akan dibuat (dirujuk `UuidReturTukar` penjualan pengganti).
@@ -442,6 +443,9 @@ class TukarKeranjang {
   final Uang nilai;
   final String uuidMetode;
   final String namaMetode;
+
+  /// K28: retur tanpa struk tidak boleh dikembalikan tunai, jadi barang pengganti minimal senilai [nilai].
+  final bool tanpaStruk;
 
   /// Simpan retur dengan refund `Tukar` [tukar] dan `Tunai` [tunai] (Σ = [nilai]); hasil = nomor retur.
   final Future<String> Function({required Uang tukar, required Uang tunai}) simpanRetur;

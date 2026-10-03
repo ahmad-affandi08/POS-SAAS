@@ -64,7 +64,7 @@ abstract final class PenyusunDokumenKasir {
       const BarisTeks('NOTA RETUR', rata: RataStruk.Tengah, tebal: true),
       if (cetakUlang) const BarisTeks('CETAK ULANG', rata: RataStruk.Tengah, tebal: true),
       BarisTeks(retur.Nomor),
-      BarisTeks('Asal: ${retur.NomorPenjualanAsal}'),
+      BarisTeks(retur.NomorPenjualanAsal.isEmpty ? 'Asal: tanpa struk' : 'Asal: ${retur.NomorPenjualanAsal}'),
       BarisDuaKolom(tanggal, jam),
       if (identitas.pengaturan.tampilkanKasir) BarisTeks('Kasir: ${retur.NamaKasir}'),
       const BarisGaris(),
