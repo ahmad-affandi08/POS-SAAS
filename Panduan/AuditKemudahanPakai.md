@@ -32,7 +32,7 @@ kali, persetujuan jarak jauh tetap); butir 3 (tautan unduh) ditunda. Butir seles
 | 14 | Back-office | Belanja stok (beli tunai sekali simpan) tersembunyi di halaman Penerimaan; tidak bisa diretur (`SimpanReturPembelian.php:97`) | Entri menu pertama di Pembelian + pintasan Beranda; retur belanja stok | Agent |
 | 15 | Back-office | Catat pengeluaran & kategori kas memaksa pilih akun COA berkode (`KasBank/Buat.tsx:62`, `KategoriKas.tsx:185`) | Kategori ramah ("Listrik & air", "Sewa", …) dipetakan otomatis; kode akun hanya di mode akuntan | Agent |
 | 16 ✓ v4.35 | Back-office | Penyesuaian > Rp 500.000 dan PO > Rp 5 jt wajib disetujui orang lain → toko satu admin buntu (`SetujuiPenyesuaianStok.php:47`, `SetujuiPesananPembelian.php:48`) | Pengguna tunggal / Pemilik = posting langsung tercatat audit; four-eyes aktif saat ada penyetuju kedua | Disetujui D-38 (aturan four-eyes BR) |
-| 17 | Awal | Paket Bisnis saat daftar langsung memaksa 2FA sebelum panduan (`KatalogPaket.json`, `web.php:173`) | Tenggang 2FA selama trial + banner | Disetujui D-38 (aturan keamanan paket) |
+| 17 ✓ v4.36 | Awal | Paket Bisnis saat daftar langsung memaksa 2FA sebelum panduan (`KatalogPaket.json`, `web.php:173`) | Tenggang 2FA selama trial + banner | Disetujui D-38 (aturan keamanan paket) |
 ## Gelombang 2 — beban berulang & istilah (Tinggi–Sedang)
 
 | # | Area | Masalah | Usulan | Putusan |

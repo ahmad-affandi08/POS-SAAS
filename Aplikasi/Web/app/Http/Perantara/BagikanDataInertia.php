@@ -11,6 +11,7 @@ use App\Domain\Organisasi\Kueri\AksesPengguna;
 use App\Domain\Organisasi\Kueri\KeanggotaanPengguna;
 use App\Domain\Organisasi\Kueri\PemilikTenant;
 use App\Domain\Organisasi\Kueri\SektorOutletTenant;
+use App\Domain\Organisasi\Layanan\PenentuWajibDuaFaktor;
 use App\Domain\Organisasi\Model\Pengguna;
 use App\Domain\Tenant\Enum\PlatformPengumuman;
 use App\Domain\Tenant\Kueri\PenawaranFiturTenant;
@@ -105,6 +106,18 @@ final class BagikanDataInertia extends Middleware
                     'BerlakuMulai' => $dokumen->BerlakuMulai->toDateString(),
                     'Tautan' => route('legal.tampil', ['jenis' => Str::kebab($dokumen->Jenis->value), 'versi' => $dokumen->Versi]),
                 ], $this->persetujuanLegal->AmbilPengumuman(now()));
+            },
+            // D-38: 2FA wajib (paket Bisnis) ditunda selama trial; pemegang peran wajib melihat banner pengingat.
+            'PengingatDuaFaktor' => function () use ($pengguna): bool {
+                $idTenant = app(KonteksTenant::class)->Ambil();
+
+                if (! $pengguna instanceof Pengguna || $idTenant === null || $pengguna->CekDuaFaktorAktif()) {
+                    return false;
+                }
+
+                $penentu = app(PenentuWajibDuaFaktor::class);
+
+                return $penentu->CekWajib($pengguna->Id, $idTenant) && $penentu->CekDitunda($idTenant);
             },
             // F-02: hak akses di tenant aktif untuk menu & tombol (hanya UX; server tetap penentu lewat WajibIzinTenant).
             'Akses' => function () use ($pengguna): ?array {

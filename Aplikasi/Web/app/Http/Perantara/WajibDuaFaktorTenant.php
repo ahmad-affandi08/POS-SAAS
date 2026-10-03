@@ -16,7 +16,8 @@ use Symfony\Component\HttpFoundation\Response;
  * §20.2 + BR-00.8: Owner, Admin, dan Akuntan tenant berpaket Bisnis ke atas wajib mengaktifkan 2FA sebelum membuka menu `/kelola` lain.
  * Halaman keamanan akun & persetujuan legal tetap terbuka agar ia bisa menyelesaikannya. Berjalan setelah
  * `IdentifikasiTenantSesi`. Verifikasi kode saat masuk tidak diurus di sini: pengguna ber-2FA baru dianggap masuk
- * setelah kodenya terverifikasi (SesiKontroler).
+ * setelah kodenya terverifikasi (SesiKontroler). D-38: selama trial kewajiban ditunda (hanya banner, lihat
+ * `BagikanDataInertia` prop `PengingatDuaFaktor`).
  */
 final class WajibDuaFaktorTenant
 {
@@ -36,7 +37,8 @@ final class WajibDuaFaktorTenant
             || ! $pengguna instanceof Pengguna
             || $idTenant === null
             || $pengguna->CekDuaFaktorAktif()
-            || ! $this->penentu->CekWajib($pengguna->Id, $idTenant)) {
+            || ! $this->penentu->CekWajib($pengguna->Id, $idTenant)
+            || $this->penentu->CekDitunda($idTenant)) {
             return $next($request);
         }
 

@@ -40,7 +40,8 @@ final class IdentifikasiTenantPemilik
             return GalatApi::Buat('TenantTidakDiizinkan', 'Anda bukan anggota aktif usaha ini. Pilih usaha lain.', 403);
         }
 
-        if (! $pengguna->CekDuaFaktorAktif() && $this->wajibDuaFaktor->CekWajib($pengguna->Id, $idTenant)) {
+        // D-38: selama trial kewajiban 2FA ditunda, sama dengan back-office.
+        if (! $pengguna->CekDuaFaktorAktif() && $this->wajibDuaFaktor->CekWajib($pengguna->Id, $idTenant) && ! $this->wajibDuaFaktor->CekDitunda($idTenant)) {
             return GalatApi::Buat('DuaFaktorWajib', 'Paket langganan usaha ini mewajibkan verifikasi dua langkah untuk peran Anda. Aktifkan dulu di menu Keamanan akun back-office.', 403);
         }
 

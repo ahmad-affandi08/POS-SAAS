@@ -53,6 +53,8 @@ export type PropsBersamaAplikasi = {
     Pengguna: PenggunaAplikasi | null;
     TenantAktif: TenantAktif | null;
     PengumumanLegal: PengumumanLegal[];
+    /** D-38: 2FA wajib paket Bisnis ditunda selama trial; true = tampilkan banner pengingat. */
+    PengingatDuaFaktor?: boolean;
     /** P-10 PGL-19: banner pengumuman & pemeliharaan platform (kosong/absen di luar back-office). */
     PengumumanPlatform?: PengumumanPlatform[];
     /** F-02: hak akses di tenant aktif (null di luar back-office). */

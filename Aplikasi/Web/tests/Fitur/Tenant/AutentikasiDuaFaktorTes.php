@@ -9,6 +9,7 @@ use App\Domain\Organisasi\Enum\PeranTenantBawaan;
 use App\Domain\Organisasi\Model\Pengguna;
 use App\Domain\Organisasi\Model\TenantPengguna;
 use App\Domain\Tenant\Aksi\DaftarkanTenant;
+use App\Domain\Tenant\Enum\StatusLangganan;
 use App\Domain\Tenant\Model\Tenant;
 use App\Http\Perantara\IdentifikasiTenantSesi;
 use App\Http\Perantara\SesiAutentikasiTenant;
@@ -30,6 +31,12 @@ beforeEach(function (): void {
 function DaftarkanTenantDuaFaktorUji(?string $kodePaket = null): array
 {
     return app(DaftarkanTenant::class)->Jalankan(BantuanPendaftaran::Data(kodePaket: $kodePaket));
+}
+
+/** D-38: kewajiban 2FA ditunda selama trial; test kewajiban memakai tenant yang trial-nya sudah berakhir (Aktif). */
+function AkhiriTrialDuaFaktorUji(int $idTenant): void
+{
+    DB::table('Langganan')->where('IdTenant', $idTenant)->update(['Status' => StatusLangganan::Aktif->value]);
 }
 
 describe('Aktivasi 2FA (§20.2, BR-00.8)', function (): void {
@@ -185,6 +192,7 @@ describe('Masuk dua langkah (BR-00.8)', function (): void {
 describe('2FA wajib paket Bisnis ke atas (§20.2, fitur keamanan.2fa-wajib)', function (): void {
     it('Owner tenant Bisnis tanpa 2FA diarahkan ke halaman keamanan dan tidak bisa membuka menu lain', function (): void {
         ['Tenant' => $tenant, 'Pengguna' => $pengguna] = DaftarkanTenantDuaFaktorUji('BISNIS');
+        AkhiriTrialDuaFaktorUji($tenant->Id);
         $this->actingAs($pengguna, 'web')->withSession([IdentifikasiTenantSesi::KUNCI_SESI => $tenant->Id]);
 
         $this->get('/kelola')->assertRedirect(route('kelola.keamanan'));
@@ -198,6 +206,23 @@ describe('2FA wajib paket Bisnis ke atas (§20.2, fitur keamanan.2fa-wajib)', fu
         // Selama paket mewajibkan, 2FA tidak bisa dinonaktifkan.
         $this->delete('/kelola/keamanan/dua-faktor', ['KataSandi' => BantuanAutentikasi::KATA_SANDI])->assertSessionHasErrors('Umum');
         expect($pengguna->refresh()->CekDuaFaktorAktif())->toBeTrue();
+    });
+
+    it('D-38: selama trial paket Bisnis, Owner tanpa 2FA tetap membuka menu dan hanya melihat banner pengingat', function (): void {
+        ['Tenant' => $tenant, 'Pengguna' => $pengguna] = DaftarkanTenantDuaFaktorUji('BISNIS');
+        $this->actingAs($pengguna, 'web')->withSession([IdentifikasiTenantSesi::KUNCI_SESI => $tenant->Id]);
+
+        $this->get('/kelola/panduan-awal')->assertOk()->assertInertia(fn (AssertableInertia $halaman) => $halaman->where('PengingatDuaFaktor', true));
+        $this->get('/kelola/keamanan')->assertInertia(fn (AssertableInertia $halaman) => $halaman->where('DuaFaktor.Wajib', true));
+
+        $rahasia = session(SesiAutentikasiTenant::RAHASIA_2FA_SEMENTARA);
+        $this->post('/kelola/keamanan/dua-faktor', ['Kode' => BantuanAutentikasi::KodeSaatIni($rahasia)])->assertSessionHasNoErrors();
+        $this->get('/kelola/keamanan')->assertInertia(fn (AssertableInertia $halaman) => $halaman->where('PengingatDuaFaktor', false));
+
+        // Trial berakhir tanpa 2FA (pengguna lain): pengalihan berlaku lagi.
+        AkhiriTrialDuaFaktorUji($tenant->Id);
+        $anggota = BantuanOrganisasi::TambahAnggota($tenant->Id, PeranTenantBawaan::Admin);
+        BantuanOrganisasi::Masuk($this, $anggota, $tenant->Id)->get('/kelola')->assertRedirect(route('kelola.keamanan'));
     });
 
     it('paket tanpa fitur 2FA wajib (Pro) dan anggota bukan Owner tidak dipaksa', function (): void {
@@ -217,6 +242,7 @@ describe('2FA wajib paket Bisnis ke atas (§20.2, fitur keamanan.2fa-wajib)', fu
     it('isolasi tenant: kewajiban dihitung dari tenant aktif, Owner Pro yang juga anggota tenant Bisnis tidak dipaksa di tenant Pro', function (): void {
         ['Tenant' => $pro, 'Pengguna' => $pemilik] = DaftarkanTenantDuaFaktorUji('PRO');
         $bisnis = app(DaftarkanTenant::class)->Jalankan(BantuanPendaftaran::Data('budi@toko.id', '081200000077', 'BISNIS', 'Toko Budi'))['Tenant'];
+        AkhiriTrialDuaFaktorUji($bisnis->Id);
         TenantPengguna::query()->create(['IdTenant' => $bisnis->Id, 'IdPengguna' => $pemilik->Id, 'Pemilik' => true]);
 
         $this->actingAs($pemilik, 'web')->withSession([IdentifikasiTenantSesi::KUNCI_SESI => $pro->Id])
@@ -229,6 +255,7 @@ describe('2FA wajib paket Bisnis ke atas (§20.2, fitur keamanan.2fa-wajib)', fu
 describe('2FA wajib per peran: Owner, Admin, Akuntan (§20.2, BR-00.8)', function (): void {
     it('Admin dan Akuntan tenant Bisnis wajib 2FA; Kasir dan Manajer Outlet tidak', function (PeranTenantBawaan $peran, bool $wajib): void {
         $bisnis = BantuanOrganisasi::BuatTenant('Toko Bisnis', 'BISNIS')['Tenant'];
+        AkhiriTrialDuaFaktorUji($bisnis->Id);
         $anggota = BantuanOrganisasi::TambahAnggota($bisnis->Id, $peran);
 
         $respons = BantuanOrganisasi::Masuk($this, $anggota, $bisnis->Id)->get('/kelola');

@@ -861,6 +861,17 @@ export default function TataLetakAplikasi({ judul, jejak = [], children }: Props
                     {props.PengumumanPlatform && props.PengumumanPlatform.length > 0 ? (
                         <BannerPengumuman pengumuman={props.PengumumanPlatform} />
                     ) : null}
+                    {/* D-38: verifikasi dua langkah paket Bisnis ditunda selama trial, cukup pengingat. */}
+                    {props.PengingatDuaFaktor ? (
+                        <Pemberitahuan jenis="info" judul="Aktifkan verifikasi dua langkah">
+                            Paket Bisnis mewajibkan verifikasi dua langkah untuk Pemilik, Admin, dan Akuntan. Selama
+                            masa coba Anda masih bisa memakai semua menu; setelahnya menu dibuka setelah verifikasi
+                            aktif.{' '}
+                            <Link href="/kelola/keamanan" className="font-semibold text-brand underline">
+                                Aktifkan sekarang
+                            </Link>
+                        </Pemberitahuan>
+                    ) : null}
                     {/* BR-P06.5: pengumuman versi materiil dokumen legal selama masa pengumuman. */}
                     {props.PengumumanLegal.length > 0 ? (
                         <Pemberitahuan jenis="info" judul="Perubahan dokumen legal">
