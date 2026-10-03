@@ -1,6 +1,6 @@
 import { Link, router, usePage } from '@inertiajs/react';
 import { Trash2Icon } from 'lucide-react';
-import { useState, type FormEvent } from 'react';
+import { useRef, useState, type FormEvent } from 'react';
 
 import BilahAksiForm from '@/Komponen/Formulir/BilahAksiForm';
 import { GalatBidang } from '@/Komponen/Formulir/BagianBidang';
@@ -71,6 +71,8 @@ export default function HalamanFormTransferStok({
     );
     const [periksa, AturPeriksa] = useState(false);
     const [memproses, AturMemproses] = useState(false);
+    // Audit kemudahan pakai #13: tombol utama menyimpan lalu langsung memproses dokumen; draf jadi pilihan kedua.
+    const lanjutkan = useRef(false);
     const judul = Mode === 'Buat' ? 'Buat transfer stok' : 'Ubah draf transfer';
     const galatAsal = galatServer.UuidGudangAsal ?? (periksa && asal === '' ? 'Pilih lokasi asal.' : undefined);
     const galatTujuan =
@@ -149,9 +151,13 @@ export default function HalamanFormTransferStok({
         const opsi = { preserveScroll: true, onStart: () => AturMemproses(true), onFinish: () => AturMemproses(false) };
 
         if (Transfer === null) {
-            router.post(alamat, { ...masukan, Uuid: uuidBaru ?? BuatUlid() }, opsi);
+            router.post(alamat, { ...masukan, Uuid: uuidBaru ?? BuatUlid(), Lanjutkan: lanjutkan.current }, opsi);
         } else {
-            router.put(`${alamat}/${Transfer.Uuid}`, { ...masukan, VersiDiubahPada: Transfer.VersiDiubahPada }, opsi);
+            router.put(
+                `${alamat}/${Transfer.Uuid}`,
+                { ...masukan, VersiDiubahPada: Transfer.VersiDiubahPada, Lanjutkan: lanjutkan.current },
+                opsi,
+            );
         }
     };
 
@@ -310,8 +316,16 @@ export default function HalamanFormTransferStok({
                 </Panel>
 
                 <BilahAksiForm>
-                    <Tombol type="submit" memproses={memproses}>
-                        Simpan draf transfer
+                    <Tombol type="submit" memproses={memproses} onClick={() => (lanjutkan.current = true)}>
+                        Simpan & kirim
+                    </Tombol>
+                    <Tombol
+                        type="submit"
+                        varian="sekunder"
+                        disabled={memproses}
+                        onClick={() => (lanjutkan.current = false)}
+                    >
+                        Simpan draf
                     </Tombol>
                     <Button asChild variant="outline" className="h-8 pointer-coarse:h-11">
                         <Link href={Transfer === null ? alamat : `${alamat}/${Transfer.Uuid}`}>Batal</Link>

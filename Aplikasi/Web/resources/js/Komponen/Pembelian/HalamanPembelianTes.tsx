@@ -303,10 +303,12 @@ describe('Halaman pembelian (F-04 fase 1)', () => {
         );
         expect(screen.getByText('Butuh persetujuan')).toBeTruthy();
         expect(screen.getAllByText('Rp 6.750.000', { selector: 'dd' })).toHaveLength(2);
-        fireEvent.click(screen.getByRole('button', { name: 'Simpan draf pesanan' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Simpan & ajukan' }));
         expect(tiruanRouter.put).toHaveBeenCalledWith(
             `/kelola/pembelian/pesanan/${Uuid}`,
             expect.objectContaining({
+                // Audit kemudahan pakai #13: tombol utama menyimpan lalu langsung mengajukan PO.
+                Lanjutkan: true,
                 UuidPemasok: Pemasok.Uuid,
                 UuidGudang: GudangUtama.Uuid,
                 TerminHari: 30,

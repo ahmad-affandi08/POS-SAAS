@@ -56,9 +56,10 @@ final class TransferStokKontroler extends DasarDokumenPersediaanKontroler
         $asal = $this->CariGudangBoleh((string) $permintaan->validated('UuidGudangAsal'));
         $tujuan = $this->CariGudangTenant((string) $permintaan->validated('UuidGudangTujuan'));
         $transfer = $simpan->Jalankan($permintaan->AmbilData($asal->id, $tujuan->id), null);
-
-        return redirect()->route(self::ALAMAT, ['transferStok' => $transfer->Uuid])
+        $hasil = redirect()->route(self::ALAMAT, ['transferStok' => $transfer->Uuid])
             ->with('Kilat', 'Draf transfer disimpan. Periksa lagi, lalu kirim supaya stok berpindah ke lokasi dalam perjalanan.');
+
+        return $this->LanjutkanSetelahSimpan($permintaan, $hasil, fn () => $this->Kirim($transfer->Uuid, app(KirimTransferStok::class)), self::ALAMAT, ['transferStok' => $transfer->Uuid]);
     }
 
     public function Detail(string $transferStok, DetailTransferStok $detail): Response
@@ -99,8 +100,9 @@ final class TransferStokKontroler extends DasarDokumenPersediaanKontroler
         $asal = $this->CariGudangBoleh((string) $permintaan->validated('UuidGudangAsal'));
         $tujuan = $this->CariGudangTenant((string) $permintaan->validated('UuidGudangTujuan'));
         $t = $simpan->Jalankan($permintaan->AmbilData($asal->id, $tujuan->id), $t);
+        $hasil = redirect()->route(self::ALAMAT, ['transferStok' => $t->Uuid])->with('Kilat', 'Draf transfer disimpan.');
 
-        return redirect()->route(self::ALAMAT, ['transferStok' => $t->Uuid])->with('Kilat', 'Draf transfer disimpan.');
+        return $this->LanjutkanSetelahSimpan($permintaan, $hasil, fn () => $this->Kirim($t->Uuid, app(KirimTransferStok::class)), self::ALAMAT, ['transferStok' => $t->Uuid]);
     }
 
     public function Kirim(string $transferStok, KirimTransferStok $kirim): RedirectResponse

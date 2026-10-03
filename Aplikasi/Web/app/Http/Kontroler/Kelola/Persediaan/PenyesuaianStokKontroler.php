@@ -55,9 +55,10 @@ final class PenyesuaianStokKontroler extends DasarDokumenPersediaanKontroler
     {
         $gudang = $this->CariGudangBoleh((string) $permintaan->validated('UuidGudang'));
         $dokumen = $simpan->Jalankan($permintaan->AmbilData($gudang->id), null);
-
-        return redirect()->route(self::ALAMAT, ['penyesuaianStok' => $dokumen->Uuid])
+        $hasil = redirect()->route(self::ALAMAT, ['penyesuaianStok' => $dokumen->Uuid])
             ->with('Kilat', 'Draf penyesuaian disimpan. Periksa lagi, lalu ajukan supaya stok dan jurnal tercatat.');
+
+        return $this->LanjutkanSetelahSimpan($permintaan, $hasil, fn () => $this->Ajukan($dokumen->Uuid, app(AjukanPenyesuaianStok::class)), self::ALAMAT, ['penyesuaianStok' => $dokumen->Uuid]);
     }
 
     public function Detail(string $penyesuaianStok, DetailPenyesuaianStok $detail, PengaturanPersediaanTenant $pengaturan): Response
@@ -98,8 +99,9 @@ final class PenyesuaianStokKontroler extends DasarDokumenPersediaanKontroler
         $p = $this->CariPenyesuaian($penyesuaianStok);
         $gudang = $this->CariGudangBoleh((string) $permintaan->validated('UuidGudang'));
         $p = $simpan->Jalankan($permintaan->AmbilData($gudang->id), $p);
+        $hasil = redirect()->route(self::ALAMAT, ['penyesuaianStok' => $p->Uuid])->with('Kilat', 'Draf penyesuaian disimpan.');
 
-        return redirect()->route(self::ALAMAT, ['penyesuaianStok' => $p->Uuid])->with('Kilat', 'Draf penyesuaian disimpan.');
+        return $this->LanjutkanSetelahSimpan($permintaan, $hasil, fn () => $this->Ajukan($p->Uuid, app(AjukanPenyesuaianStok::class)), self::ALAMAT, ['penyesuaianStok' => $p->Uuid]);
     }
 
     public function Ajukan(string $penyesuaianStok, AjukanPenyesuaianStok $ajukan): RedirectResponse

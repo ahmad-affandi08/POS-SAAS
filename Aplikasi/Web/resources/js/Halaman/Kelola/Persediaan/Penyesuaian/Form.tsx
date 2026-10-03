@@ -1,6 +1,6 @@
 import { Link, router, usePage } from '@inertiajs/react';
 import { Trash2Icon } from 'lucide-react';
-import { useState, type FormEvent } from 'react';
+import { useRef, useState, type FormEvent } from 'react';
 
 import BilahAksiForm from '@/Komponen/Formulir/BilahAksiForm';
 import { GalatBidang } from '@/Komponen/Formulir/BagianBidang';
@@ -94,6 +94,8 @@ export default function HalamanFormPenyesuaianStok({
     );
     const [periksa, AturPeriksa] = useState(false);
     const [memproses, AturMemproses] = useState(false);
+    // Audit kemudahan pakai #13: tombol utama menyimpan lalu langsung memproses dokumen; draf jadi pilihan kedua.
+    const lanjutkan = useRef(false);
     const opsiAlasan = OpsiAlasan.find((o) => o.Nilai === alasan);
     const bolehMasuk = opsiAlasan?.BolehMasuk ?? false;
     const judul = Mode === 'Buat' ? 'Buat penyesuaian stok' : 'Ubah draf penyesuaian';
@@ -168,11 +170,11 @@ export default function HalamanFormPenyesuaianStok({
         const opsi = { preserveScroll: true, onStart: () => AturMemproses(true), onFinish: () => AturMemproses(false) };
 
         if (Penyesuaian === null) {
-            router.post(alamat, { ...masukan, Uuid: uuidBaru ?? BuatUlid() }, opsi);
+            router.post(alamat, { ...masukan, Uuid: uuidBaru ?? BuatUlid(), Lanjutkan: lanjutkan.current }, opsi);
         } else {
             router.put(
                 `${alamat}/${Penyesuaian.Uuid}`,
-                { ...masukan, VersiDiubahPada: Penyesuaian.VersiDiubahPada },
+                { ...masukan, VersiDiubahPada: Penyesuaian.VersiDiubahPada, Lanjutkan: lanjutkan.current },
                 opsi,
             );
         }
@@ -404,8 +406,16 @@ export default function HalamanFormPenyesuaianStok({
                 </Panel>
 
                 <BilahAksiForm>
-                    <Tombol type="submit" memproses={memproses}>
-                        Simpan draf penyesuaian
+                    <Tombol type="submit" memproses={memproses} onClick={() => (lanjutkan.current = true)}>
+                        Simpan & ajukan
+                    </Tombol>
+                    <Tombol
+                        type="submit"
+                        varian="sekunder"
+                        disabled={memproses}
+                        onClick={() => (lanjutkan.current = false)}
+                    >
+                        Simpan draf
                     </Tombol>
                     <Button asChild variant="outline" className="h-8 pointer-coarse:h-11">
                         <Link href={Penyesuaian === null ? alamat : `${alamat}/${Penyesuaian.Uuid}`}>Batal</Link>

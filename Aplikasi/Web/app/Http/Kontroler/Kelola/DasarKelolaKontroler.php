@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace App\Http\Kontroler\Kelola;
 
+use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
 use App\Domain\Bersama\Tenant\KonteksTenant;
 use App\Domain\Organisasi\Kueri\AksesPengguna;
 use App\Domain\Organisasi\Model\Outlet;
 use App\Domain\Organisasi\Model\Pengguna;
 use App\Http\Kontroler\Kontroler;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 /**
@@ -47,5 +50,28 @@ abstract class DasarKelolaKontroler extends Kontroler
         abort_if($boleh !== null && ! in_array($outlet->Id, $boleh, true), 404);
 
         return $outlet;
+    }
+
+    /**
+     * Audit kemudahan pakai #13 ("Simpan & posting"): setelah draf tersimpan, bila formulir mengirim `Lanjutkan`,
+     * langkah berikutnya (posting/kirim/ajukan) langsung dijalankan lewat aksi kontroler yang sama dengan tombol di
+     * halaman detail. Galat bisnis langkah itu tidak membatalkan draf: pengguna dibawa ke detail draf dengan pesannya.
+     *
+     * @param  callable(): RedirectResponse  $lanjut
+     * @param  array<string, string>  $parameter
+     */
+    protected function LanjutkanSetelahSimpan(Request $permintaan, RedirectResponse $hasilSimpan, callable $lanjut, string $ruteDetail, array $parameter): RedirectResponse
+    {
+        if (! $permintaan->boolean('Lanjutkan')) {
+            return $hasilSimpan;
+        }
+
+        try {
+            return $lanjut();
+        } catch (PelanggaranAturanBisnis $galat) {
+            return redirect()->route($ruteDetail, $parameter)
+                ->with('Kilat', 'Draf disimpan.')
+                ->withErrors(['Umum' => 'Belum diproses: '.$galat->getMessage()]);
+        }
     }
 }

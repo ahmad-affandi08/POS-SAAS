@@ -1,6 +1,6 @@
 import { Link, router, usePage } from '@inertiajs/react';
 import { Trash2Icon } from 'lucide-react';
-import { Fragment, useState, type FormEvent } from 'react';
+import { Fragment, useRef, useState, type FormEvent } from 'react';
 
 import TabelForm from '@/Komponen/TabelData/TabelForm';
 import BilahAksiForm from '@/Komponen/Formulir/BilahAksiForm';
@@ -79,6 +79,8 @@ export default function HalamanFormStokAwal({
     );
     const [periksa, AturPeriksa] = useState(false);
     const [memproses, AturMemproses] = useState(false);
+    // Audit kemudahan pakai #13: tombol utama menyimpan lalu langsung memproses dokumen; draf jadi pilihan kedua.
+    const lanjutkan = useRef(false);
     const aturan = { WajibKedaluwarsaBatch, MaksimalNomorSeriPerBaris };
     const ganda = CariBarisGanda(daftarBaris);
     const totalPerkiraan = HitungTotalNilai(daftarBaris);
@@ -169,9 +171,13 @@ export default function HalamanFormStokAwal({
         };
 
         if (StokAwal === null) {
-            router.post(alamat, { ...masukan, Uuid: uuidBaru ?? BuatUlid() }, opsi);
+            router.post(alamat, { ...masukan, Uuid: uuidBaru ?? BuatUlid(), Lanjutkan: lanjutkan.current }, opsi);
         } else {
-            router.put(`${alamat}/${StokAwal.Uuid}`, { ...masukan, VersiDiubahPada: StokAwal.VersiDiubahPada }, opsi);
+            router.put(
+                `${alamat}/${StokAwal.Uuid}`,
+                { ...masukan, VersiDiubahPada: StokAwal.VersiDiubahPada, Lanjutkan: lanjutkan.current },
+                opsi,
+            );
         }
     };
 
@@ -455,7 +461,15 @@ export default function HalamanFormStokAwal({
                 </Panel>
 
                 <BilahAksiForm>
-                    <Tombol type="submit" memproses={memproses}>
+                    <Tombol type="submit" memproses={memproses} onClick={() => (lanjutkan.current = true)}>
+                        Simpan & posting
+                    </Tombol>
+                    <Tombol
+                        type="submit"
+                        varian="sekunder"
+                        disabled={memproses}
+                        onClick={() => (lanjutkan.current = false)}
+                    >
                         Simpan draf
                     </Tombol>
                     <Button asChild variant="outline" className="h-8 pointer-coarse:h-11">

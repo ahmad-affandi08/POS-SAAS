@@ -56,9 +56,10 @@ final class StokAwalKontroler extends DasarPersediaanKontroler
     {
         $gudang = $this->CariGudangBoleh((string) $permintaan->validated('UuidGudang'));
         $stokAwal = $simpan->Jalankan($permintaan->AmbilData($gudang->id), null);
-
-        return redirect()->route('kelola.persediaan.stok-awal.detail', ['stokAwal' => $stokAwal->Uuid])
+        $hasil = redirect()->route('kelola.persediaan.stok-awal.detail', ['stokAwal' => $stokAwal->Uuid])
             ->with('Kilat', 'Draf stok awal disimpan. Periksa lagi, lalu posting supaya stok dan jurnal tercatat.');
+
+        return $this->LanjutkanPosting($permintaan, $hasil, $stokAwal->Uuid);
     }
 
     public function Detail(string $stokAwal, DetailStokAwal $detail): Response
@@ -99,9 +100,10 @@ final class StokAwalKontroler extends DasarPersediaanKontroler
         $dokumen = $this->CariStokAwal($stokAwal);
         $gudang = $this->CariGudangBoleh((string) $permintaan->validated('UuidGudang'));
         $dokumen = $simpan->Jalankan($permintaan->AmbilData($gudang->id), $dokumen);
-
-        return redirect()->route('kelola.persediaan.stok-awal.detail', ['stokAwal' => $dokumen->Uuid])
+        $hasil = redirect()->route('kelola.persediaan.stok-awal.detail', ['stokAwal' => $dokumen->Uuid])
             ->with('Kilat', 'Draf stok awal disimpan.');
+
+        return $this->LanjutkanPosting($permintaan, $hasil, $dokumen->Uuid);
     }
 
     public function Buang(string $stokAwal, BuangStokAwal $buang): RedirectResponse
@@ -110,6 +112,16 @@ final class StokAwalKontroler extends DasarPersediaanKontroler
 
         return redirect()->route('kelola.persediaan.stok-awal.daftar')
             ->with('Kilat', 'Draf stok awal dibuang. Stok dan jurnal tidak berubah.');
+    }
+
+    /** Audit kemudahan pakai #13: "Simpan & posting" hanya bagi pemegang izin posting stok awal (sama dengan rutenya). */
+    private function LanjutkanPosting(Request $permintaan, RedirectResponse $hasil, string $uuid): RedirectResponse
+    {
+        if ($permintaan->boolean('Lanjutkan') && ! $this->CekIzin(IzinTenant::PersediaanStokAwalPosting)) {
+            return $hasil->withErrors(['Umum' => 'Draf disimpan. Anda belum punya izin memposting stok awal; minta pemegang izin memostingnya.']);
+        }
+
+        return $this->LanjutkanSetelahSimpan($permintaan, $hasil, fn () => $this->Posting($uuid, app(AjukanPostingStokAwal::class)), 'kelola.persediaan.stok-awal.detail', ['stokAwal' => $uuid]);
     }
 
     public function Posting(string $stokAwal, AjukanPostingStokAwal $ajukan): RedirectResponse

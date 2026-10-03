@@ -565,13 +565,22 @@ describe('Kelola/Persediaan/Penyesuaian (F-05b, §19.2)', () => {
         expect(screen.queryByText('Tambah stok')).toBeNull();
         fireEvent.keyDown(document.activeElement ?? document.body, { key: 'Escape' });
 
-        fireEvent.click(screen.getByRole('button', { name: 'Simpan draf penyesuaian' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Simpan draf' }));
         expect(tiruanRouter.put).toHaveBeenCalledWith(
             `/kelola/persediaan/penyesuaian/${Uuid}`,
             expect.objectContaining({
                 KodeAlasan: 'Rusak',
                 Baris: [expect.objectContaining({ Arah: 'Keluar', Jumlah: '2', HppSatuan: null })],
+                Lanjutkan: false,
             }),
+            expect.anything(),
+        );
+
+        // Audit kemudahan pakai #13: tombol utama menyimpan lalu langsung mengajukan.
+        fireEvent.click(screen.getByRole('button', { name: 'Simpan & ajukan' }));
+        expect(tiruanRouter.put).toHaveBeenLastCalledWith(
+            `/kelola/persediaan/penyesuaian/${Uuid}`,
+            expect.objectContaining({ Lanjutkan: true }),
             expect.anything(),
         );
     });

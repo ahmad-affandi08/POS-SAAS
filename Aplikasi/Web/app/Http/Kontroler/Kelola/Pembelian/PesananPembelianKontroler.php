@@ -54,8 +54,9 @@ final class PesananPembelianKontroler extends DasarPembelianKontroler
     {
         $gudang = $this->CariGudangBoleh((string) $permintaan->validated('UuidGudang'));
         $po = $simpan->Jalankan($permintaan->AmbilData($gudang->id, $this->Pelaku()->Id));
+        $hasil = to_route('kelola.pembelian.pesanan.detail', ['pesanan' => $po->Uuid])->with('Kilat', "Draf {$po->Nomor} disimpan. Ajukan PO bila sudah benar.");
 
-        return to_route('kelola.pembelian.pesanan.detail', ['pesanan' => $po->Uuid])->with('Kilat', "Draf {$po->Nomor} disimpan. Ajukan PO bila sudah benar.");
+        return $this->LanjutkanSetelahSimpan($permintaan, $hasil, fn () => $this->Ajukan($po->Uuid, app(AjukanPesananPembelian::class)), 'kelola.pembelian.pesanan.detail', ['pesanan' => $po->Uuid]);
     }
 
     /** D-23 D: draf PO sekarang juga (tanpa menunggu jadwal pagi) untuk stok di bawah minimum di outlet pelaku. */
@@ -109,8 +110,9 @@ final class PesananPembelianKontroler extends DasarPembelianKontroler
         $po = $this->CariDokumen(PesananPembelian::class, $pesanan);
         $gudang = $this->CariGudangBoleh((string) $permintaan->validated('UuidGudang'));
         $po = $simpan->Jalankan($permintaan->AmbilData($gudang->id, $this->Pelaku()->Id), $po);
+        $hasil = to_route('kelola.pembelian.pesanan.detail', ['pesanan' => $po->Uuid])->with('Kilat', "Draf {$po->Nomor} disimpan.");
 
-        return to_route('kelola.pembelian.pesanan.detail', ['pesanan' => $po->Uuid])->with('Kilat', "Draf {$po->Nomor} disimpan.");
+        return $this->LanjutkanSetelahSimpan($permintaan, $hasil, fn () => $this->Ajukan($po->Uuid, app(AjukanPesananPembelian::class)), 'kelola.pembelian.pesanan.detail', ['pesanan' => $po->Uuid]);
     }
 
     public function Ajukan(string $pesanan, AjukanPesananPembelian $ajukan): RedirectResponse

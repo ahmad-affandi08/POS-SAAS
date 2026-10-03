@@ -1,5 +1,5 @@
 import { Link, router, usePage } from '@inertiajs/react';
-import { useState, type FormEvent } from 'react';
+import { useRef, useState, type FormEvent } from 'react';
 
 import BilahAksiForm from '@/Komponen/Formulir/BilahAksiForm';
 import BidangOutlet from '@/Komponen/Formulir/BidangOutlet';
@@ -60,6 +60,8 @@ export default function HalamanFormPesanan({
     );
     const [periksa, AturPeriksa] = useState(false);
     const [memproses, AturMemproses] = useState(false);
+    // Audit kemudahan pakai #13: tombol utama menyimpan lalu langsung memproses dokumen; draf jadi pilihan kedua.
+    const lanjutkan = useRef(false);
     const judul = Mode === 'Buat' ? 'Buat pesanan pembelian' : `Ubah draf ${Pesanan?.Nomor ?? ''}`;
     const pemasokTerpilih = OpsiPemasok.find((p) => p.Uuid === pemasok);
     const totalBarang = HitungTotalBaris(baris);
@@ -105,9 +107,9 @@ export default function HalamanFormPesanan({
         };
 
         if (Mode === 'Buat' || Pesanan === null) {
-            router.post(alamat, data, opsi);
+            router.post(alamat, { ...data, Lanjutkan: lanjutkan.current }, opsi);
         } else {
-            router.put(`${alamat}/${Pesanan.Uuid}`, data, opsi);
+            router.put(`${alamat}/${Pesanan.Uuid}`, { ...data, Lanjutkan: lanjutkan.current }, opsi);
         }
     };
 
@@ -233,8 +235,16 @@ export default function HalamanFormPesanan({
                 </Panel>
 
                 <BilahAksiForm>
-                    <Tombol type="submit" memproses={memproses}>
-                        Simpan draf pesanan
+                    <Tombol type="submit" memproses={memproses} onClick={() => (lanjutkan.current = true)}>
+                        Simpan & ajukan
+                    </Tombol>
+                    <Tombol
+                        type="submit"
+                        varian="sekunder"
+                        disabled={memproses}
+                        onClick={() => (lanjutkan.current = false)}
+                    >
+                        Simpan draf
                     </Tombol>
                     <Button asChild variant="outline">
                         <Link href={Pesanan ? `${alamat}/${Pesanan.Uuid}` : alamat}>Batal</Link>
