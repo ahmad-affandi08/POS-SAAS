@@ -1,8 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:sistem_desain/SistemDesain.dart';
 
 /// Papan angka PIN 6 digit (target sentuh ≥ 48dp, PRD §17.2). PIN hanya ada di memori widget sampai dikirim ke
-/// `saatSelesai`, tidak pernah disimpan atau dicatat.
+/// `saatSelesai`, tidak pernah disimpan atau dicatat. Keyboard fisik (Windows, tablet berkeyboard) juga bisa dipakai:
+/// angka baris atas & numpad mengisi, Backspace menghapus satu angka (audit kemudahan pakai #9).
 class PapanPin extends StatefulWidget {
   const PapanPin({super.key, required this.saatSelesai, this.sibuk = false, this.pesanGalat});
 
@@ -31,6 +35,40 @@ class _PapanPinState extends State<PapanPin> {
 
   void _Hapus() => setState(() => _pin = _pin.isEmpty ? '' : _pin.substring(0, _pin.length - 1));
 
+  static final Map<LogicalKeyboardKey, String> _numpad = {
+    LogicalKeyboardKey.numpad0: '0',
+    LogicalKeyboardKey.numpad1: '1',
+    LogicalKeyboardKey.numpad2: '2',
+    LogicalKeyboardKey.numpad3: '3',
+    LogicalKeyboardKey.numpad4: '4',
+    LogicalKeyboardKey.numpad5: '5',
+    LogicalKeyboardKey.numpad6: '6',
+    LogicalKeyboardKey.numpad7: '7',
+    LogicalKeyboardKey.numpad8: '8',
+    LogicalKeyboardKey.numpad9: '9',
+  };
+
+  KeyEventResult _SaatTombol(FocusNode _, KeyEvent event) {
+    if (event is KeyUpEvent) {
+      return KeyEventResult.ignored;
+    }
+    if (event.logicalKey == LogicalKeyboardKey.backspace) {
+      if (!widget.sibuk) {
+        _Hapus();
+      }
+      return KeyEventResult.handled;
+    }
+    final karakter = event.character;
+    final angka =
+        _numpad[event.logicalKey] ??
+        (karakter != null && karakter.length == 1 && '0123456789'.contains(karakter) ? karakter : null);
+    if (angka == null || event is KeyRepeatEvent) {
+      return KeyEventResult.ignored;
+    }
+    unawaited(_Tekan(angka));
+    return KeyEventResult.handled;
+  }
+
   @override
   Widget build(BuildContext context) {
     final warna = TokenWarna.AmbilDari(context);
@@ -48,72 +86,76 @@ class _PapanPinState extends State<PapanPin> {
       ),
     );
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Semantics(
-          label: 'PIN terisi ${_pin.length} dari 6 angka',
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              for (var i = 0; i < 6; i++)
-                Container(
-                  margin: const EdgeInsets.all(6),
-                  width: 16,
-                  height: 16,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: i < _pin.length ? warna.brand : null,
-                    border: Border.all(color: warna.garisInput, width: 2),
-                  ),
-                ),
-            ],
-          ),
-        ),
-        SizedBox(
-          height: 48,
-          child: Center(
-            child: widget.sibuk
-                ? const Text('Memeriksa PIN…')
-                : widget.pesanGalat == null
-                ? null
-                : Text(
-                    widget.pesanGalat!,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: warna.bahaya),
-                  ),
-          ),
-        ),
-        for (final baris in const [
-          ['1', '2', '3'],
-          ['4', '5', '6'],
-          ['7', '8', '9'],
-        ])
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4),
+    return Focus(
+      autofocus: true,
+      onKeyEvent: _SaatTombol,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Semantics(
+            label: 'PIN terisi ${_pin.length} dari 6 angka',
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                for (final angka in baris)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    child: Tombol(angka, () => _Tekan(angka)),
+                for (var i = 0; i < 6; i++)
+                  Container(
+                    margin: const EdgeInsets.all(6),
+                    width: 16,
+                    height: 16,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: i < _pin.length ? warna.brand : null,
+                      border: Border.all(color: warna.garisInput, width: 2),
+                    ),
                   ),
               ],
             ),
           ),
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(width: 96),
-            Padding(padding: const EdgeInsets.symmetric(horizontal: 4), child: Tombol('0', () => _Tekan('0'))),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4),
-              child: Tombol('⌫', _Hapus, semantik: 'Hapus satu angka'),
+          SizedBox(
+            height: 48,
+            child: Center(
+              child: widget.sibuk
+                  ? const Text('Memeriksa PIN…')
+                  : widget.pesanGalat == null
+                  ? null
+                  : Text(
+                      widget.pesanGalat!,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: warna.bahaya),
+                    ),
             ),
-          ],
-        ),
-      ],
+          ),
+          for (final baris in const [
+            ['1', '2', '3'],
+            ['4', '5', '6'],
+            ['7', '8', '9'],
+          ])
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  for (final angka in baris)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: Tombol(angka, () => _Tekan(angka)),
+                    ),
+                ],
+              ),
+            ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(width: 96),
+              Padding(padding: const EdgeInsets.symmetric(horizontal: 4), child: Tombol('0', () => _Tekan('0'))),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: Tombol('⌫', _Hapus, semantik: 'Hapus satu angka'),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

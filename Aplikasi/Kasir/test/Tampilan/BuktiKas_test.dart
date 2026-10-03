@@ -40,10 +40,8 @@ void main() {
 
       await tester.tap(find.widgetWithText(OutlinedButton, 'Kas keluar'));
       await Tunggu(tester);
-      await tester.tap(find.byType(DropdownButtonFormField<String>));
-      await Tunggu(tester);
-      await tester.tap(find.text('Beli es batu & galon').last);
-      await Tunggu(tester);
+      // Satu-satunya kategori kas keluar terpilih otomatis (audit kemudahan pakai #8).
+      expect(tester.widget<ChoiceChip>(find.widgetWithText(ChoiceChip, 'Beli es batu & galon')).selected, isTrue);
       await tester.enterText(find.widgetWithText(TextField, 'Jumlah'), '45000');
       await tester.ensureVisible(find.text('Foto bukti / nota (opsional)'));
       await tester.tap(find.text('Foto bukti / nota (opsional)'));

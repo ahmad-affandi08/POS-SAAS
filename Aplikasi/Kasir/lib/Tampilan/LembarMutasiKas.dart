@@ -17,7 +17,8 @@ import 'Komponen/MasukanUang.dart';
 import 'Komponen/PapanPin.dart';
 
 /// F-06 langkah 4: catat kas masuk/keluar/setoran non-penjualan. Kas keluar di atas batas meminta PIN supervisor
-/// (BR-06.4) sebelum disimpan. Isi formulir ini ditampilkan bingkai ruang kerja di dalam `PanelTugas` (panel samping
+/// (BR-06.4) sebelum disimpan. Kategori dipilih lewat chip (satu-satunya kategori terpilih otomatis) dan isian
+/// diperiksa sebelum PIN diminta, supaya supervisor tidak memasukkan PIN untuk formulir yang lalu ditolak. Isi formulir ini ditampilkan bingkai ruang kerja di dalam `PanelTugas` (panel samping
 /// atau lembar bawah) yang juga memberi judul; [saatTersimpan] dipanggil setelah mutasi tersimpan.
 class LembarMutasiKas extends ConsumerStatefulWidget {
   const LembarMutasiKas({
@@ -49,6 +50,7 @@ class _LembarMutasiKasState extends ConsumerState<LembarMutasiKas> {
   String? _uuidKategori;
   bool _sibuk = false;
   String? _galat;
+  String? _galatKategori;
   Uint8List? _bukti;
 
   Future<void> _AmbilBukti() async {
@@ -65,11 +67,29 @@ class _LembarMutasiKasState extends ConsumerState<LembarMutasiKas> {
     super.dispose();
   }
 
+  /// Kategori yang dipakai: pilihan kasir, atau satu-satunya kategori jenis ini.
+  String? _AmbilKategori() {
+    if (widget.jenis == JenisMutasi.setoran) {
+      return null;
+    }
+    final daftar = ref.read(penyediaKategori(widget.jenis)).value ?? const <BarisKategoriKas>[];
+    return _uuidKategori ?? (daftar.length == 1 ? daftar.single.Uuid : null);
+  }
+
   Future<void> _Simpan() async {
     final layanan = ref.read(penyediaLayananShift);
     final jumlah = MasukanUang.AmbilNilai(_jumlah);
-    if (jumlah == null) {
-      setState(() => _galat = 'Isi jumlah kas.');
+    final uuidKategori = _AmbilKategori();
+    final kurangKategori = widget.jenis != JenisMutasi.setoran && uuidKategori == null;
+    if (jumlah == null || jumlah.Bandingkan(Uang.Nol()) <= 0 || kurangKategori) {
+      setState(() {
+        _galat = jumlah == null
+            ? 'Isi jumlah kas.'
+            : jumlah.Bandingkan(Uang.Nol()) <= 0
+            ? 'Jumlah kas harus lebih dari Rp 0.'
+            : null;
+        _galatKategori = kurangKategori ? 'Pilih kategori kas terlebih dahulu.' : null;
+      });
       return;
     }
 
@@ -93,6 +113,7 @@ class _LembarMutasiKasState extends ConsumerState<LembarMutasiKas> {
     setState(() {
       _sibuk = true;
       _galat = null;
+      _galatKategori = null;
     });
     try {
       await layanan.CatatMutasi(
@@ -100,7 +121,7 @@ class _LembarMutasiKasState extends ConsumerState<LembarMutasiKas> {
         jenis: widget.jenis,
         jumlah: jumlah,
         pencatat: widget.pencatat,
-        uuidKategori: _uuidKategori,
+        uuidKategori: uuidKategori,
         catatan: _catatan.text,
         penyetuju: penyetuju,
         bukti: _bukti,
@@ -137,18 +158,14 @@ class _LembarMutasiKasState extends ConsumerState<LembarMutasiKas> {
               error: (galat, _) => Text('$galat'),
               data: (daftar) => daftar.isEmpty
                   ? const Text('Belum ada kategori. Minta admin menambahkannya di back-office menu Shift & kas.')
-                  : DropdownButtonFormField<String>(
-                      isExpanded: true,
-                      initialValue: _uuidKategori,
-                      decoration: const InputDecoration(labelText: 'Kategori', border: OutlineInputBorder()),
-                      items: [
-                        for (final k in daftar)
-                          DropdownMenuItem(
-                            value: k.Uuid,
-                            child: Text(k.Nama, maxLines: 1, overflow: TextOverflow.ellipsis),
-                          ),
-                      ],
-                      onChanged: (nilai) => setState(() => _uuidKategori = nilai),
+                  : _PilihanKategori(
+                      daftar: daftar,
+                      terpilih: _uuidKategori ?? (daftar.length == 1 ? daftar.single.Uuid : null),
+                      galat: _galatKategori,
+                      saatDipilih: (uuid) => setState(() {
+                        _uuidKategori = uuid;
+                        _galatKategori = null;
+                      }),
                     ),
             ),
           const SizedBox(height: 12),
@@ -191,6 +208,50 @@ class _LembarMutasiKasState extends ConsumerState<LembarMutasiKas> {
               child: Text(_sibuk ? 'Menyimpan…' : 'Simpan ${LembarMutasiKas.AmbilJudul(widget.jenis).toLowerCase()}'),
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Kategori kas sebagai chip (audit kemudahan pakai #8): satu ketukan, terlihat semua tanpa membuka dropdown.
+class _PilihanKategori extends StatelessWidget {
+  const _PilihanKategori({
+    required this.daftar,
+    required this.terpilih,
+    required this.galat,
+    required this.saatDipilih,
+  });
+
+  final List<BarisKategoriKas> daftar;
+  final String? terpilih;
+  final String? galat;
+  final ValueChanged<String> saatDipilih;
+
+  @override
+  Widget build(BuildContext context) {
+    final warna = TokenWarna.AmbilDari(context);
+    return Semantics(
+      container: true,
+      label: 'Kategori',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Kategori', style: Theme.of(context).textTheme.labelLarge),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final k in daftar)
+                ChoiceChip(
+                  label: Text(k.Nama, maxLines: 1, overflow: TextOverflow.ellipsis),
+                  selected: k.Uuid == terpilih,
+                  onSelected: (_) => saatDipilih(k.Uuid),
+                ),
+            ],
+          ),
+          if (galat != null) ...[const SizedBox(height: 4), Text(galat!, style: TextStyle(color: warna.bahaya))],
         ],
       ),
     );

@@ -108,10 +108,8 @@ void main() {
     await Tunggu(tester);
     // Formulir dibuka sebagai panel di atas area kerja (bukan halaman baru).
     expect(find.text('Kas keluar'), findsNWidgets(2));
-    await tester.tap(find.byType(DropdownButtonFormField<String>));
-    await Tunggu(tester);
-    await tester.tap(find.text('Beli es batu & galon').last);
-    await Tunggu(tester);
+    // Satu-satunya kategori kas keluar terpilih otomatis (audit kemudahan pakai #8).
+    expect(tester.widget<ChoiceChip>(find.widgetWithText(ChoiceChip, 'Beli es batu & galon')).selected, isTrue);
     await tester.enterText(find.widgetWithText(TextField, 'Jumlah'), '350000');
     await tester.tap(find.text('Simpan kas keluar'));
     await Tunggu(tester);
