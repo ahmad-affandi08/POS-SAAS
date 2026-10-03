@@ -24,7 +24,8 @@ use Illuminate\Support\Carbon;
  * tersedia.
  *
  * D-35 edisi Lisensi: semua fitur di katalog aktif (termasuk fitur yang ditambahkan rilis berikutnya) dan batas
- * outlet/perangkat/pengguna diambil dari berkas lisensi yang berlaku; batas lain tak terbatas. Tanpa lisensi sah,
+ * outlet/perangkat/pengguna diambil dari berkas lisensi yang berlaku; batas lain tak terbatas. Override pengelola
+ * diabaikan (konsolnya tidak ada, dan baris yang disisipkan langsung ke basis data tidak boleh menambah batas). Tanpa lisensi sah,
  * tidak ada fitur dan semua batas nol (permintaan HTTP pun sudah ditolak `WajibLisensiSah`).
  */
 final class SumberFiturTenant
@@ -49,7 +50,7 @@ final class SumberFiturTenant
             ->first();
         $paket = $langganan?->Paket;
 
-        $override = $this->AmbilOverrideAktif($idTenant, $pada);
+        $override = EdisiAplikasi::CekLisensi() ? [] : $this->AmbilOverrideAktif($idTenant, $pada);
         $overrideFitur = [];
         $overrideBatas = [];
 

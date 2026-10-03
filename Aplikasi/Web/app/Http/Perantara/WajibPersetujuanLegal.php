@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Perantara;
 
 use App\Domain\Bersama\Tenant\KonteksTenant;
+use App\Domain\Lisensi\Enum\EdisiAplikasi;
 use App\Domain\Organisasi\Kueri\PemilikTenant;
 use App\Domain\Organisasi\Model\Pengguna;
 use App\Domain\Tenant\Kueri\PersetujuanLegalTertunda;
@@ -15,7 +16,8 @@ use Symfony\Component\HttpFoundation\Response;
 
 /**
  * BR-P06.5: Owner yang belum menyetujui versi materiil dokumen legal yang sudah berlaku diarahkan ke halaman
- * persetujuan sebelum membuka menu `/kelola` lain. Berjalan setelah `IdentifikasiTenantSesi`.
+ * persetujuan sebelum membuka menu `/kelola` lain. Berjalan setelah `IdentifikasiTenantSesi`. D-35: tidak berlaku di
+ * edisi Lisensi (tanpa dokumen legal platform; halaman legal publiknya pun tidak didaftarkan).
  */
 final class WajibPersetujuanLegal
 {
@@ -32,7 +34,8 @@ final class WajibPersetujuanLegal
         $pengguna = Auth::guard('web')->user();
         $idTenant = $this->konteks->Ambil();
 
-        if ($request->routeIs(self::RUTE_PERSETUJUAN, self::RUTE_PERSETUJUAN.'.*')
+        if (EdisiAplikasi::CekLisensi()
+            || $request->routeIs(self::RUTE_PERSETUJUAN, self::RUTE_PERSETUJUAN.'.*')
             || ! $pengguna instanceof Pengguna
             || $idTenant === null
             || ! $this->pemilik->CekPemilik($pengguna->Id, $idTenant)

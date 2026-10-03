@@ -45,12 +45,19 @@ final class BuatKunciLisensiPerintah extends Command
 
         $kunci = $penanda->BuatPasanganKunci();
 
-        if (file_put_contents($berkas, $kunci['KunciPrivat']."\n") === false) {
+        // Dibuat dengan mode `x` (gagal bila sudah ada, atomik) di bawah umask 0077 agar berkas tidak pernah sempat
+        // terbaca pengguna lain sebelum izinnya dipersempit.
+        $umaskLama = umask(0077);
+        $pegangan = fopen($berkas, 'x');
+        umask($umaskLama);
+
+        if ($pegangan === false || fwrite($pegangan, $kunci['KunciPrivat']."\n") === false) {
             $this->error("Tidak bisa menulis {$berkas}.");
 
             return self::FAILURE;
         }
 
+        fclose($pegangan);
         chmod($berkas, 0600);
 
         $this->info("Kunci privat disimpan di {$berkas}. Cadangkan di tempat aman; kalau hilang, lisensi baru tidak bisa diterbitkan.");

@@ -2,6 +2,7 @@ import { router, useForm } from '@inertiajs/react';
 import { Check, Copy } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 
+import AjakanTambahBatas from '@/Komponen/Kelola/AjakanTambahBatas';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import GrupCentang from '@/Komponen/Formulir/GrupCentang';
 import Tombol from '@/Komponen/Formulir/Tombol';
@@ -130,12 +131,14 @@ export default function HalamanWebhook({ Webhook, Kiriman, OpsiPeristiwa, Rahasi
                 membawa header <span className="font-mono">X-Id-Peristiwa</span> untuk mencegah dobel dan{' '}
                 <span className="font-mono">X-Tanda-Tangan: sha256=…</span>, yaitu HMAC-SHA256 dari{' '}
                 <span className="font-mono">X-Waktu-Kirim</span>, titik, lalu isi kiriman, memakai rahasia webhook.
-                Kiriman yang gagal dicoba lagi 1 menit, 5 menit, 30 menit, 2 jam, lalu 12 jam kemudian. Contoh kode
-                pemeriksaan tanda tangan ada di{' '}
-                <a className="font-semibold text-brand underline" href="/pengembang#webhook">
-                    dokumentasi API
-                </a>
-                .
+                Kiriman yang gagal dicoba lagi 1 menit, 5 menit, 30 menit, 2 jam, lalu 12 jam kemudian.{' '}
+                <AjakanTambahBatas teksLisensi={null}>
+                    Contoh kode pemeriksaan tanda tangan ada di{' '}
+                    <a className="font-semibold text-brand underline" href="/pengembang#webhook">
+                        dokumentasi API
+                    </a>
+                    .
+                </AjakanTambahBatas>
             </p>
 
             {RahasiaBaru ? <KartuRahasiaBaru nama={RahasiaBaru.Nama} rahasia={RahasiaBaru.Rahasia} /> : null}

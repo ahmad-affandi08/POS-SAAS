@@ -1,6 +1,7 @@
 import { Link, router, useForm } from '@inertiajs/react';
 import { useRef, useState, type FormEvent } from 'react';
 
+import AjakanTambahBatas from '@/Komponen/Kelola/AjakanTambahBatas';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import KartuKodeAktivasi from '@/Komponen/Kelola/KartuKodeAktivasi';
@@ -102,10 +103,13 @@ export default function HalamanPerangkatPanduan({
             ) : batasPenuh ? (
                 <Pemberitahuan jenis="info" judul="Batas perangkat paket tercapai">
                     {FormatBatas(Outlet.BatasPerangkat, 'perangkat')} di outlet ini. Cabut perangkat yang tidak dipakai
-                    di menu Perangkat, atau tambah add-on perangkat di{' '}
-                    <Link href="/kelola/langganan" className="font-semibold text-brand underline">
-                        menu Langganan
-                    </Link>
+                    di menu Perangkat, atau{' '}
+                    <AjakanTambahBatas>
+                        tambah add-on perangkat di{' '}
+                        <Link href="/kelola/langganan" className="font-semibold text-brand underline">
+                            menu Langganan
+                        </Link>
+                    </AjakanTambahBatas>
                     .
                 </Pemberitahuan>
             ) : (

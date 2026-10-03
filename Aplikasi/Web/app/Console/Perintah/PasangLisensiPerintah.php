@@ -9,6 +9,7 @@ use App\Domain\Lisensi\Aksi\PasangLisensi;
 use App\Domain\Lisensi\Galat\LisensiTidakSah;
 use App\Domain\Lisensi\Model\LisensiTerpasang;
 use App\Domain\Organisasi\Data\DataPemilikBaru;
+use App\Domain\Tenant\Model\Fitur;
 use App\Http\Permintaan\Autentikasi\DaftarPermintaan;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Validator;
@@ -71,6 +72,11 @@ final class PasangLisensiPerintah extends Command
             $data->batasPerangkatPerOutlet ?? 'tak terbatas',
             $data->batasPengguna ?? 'tak terbatas',
         ));
+
+        // Katalog fitur diisi `db:seed`; tanpa itu lisensi sah tidak memberi fitur apa pun.
+        if (! Fitur::query()->exists()) {
+            $this->warn('Katalog fitur masih kosong: jalankan php artisan db:seed --force agar semua fitur aktif.');
+        }
 
         if ($pertama && $pemilik !== null) {
             $this->info("Masuk ke https://{$data->domain}/masuk dengan {$pemilik->email}.");

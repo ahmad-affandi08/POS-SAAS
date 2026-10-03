@@ -1,5 +1,6 @@
 import { Link, router, usePage } from '@inertiajs/react';
 
+import AjakanTambahBatas from '@/Komponen/Kelola/AjakanTambahBatas';
 import AksiHalaman from '@/Komponen/Kelola/AksiHalaman';
 import DaftarGalatServer from '@/Komponen/Katalog/DaftarGalatServer';
 import PesanHanyaLihat from '@/Komponen/Katalog/PesanHanyaLihat';
@@ -160,10 +161,13 @@ export default function HalamanDaftarProduk({ Produk, Kategori, Jenis, BatasSku,
 
             {Izin.Kelola && penuh ? (
                 <Pemberitahuan jenis="info" judul="Batas produk paket sudah tercapai">
-                    Arsipkan produk yang tidak dijual lagi, atau tingkatkan paket di{' '}
-                    <Link href="/kelola/langganan" className="font-semibold text-brand underline">
-                        menu Langganan
-                    </Link>
+                    Arsipkan produk yang tidak dijual lagi, atau{' '}
+                    <AjakanTambahBatas>
+                        tingkatkan paket di{' '}
+                        <Link href="/kelola/langganan" className="font-semibold text-brand underline">
+                            menu Langganan
+                        </Link>
+                    </AjakanTambahBatas>
                     . Produk diarsipkan dan induk varian tidak dihitung.
                 </Pemberitahuan>
             ) : null}

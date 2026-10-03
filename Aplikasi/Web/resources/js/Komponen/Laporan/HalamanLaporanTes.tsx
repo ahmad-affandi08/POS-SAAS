@@ -195,7 +195,9 @@ describe('F-14a laporan penjualan', () => {
     });
 
     it('X6: sakelar insight mingguan mengirim pilihan langganan ke server', () => {
-        RenderUji(<HalamanLaporanPenjualan {...PropsPenjualan({ InsightWhatsapp: { BisaWhatsapp: true, Aktif: true } })} />);
+        RenderUji(
+            <HalamanLaporanPenjualan {...PropsPenjualan({ InsightWhatsapp: { BisaWhatsapp: true, Aktif: true } })} />,
+        );
 
         const sakelar = screen.getByRole('switch', { name: 'Kirim insight mingguan ke WhatsApp saya' });
         expect(sakelar.getAttribute('aria-checked')).toBe('true');

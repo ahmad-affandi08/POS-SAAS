@@ -14,16 +14,20 @@ use App\Domain\Organisasi\Model\Pengguna;
 use App\Domain\Organisasi\Model\TenantPengguna;
 use App\Domain\PanduanAwal\Model\ProgresPanduanAwal;
 use App\Domain\Pengelola\Katalog\Aksi\SiapkanKatalogBawaan;
+use App\Domain\Pengelola\TimInternal\Enum\PeranPengelolaBawaan;
+use App\Domain\Tenant\Enum\JenisOverride;
 use App\Domain\Tenant\Enum\StatusLangganan;
 use App\Domain\Tenant\Kueri\SumberFiturTenant;
 use App\Domain\Tenant\Layanan\EvaluatorFitur;
 use App\Domain\Tenant\Model\Fitur;
 use App\Domain\Tenant\Model\Langganan;
+use App\Domain\Tenant\Model\OverrideTenant;
 use App\Domain\Tenant\Model\Tenant;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Facades\Route;
 use Inertia\Testing\AssertableInertia;
 use Tests\Pendukung\Lisensi\BantuanLisensi;
+use Tests\Pendukung\Pengelola\BantuanPengelola;
 use Tests\TestCase;
 
 /*
@@ -107,6 +111,24 @@ describe('Edisi Lisensi (D-35)', function (): void {
             ->and(LisensiTerpasang::query()->count())->toBe(2)
             ->and(app(LisensiBerlaku::class)->Ambil()?->nomor)->toBe('PAYOU-L-2026-0001-B')
             ->and(app(EvaluatorFitur::class)->HitungBatasEfektif($sumber)['BatasOutlet'])->toBe(5);
+    });
+
+    it('override batas yang disisipkan langsung ke basis data tidak menambah batas lisensi', function (): void {
+        app(PasangLisensi::class)->Jalankan(BantuanLisensi::Berkas(), 'Kopi Nusantara', PemilikLisensiUji());
+        $tenant = Tenant::query()->sole();
+        OverrideTenant::query()->create([
+            'IdTenant' => $tenant->Id,
+            'Jenis' => JenisOverride::Batas,
+            'Kunci' => 'BatasOutlet',
+            'Nilai' => null,
+            'BerakhirPada' => now()->addYear(),
+            'Alasan' => 'Disisipkan langsung',
+            'DibuatOleh' => BantuanPengelola::BuatAnggota(PeranPengelolaBawaan::SuperAdmin)->Id,
+        ]);
+
+        $sumber = app(SumberFiturTenant::class)->Ambil($tenant->Id);
+
+        expect(app(EvaluatorFitur::class)->HitungBatasEfektif($sumber)['BatasOutlet'])->toBe(2);
     });
 
     it('berkas palsu ditolak sebelum apa pun tersimpan; pemasangan pertama wajib menyebut usaha & Owner', function (): void {

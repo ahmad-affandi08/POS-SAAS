@@ -1,6 +1,7 @@
 import { Link, router, useForm, usePage } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 
+import AjakanTambahBatas from '@/Komponen/Kelola/AjakanTambahBatas';
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import GrupCentang from '@/Komponen/Formulir/GrupCentang';
@@ -98,10 +99,13 @@ export default function HalamanTambahPengguna({ Peran, Outlet, BatasPengguna }: 
             />
             {CekBatasPenuh(BatasPengguna) ? (
                 <Pemberitahuan jenis="info" judul="Batas pengguna paket sudah tercapai">
-                    Nonaktifkan pengguna yang tidak dipakai, batalkan undangan, atau tingkatkan paket di{' '}
-                    <Link href="/kelola/langganan" className="font-semibold text-brand underline">
-                        menu Langganan
-                    </Link>
+                    Nonaktifkan pengguna yang tidak dipakai, batalkan undangan, atau{' '}
+                    <AjakanTambahBatas>
+                        tingkatkan paket di{' '}
+                        <Link href="/kelola/langganan" className="font-semibold text-brand underline">
+                            menu Langganan
+                        </Link>
+                    </AjakanTambahBatas>
                     .
                 </Pemberitahuan>
             ) : null}

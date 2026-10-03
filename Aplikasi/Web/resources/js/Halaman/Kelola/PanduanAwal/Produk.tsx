@@ -1,6 +1,7 @@
 import { Link, useForm } from '@inertiajs/react';
 import { useRef, useState, type FormEvent } from 'react';
 
+import AjakanTambahBatas from '@/Komponen/Kelola/AjakanTambahBatas';
 import TabelForm from '@/Komponen/TabelData/TabelForm';
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
@@ -53,11 +54,14 @@ export default function HalamanProdukPanduan({
 
             {kuotaPenuh ? (
                 <Pemberitahuan jenis="peringatan" judul="Kuota produk paket sudah penuh">
-                    {FormatBatas(BatasSku, 'SKU produk')}. Tambah kuota di{' '}
-                    <Link href="/kelola/langganan" className="font-semibold text-brand underline">
-                        menu Langganan
-                    </Link>{' '}
-                    untuk menambah produk baru.
+                    {FormatBatas(BatasSku, 'SKU produk')}.{' '}
+                    <AjakanTambahBatas teksLisensi="Minta berkas lisensi dengan batas lebih besar ke penjual lisensi PAYOU.">
+                        Tambah kuota di{' '}
+                        <Link href="/kelola/langganan" className="font-semibold text-brand underline">
+                            menu Langganan
+                        </Link>{' '}
+                        untuk menambah produk baru.
+                    </AjakanTambahBatas>
                 </Pemberitahuan>
             ) : null}
 

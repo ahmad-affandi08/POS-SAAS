@@ -19,3 +19,7 @@ coverage/
 # Keluaran pembanding golden Flutter (`flutter test` menulisnya saat golden tidak cocok). Bukan sumber, tidak
 # pernah di-commit, dan namanya snake_case bahasa Inggris sehingga selalu ditandai CekKonvensi bila dibiarkan.
 **/test/**/failures/
+
+# D-35: kunci privat penerbit & berkas lisensi pembeli tidak pernah masuk repo.
+*.kunci
+*.lisensi

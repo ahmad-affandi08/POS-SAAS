@@ -93,8 +93,9 @@ final class BagikanDataInertia extends Middleware
                 ];
             },
             // BR-P06.5: banner di back-office selama masa pengumuman versi materiil, hanya untuk Owner tenant aktif.
+            // D-35: edisi Lisensi tanpa dokumen legal platform (pembeli sendiri penyelenggaranya).
             'PengumumanLegal' => function () use ($pengguna, $idTenant): array {
-                if (! $pengguna instanceof Pengguna || ! is_int($idTenant) || ! $this->pemilikTenant->CekPemilik($pengguna->Id, $idTenant)) {
+                if (EdisiAplikasi::CekLisensi() || ! $pengguna instanceof Pengguna || ! is_int($idTenant) || ! $this->pemilikTenant->CekPemilik($pengguna->Id, $idTenant)) {
                     return [];
                 }
 

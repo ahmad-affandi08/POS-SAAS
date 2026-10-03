@@ -58,6 +58,12 @@ final class TerbitkanLisensiPerintah extends Command
             return self::FAILURE;
         }
 
+        if (file_exists($keluaran)) {
+            $this->error("Berkas {$keluaran} sudah ada. Pilih nama lain agar lisensi lama tidak tertimpa.");
+
+            return self::FAILURE;
+        }
+
         if (file_put_contents($keluaran, $isi) === false) {
             $this->error("Tidak bisa menulis {$keluaran}.");
 

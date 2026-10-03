@@ -153,14 +153,12 @@ function KartuRingkasan({ nilai, label }: { nilai: number; label: string }) {
 /** Tagihan langganan & antrean "Menunggu Verifikasi" transfer manual (P-08 langkah 3), TabelData D-16. */
 export default function HalamanDaftarTagihan({ Antrean, Tagihan, Ringkasan, OpsiStatus }: PropsDaftarTagihan) {
     return (
-        <TataLetakPengelola
-            judul="Tagihan langganan"
-            aksi={
-                <Link href="/laporan-langganan" className="text-label text-brand underline">
+        <TataLetakPengelola judul="Tagihan langganan">
+            <p className="text-label">
+                <Link href="/laporan-langganan" className="text-brand underline">
                     Laporan langganan (MRR, churn)
                 </Link>
-            }
-        >
+            </p>
             <ul className="grid gap-3 sm:grid-cols-2" aria-label="Ringkasan tagihan">
                 <li>
                     <KartuRingkasan nilai={Ringkasan.MenungguVerifikasi} label="bukti transfer menunggu verifikasi" />

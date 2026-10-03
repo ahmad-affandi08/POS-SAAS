@@ -1,6 +1,7 @@
 import { Link, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
+import AjakanTambahBatas from '@/Komponen/Kelola/AjakanTambahBatas';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import DaftarGalatServer from '@/Komponen/Katalog/DaftarGalatServer';
 import KemajuanImpor, { StatusBerjalan } from '@/Komponen/Katalog/KemajuanImpor';
@@ -143,9 +144,11 @@ export default function HalamanDetailImpor({
                     {Pratinjau.DiblokirBatasSku ? (
                         <Pemberitahuan jenis="bahaya" judul="Impor melebihi batas produk paket">
                             {Pratinjau.DiblokirBatasSku}{' '}
-                            <Link href="/kelola/langganan" className="font-semibold text-brand underline">
-                                Buka menu Langganan
-                            </Link>
+                            <AjakanTambahBatas teksLisensi="Minta berkas lisensi dengan batas lebih besar ke penjual lisensi PAYOU.">
+                                <Link href="/kelola/langganan" className="font-semibold text-brand underline">
+                                    Buka menu Langganan
+                                </Link>
+                            </AjakanTambahBatas>
                         </Pemberitahuan>
                     ) : null}
                     {Pratinjau.Peringatan.length > 0 ? (

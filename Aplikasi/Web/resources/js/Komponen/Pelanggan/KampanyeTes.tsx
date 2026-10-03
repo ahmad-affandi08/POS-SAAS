@@ -84,7 +84,9 @@ describe('CRM-07 kampanye pesan', () => {
         expect(screen.getByRole('combobox', { name: /Kanal/ }).textContent).toContain('WhatsApp (belum aktif)');
         expect(screen.getByText(/Pengiriman WhatsApp belum aktif/)).toBeTruthy();
         await waitFor(() => expect(screen.getByRole('status').textContent).toContain('2 pelanggan'));
-        expect(screen.getByRole('status').textContent).toContain('1 lainnya cocok tetapi tidak punya nomor WhatsApp yang sah');
+        expect(screen.getByRole('status').textContent).toContain(
+            '1 lainnya cocok tetapi tidak punya nomor WhatsApp yang sah',
+        );
         expect(screen.getByLabelText('Baru (1)')).toBeTruthy();
         expect(screen.queryByLabelText('Judul email')).toBeNull();
         const [alamat, opsi] = Ambil.mock.calls[0] as [string, { body: string }];

@@ -6,6 +6,7 @@ namespace App\Console\Perintah;
 
 use App\Domain\Lisensi\Enum\EdisiAplikasi;
 use App\Domain\Lisensi\Kueri\LisensiBerlaku;
+use App\Domain\Tenant\Model\Fitur;
 use Illuminate\Console\Command;
 
 /** D-35: menampilkan edisi dan lisensi yang berlaku di server ini. */
@@ -35,6 +36,11 @@ final class InfoLisensiPerintah extends Command
             ['Batas pengguna', $lisensi->batasPengguna ?? 'tak terbatas'],
             ['Diterbitkan', $lisensi->diterbitkanPada],
         ]);
+
+        // Katalog fitur diisi `db:seed`; tanpa itu lisensi sah tidak memberi fitur apa pun.
+        if (! Fitur::query()->exists()) {
+            $this->warn('Katalog fitur masih kosong: jalankan php artisan db:seed --force agar semua fitur aktif.');
+        }
 
         return self::SUCCESS;
     }

@@ -1,5 +1,6 @@
 import { Link, router, usePage } from '@inertiajs/react';
 
+import AjakanTambahBatas from '@/Komponen/Kelola/AjakanTambahBatas';
 import KartuFormulir from '@/Komponen/Formulir/KartuFormulir';
 import DaftarGalatServer from '@/Komponen/Katalog/DaftarGalatServer';
 import FormAksesPengguna, { type IsianAkses } from '@/Komponen/Kelola/FormAksesPengguna';
@@ -26,10 +27,13 @@ export default function HalamanBuatUndangan({ Peran, Outlet, BatasPengguna }: Pr
             />
             {CekBatasPenuh(BatasPengguna) ? (
                 <Pemberitahuan jenis="info" judul="Batas pengguna paket sudah tercapai">
-                    Nonaktifkan pengguna yang tidak dipakai, batalkan undangan, atau tingkatkan paket di{' '}
-                    <Link href="/kelola/langganan" className="font-semibold text-brand underline">
-                        menu Langganan
-                    </Link>
+                    Nonaktifkan pengguna yang tidak dipakai, batalkan undangan, atau{' '}
+                    <AjakanTambahBatas>
+                        tingkatkan paket di{' '}
+                        <Link href="/kelola/langganan" className="font-semibold text-brand underline">
+                            menu Langganan
+                        </Link>
+                    </AjakanTambahBatas>
                     .
                 </Pemberitahuan>
             ) : null}

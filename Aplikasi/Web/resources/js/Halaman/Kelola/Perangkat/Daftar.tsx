@@ -1,6 +1,7 @@
 import { Link, router, useForm, usePage } from '@inertiajs/react';
 import { useState, type FormEvent } from 'react';
 
+import AjakanTambahBatas from '@/Komponen/Kelola/AjakanTambahBatas';
 import AksiHalaman from '@/Komponen/Kelola/AksiHalaman';
 import BidangOutlet from '@/Komponen/Formulir/BidangOutlet';
 import BidangPilihan from '@/Komponen/Formulir/BidangPilihan';
@@ -140,10 +141,13 @@ export default function HalamanDaftarPerangkat({ Perangkat, Outlet, JenisPerangk
 
             {bolehKelola && Outlet.some((outlet) => CekBatasPenuh(outlet.BatasPerangkat)) ? (
                 <Pemberitahuan jenis="info" judul="Batas perangkat paket tercapai di sebagian outlet">
-                    Cabut perangkat yang tidak dipakai, atau tambah add-on perangkat di{' '}
-                    <Link href="/kelola/langganan" className="font-semibold text-brand underline">
-                        menu Langganan
-                    </Link>
+                    Cabut perangkat yang tidak dipakai, atau{' '}
+                    <AjakanTambahBatas>
+                        tambah add-on perangkat di{' '}
+                        <Link href="/kelola/langganan" className="font-semibold text-brand underline">
+                            menu Langganan
+                        </Link>
+                    </AjakanTambahBatas>
                     . Perangkat yang dicabut tidak dihitung.
                 </Pemberitahuan>
             ) : null}

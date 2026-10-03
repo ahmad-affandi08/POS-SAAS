@@ -1,6 +1,7 @@
 import { Link, router, usePage } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
 
+import AjakanTambahBatas from '@/Komponen/Kelola/AjakanTambahBatas';
 import AksiHalaman from '@/Komponen/Kelola/AksiHalaman';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import FormAksesPengguna from '@/Komponen/Kelola/FormAksesPengguna';
@@ -234,10 +235,13 @@ export default function HalamanDaftarPengguna({
 
             {bolehUndang && penuh ? (
                 <Pemberitahuan jenis="info" judul="Batas pengguna paket sudah tercapai">
-                    Nonaktifkan pengguna yang tidak dipakai, batalkan undangan, atau tingkatkan paket di{' '}
-                    <Link href="/kelola/langganan" className="font-semibold text-brand underline">
-                        menu Langganan
-                    </Link>
+                    Nonaktifkan pengguna yang tidak dipakai, batalkan undangan, atau{' '}
+                    <AjakanTambahBatas>
+                        tingkatkan paket di{' '}
+                        <Link href="/kelola/langganan" className="font-semibold text-brand underline">
+                            menu Langganan
+                        </Link>
+                    </AjakanTambahBatas>
                     .
                 </Pemberitahuan>
             ) : null}

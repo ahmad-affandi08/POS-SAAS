@@ -59,7 +59,7 @@ const kolomUmur: KolomTabel<BarisUmur>[] = [
 
 function Angka({ label, nilai, keterangan }: { label: string; nilai: string; keterangan?: string }) {
     return (
-        <Card className="flex flex-col gap-1 p-4">
+        <Card className="flex flex-col gap-1 p-4 rounded-panel shadow-none">
             <span className="text-keterangan text-teks-sekunder">{label}</span>
             <span className="text-subjudul font-semibold text-teks-utama tabular-nums">{nilai}</span>
             {keterangan ? <span className="text-keterangan text-teks-sekunder">{keterangan}</span> : null}
@@ -166,7 +166,7 @@ export default function HalamanLaporanLangganan({
                         ambilIdBaris={(b) => b.Kunci}
                         urutBawaan="-Pendapatan"
                         cari={false}
-                        kosong={{ judul: 'Tidak ada tagihan lunas pada periode ini.' }}
+                        kosong={{ ilustrasi: true, judul: 'Tidak ada tagihan lunas pada periode ini.' }}
                     />
                     <TabelData
                         id="laporan-langganan-pendapatan-sektor"
@@ -176,7 +176,7 @@ export default function HalamanLaporanLangganan({
                         ambilIdBaris={(b) => b.Kunci}
                         urutBawaan="-Pendapatan"
                         cari={false}
-                        kosong={{ judul: 'Tidak ada tagihan lunas pada periode ini.' }}
+                        kosong={{ ilustrasi: true, judul: 'Tidak ada tagihan lunas pada periode ini.' }}
                     />
                 </div>
             </section>
@@ -197,7 +197,7 @@ export default function HalamanLaporanLangganan({
                     sumber={{ mode: 'lokal', data: Piutang.Umur }}
                     ambilIdBaris={(b) => b.Kunci}
                     cari={false}
-                    kosong={{ judul: 'Tidak ada tagihan terbuka.' }}
+                    kosong={{ ilustrasi: true, judul: 'Tidak ada tagihan terbuka.' }}
                 />
             </section>
         </TataLetakPengelola>

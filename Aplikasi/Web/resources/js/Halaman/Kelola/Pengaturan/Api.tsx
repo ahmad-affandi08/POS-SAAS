@@ -2,6 +2,7 @@ import { router, useForm } from '@inertiajs/react';
 import { Check, Copy } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 
+import AjakanTambahBatas from '@/Komponen/Kelola/AjakanTambahBatas';
 import BidangTeks from '@/Komponen/Formulir/BidangTeks';
 import GrupCentang from '@/Komponen/Formulir/GrupCentang';
 import Tombol from '@/Komponen/Formulir/Tombol';
@@ -83,12 +84,14 @@ export default function HalamanTokenApi({ Token, OpsiCakupan, TokenBaru, AlamatA
                 Token API mengizinkan aplikasi lain membaca data usaha Anda lewat{' '}
                 <span className="font-mono">{AlamatApi}</span> dengan header{' '}
                 <span className="font-mono">Authorization: Bearer &lt;token&gt;</span>. Berikan akses seperlunya saja
-                dan cabut token yang tidak dipakai. Batas 120 permintaan per menit per token. Panduan lengkap untuk
-                pengembang ada di{' '}
-                <a className="font-semibold text-brand underline" href="/pengembang">
-                    dokumentasi API
-                </a>
-                .
+                dan cabut token yang tidak dipakai. Batas 120 permintaan per menit per token.{' '}
+                <AjakanTambahBatas teksLisensi={null}>
+                    Panduan lengkap untuk pengembang ada di{' '}
+                    <a className="font-semibold text-brand underline" href="/pengembang">
+                        dokumentasi API
+                    </a>
+                    .
+                </AjakanTambahBatas>
             </p>
 
             {TokenBaru ? <KartuTokenBaru nama={TokenBaru.Nama} token={TokenBaru.Token} /> : null}

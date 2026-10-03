@@ -13,10 +13,13 @@ use App\Domain\Organisasi\Model\TenantPengguna;
  * Membuat akun pengguna Owner beserta keanggotaannya di tenant baru (F-00 langkah 3, BR-00.1). Dipanggil di dalam
  * transaksi pendaftaran. Email & nomor WhatsApp unik per pengguna; email belum terverifikasi (BR-00.5).
  * Identitas yang sudah dipakai ditolak lewat `IdentitasSudahTerdaftar` tanpa membuka mana yang cocok (§25 no. 18).
+ *
+ * `emailTerverifikasi` (D-35 edisi Lisensi): email diketik sendiri oleh pemasang server pembeli, dianggap terverifikasi
+ * seperti email yang diisi admin (D-22); server baru belum tentu sudah punya pengirim email.
  */
 final class BuatPemilikTenant
 {
-    public function Jalankan(int $idTenant, DataPemilikBaru $data): Pengguna
+    public function Jalankan(int $idTenant, DataPemilikBaru $data, bool $emailTerverifikasi = false): Pengguna
     {
         $identitasPerPengguna = [];
 
@@ -37,7 +40,7 @@ final class BuatPemilikTenant
             'Email' => $data->email,
             'NoHp' => $data->noHp,
             'KataSandi' => $data->kataSandi,
-            'EmailDiverifikasiPada' => null,
+            'EmailDiverifikasiPada' => $emailTerverifikasi ? now() : null,
         ]);
 
         TenantPengguna::query()->create(['IdTenant' => $idTenant, 'IdPengguna' => $pengguna->Id, 'Pemilik' => true]);

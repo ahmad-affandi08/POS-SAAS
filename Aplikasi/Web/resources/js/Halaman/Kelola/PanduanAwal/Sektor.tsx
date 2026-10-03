@@ -1,6 +1,7 @@
 import { Link, useForm } from '@inertiajs/react';
 import { useId, useRef, type FormEvent } from 'react';
 
+import AjakanTambahBatas from '@/Komponen/Kelola/AjakanTambahBatas';
 import GrupCentang from '@/Komponen/Formulir/GrupCentang';
 import Tombol from '@/Komponen/Formulir/Tombol';
 import RingkasanGalatFormulir, { FokusGalatPertama } from '@/Komponen/PanduanAwal/RingkasanGalatFormulir';
@@ -97,11 +98,14 @@ export default function HalamanSektor({ Progres, Template, TemplateTerpilih, Sek
                 <Empty className="items-start border border-solid border-garis bg-permukaan p-6 text-left md:p-6">
                     <EmptyHeader className="max-w-none items-start text-left">
                         <EmptyDescription className="text-isi text-teks-sekunder">
-                            Belum ada template yang bisa dipilih. Hubungi tim kami lewat menu{' '}
-                            <Link href="/kelola/bantuan" className="font-semibold text-brand underline">
-                                Bantuan
-                            </Link>
-                            .
+                            Belum ada template yang bisa dipilih.{' '}
+                            <AjakanTambahBatas teksLisensi="Hubungi penjual lisensi PAYOU untuk paket data template sektor.">
+                                Hubungi tim kami lewat menu{' '}
+                                <Link href="/kelola/bantuan" className="font-semibold text-brand underline">
+                                    Bantuan
+                                </Link>
+                                .
+                            </AjakanTambahBatas>
                         </EmptyDescription>
                     </EmptyHeader>
                 </Empty>

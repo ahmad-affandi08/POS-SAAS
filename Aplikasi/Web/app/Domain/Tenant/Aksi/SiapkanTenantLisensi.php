@@ -61,10 +61,7 @@ final class SiapkanTenantLisensi
                 'Nama' => $namaUsaha,
                 'Slug' => $this->pembuatSlug->Buat($namaUsaha),
             ]);
-            $pengguna = $this->buatPemilik->Jalankan($tenant->Id, $pemilik);
-            // Email diketik sendiri oleh pemasang di server pembeli (seperti D-22: diisi admin = terverifikasi);
-            // server baru belum tentu sudah punya pengirim email.
-            $pengguna->forceFill(['EmailDiverifikasiPada' => now()])->save();
+            $pengguna = $this->buatPemilik->Jalankan($tenant->Id, $pemilik, emailTerverifikasi: true);
 
             Langganan::query()->create([
                 'IdTenant' => $tenant->Id,
