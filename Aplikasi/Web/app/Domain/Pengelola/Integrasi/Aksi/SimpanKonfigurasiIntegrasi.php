@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Pengelola\Integrasi\Aksi;
 
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
+use App\Domain\Lisensi\Enum\EdisiAplikasi;
 use App\Domain\Pengelola\Integrasi\Data\DataKonfigurasiIntegrasi;
 use App\Domain\Pengelola\Integrasi\Enum\JenisIntegrasi;
 use App\Domain\Pengelola\Integrasi\Enum\LingkunganIntegrasi;
@@ -25,8 +26,13 @@ final class SimpanKonfigurasiIntegrasi
 {
     public function __construct(private readonly PencatatAuditPengelola $audit) {}
 
-    public function Jalankan(PenggunaPengelola $pelaku, DataKonfigurasiIntegrasi $data): KonfigurasiIntegrasi
+    public function Jalankan(?PenggunaPengelola $pelaku, DataKonfigurasiIntegrasi $data): KonfigurasiIntegrasi
     {
+        // D-35: tanpa pelaku konsol hanya di edisi Lisensi (`lisensi:atur-integrasi` oleh pemasang server pembeli).
+        if ($pelaku === null && ! EdisiAplikasi::CekLisensi()) {
+            throw new PelanggaranAturanBisnis('D-35', 'Konfigurasi integrasi hanya bisa diubah anggota Platform Pengelola.');
+        }
+
         if ($data->jenis === JenisIntegrasi::GerbangPembayaran) {
             throw new PelanggaranAturanBisnis('GerbangPerTenant', 'Sejak v2.06 gerbang pembayaran diatur tiap tenant dengan akun merchant sendiri. Atur penyedia yang diizinkan di bagian katalog gerbang.', 'Jenis');
         }
@@ -46,7 +52,7 @@ final class SimpanKonfigurasiIntegrasi
         return $konfigurasi;
     }
 
-    private function Simpan(PenggunaPengelola $pelaku, DataKonfigurasiIntegrasi $data): KonfigurasiIntegrasi
+    private function Simpan(?PenggunaPengelola $pelaku, DataKonfigurasiIntegrasi $data): KonfigurasiIntegrasi
     {
         $penyedia = $data->AmbilPenyedia();
 
@@ -124,14 +130,17 @@ final class SimpanKonfigurasiIntegrasi
 
         $konfigurasi->save();
 
-        $this->audit->Catat(
-            $nilaiLama === null ? 'integrasi.buat' : 'integrasi.ubah',
-            $konfigurasi,
-            nilaiLama: $nilaiLama,
-            nilaiBaru: [...self::AmbilRingkasan($konfigurasi), 'KredensialDiganti' => $kredensialBerubah],
-            alasan: $data->alasan,
-            idPelaku: $pelaku->Id,
-        );
+        // D-35: edisi Lisensi tanpa konsol, jadi tanpa log audit pengelola.
+        if ($pelaku !== null) {
+            $this->audit->Catat(
+                $nilaiLama === null ? 'integrasi.buat' : 'integrasi.ubah',
+                $konfigurasi,
+                nilaiLama: $nilaiLama,
+                nilaiBaru: [...self::AmbilRingkasan($konfigurasi), 'KredensialDiganti' => $kredensialBerubah],
+                alasan: $data->alasan,
+                idPelaku: $pelaku->Id,
+            );
+        }
 
         return $konfigurasi;
     }

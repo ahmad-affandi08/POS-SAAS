@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Pengelola\Integrasi\Aksi;
 
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
+use App\Domain\Lisensi\Enum\EdisiAplikasi;
 use App\Domain\Pengelola\Integrasi\Enum\LingkunganIntegrasi;
 use App\Domain\Pengelola\Integrasi\Enum\StatusIntegrasi;
 use App\Domain\Pengelola\Integrasi\Layanan\PenerapKonfigurasiIntegrasi;
@@ -21,8 +22,13 @@ final class UbahStatusIntegrasi
 {
     public function __construct(private readonly PencatatAuditPengelola $audit) {}
 
-    public function Jalankan(PenggunaPengelola $pelaku, KonfigurasiIntegrasi $konfigurasi, bool $aktif, ?string $alasan): KonfigurasiIntegrasi
+    public function Jalankan(?PenggunaPengelola $pelaku, KonfigurasiIntegrasi $konfigurasi, bool $aktif, ?string $alasan): KonfigurasiIntegrasi
     {
+        // D-35: tanpa pelaku konsol hanya di edisi Lisensi (`lisensi:atur-integrasi` oleh pemasang server pembeli).
+        if ($pelaku === null && ! EdisiAplikasi::CekLisensi()) {
+            throw new PelanggaranAturanBisnis('D-35', 'Konfigurasi integrasi hanya bisa diubah anggota Platform Pengelola.');
+        }
+
         $konfigurasi = DB::transaction(function () use ($pelaku, $konfigurasi, $aktif, $alasan): KonfigurasiIntegrasi {
             $konfigurasi = KonfigurasiIntegrasi::query()->lockForUpdate()->findOrFail($konfigurasi->Id);
 
@@ -39,14 +45,17 @@ final class UbahStatusIntegrasi
             }
 
             $konfigurasi->update(['Aktif' => $aktif]);
-            $this->audit->Catat(
-                $aktif ? 'integrasi.aktifkan' : 'integrasi.nonaktifkan',
-                $konfigurasi,
-                nilaiLama: ['Aktif' => ! $aktif],
-                nilaiBaru: ['Aktif' => $aktif, 'Jenis' => $konfigurasi->Jenis->value, 'Lingkungan' => $konfigurasi->Lingkungan->value],
-                alasan: $alasan,
-                idPelaku: $pelaku->Id,
-            );
+            // D-35: edisi Lisensi tanpa konsol, jadi tanpa log audit pengelola.
+            if ($pelaku !== null) {
+                $this->audit->Catat(
+                    $aktif ? 'integrasi.aktifkan' : 'integrasi.nonaktifkan',
+                    $konfigurasi,
+                    nilaiLama: ['Aktif' => ! $aktif],
+                    nilaiBaru: ['Aktif' => $aktif, 'Jenis' => $konfigurasi->Jenis->value, 'Lingkungan' => $konfigurasi->Lingkungan->value],
+                    alasan: $alasan,
+                    idPelaku: $pelaku->Id,
+                );
+            }
 
             return $konfigurasi;
         });

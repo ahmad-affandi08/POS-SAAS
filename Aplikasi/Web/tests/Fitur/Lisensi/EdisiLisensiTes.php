@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Domain\Bersama\Galat\PelanggaranAturanBisnis;
+use App\Domain\Bersama\Status\StatusDataMaster;
 use App\Domain\Bersama\Tenant\KonteksTenant;
 use App\Domain\Lisensi\Aksi\PasangLisensi;
 use App\Domain\Lisensi\Galat\LisensiTidakSah;
@@ -12,9 +13,16 @@ use App\Domain\Organisasi\Data\DataPemilikBaru;
 use App\Domain\Organisasi\Model\Outlet;
 use App\Domain\Organisasi\Model\Pengguna;
 use App\Domain\Organisasi\Model\TenantPengguna;
+use App\Domain\Pajak\Model\TarifPajak;
+use App\Domain\PanduanAwal\Enum\StatusTemplateSektor;
 use App\Domain\PanduanAwal\Model\ProgresPanduanAwal;
+use App\Domain\PanduanAwal\Model\TemplateSektorVersi;
+use App\Domain\Pengelola\Integrasi\Enum\JenisIntegrasi;
+use App\Domain\Pengelola\Integrasi\Enum\PenyediaIntegrasi;
+use App\Domain\Pengelola\Integrasi\Model\KonfigurasiIntegrasi;
 use App\Domain\Pengelola\Katalog\Aksi\SiapkanKatalogBawaan;
 use App\Domain\Pengelola\TimInternal\Enum\PeranPengelolaBawaan;
+use App\Domain\Referensi\Model\SatuanStandar;
 use App\Domain\Tenant\Enum\JenisOverride;
 use App\Domain\Tenant\Enum\StatusLangganan;
 use App\Domain\Tenant\Kueri\SumberFiturTenant;
@@ -24,6 +32,7 @@ use App\Domain\Tenant\Model\Langganan;
 use App\Domain\Tenant\Model\OverrideTenant;
 use App\Domain\Tenant\Model\Tenant;
 use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Route;
 use Inertia\Testing\AssertableInertia;
 use Tests\Pendukung\Lisensi\BantuanLisensi;
@@ -80,6 +89,22 @@ describe('Edisi Lisensi (D-35)', function (): void {
         app(KonteksTenant::class)->Atur($tenant->Id);
         expect(Outlet::query()->count())->toBe(1)
             ->and(ProgresPanduanAwal::query()->sole()->Wajib)->toBeTrue();
+    });
+
+    it('data master rilis langsung terbit tanpa konsol: tarif PPN, template sektor, satuan; idempoten', function (): void {
+        app(PasangLisensi::class)->Jalankan(BantuanLisensi::Berkas(), 'Kopi Nusantara', PemilikLisensiUji());
+
+        $ppn = TarifPajak::query()->whereHas('JenisPajak', fn ($k) => $k->where('Kode', 'Ppn'))->sole();
+        $templateTerbit = TemplateSektorVersi::query()->where('Status', StatusTemplateSektor::Terbit->value)->count();
+
+        expect($ppn->Status)->toBe(StatusDataMaster::Terbit)
+            ->and($templateTerbit)->toBeGreaterThan(0)
+            ->and(TemplateSektorVersi::query()->where('Status', StatusTemplateSektor::Draf->value)->count())->toBe(0)
+            ->and(SatuanStandar::query()->exists())->toBeTrue();
+
+        $this->artisan('lisensi:siapkan-data')->expectsOutputToContain('0 tarif pajak & 0 template sektor baru')->assertSuccessful();
+        expect(TarifPajak::query()->count())->toBe(1)
+            ->and(TemplateSektorVersi::query()->where('Status', StatusTemplateSektor::Terbit->value)->count())->toBe($templateTerbit);
     });
 
     it('fitur: semua fitur katalog aktif, batas outlet/perangkat/pengguna dari lisensi, batas lain tak terbatas', function (): void {
@@ -197,6 +222,23 @@ describe('Edisi Lisensi (D-35)', function (): void {
             ->and($lolos('tenant:akhiri-trial'))->toBeFalse()
             ->and($lolos('pengelola:detak'))->toBeFalse()
             ->and($lolos('kasir:tutup-harian-otomatis'))->toBeTrue();
+    });
+
+    it('lisensi:atur-integrasi: WhatsApp Fonnte disimpan terenkripsi, diuji, lalu aktif tanpa konsol', function (): void {
+        Http::fake(['api.fonnte.com/*' => Http::response(['status' => true, 'device_status' => 'connect'])]);
+
+        $this->artisan('lisensi:atur-integrasi', ['jenis' => 'Whatsapp'])
+            ->expectsChoice('Penyedia', 'Fonnte', array_map(fn (PenyediaIntegrasi $p): string => $p->value, array_values(array_filter(PenyediaIntegrasi::cases(), fn (PenyediaIntegrasi $p): bool => $p->AmbilJenis() === JenisIntegrasi::Whatsapp))))
+            ->expectsQuestion('Token perangkat Fonnte', 'tok-fonnte-rahasia-1234')
+            ->expectsOutputToContain('tersambung dan aktif')
+            ->assertSuccessful();
+
+        $konfigurasi = KonfigurasiIntegrasi::query()->sole();
+
+        expect($konfigurasi->Aktif)->toBeTrue()
+            ->and($konfigurasi->Penyedia)->toBe(PenyediaIntegrasi::Fonnte)
+            ->and($konfigurasi->Kredensial['Token'])->toBe('tok-fonnte-rahasia-1234')
+            ->and((string) $konfigurasi->getRawOriginal('Kredensial'))->not->toContain('tok-fonnte');
     });
 
     it('perintah lisensi:pasang meminta data Owner, kata sandi tersembunyi, lalu lisensi:info menampilkannya', function (): void {

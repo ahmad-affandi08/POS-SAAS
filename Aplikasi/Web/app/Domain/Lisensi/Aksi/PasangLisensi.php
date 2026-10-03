@@ -11,19 +11,23 @@ use App\Domain\Lisensi\Kueri\LisensiBerlaku;
 use App\Domain\Lisensi\Layanan\PenandaLisensi;
 use App\Domain\Lisensi\Model\LisensiTerpasang;
 use App\Domain\Organisasi\Data\DataPemilikBaru;
+use App\Domain\Pengelola\DataBawaan\Aksi\SiapkanDataBawaanLisensi;
 use App\Domain\Tenant\Aksi\SiapkanTenantLisensi;
 use Illuminate\Support\Facades\DB;
 
 /**
  * D-35: memasang berkas lisensi di server pembeli. Pemasangan pertama sekaligus membuat satu-satunya usaha beserta
  * Owner-nya (`SiapkanTenantLisensi`); pemasangan berikutnya hanya mengganti berkas (misal tambah outlet/perangkat atau
- * pindah domain) tanpa menyentuh data usaha. Berkas diverifikasi tanda tangannya sebelum apa pun disimpan.
+ * pindah domain) tanpa menyentuh data usaha. Berkas diverifikasi tanda tangannya sebelum apa pun disimpan. Data master
+ * platform (pajak, satuan, wilayah, katalog fitur, template sektor) disiapkan & diterbitkan lebih dulu, karena panduan
+ * awal usaha baru membutuhkannya dan server pembeli tidak punya konsol.
  */
 final class PasangLisensi
 {
     public function __construct(
         private readonly PenandaLisensi $penanda,
         private readonly SiapkanTenantLisensi $siapkanTenant,
+        private readonly SiapkanDataBawaanLisensi $siapkanData,
     ) {}
 
     /**
@@ -45,6 +49,7 @@ final class PasangLisensi
                     throw new PelanggaranAturanBisnis('D-35', 'Pemasangan pertama butuh nama usaha dan data Owner.');
                 }
 
+                $this->siapkanData->Jalankan();
                 $this->siapkanTenant->Jalankan(trim($namaUsaha), $pemilik);
             }
 
